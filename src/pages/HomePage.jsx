@@ -28,6 +28,8 @@ import StraightLineNotification from '../components/StraightLineNotification.jsx
 import LiveAlertsBar from '../components/LiveAlertsBar.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
+import MockTestCard from '../components/MockTestCard.jsx';
+import { MOCK_TESTS_METADATA } from '../data/mockTestsData.js';
 
 export default function HomePage() {
   const { t, getLocalized } = useLanguage();
@@ -104,10 +106,17 @@ export default function HomePage() {
       to: '/results'
     },
     {
+      title: 'Mock Tests (CBT)',
+      desc: 'Jan 2026, Dec, Nov & Oct 2025 Mocks',
+      icon: Sparkles,
+      color: 'bg-amber-50 text-amber-900 border-amber-200',
+      to: '/mocks'
+    },
+    {
       title: t('qcCurrentAffairsTitle'),
       desc: t('qcCurrentAffairsDesc'),
       icon: Globe2,
-      color: 'bg-amber-50 text-amber-800 border-amber-100',
+      color: 'bg-blue-50 text-[#2468B4] border-blue-100',
       to: '/current-affairs'
     },
     {
@@ -467,6 +476,41 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* 4.5 CURRENT AFFAIRS MOCK TESTS (PDF-GROUNDED CBT & PRACTICE) */}
+      <section className="max-w-[1200px] mx-auto px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-[#2468B4] uppercase tracking-wider mb-1">
+              <Sparkles className="w-4 h-4 text-[#F2BE4F]" />
+              <span>Grounded in Official Monthly Compendiums</span>
+            </div>
+            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#182B45]">
+              Current Affairs Mock Tests & Practice Hub
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Full-length CBT mock tests for UPSC, SSC, Banking, Railways & State PSCs with verified explanations.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              to="/mocks"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition-colors shadow-xs"
+            >
+              <span>Explore All {MOCK_TESTS_METADATA.length} Mocks</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Mock cards row matching image_324852b7.png */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {MOCK_TESTS_METADATA.slice(0, 3).map((mock) => (
+            <MockTestCard key={mock.id} mock={mock} />
+          ))}
         </div>
       </section>
 

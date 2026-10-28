@@ -61,6 +61,7 @@ export default function Header() {
   const navLinks = [
     { to: '/', label: t('navHome') },
     { to: '/jobs', label: t('navJobs') },
+    { to: '/mocks', label: 'Mock Tests', isHot: true },
     { to: '/admit-cards', label: t('navAdmitCards') },
     { to: '/results', label: t('navResults') },
     { to: '/current-affairs', label: t('navCurrentAffairs') },
@@ -141,14 +142,19 @@ export default function Header() {
                   to={link.to}
                   end={link.to === '/'}
                   className={({ isActive }) =>
-                    `px-3 py-2 text-sm font-semibold rounded-lg transition-colors relative ${
+                    `px-3 py-2 text-sm font-semibold rounded-lg transition-colors relative flex items-center gap-1.5 ${
                       isActive
                         ? 'text-[#12345A] bg-[#EAF3FF]'
                         : 'text-slate-600 hover:text-[#12345A] hover:bg-slate-50'
                     }`
                   }
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  {link.isHot && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#F2BE4F] text-[#0B1F3A] uppercase tracking-wider">
+                      CBT
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </nav>

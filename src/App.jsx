@@ -17,6 +17,8 @@ import CurrentAffairDetailPage from './pages/CurrentAffairDetailPage.jsx';
 import GKPracticePage from './pages/GKPracticePage.jsx';
 import PreviousPapersPage from './pages/PreviousPapersPage.jsx';
 import StudyMaterialPage from './pages/StudyMaterialPage.jsx';
+import MockTestsHubPage from './pages/MockTestsHubPage.jsx';
+import MockTestEnginePage from './pages/MockTestEnginePage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
@@ -47,6 +49,8 @@ export default function App() {
                 <Route path="/current-affairs" element={<CurrentAffairsPage />} />
                 <Route path="/current-affairs/:id" element={<CurrentAffairDetailPage />} />
                 <Route path="/gk-practice" element={<GKPracticePage />} />
+                <Route path="/mocks" element={<MockTestsHubPage />} />
+                <Route path="/mocks/:mockId" element={<MockTestEnginePage />} />
                 <Route path="/previous-papers" element={<PreviousPapersPage />} />
                 <Route path="/study-material" element={<StudyMaterialPage />} />
                 <Route path="/admin" element={<AdminPage />} />

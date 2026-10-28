@@ -5,7 +5,7 @@ import {
   Briefcase,
   FileCheck2,
   Award,
-  Sparkles
+  GraduationCap
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 
@@ -15,9 +15,9 @@ export default function MobileBottomNav() {
   const navItems = [
     { to: '/', label: t('navHome'), icon: Home, end: true },
     { to: '/jobs', label: t('navJobs'), icon: Briefcase },
+    { to: '/mocks', label: 'Mock Tests', icon: GraduationCap },
     { to: '/admit-cards', label: t('navAdmitCards'), icon: FileCheck2 },
     { to: '/results', label: t('navResults'), icon: Award },
-    { to: '/gk-practice', label: 'GK Quiz', icon: Sparkles },
   ];
 
   return (
