@@ -1,0 +1,195 @@
+{
+  "entities": {
+    "Update": {
+      "title": "Update",
+      "description": "Recruitment notification, admit card, or result update",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "object",
+          "description": "Bilingual title with en and te keys"
+        },
+        "organization": {
+          "type": "object",
+          "description": "Bilingual recruiting organization name"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Exam board category"
+        },
+        "region": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Coverage region (All India, Andhra Pradesh, Telangana)"
+        },
+        "publishedAt": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "ISO publication date"
+        },
+        "deadline": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Application deadline or null"
+        },
+        "officialUrl": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Official board notification URL"
+        },
+        "applyUrl": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Official application portal URL"
+        },
+        "status": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Status badge label"
+        },
+        "featured": {
+          "type": "boolean",
+          "description": "Whether highlighted on homepage"
+        }
+      },
+      "required": ["title", "organization", "category", "region", "status", "officialUrl"]
+    },
+    "CurrentAffair": {
+      "title": "CurrentAffair",
+      "description": "Daily verified current affairs summary for competitive exams",
+      "type": "object",
+      "properties": {
+        "headline": {
+          "type": "object",
+          "description": "Bilingual headline with en and te"
+        },
+        "summary": {
+          "type": "object",
+          "description": "Bilingual summary with en and te"
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Topic category"
+        },
+        "eventDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Date of the occurrence"
+        },
+        "sourceUrl": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Direct link to official press release or gazette"
+        },
+        "sourceName": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Name of primary reporting organization"
+        }
+      },
+      "required": ["headline", "summary", "topic", "eventDate", "sourceUrl"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Multiple-choice GK practice question with bilingual text and explanations",
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Subject topic"
+        },
+        "question": {
+          "type": "object",
+          "description": "Bilingual question text"
+        },
+        "options": {
+          "type": "object",
+          "description": "Bilingual options list"
+        },
+        "correctAnswer": {
+          "type": "number",
+          "description": "0-based index of the correct option"
+        },
+        "explanation": {
+          "type": "object",
+          "description": "Bilingual explanatory notes"
+        },
+        "isPyq": {
+          "type": "boolean",
+          "description": "Whether derived from an official previous-year question"
+        }
+      },
+      "required": ["topic", "question", "correctAnswer"]
+    },
+    "Resource": {
+      "title": "Resource",
+      "description": "Downloadable syllabus, past question paper, or revision capsules",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "object",
+          "description": "Bilingual title"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Resource type"
+        },
+        "examBoard": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Examination board"
+        },
+        "downloadUrl": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Direct download link"
+        }
+      },
+      "required": ["title", "category", "examBoard", "downloadUrl"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Designated administrator identity record",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Administrator email address"
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Admin role designation"
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/updates/{updateId}": {
+      "schema": "Update",
+      "description": "Recruitment notifications and status alerts"
+    },
+    "/currentAffairs/{articleId}": {
+      "schema": "CurrentAffair",
+      "description": "Daily current affairs articles and source references"
+    },
+    "/questions/{questionId}": {
+      "schema": "Question",
+      "description": "GK practice questions, keys, and explanations"
+    },
+    "/resources/{resourceId}": {
+      "schema": "Resource",
+      "description": "Downloadable syllabi and previous-year papers"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Authorized administrators list"
+    }
+  }
+}

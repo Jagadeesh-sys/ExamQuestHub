@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all unspecified document paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Security Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == 'koppisettijagadeesh123@gmail.com' && request.auth.token.email_verified == true) ||
+        (request.auth.token.email == 'admin@examquesthub.com' && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Health-check / connection test
+    match /test/{testId} {
+      allow read: if true;
+    }
+
+    // 1. UPDATES (Recruitment Notifications, Admit Cards, Results)
+    match /updates/{updateId} {
+      // Public visitors can read only published non-draft notifications.
+      // Authorized admins can read all notifications including drafts.
+      allow read: if (resource.data.status != 'Draft') || isAdmin();
+
+      // Only authorized admins can create, update, or delete notifications.
+      allow create: if isAdmin() && isValidId(updateId) &&
+        request.resource.data.keys().hasAll(['title', 'organization', 'category', 'region', 'status', 'officialUrl']) &&
+        request.resource.data.category is string && request.resource.data.category.size() <= 100 &&
+        request.resource.data.officialUrl is string && request.resource.data.officialUrl.size() <= 500;
+
+      allow update: if isAdmin() && isValidId(updateId);
+      allow delete: if isAdmin() && isValidId(updateId);
+    }
+
+    // 2. CURRENT AFFAIRS
+    match /currentAffairs/{articleId} {
+      allow read: if true; // Public verified factual summaries
+
+      allow create: if isAdmin() && isValidId(articleId) &&
+        request.resource.data.keys().hasAll(['headline', 'summary', 'topic', 'eventDate', 'sourceUrl']) &&
+        request.resource.data.topic is string && request.resource.data.topic.size() <= 100 &&
+        request.resource.data.sourceUrl is string && request.resource.data.sourceUrl.size() <= 500;
+
+      allow update: if isAdmin() && isValidId(articleId);
+      allow delete: if isAdmin() && isValidId(articleId);
+    }
+
+    // 3. QUESTIONS (GK Quiz)
+    match /questions/{questionId} {
+      allow read: if true; // Public self-assessment questions
+
+      allow create: if isAdmin() && isValidId(questionId) &&
+        request.resource.data.keys().hasAll(['topic', 'question', 'correctAnswer']) &&
+        request.resource.data.topic is string && request.resource.data.topic.size() <= 100 &&
+        request.resource.data.correctAnswer is number;
+
+      allow update: if isAdmin() && isValidId(questionId);
+      allow delete: if isAdmin() && isValidId(questionId);
+    }
+
+    // 4. RESOURCES (Syllabus & Previous Papers)
+    match /resources/{resourceId} {
+      allow read: if true; // Public educational materials
+
+      allow create: if isAdmin() && isValidId(resourceId) &&
+        request.resource.data.keys().hasAll(['title', 'category', 'examBoard', 'downloadUrl']) &&
+        request.resource.data.category is string && request.resource.data.category.size() <= 100 &&
+        request.resource.data.downloadUrl is string && request.resource.data.downloadUrl.size() <= 500;
+
+      allow update: if isAdmin() && isValidId(resourceId);
+      allow delete: if isAdmin() && isValidId(resourceId);
+    }
+
+    // 5. ADMINS COLLECTION
+    match /admins/{adminId} {
+      // Admins can read their own or other admin records; no self-assignment
+      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

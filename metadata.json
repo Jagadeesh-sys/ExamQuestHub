@@ -1,0 +1,6 @@
+{
+  "name": "ExamQuestHub",
+  "description": "Verified government exam notifications, admit cards, results, daily current affairs, GK practice, and previous year question papers in English and Telugu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

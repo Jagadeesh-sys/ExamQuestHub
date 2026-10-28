@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-navy: #12345A;
+  --color-deep-navy: #0B1F3A;
+  --color-primary-blue: #2468B4;
+  --color-sky-blue: #EAF3FF;
+  --color-app-bg: #F6F8FC;
+  --color-card-bg: #FFFFFF;
+  --color-main-text: #182B45;
+  --color-secondary-text: #718096;
+  --color-app-border: #E3EAF2;
+  --color-accent-gold: #F2BE4F;
+  --color-accent-gold-hover: #E0AC3C;
+  --color-success-green: #16845D;
+  --color-error-red: #C64545;
+  
+  --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-telugu: "Noto Sans Telugu", "Inter", system-ui, sans-serif;
+}
+
+:root {
+  --navy: #12345A;
+  --deep-navy: #0B1F3A;
+  --blue: #2468B4;
+  --sky: #EAF3FF;
+  --bg: #F6F8FC;
+  --card: #FFFFFF;
+  --text: #182B45;
+  --text-muted: #718096;
+  --border: #E3EAF2;
+  --gold: #F2BE4F;
+  --green: #16845D;
+  --red: #C64545;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #F6F8FC;
+  color: #182B45;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
+}
+
+.telugu-text {
+  font-family: var(--font-telugu);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom desktop scrollbar */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #F1F4F9;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+}
+
+/* Touch target standards */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Print styles for notifications & question sheets */
+@media print {
+  header, footer, .no-print, nav {
+    display: none !important;
+  }
+}
