@@ -7,11 +7,14 @@ import {
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  List,
+  LayoutGrid
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getUpdates } from '../firebase/firestoreService.js';
 import NotificationCard from '../components/NotificationCard.jsx';
+import StraightLineNotification from '../components/StraightLineNotification.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
@@ -32,6 +35,13 @@ export default function JobsPage() {
   const regionFilter = searchParams.get('region') || 'All';
   const statusFilter = searchParams.get('status') || 'All';
   const sortBy = searchParams.get('sort') || 'newest';
+
+  const [viewMode, setViewMode] = useState('straightLine'); // 'straightLine' (default) | 'grid'
+  const [expandedIds, setExpandedIds] = useState({});
+
+  const toggleExpand = (id) => {
+    setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   useEffect(() => {
     async function loadJobs() {
@@ -195,57 +205,128 @@ export default function JobsPage() {
 
         </div>
 
-        {/* Sort & Reset Active Tags */}
+        {/* Sort & View Mode Switcher */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium">Sort:</span>
-            <button
-              type="button"
-              onClick={() => updateParam('sort', 'newest')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                sortBy === 'newest'
-                  ? 'bg-[#12345A] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {t('newestFirst')}
-            </button>
-            <button
-              type="button"
-              onClick={() => updateParam('sort', 'deadline')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                sortBy === 'deadline'
-                  ? 'bg-[#12345A] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {t('deadlineFirst')}
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 font-medium">Sort:</span>
+              <button
+                type="button"
+                onClick={() => updateParam('sort', 'newest')}
+                className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                  sortBy === 'newest'
+                    ? 'bg-[#12345A] text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {t('newestFirst')}
+              </button>
+              <button
+                type="button"
+                onClick={() => updateParam('sort', 'deadline')}
+                className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                  sortBy === 'deadline'
+                    ? 'bg-[#12345A] text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {t('deadlineFirst')}
+              </button>
+            </div>
+
+            {(searchFilter || categoryFilter !== 'All' || regionFilter !== 'All' || statusFilter !== 'All') && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1 text-slate-500 hover:text-red-600 transition-colors font-medium"
+              >
+                <RefreshCcw className="w-3.5 h-3.5" />
+                <span>{t('resetFilters')}</span>
+              </button>
+            )}
           </div>
 
-          {(searchFilter || categoryFilter !== 'All' || regionFilter !== 'All' || statusFilter !== 'All') && (
+          {/* View Mode Switcher */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
             <button
               type="button"
-              onClick={handleResetFilters}
-              className="inline-flex items-center gap-1 text-slate-500 hover:text-red-600 transition-colors font-medium"
+              onClick={() => setViewMode('straightLine')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'straightLine'
+                  ? 'bg-white text-[#12345A] shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Straight Line Expandable View"
             >
-              <RefreshCcw className="w-3.5 h-3.5" />
-              <span>{t('resetFilters')}</span>
+              <List className="w-3.5 h-3.5 text-[#2468B4]" />
+              <span>Straight Line</span>
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-white text-[#12345A] shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Cards Grid View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5 text-[#2468B4]" />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Helpful Hint & Expand All for Straight Line mode */}
+      {viewMode === 'straightLine' && paginatedItems.length > 0 && !loading && (
+        <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+          <span className="flex items-center gap-1.5 font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#2468B4] animate-pulse" />
+            <span>Click any straight line row to reveal full details up to full length</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const areAllExp = paginatedItems.every(u => expandedIds[u.id]);
+              if (areAllExp) {
+                setExpandedIds({});
+              } else {
+                const next = {};
+                paginatedItems.forEach(u => { next[u.id] = true; });
+                setExpandedIds(next);
+              }
+            }}
+            className="text-[#2468B4] hover:underline font-bold"
+          >
+            {paginatedItems.every(u => expandedIds[u.id]) ? 'Collapse All' : 'Expand All'}
+          </button>
+        </div>
+      )}
 
       {/* Listing Content */}
       {loading ? (
         <SkeletonLoader count={6} />
       ) : paginatedItems.length > 0 ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {paginatedItems.map((item) => (
-              <NotificationCard key={item.id} item={item} />
-            ))}
-          </div>
+          {viewMode === 'straightLine' ? (
+            <div className="space-y-2.5">
+              {paginatedItems.map((item) => (
+                <StraightLineNotification
+                  key={item.id}
+                  item={item}
+                  isExpanded={!!expandedIds[item.id]}
+                  onToggle={() => toggleExpand(item.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {paginatedItems.map((item) => (
+                <NotificationCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

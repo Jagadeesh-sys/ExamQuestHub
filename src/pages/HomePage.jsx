@@ -17,11 +17,15 @@ import {
   Instagram,
   CheckCircle2,
   ExternalLink,
-  Layers
+  Layers,
+  List,
+  LayoutGrid
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getUpdates, getCurrentAffairs } from '../firebase/firestoreService.js';
 import NotificationCard from '../components/NotificationCard.jsx';
+import StraightLineNotification from '../components/StraightLineNotification.jsx';
+import LiveAlertsBar from '../components/LiveAlertsBar.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 
@@ -35,6 +39,12 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedRegion, setSelectedRegion] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('straightLine'); // 'straightLine' (default) | 'grid'
+  const [expandedIds, setExpandedIds] = useState({});
+
+  const toggleExpand = (id) => {
+    setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -130,8 +140,11 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="space-y-12 pb-16">
+    <div className="space-y-10 pb-16">
       
+      {/* Top Live Alerts Straight-Line Strip */}
+      <LiveAlertsBar notifications={updates} />
+
       {/* 1. HERO SECTION */}
       <section className="relative bg-gradient-to-b from-[#0B1F3A] to-[#12345A] text-white pt-12 pb-16 px-4 sm:px-6 overflow-hidden">
         {/* Subtle decorative geometry */}
@@ -269,7 +282,7 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Filter Tabs Bar */}
+        {/* Filter Tabs & View Mode Bar */}
         <div className="bg-white p-3 rounded-2xl border border-[#E3EAF2] shadow-xs mb-6 flex flex-wrap items-center justify-between gap-3">
           
           {/* Category Tabs */}
@@ -301,41 +314,113 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Region Tabs */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-400 font-medium mr-1 hidden sm:inline">Region:</span>
-            {[
-              { id: 'All', label: 'All' },
-              { id: 'All India', label: 'All India' },
-              { id: 'Andhra Pradesh', label: 'AP' },
-              { id: 'Telangana', label: 'TS' }
-            ].map((reg) => (
+          {/* Right: Region Tabs & Straight Line View Switcher */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Region Tabs */}
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-400 font-medium mr-1 hidden sm:inline">Region:</span>
+              {[
+                { id: 'All', label: 'All' },
+                { id: 'All India', label: 'All India' },
+                { id: 'Andhra Pradesh', label: 'AP' },
+                { id: 'Telangana', label: 'TS' }
+              ].map((reg) => (
+                <button
+                  key={reg.id}
+                  type="button"
+                  onClick={() => setSelectedRegion(reg.id)}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    selectedRegion === reg.id
+                      ? 'bg-[#EAF3FF] text-[#12345A] font-bold border border-[#2468B4]/20'
+                      : 'text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  {reg.label}
+                </button>
+              ))}
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
               <button
-                key={reg.id}
                 type="button"
-                onClick={() => setSelectedRegion(reg.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  selectedRegion === reg.id
-                    ? 'bg-[#EAF3FF] text-[#12345A] font-bold border border-[#2468B4]/20'
-                    : 'text-slate-500 hover:bg-slate-50'
+                onClick={() => setViewMode('straightLine')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === 'straightLine'
+                    ? 'bg-white text-[#12345A] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
+                title="Straight Line Expandable View"
               >
-                {reg.label}
+                <List className="w-3.5 h-3.5 text-[#2468B4]" />
+                <span>Straight Line</span>
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-[#12345A] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Cards Grid View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5 text-[#2468B4]" />
+                <span className="hidden sm:inline">Grid</span>
+              </button>
+            </div>
           </div>
 
         </div>
 
-        {/* Notifications Grid */}
+        {/* Straight-line helpful indicator & expand-all button */}
+        {viewMode === 'straightLine' && filteredUpdates.length > 0 && !loading && (
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-3 px-1">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#2468B4] animate-pulse" />
+              <span>Click any notification line to view full details up to full length</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const areAllExp = filteredUpdates.slice(0, 8).every(u => expandedIds[u.id]);
+                if (areAllExp) {
+                  setExpandedIds({});
+                } else {
+                  const next = {};
+                  filteredUpdates.slice(0, 8).forEach(u => { next[u.id] = true; });
+                  setExpandedIds(next);
+                }
+              }}
+              className="text-[#2468B4] hover:underline font-bold"
+            >
+              {filteredUpdates.slice(0, 8).every(u => expandedIds[u.id]) ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
+        )}
+
+        {/* Notifications Listing */}
         {loading ? (
           <SkeletonLoader count={6} />
         ) : filteredUpdates.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredUpdates.slice(0, 6).map((item) => (
-              <NotificationCard key={item.id} item={item} />
-            ))}
-          </div>
+          viewMode === 'straightLine' ? (
+            <div className="space-y-2.5">
+              {filteredUpdates.slice(0, 8).map((item) => (
+                <StraightLineNotification
+                  key={item.id}
+                  item={item}
+                  isExpanded={!!expandedIds[item.id]}
+                  onToggle={() => toggleExpand(item.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredUpdates.slice(0, 6).map((item) => (
+                <NotificationCard key={item.id} item={item} />
+              ))}
+            </div>
+          )
         ) : (
           <div className="bg-white rounded-2xl border border-[#E3EAF2] p-8 text-center text-slate-500">
             <p>No notifications match the chosen category or region filter.</p>
