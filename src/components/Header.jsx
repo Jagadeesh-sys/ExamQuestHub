@@ -62,7 +62,6 @@ export default function Header() {
     { to: '/', label: t('navHome') },
     { to: '/jobs', label: t('navJobs') },
     { to: '/mocks', label: 'Mock Tests', isHot: true },
-    { to: '/admit-cards', label: t('navAdmitCards') },
     { to: '/results', label: t('navResults') },
     { to: '/current-affairs', label: t('navCurrentAffairs') },
     { to: '/previous-papers', label: t('navPreviousPapers') },
