@@ -19,16 +19,20 @@ import {
   ExternalLink,
   Layers,
   List,
-  LayoutGrid
+  LayoutGrid,
+  Columns3
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getUpdates, getCurrentAffairs } from '../firebase/firestoreService.js';
 import NotificationCard from '../components/NotificationCard.jsx';
 import StraightLineNotification from '../components/StraightLineNotification.jsx';
+import StraightLineCurrentAffair from '../components/StraightLineCurrentAffair.jsx';
+import CurrentAffairCard from '../components/CurrentAffairCard.jsx';
 import LiveAlertsBar from '../components/LiveAlertsBar.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import MockTestCard from '../components/MockTestCard.jsx';
+import EditorialCurrentAffairsSection from '../components/EditorialCurrentAffairsSection.jsx';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsData.js';
 
 export default function HomePage() {
@@ -44,8 +48,16 @@ export default function HomePage() {
   const [viewMode, setViewMode] = useState('straightLine'); // 'straightLine' (default) | 'grid'
   const [expandedIds, setExpandedIds] = useState({});
 
+  // Current Affairs Display Options: 'threeInRow' | 'singleAlign' | 'grid'
+  const [caViewMode, setCaViewMode] = useState('threeInRow');
+  const [expandedCaIds, setExpandedCaIds] = useState({});
+
   const toggleExpand = (id) => {
     setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleCaExpand = (id) => {
+    setExpandedCaIds(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   useEffect(() => {
@@ -514,84 +526,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. CURRENT AFFAIRS PREVIEW */}
+      {/* 5. CURRENT AFFAIRS PREVIEW (Matching image_1b19ce6e.png) */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-[#16845D] uppercase tracking-wider mb-1">
-              <Globe2 className="w-4 h-4" />
-              <span>Editorial Current Affairs</span>
-            </div>
-            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#182B45]">
-              {t('dailyCurrentAffairs')}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              {t('currentAffairsDesc')}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/gk-practice"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition-colors shadow-xs"
-            >
-              <span>{t('practiceTodayGK')}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {currentAffairs.map((article) => {
-            const headline = getLocalized(article.headline);
-            const summary = getLocalized(article.summary);
-            return (
-              <div
-                key={article.id}
-                className="bg-white rounded-2xl border border-[#E3EAF2] hover:border-[#2468B4]/40 hover:shadow-sm transition-all p-4 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 mb-2">
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium text-[10px]">
-                      {article.topic}
-                    </span>
-                    <span>{article.eventDate}</span>
-                  </div>
-                  <Link
-                    to={`/current-affairs/${article.slug || article.id}`}
-                    className="font-heading font-bold text-sm text-[#182B45] hover:text-[#2468B4] transition-colors line-clamp-2 leading-snug"
-                  >
-                    {headline}
-                  </Link>
-                  <p className="text-xs text-slate-600 mt-2 line-clamp-3 leading-relaxed">
-                    {summary}
-                  </p>
-                </div>
-
-                <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  {article.sourceUrl ? (
-                    <a
-                      href={article.sourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[11px] text-slate-400 hover:text-[#2468B4] flex items-center gap-1"
-                    >
-                      <span>{t('sourceLink')}</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                  ) : <span />}
-                  <Link
-                    to={`/current-affairs/${article.slug || article.id}`}
-                    className="font-semibold text-xs text-[#2468B4] hover:underline flex items-center gap-0.5"
-                  >
-                    <span>{t('readMore')}</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <EditorialCurrentAffairsSection
+          articles={currentAffairs}
+          loading={loading}
+          showViewToggle={true}
+          initialViewMode="editorial"
+        />
       </section>
 
       {/* 6. STUDY RESOURCES & PYQ PREVIEW */}

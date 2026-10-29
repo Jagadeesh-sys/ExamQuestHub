@@ -152,20 +152,47 @@ export async function deleteUpdate(id) {
  * 2. CURRENT AFFAIRS SERVICE
  * -------------------------------------------------------------
  */
+const DEFAULT_TOPIC_IMAGES = {
+  'Andhra Pradesh current affairs': 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80',
+  'National news': 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80',
+  'Economy': 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=600&q=80',
+  'Science and technology': 'https://images.unsplash.com/photo-1517976487502-d216f9f6e632?auto=format&fit=crop&w=600&q=80',
+  'Environment': 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80',
+  'Defence': 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80',
+  'Telangana current affairs': 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=600&q=80',
+  'Default': 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80'
+};
+
+export const getDefaultImageForTopic = (topic) => {
+  return DEFAULT_TOPIC_IMAGES[topic] || DEFAULT_TOPIC_IMAGES['Default'];
+};
+
 export async function getCurrentAffairs() {
+  let list = [];
   if (isFirebaseConfigured && db) {
     try {
       const colRef = collection(db, 'currentAffairs');
       const q = query(colRef, orderBy('publishedAt', 'desc'));
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
-        return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       }
     } catch (err) {
       console.warn('Firestore getCurrentAffairs fallback:', err);
     }
   }
-  return getLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, INITIAL_CURRENT_AFFAIRS);
+  if (!list || list.length === 0) {
+    list = getLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, INITIAL_CURRENT_AFFAIRS);
+  }
+
+  // Ensure every article has valid image and exam relevance tags
+  return list.map(item => ({
+    ...item,
+    imageUrl: item.imageUrl || getDefaultImageForTopic(item.topic),
+    examRelevance: item.examRelevance && item.examRelevance.length > 0
+      ? item.examRelevance
+      : ['UPSC', 'APPSC', 'SSC']
+  }));
 }
 
 export async function getCurrentAffairById(id) {

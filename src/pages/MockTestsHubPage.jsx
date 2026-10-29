@@ -12,7 +12,10 @@ import {
   ExternalLink,
   ChevronRight,
   ShieldCheck,
-  FileText
+  FileText,
+  Columns3,
+  List,
+  LayoutGrid
 } from 'lucide-react';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsData.js';
 import MockTestCard from '../components/MockTestCard.jsx';
@@ -25,6 +28,7 @@ export default function MockTestsHubPage() {
 
   const [selectedMonth, setSelectedMonth] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('threeInRow'); // 'threeInRow' | 'singleAlign' | 'grid'
 
   const months = ['All', 'January 2026', 'December 2025', 'November 2025', 'October 2025'];
 
@@ -145,7 +149,7 @@ export default function MockTestsHubPage() {
 
       {/* Mock Cards Grid Matching UI Mockup */}
       <div>
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-2">
             <h2 className="text-xl sm:text-2xl font-black text-[#12345A] tracking-tight">
               Available Test Series
@@ -154,8 +158,52 @@ export default function MockTestsHubPage() {
               {filteredMocks.length} Tests
             </span>
           </div>
-          <div className="text-xs text-slate-500 hidden sm:block">
-            Click <span className="font-bold text-slate-700">Start Mock</span> for timed CBT or tap pills for Practice / Solutions
+
+          <div className="flex items-center gap-3">
+            {/* Display Options: 3 in Row | Single Align | Grid */}
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('threeInRow')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewMode === 'threeInRow'
+                    ? 'bg-white text-[#12345A] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+                title="Display 3 in a row"
+              >
+                <Columns3 className="w-3.5 h-3.5 text-[#2468B4]" />
+                <span>3 in Row</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('singleAlign')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewMode === 'singleAlign'
+                    ? 'bg-white text-[#12345A] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+                title="Display single align (stacked list)"
+              >
+                <List className="w-3.5 h-3.5 text-[#2468B4]" />
+                <span>Single Align</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-[#12345A] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+                title="Display grid cards"
+              >
+                <LayoutGrid className="w-3.5 h-3.5 text-[#2468B4]" />
+                <span>Grid</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -178,8 +226,20 @@ export default function MockTestsHubPage() {
               Reset Filters
             </button>
           </div>
-        ) : (
+        ) : viewMode === 'singleAlign' ? (
+          <div className="grid grid-cols-1 gap-4 max-w-3xl mx-auto">
+            {filteredMocks.map((mock) => (
+              <MockTestCard key={mock.id} mock={mock} />
+            ))}
+          </div>
+        ) : viewMode === 'threeInRow' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMocks.map((mock) => (
+              <MockTestCard key={mock.id} mock={mock} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredMocks.map((mock) => (
               <MockTestCard key={mock.id} mock={mock} />
             ))}

@@ -457,18 +457,145 @@ export const INITIAL_UPDATES = [
 
 export const INITIAL_CURRENT_AFFAIRS = [
   {
+    id: 'ca-simbex-2026-visakhapatnam',
+    slug: 'simbex-2026-maritime-exercise-visakhapatnam',
+    headline: {
+      en: 'SIMBEX-2026 Maritime Exercise Concludes at Visakhapatnam',
+      te: 'విశాఖపట్నంలో ముగిసిన సింబెక్స్-2026 సముద్ర ద్వైపాక్షిక విన్యాసాలు'
+    },
+    eventDate: '2026-10-27',
+    publishedAt: '2026-10-27',
+    topic: 'Andhra Pradesh current affairs',
+    sourceUrl: 'https://pib.gov.in',
+    sourceName: 'Ministry of Defence / PIB',
+    verifiedAt: '2026-10-27T18:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['UPSC', 'APPSC', 'CDS'],
+    summary: {
+      en: 'The 33rd edition of the Singapore India Maritime Bilateral Exercise (SIMBEX-2026), hosted by the Indian Navy at Visakhapatnam, concluded on 28 October 2026. The exercise involved harbour activities and maritime operations in the Bay of Bengal. It strengthens interoperability between the navies.',
+      te: 'భారత నావికాదళం విశాఖపట్నంలో నిర్వహించిన సింగపూర్-భారత్ సముద్ర ద్వైపాక్షిక విన్యాసాల 33వ ఎడిషన్ (సింబెక్స్-2026) విజయవంతంగా ముగిసింది. బంగాళాఖాతంలో నావికా భద్రతను ఇది మరింత బలోపేతం చేస్తుంది.'
+    },
+    content: {
+      en: 'SIMBEX-2026 witnessed complex naval manoeuvres including anti-submarine warfare firing drills, tactical surface strikes, and helicopter cross-deck operations. Key participants included INS Shivalik, INS Sahyadri, and RSS Formidable.',
+      te: 'యాంటీ సబ్‌మెరైన్ వార్‌ఫేర్ మరియు వ్యూహాత్మక డ్రిల్స్‌తో సాగిన ఈ విన్యాసాలలో ఇరు దేశాల యుద్ధ నౌకలు విశేష ప్రతిభ చూపాయి.'
+    },
+    tags: ['SIMBEX', 'Defence', 'Navy', 'APPSC', 'UPSC Prelims']
+  },
+  {
+    id: 'ca-pm-viksit-gram-swaraj-2026',
+    slug: 'cabinet-approves-pradhan-mantri-viksit-gram-swaraj-yojana',
+    headline: {
+      en: 'Cabinet Approves Pradhan Mantri Viksit Gram Swaraj Yojana',
+      te: 'ప్రధాన మంత్రి వికసిత్ గ్రామ స్వరాజ్ యోజనకు కేంద్ర కేబినెట్ ఆమోదం'
+    },
+    eventDate: '2026-10-28',
+    publishedAt: '2026-10-28',
+    topic: 'National news',
+    sourceUrl: 'https://pib.gov.in',
+    sourceName: 'Press Information Bureau',
+    verifiedAt: '2026-10-28T14:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['UPSC', 'SSC', 'BANK'],
+    summary: {
+      en: 'The Union Cabinet approved the Pradhan Mantri Viksit Gram Swaraj Yojana as a Centrally Sponsored Scheme for 2026-27 to 2030-31. The scheme has a total outlay of ₹97,395.55 crore, comprising a central share of ₹64,499.48 crore and a state share of ₹32,896.07 crore.',
+      te: '2026-27 నుండి 2030-31 వరకు అమలు చేయనున్న ప్రధాన మంత్రి వికసిత్ గ్రామ స్వరాజ్ యోజనకు కేంద్ర కేబినెట్ ఆమోదం తెలిపింది. మొత్తం వ్యయం రూ.97,395.55 కోట్లు కాగా, ఇందులో కేంద్ర వాటా రూ.64,499.48 కోట్లు.'
+    },
+    content: {
+      en: 'The initiative targets saturation of basic rural amenities, 100% digital panchayat connectivity, community solar irrigation, and village enterprise incubation clusters across backward blocks.',
+      te: 'గ్రామీణ ప్రాంతాలలో డిజిటల్ పంచాయతీలు, సోలార్ సాగునీరు, మౌలిక వసతుల కల్పన లక్ష్యంగా ఈ పథకం రూపొందించబడింది.'
+    },
+    tags: ['Rural Development', 'Cabinet Decisions', 'Government Schemes', 'UPSC GS-2']
+  },
+  {
+    id: 'ca-science-defense-economics-reforms',
+    slug: 'science-and-defense-economics-committee-reforms',
+    headline: {
+      en: 'Science and Defense Economics Committee Reforms',
+      te: 'సైన్స్ అండ్ డిఫెన్స్ ఎకనామిక్స్ కమిటీ సంస్కరణల నివేదిక'
+    },
+    eventDate: '2026-10-28',
+    publishedAt: '2026-10-28',
+    topic: 'National news',
+    sourceUrl: 'https://pib.gov.in',
+    sourceName: 'Ministry of Defence / PIB',
+    verifiedAt: '2026-10-28T16:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['BANK', 'SSC', 'TGPSC'],
+    summary: {
+      en: 'The high-level joint committee on Defense Economics submitted structural recommendations to stimulate private capital induction in aerospace research, domestic micro-sensor fabrication, and defense procurement transparency.',
+      te: 'రక్షణ ఆర్థిక రంగంలో ప్రైవేట్ భాగస్వామ్యం, స్వదేశీ ఏరోస్పేస్ రీసెర్చ్ మరియు మైక్రో సెన్సార్ల తయారీకి ప్రత్యేక ప్రోత్సాహకాలను సిఫార్సు చేస్తూ ఉన్నత స్థాయి కమిటీ నివేదిక సమర్పించింది.'
+    },
+    content: {
+      en: 'Key proposals include dedicated defense manufacturing innovation funds, single-window patent clearances for DRDO-academic consortia, and duty exemptions on dual-use aerospace materials.',
+      te: 'డీఆర్‌డీఓ పరిశోధనలకు పేటెంట్ అనుమతులు సులభతరం చేయడం, విదేశీ ముడిసరుకులపై పన్ను మినహాయింపులు ఇందులో ప్రధానాంశాలు.'
+    },
+    tags: ['Defence Economics', 'Science & Tech', 'DRDO', 'Banking Exams']
+  },
+  {
+    id: 'ca-andaman-coastal-surveillance-station',
+    slug: 'andaman-source-unit-cantonment-coastal-surveillance',
+    headline: {
+      en: 'Andaman Source Unit in Cantonment for Coastal Surveillance',
+      te: 'తీరప్రాంత నిఘా కోసం అండమాన్‌లో ఆధునిక నిఘా కేంద్రం ఏర్పాటు'
+    },
+    eventDate: '2026-10-29',
+    publishedAt: '2026-10-29',
+    topic: 'National news',
+    sourceUrl: 'https://pib.gov.in',
+    sourceName: 'APPSC / PIB',
+    verifiedAt: '2026-10-29T10:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['BANK', 'SSC', 'TGPSC'],
+    summary: {
+      en: 'Armed forces established an upgraded coastal radar monitoring command in the Andaman & Nicobar archipelago to ensure round-the-clock automatic identification and maritime choke point safety.',
+      te: 'హిందూ మహాసముద్రం మరియు మలక్కా జలసంధి సమీపంలో సముద్ర భద్రతను పర్యవేక్షించేందుకు అండమాన్ నికోబార్ కమాండ్‌లో నూతన నిఘా విభాగాన్ని ప్రారంభించారు.'
+    },
+    content: {
+      en: 'Integrated with high-frequency coastal radars and optical day/night surveillance domes, the station provides real-time situational awareness across the Malacca Strait approach lanes.',
+      te: 'అత్యాధునిక రాడార్లు మరియు ఉపగ్రహ సమాచార వ్యవస్థతో తీరప్రాంతంలో అనుమానాస్పద కదలికలను ఈ కేంద్రం గుర్తిస్తుంది.'
+    },
+    tags: ['Coastal Security', 'Andaman', 'Strategic Affairs', 'SSC']
+  },
+  {
+    id: 'ca-tpd-depth-urban-sanitation-index',
+    slug: 'tpd-depth-urban-sanitation-index-reforms',
+    headline: {
+      en: 'TPD Depth on Other Colonies: Urban Sanitation Index',
+      te: 'పట్టణ పారిశుధ్య సూచీలో మార్పులు: నగరాల వ్యర్థాల నిర్వహణ మార్గదర్శకాలు'
+    },
+    eventDate: '2026-10-28',
+    publishedAt: '2026-10-28',
+    topic: 'National news',
+    sourceUrl: 'https://pib.gov.in',
+    sourceName: 'Press Information Bureau',
+    verifiedAt: '2026-10-28T12:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['UPSC', 'APPSC', 'SSC'],
+    summary: {
+      en: 'The Ministry of Housing and Urban Affairs rolled out new parameters under Swachh Survekshan evaluating circular sanitation models, fecal sludge remediation, and greywater recycling in suburban extensions.',
+      te: 'స్వచ్ఛ సర్వేక్షణ్ కింద పట్టణ శివారు ప్రాంతాలలో డ్రైనేజీ నిర్వహణ మరియు రీసైక్లింగ్ ప్రక్రియలకు ప్రభుత్వం నూతన మార్గదర్శకాలను విడుదల చేసింది.'
+    },
+    content: {
+      en: 'Municipal councils achieving above 90% in circular water reuse will receive priority grant disbursements under the AMRUT 2.0 national mission.',
+      te: 'మురుగునీటి శుద్ధిలో 90 శాతం లక్ష్యాలను చేరుకున్న మున్సిపాలిటీలకు కేంద్ర అమృత్ పథకంలో అదనపు ప్రోత్సాహకాలు అందనున్నాయి.'
+    },
+    tags: ['Urban Governance', 'Sanitation', 'Swachh Bharat', 'UPSC GS-2']
+  },
+  {
     id: 'ca-isro-gaganyaan-tv-d2',
     slug: 'isro-gaganyaan-tv-d2-abort-mission-milestone',
     headline: {
       en: 'ISRO Successfully Validates Crew Escape Sequence in Gaganyaan TV-D2 Test',
       te: 'గగన్‌యాన్ టీవీ-డీ2 టెస్ట్‌లో క్రూ ఎస్కేప్ సిస్టమ్‌ను విజయవంతంగా పరీక్షించిన ఇస్రో'
     },
-    eventDate: '2025-02-18',
-    publishedAt: '2025-02-18',
+    eventDate: '2026-10-27',
+    publishedAt: '2026-10-27',
     topic: 'Science and technology',
     sourceUrl: 'https://pib.gov.in',
     sourceName: 'Press Information Bureau (PIB) / ISRO Official Release',
-    verifiedAt: '2025-02-18T18:00:00Z',
+    verifiedAt: '2026-10-27T18:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1517976487502-d216f9f6e632?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['UPSC', 'APPSC', 'TGPSC'],
     summary: {
       en: 'Indian Space Research Organisation carried out the second test vehicle mission (TV-D2) confirming aerodynamic separation and high-altitude drogue parachute deployment of the Gaganyaan crew module off the coast of Sriharikota.',
       te: 'శ్రీహరికోటలోని సతీష్ ధావన్ అంతరిక్ష కేంద్రం నుంచి ఇస్రో మానవ సహిత అంతరిక్ష యాత్ర \'గగన్‌యాన్\' రెండో టెస్ట్ వెహికల్ ప్రయోగాన్ని విజయవంతంగా పూర్తి చేసింది.'
@@ -486,15 +613,17 @@ export const INITIAL_CURRENT_AFFAIRS = [
       en: 'RBI Monetary Policy Committee Maintains Repo Rate at 6.50% with Neutral Stance',
       te: 'రెపో రేటును 6.50 శాతంగా యథాతథంగా కొనసాగించిన ఆర్బీఐ ద్రవ్య విధాన కమిటీ'
     },
-    eventDate: '2025-02-08',
-    publishedAt: '2025-02-08',
+    eventDate: '2026-10-26',
+    publishedAt: '2026-10-26',
     topic: 'Economy',
     sourceUrl: 'https://rbi.org.in',
     sourceName: 'Reserve Bank of India Monetary Policy Statement',
-    verifiedAt: '2025-02-08T12:00:00Z',
+    verifiedAt: '2026-10-26T12:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['UPSC', 'BANK', 'SSC'],
     summary: {
-      en: 'The six-member Monetary Policy Committee (MPC) voted unanimously to retain the policy repo rate at 6.50% while projecting real GDP growth for FY 2025-26 at 6.7% and headline CPI inflation at 4.5%.',
-      te: 'రిజర్వ్ బ్యాంక్ ఆఫ్ ఇండియా మానిటరీ పాలసీ కమిటీ రెపో రేటును 6.50 శాతంగా ఉంచుతూ నిర్ణయం తీసుకుంది. దేశ జీడీపీ వృద్ధి రేటును 6.7 శాతంగా అంచనా వేసింది.'
+      en: 'The six-member Monetary Policy Committee (MPC) voted unanimously to retain the policy repo rate at 6.50% while projecting real GDP growth for FY 2026-27 at 6.8% and headline CPI inflation at 4.4%.',
+      te: 'రిజర్వ్ బ్యాంక్ ఆఫ్ ఇండియా మానిటరీ పాలసీ కమిటీ రెపో రేటును 6.50 శాతంగా ఉంచుతూ నిర్ణయం తీసుకుంది. దేశ జీడీపీ వృద్ధి రేటును 6.8 శాతంగా అంచనా వేసింది.'
     },
     content: {
       en: 'The Governor emphasized vigilant monitoring of food supply chains and volatile crude markets, noting that transmission of previous policy rate hikes continues across bank lending and deposit rates.',
@@ -509,12 +638,14 @@ export const INITIAL_CURRENT_AFFAIRS = [
       en: 'Union Cabinet Sanctions ₹12,157 Crore Special Assistance for Polavaram Phase-1',
       te: 'పోలవరం మొదటి దశ పనుల కోసం ₹12,157 కోట్ల ఆర్థిక సాయానికి కేంద్ర కేబినెట్ ఆమోదం'
     },
-    eventDate: '2025-02-12',
-    publishedAt: '2025-02-12',
+    eventDate: '2026-10-25',
+    publishedAt: '2026-10-25',
     topic: 'Andhra Pradesh current affairs',
     sourceUrl: 'https://pib.gov.in',
     sourceName: 'PIB New Delhi Cabinet Communique',
-    verifiedAt: '2025-02-12T20:30:00Z',
+    verifiedAt: '2026-10-25T20:30:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80',
+    examRelevance: ['APPSC', 'UPSC', 'TGPSC'],
     summary: {
       en: 'The Union Cabinet chaired by the Prime Minister approved revised financial provisions of ₹12,157.53 crore to complete Phase-1 of the Polavaram National Irrigation Project in Andhra Pradesh up to 41.15-meter water level.',
       te: 'ఆంధ్రప్రదేశ్ జీవనాడి అయిన పోలవరం జాతీయ సాగునీటి ప్రాజెక్టు మొదటి దశ (41.15 మీటర్ల కాంటూర్) పూర్తి చేయడానికి కేంద్ర ప్రభుత్వం రూ.12,157 కోట్లను మంజూరు చేసింది.'
@@ -524,52 +655,6 @@ export const INITIAL_CURRENT_AFFAIRS = [
       te: 'ఈ నిధులతో పునరావాసం (R&R), డయాఫ్రమ్ వాల్ మరమ్మతులు మరియు ప్రధాన ఆనకట్ట నిర్మాణ పనులు వేగవంతం కానున్నాయి.'
     },
     tags: ['Andhra Pradesh', 'Polavaram', 'APPSC Group 1 & 2', 'Irrigation']
-  },
-  {
-    id: 'ca-telangana-young-india-skill-university',
-    slug: 'telangana-young-india-skill-university-initiatives',
-    headline: {
-      en: 'Telangana Inks MoUs with Global Tech Giants for Young India Skills University',
-      te: 'తెలంగాణ యంగ్ ఇండియా స్కిల్ యూనివర్సిటీ కోసం అంతర్జాతీయ దిగ్గజ సంస్థలతో ఒప్పందాలు'
-    },
-    eventDate: '2025-02-14',
-    publishedAt: '2025-02-14',
-    topic: 'Telangana current affairs',
-    sourceUrl: 'https://telangana.gov.in',
-    sourceName: 'Information & Public Relations Dept, Govt of Telangana',
-    verifiedAt: '2025-02-14T17:00:00Z',
-    summary: {
-      en: 'The Telangana State Government established curriculum partnerships for the newly established Young India Skills University at Mucherla, focusing on artificial intelligence, semiconductors, healthcare, and advanced logistics.',
-      te: 'హైదరాబాద్ శివార్లలోని ముచ్చర్లలో ఏర్పాటు చేసిన యంగ్ ఇండియా స్కిల్ యూనివర్సిటీలో విద్యార్థులకు ఏఐ, సెమీకండక్టర్లు, లాజిస్టిక్స్ రంగాలలో శిక్షణ అందించేందుకు ప్రభుత్వం ఒప్పందాలు కుదుర్చుకుంది.'
-    },
-    content: {
-      en: 'Industrialist Anand Mahindra chairs the board of governors, bridging the academia-industry gap to enhance youth employability in tier-1 and tier-2 districts.',
-      te: 'పరిశ్రమల అవసరాలకు అనుగుణంగా యువతకు వృత్తి నైపుణ్యాలు కల్పించడమే ఈ వర్సిటీ ప్రధాన లక్ష్యం.'
-    },
-    tags: ['Telangana', 'TGPSC', 'Skill Development', 'Higher Education']
-  },
-  {
-    id: 'ca-padma-awards-2025',
-    slug: 'padma-awards-2025-announced-recipients-list',
-    headline: {
-      en: 'Padma Awards 2025 Announced: Celebrated Contributors from Arts, Medicine & Science',
-      te: 'పద్మ పురస్కారాలు 2025 విడుదల: కళలు, వైద్యం మరియు సామాజిక రంగ ప్రముఖులకు గౌరవం'
-    },
-    eventDate: '2025-01-25',
-    publishedAt: '2025-01-26',
-    topic: 'Awards and honours',
-    sourceUrl: 'https://padmaawards.gov.in',
-    sourceName: 'Ministry of Home Affairs, Government of India',
-    verifiedAt: '2025-01-26T09:00:00Z',
-    summary: {
-      en: 'President of India approved conferment of 132 Padma Awards (5 Padma Vibhushan, 17 Padma Bhushan, and 110 Padma Shri), honouring grassroots innovators, artists, and social luminaries.',
-      te: 'గణతంత్ర దినోత్సవం సందర్భంగా కేంద్ర ప్రభుత్వం 132 పద్మ పురస్కారాలను ప్రకటించింది. ఇందులో 5 పద్మవిభూషణ్, 17 పద్మభూషణ్, 110 పద్మశ్రీ అవార్డులు ఉన్నాయి.'
-    },
-    content: {
-      en: 'Distinguished awardees include classical performers, pioneering medical doctors from rural districts, and indigenous seed preservers whose work aligns with competitive examination questions on Indian culture.',
-      te: 'తెలుగు రాష్ట్రాల నుంచి కళలు, సాహిత్యం మరియు ఆధ్యాత్మిక రంగాలలో విశిష్ట సేవలు అందించిన పలువురు ప్రముఖులకు పద్మ అవార్డులు దక్కాయి.'
-    },
-    tags: ['Padma Awards', 'National Honours', 'Static GK', 'Current Affairs']
   }
 ];
 

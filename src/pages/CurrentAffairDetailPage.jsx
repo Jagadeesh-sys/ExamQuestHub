@@ -139,6 +139,20 @@ export default function CurrentAffairDetailPage() {
           )}
         </div>
 
+        {/* Featured Image */}
+        {article.imageUrl && (
+          <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 max-h-96">
+            <img
+              src={article.imageUrl}
+              alt={headline}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+
         {/* Summary Card */}
         <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60 text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
           {summary}

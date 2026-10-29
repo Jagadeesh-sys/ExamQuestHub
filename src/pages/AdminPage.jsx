@@ -19,7 +19,9 @@ import {
   Eye,
   X,
   Layers,
-  Database
+  Database,
+  Image as ImageIcon,
+  Clipboard
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -41,6 +43,7 @@ import {
 import StatusBadge from '../components/StatusBadge.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import FirebaseBanner from '../components/FirebaseBanner.jsx';
+import ImagePasteUploader from '../components/ImagePasteUploader.jsx';
 
 export default function AdminPage() {
   const { currentUser, isAdmin, loginWithGoogle, loginWithEmail, logoutAdmin, authError, isFirebaseConfigured } = useAuth();
@@ -70,6 +73,11 @@ export default function AdminPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null, type: null, title: '' });
   const [successToast, setSuccessToast] = useState('');
+
+  // Quick image modal state for Current Affairs
+  const [imageModalItem, setImageModalItem] = useState(null);
+  const [quickImageUrl, setQuickImageUrl] = useState('');
+  const [imageSaving, setImageSaving] = useState(false);
 
   const loadAllAdminData = async () => {
     setLoading(true);
@@ -626,7 +634,7 @@ export default function AdminPage() {
                 Manage Current Affairs Articles
               </h2>
               <p className="text-xs text-slate-500">
-                Add factual exam summaries with primary official sources (PIB, RBI, Gazette).
+                Add factual exam summaries with primary official sources and featured images (direct clipboard copy-paste supported).
               </p>
             </div>
 
@@ -642,6 +650,8 @@ export default function AdminPage() {
                   publishedAt: new Date().toISOString().split('T')[0],
                   sourceName: 'PIB New Delhi',
                   sourceUrl: 'https://pib.gov.in',
+                  imageUrl: '',
+                  examRelevance: ['UPSC', 'APPSC', 'SSC'],
                   tags: ['Current Affairs']
                 });
                 setEditType('ca');
@@ -656,32 +666,94 @@ export default function AdminPage() {
 
           <div className="divide-y divide-slate-100 text-xs">
             {currentAffairs.map((ca) => (
-              <div key={ca.id} className="py-3 flex items-center justify-between gap-4">
-                <div className="space-y-1 max-w-xl">
-                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-semibold">
-                    {ca.topic}
-                  </span>
-                  <h4 className="font-bold text-[#182B45] text-sm">
-                    {getLocalized(ca.headline)}
-                  </h4>
-                  <div className="text-[11px] text-slate-400">
-                    Event Date: {ca.eventDate} • Source: {ca.sourceName}
+              <div key={ca.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  {/* Thumbnail & Quick Paste Trigger */}
+                  <div className="relative group shrink-0">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                      <img
+                        src={ca.imageUrl || 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80'}
+                        alt={getLocalized(ca.headline)}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80';
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageModalItem(ca);
+                        setQuickImageUrl(ca.imageUrl || '');
+                      }}
+                      className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center rounded-xl text-[9px] font-bold"
+                      title="Paste or change image"
+                    >
+                      <Clipboard className="w-3.5 h-3.5 mb-0.5" />
+                      <span>Paste</span>
+                    </button>
+                  </div>
+
+                  {/* Headline & Metadata */}
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-100">
+                        {ca.topic}
+                      </span>
+                      {ca.examRelevance && (
+                        <div className="flex items-center gap-1">
+                          {ca.examRelevance.map((r, i) => (
+                            <span key={i} className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 text-[9px] font-medium">
+                              {r}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <h4 className="font-bold text-[#182B45] text-sm leading-snug line-clamp-2">
+                      {getLocalized(ca.headline)}
+                    </h4>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-2 flex-wrap">
+                      <span>Event Date: {ca.eventDate}</span>
+                      <span>•</span>
+                      <span>Source: {ca.sourceName}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                {/* Actions: Quick Image Paste, Edit, Delete */}
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                   <button
                     type="button"
                     onClick={() => {
-                      setEditingItem(ca);
+                      setImageModalItem(ca);
+                      setQuickImageUrl(ca.imageUrl || '');
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-[#12345A] hover:bg-blue-100 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                    title="Copy-paste or upload image"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-[#2468B4]" />
+                    <span>Paste Image</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingItem({
+                        ...ca,
+                        imageUrl: ca.imageUrl || '',
+                        examRelevance: ca.examRelevance || ['UPSC', 'APPSC', 'SSC']
+                      });
                       setEditType('ca');
                       setIsFormOpen(true);
                     }}
                     className="p-1.5 rounded-lg text-slate-600 hover:text-[#12345A] hover:bg-slate-100"
-                    title="Edit"
+                    title="Edit full article"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1185,6 +1257,52 @@ export default function AdminPage() {
                     className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
                   />
                 </div>
+
+                {/* IMAGE UPLOAD & CLIPBOARD PASTE COMPONENT */}
+                <ImagePasteUploader
+                  value={editingItem.imageUrl || ''}
+                  onChange={(url) => setEditingItem({ ...editingItem, imageUrl: url })}
+                  label="Featured Image (Clipboard Copy-Paste, File Upload, or URL)"
+                />
+
+                {/* EXAM RELEVANCE TAGS */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Exam Relevance Tags
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['UPSC', 'APPSC', 'TGPSC', 'SSC', 'BANK', 'RAILWAYS', 'CDS', 'DEFENCE'].map((exam) => {
+                      const currentTags = editingItem.examRelevance || [];
+                      const isSelected = currentTags.includes(exam);
+                      return (
+                        <button
+                          key={exam}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setEditingItem({
+                                ...editingItem,
+                                examRelevance: currentTags.filter(t => t !== exam)
+                              });
+                            } else {
+                              setEditingItem({
+                                ...editingItem,
+                                examRelevance: [...currentTags, exam]
+                              });
+                            }
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#12345A] text-white border-[#12345A] shadow-xs'
+                              : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                          }`}
+                        >
+                          {isSelected ? `✓ ${exam}` : `+ ${exam}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="flex items-center justify-end gap-2 pt-2 border-t">
                   <button
                     type="button"
@@ -1411,6 +1529,66 @@ export default function AdminPage() {
               </form>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Quick Image Paste & Update Modal for Current Affairs */}
+      {imageModalItem && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-[#2468B4]" />
+                  <span>Update Current Affair Image</span>
+                </h3>
+                <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                  {getLocalized(imageModalItem.headline)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImageModalItem(null)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <ImagePasteUploader
+              value={quickImageUrl}
+              onChange={setQuickImageUrl}
+              label="Article Image (Click & press Ctrl+V, use button, or select preset)"
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setImageModalItem(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={imageSaving}
+                onClick={async () => {
+                  setImageSaving(true);
+                  await saveCurrentAffair({
+                    ...imageModalItem,
+                    imageUrl: quickImageUrl
+                  });
+                  await loadAllAdminData();
+                  setImageSaving(false);
+                  setImageModalItem(null);
+                  triggerToast('Current affair image updated successfully!');
+                }}
+                className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition-all shadow-xs"
+              >
+                {imageSaving ? 'Saving...' : 'Save Image'}
+              </button>
+            </div>
           </div>
         </div>
       )}
