@@ -44,6 +44,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import FirebaseBanner from '../components/FirebaseBanner.jsx';
 import ImagePasteUploader from '../components/ImagePasteUploader.jsx';
+import DocumentFileUploader from '../components/DocumentFileUploader.jsx';
 
 export default function AdminPage() {
   const { currentUser, isAdmin, loginWithGoogle, loginWithEmail, logoutAdmin, authError, isFirebaseConfigured } = useAuth();
@@ -66,6 +67,8 @@ export default function AdminPage() {
 
   // Filter & Search inside Admin
   const [searchQuery, setSearchQuery] = useState('');
+  const [caTopicFilter, setCaTopicFilter] = useState('All');
+  const [caSearchQuery, setCaSearchQuery] = useState('');
 
   // Modals state
   const [editingItem, setEditingItem] = useState(null);
@@ -78,6 +81,12 @@ export default function AdminPage() {
   const [imageModalItem, setImageModalItem] = useState(null);
   const [quickImageUrl, setQuickImageUrl] = useState('');
   const [imageSaving, setImageSaving] = useState(false);
+
+  // Quick document upload modal state for Study Materials & Previous Papers
+  const [documentModalItem, setDocumentModalItem] = useState(null);
+  const [quickDocUrl, setQuickDocUrl] = useState('');
+  const [quickDocSize, setQuickDocSize] = useState('');
+  const [docSaving, setDocSaving] = useState(false);
 
   const loadAllAdminData = async () => {
     setLoading(true);
@@ -664,8 +673,66 @@ export default function AdminPage() {
             </button>
           </div>
 
+          {/* Current Affairs Topic Filter & Search Bar */}
+          <div className="bg-[#F8FAFC] border border-[#E3EAF2] rounded-2xl p-3 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-xs font-bold text-slate-700">Filter Topic:</label>
+              <select
+                value={caTopicFilter}
+                onChange={(e) => setCaTopicFilter(e.target.value)}
+                className="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:outline-hidden focus:border-[#2468B4]"
+              >
+                <option value="All">All Topics ({currentAffairs.length})</option>
+                <option value="Government schemes">
+                  Government schemes ({currentAffairs.filter(c => c.topic === 'Government schemes').length})
+                </option>
+                <option value="National news">National news</option>
+                <option value="International affairs">International affairs</option>
+                <option value="Economy">Economy</option>
+                <option value="Science and technology">Science & Technology</option>
+                <option value="Environment">Environment</option>
+                <option value="Awards and honours">Awards & Honours</option>
+                <option value="Sports">Sports</option>
+                <option value="Andhra Pradesh current affairs">Andhra Pradesh</option>
+                <option value="Telangana current affairs">Telangana</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-60">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search articles..."
+                  value={caSearchQuery}
+                  onChange={(e) => setCaSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs placeholder:text-slate-400 focus:outline-hidden focus:border-[#2468B4]"
+                />
+              </div>
+              {(caTopicFilter !== 'All' || caSearchQuery) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCaTopicFilter('All');
+                    setCaSearchQuery('');
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 text-[11px] font-semibold hover:bg-slate-200/60"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="divide-y divide-slate-100 text-xs">
-            {currentAffairs.map((ca) => (
+            {currentAffairs
+              .filter((ca) => {
+                const matchesTopic = caTopicFilter === 'All' || ca.topic === caTopicFilter;
+                const text = ((ca.headline?.en || '') + ' ' + (ca.headline?.te || '') + ' ' + (ca.summary?.en || '')).toLowerCase();
+                const matchesSearch = !caSearchQuery || text.includes(caSearchQuery.toLowerCase());
+                return matchesTopic && matchesSearch;
+              })
+              .map((ca) => (
               <div key={ca.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   {/* Thumbnail & Quick Paste Trigger */}
@@ -772,6 +839,17 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+
+            {currentAffairs.filter((ca) => {
+              const matchesTopic = caTopicFilter === 'All' || ca.topic === caTopicFilter;
+              const text = ((ca.headline?.en || '') + ' ' + (ca.headline?.te || '') + ' ' + (ca.summary?.en || '')).toLowerCase();
+              return matchesTopic && (!caSearchQuery || text.includes(caSearchQuery.toLowerCase()));
+            }).length === 0 && (
+              <div className="py-12 text-center text-slate-500 space-y-2">
+                <p className="font-semibold text-sm text-slate-700">No articles found under &ldquo;{caTopicFilter}&rdquo;</p>
+                <p className="text-xs text-slate-400">Click &quot;Add New CA&quot; to publish a current affair article for this topic.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -875,17 +953,17 @@ export default function AdminPage() {
       )}
 
       {/* -------------------------------------------------------------
-          TAB 4: STUDY RESOURCES MANAGER
+          TAB 4: STUDY RESOURCES & PREVIOUS PAPERS MANAGER
          ------------------------------------------------------------- */}
       {activeTab === 'resources' && (
         <div className="bg-white rounded-3xl p-6 border border-[#E3EAF2] space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="font-heading font-bold text-lg text-[#182B45]">
-                Manage Study Resources & Papers
+                Manage Study Resources & Previous Papers
               </h2>
               <p className="text-xs text-slate-500">
-                Manage syllabus breakdowns and previous-year question paper links.
+                Upload official question papers, model test keys, and syllabus documents (PDF, DOC).
               </p>
             </div>
 
@@ -914,22 +992,54 @@ export default function AdminPage() {
 
           <div className="divide-y divide-slate-100 text-xs">
             {resources.map((res) => (
-              <div key={res.id} className="py-3 flex items-center justify-between gap-4">
-                <div className="space-y-1 max-w-xl">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-800 text-[10px] font-semibold">
-                      {res.category}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      {res.examBoard} ({res.year})
+              <div key={res.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  {/* Document Format Badge */}
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex flex-col items-center justify-center shrink-0 border border-purple-200">
+                    <FileText className="w-4 h-4" />
+                    <span className="text-[8px] font-bold uppercase">
+                      {res.fileSize?.includes('DOC') ? 'DOC' : 'PDF'}
                     </span>
                   </div>
-                  <h4 className="font-bold text-[#182B45]">
-                    {getLocalized(res.title)}
-                  </h4>
+
+                  {/* Title & Metadata */}
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-800 text-[10px] font-semibold border border-purple-100">
+                        {res.category}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        {res.examBoard} {res.year ? `(${res.year})` : ''}
+                      </span>
+                      {res.downloadUrl && (
+                        <span className="px-2 py-0.2 rounded bg-emerald-50 text-emerald-700 text-[9px] font-bold border border-emerald-200 flex items-center gap-1">
+                          <span>✓ File Attached</span>
+                          {res.fileSize && <span>• {res.fileSize}</span>}
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="font-bold text-[#182B45] text-sm leading-snug">
+                      {getLocalized(res.title)}
+                    </h4>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                {/* Actions: Quick Document Upload, Edit, Delete */}
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDocumentModalItem(res);
+                      setQuickDocUrl(res.downloadUrl || '');
+                      setQuickDocSize(res.fileSize || '');
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-800 hover:bg-purple-100 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                    title="Upload or change document file"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Upload Doc</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -938,10 +1048,11 @@ export default function AdminPage() {
                       setIsFormOpen(true);
                     }}
                     className="p-1.5 rounded-lg text-slate-600 hover:text-[#12345A] hover:bg-slate-100"
-                    title="Edit"
+                    title="Edit resource"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1202,6 +1313,7 @@ export default function AdminPage() {
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
                     >
                       <option value="National news">National news</option>
+                      <option value="Government schemes">Government schemes</option>
                       <option value="International affairs">International affairs</option>
                       <option value="Economy">Economy</option>
                       <option value="Science and technology">Science & Technology</option>
@@ -1476,6 +1588,7 @@ export default function AdminPage() {
                       <option value="Previous-Year Papers">Previous-Year Papers</option>
                       <option value="Syllabus & Exam Pattern">Syllabus & Exam Pattern</option>
                       <option value="General Knowledge notes">GK Notes / Capsules</option>
+                      <option value="Model Question Papers">Model Question Papers</option>
                     </select>
                   </div>
                   <div>
@@ -1483,34 +1596,32 @@ export default function AdminPage() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. UPSC, SSC, APPSC"
+                      placeholder="e.g. UPSC, SSC, APPSC, TGPSC"
                       value={editingItem.examBoard || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, examBoard: e.target.value })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Year</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Year / Edition</label>
                     <input
                       type="text"
-                      placeholder="e.g. 2024"
+                      placeholder="e.g. 2025"
                       value={editingItem.year || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, year: e.target.value })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Download / Board Document URL *</label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://..."
-                    value={editingItem.downloadUrl || ''}
-                    onChange={(e) => setEditingItem({ ...editingItem, downloadUrl: e.target.value })}
-                    className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
-                  />
-                </div>
+
+                {/* DOCUMENT UPLOADER COMPONENT */}
+                <DocumentFileUploader
+                  value={editingItem.downloadUrl || ''}
+                  onChange={(url) => setEditingItem({ ...editingItem, downloadUrl: url })}
+                  currentFileSize={editingItem.fileSize || ''}
+                  onFileSizeChange={(size) => setEditingItem(prev => ({ ...prev, fileSize: size }))}
+                  label="Document File (Upload PDF, DOC, or Select Official Compendium)"
+                />
                 <div className="flex items-center justify-end gap-2 pt-2 border-t">
                   <button
                     type="button"
@@ -1587,6 +1698,69 @@ export default function AdminPage() {
                 className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition-all shadow-xs"
               >
                 {imageSaving ? 'Saving...' : 'Save Image'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Document Upload Modal for Study Materials & Previous Papers */}
+      {documentModalItem && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-purple-600" />
+                  <span>Upload Document / Previous Paper</span>
+                </h3>
+                <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                  {getLocalized(documentModalItem.title)} ({documentModalItem.examBoard} {documentModalItem.year})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDocumentModalItem(null)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <DocumentFileUploader
+              value={quickDocUrl}
+              onChange={setQuickDocUrl}
+              currentFileSize={quickDocSize}
+              onFileSizeChange={setQuickDocSize}
+              label="Document File (PDF, DOC, or Select Official Compendium)"
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDocumentModalItem(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={docSaving}
+                onClick={async () => {
+                  setDocSaving(true);
+                  await saveResource({
+                    ...documentModalItem,
+                    downloadUrl: quickDocUrl,
+                    fileSize: quickDocSize || documentModalItem.fileSize || 'PDF Document'
+                  });
+                  await loadAllAdminData();
+                  setDocSaving(false);
+                  setDocumentModalItem(null);
+                  triggerToast('Document attached and saved successfully!');
+                }}
+                className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition-all shadow-xs"
+              >
+                {docSaving ? 'Saving...' : 'Save Document'}
               </button>
             </div>
           </div>

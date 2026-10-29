@@ -490,7 +490,7 @@ export const INITIAL_CURRENT_AFFAIRS = [
     },
     eventDate: '2026-10-28',
     publishedAt: '2026-10-28',
-    topic: 'National news',
+    topic: 'Government schemes',
     sourceUrl: 'https://pib.gov.in',
     sourceName: 'Press Information Bureau',
     verifiedAt: '2026-10-28T14:00:00Z',
@@ -783,7 +783,7 @@ export const INITIAL_RESOURCES = [
     year: '2024',
     type: 'Question Paper + Official Key',
     fileSize: '2.4 MB PDF',
-    downloadUrl: 'https://upsc.gov.in/examinations/previous-question-papers',
+    downloadUrl: '/assets/aistudio/October_2025_Current_Affairs_MCQs_9e8d634c.pdf',
     officialSource: 'https://upsc.gov.in',
     description: {
       en: 'Official bilingual Question Paper Series A with key questions on History, Polity, Geography, Economy, Environment, and Science.',
@@ -801,7 +801,7 @@ export const INITIAL_RESOURCES = [
     year: '2024',
     type: 'Solved Question Paper',
     fileSize: '3.8 MB PDF',
-    downloadUrl: 'https://ssc.gov.in/notices',
+    downloadUrl: '/assets/aistudio/November_2025_Current_Affairs_MCQs_106d2ab4.pdf',
     officialSource: 'https://ssc.gov.in',
     description: {
       en: 'Covers Quantitative Aptitude, English Comprehension, Reasoning, and General Awareness sections with step-by-step shortcuts.',
@@ -819,7 +819,7 @@ export const INITIAL_RESOURCES = [
     year: '2024-25',
     type: 'Official Syllabus Breakdown',
     fileSize: '1.2 MB PDF',
-    downloadUrl: 'https://psc.ap.gov.in',
+    downloadUrl: '/assets/aistudio/December_2025_Current_Affairs_MCQs_fea0a8ff.pdf',
     officialSource: 'https://psc.ap.gov.in',
     description: {
       en: 'Detailed topic-wise syllabus for Prelims (Screening) and Mains Paper I (Social History of AP & Constitution) and Paper II (Indian & AP Economy, Science & Tech).',
@@ -837,7 +837,7 @@ export const INITIAL_RESOURCES = [
     year: '2024-25',
     type: 'Official Syllabus Breakdown',
     fileSize: '1.5 MB PDF',
-    downloadUrl: 'https://tgpsc.gov.in',
+    downloadUrl: '/assets/aistudio/October_2025_Current_Affairs_MCQs_9e8d634c.pdf',
     officialSource: 'https://tgpsc.gov.in',
     description: {
       en: 'Covers General English qualifying paper and 6 descriptive papers including Telangana Movement and State Formation.',
@@ -847,15 +847,15 @@ export const INITIAL_RESOURCES = [
   {
     id: 'notes-monthly-current-affairs-jan-2025',
     title: {
-      en: 'ExamQuestHub Monthly Current Affairs Digest — January 2025 (Bilingual)',
-      te: 'ఎగ్జామ్‌క్వెస్ట్ హబ్ నెలవారీ కరెంట్ అఫైర్స్ డైజెస్ట్ — జనవరి 2025 (ద్విభాష)'
+      en: 'ExamQuestHub Monthly Current Affairs Digest — January 2026 (Bilingual)',
+      te: 'ఎగ్జామ్‌క్వెస్ట్ హబ్ నెలవారీ కరెంట్ అఫైర్స్ డైజెస్ట్ — జనవరి 2026 (ద్విభాష)'
     },
     category: 'General Knowledge notes',
     examBoard: 'All Competitive Exams',
-    year: '2025',
+    year: '2026',
     type: 'Revision Capsule',
     fileSize: '4.1 MB PDF',
-    downloadUrl: 'https://pib.gov.in',
+    downloadUrl: '/assets/aistudio/January_2026_Current_Affairs_MCQ_31a6a736.pdf',
     officialSource: 'https://pib.gov.in',
     description: {
       en: 'Categorized quick-revision notes for National, International, AP, Telangana, Sports, and Science news with 100 revision MCQs.',

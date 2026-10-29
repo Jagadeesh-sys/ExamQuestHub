@@ -148,10 +148,11 @@ export default function StudyMaterialPage() {
                     href={item.downloadUrl || item.officialSource}
                     target="_blank"
                     rel="noopener noreferrer"
+                    download={item.downloadUrl?.startsWith('data:') ? `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf` : undefined}
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#12345A] hover:bg-[#0B1F3A] text-white font-semibold rounded-xl transition-colors shadow-xs active:scale-95"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download PDF</span>
+                    <span>Download Document</span>
                   </a>
                 </div>
               </div>
