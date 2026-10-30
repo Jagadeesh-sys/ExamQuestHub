@@ -241,6 +241,21 @@ export default function EditorialCurrentAffairsSection({
     };
   }, [viewMode]);
 
+  // If window resizes to desktop, and we are in reels mode, switch back to editorial
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleResize = (e) => {
+      if (e.matches && viewMode === 'reels') {
+        setViewMode('editorial');
+      }
+    };
+    
+    mediaQuery.addEventListener('change', handleResize);
+    return () => mediaQuery.removeEventListener('change', handleResize);
+  }, [viewMode]);
+
   const topics = ['All', ...CURRENT_AFFAIR_TOPICS];
 
   const trendingTags = [
@@ -420,7 +435,7 @@ export default function EditorialCurrentAffairsSection({
               <button
                 type="button"
                 onClick={() => setViewMode('reels')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
                   viewMode === 'reels'
                     ? 'bg-white text-[#12345A] shadow-xs'
                     : 'text-slate-500 hover:text-slate-900'
