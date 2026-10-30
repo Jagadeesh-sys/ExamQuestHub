@@ -50,7 +50,7 @@ import FirebaseBanner from '../components/FirebaseBanner.jsx';
 import ImagePasteUploader from '../components/ImagePasteUploader.jsx';
 import DocumentFileUploader from '../components/DocumentFileUploader.jsx';
 import AdminDiagnosticsTab from '../components/AdminDiagnosticsTab.jsx';
-import { CURRENT_AFFAIR_TOPICS, topicMatches } from '../constants/currentAffairs.js';
+import { CURRENT_AFFAIR_TOPICS, topicMatches, normalizeTopic } from '../constants/currentAffairs.js';
 
 export default function AdminPage() {
   const { currentUser, isAdmin, loading: authLoading, loginWithGoogle, loginWithEmail, logoutAdmin, authError, isFirebaseConfigured } = useAuth();
@@ -104,6 +104,18 @@ export default function AdminPage() {
   const [importJson, setImportJson] = useState('');
   const [importBusy, setImportBusy] = useState(false);
   const [importSummary, setImportSummary] = useState(null);
+
+  // Bulk JSON import for current affairs (supports a per-article imageUrl)
+  const [caImportOpen, setCaImportOpen] = useState(false);
+  const [caImportJson, setCaImportJson] = useState('');
+  const [caImportBusy, setCaImportBusy] = useState(false);
+  const [caImportSummary, setCaImportSummary] = useState(null);
+
+  // Bulk JSON import for GK practice questions
+  const [gkImportOpen, setGkImportOpen] = useState(false);
+  const [gkImportJson, setGkImportJson] = useState('');
+  const [gkImportBusy, setGkImportBusy] = useState(false);
+  const [gkImportSummary, setGkImportSummary] = useState(null);
 
   const loadAllAdminData = async () => {
     setLoading(true);
@@ -204,6 +216,145 @@ export default function AdminPage() {
     if (ok > 0) {
       await loadAllAdminData();
       triggerToast(`Imported ${ok} notification${ok === 1 ? '' : 's'}`);
+    }
+  };
+
+  const handleCaBulkImport = async () => {
+    setCaImportSummary(null);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(caImportJson);
+    } catch (e) {
+      setCaImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`] });
+      return;
+    }
+
+    const items = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.currentAffairs)
+        ? parsed.currentAffairs
+        : Array.isArray(parsed?.articles)
+          ? parsed.articles
+          : null;
+    if (!items || items.length === 0) {
+      setCaImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of current affairs articles.'] });
+      return;
+    }
+
+    setCaImportBusy(true);
+    const errors = [];
+    let ok = 0;
+
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      const label = item?.headline?.en || item?.id || `item ${i + 1}`;
+
+      if (!item?.headline?.en || !item?.sourceUrl || !item?.summary?.en) {
+        errors.push(`${label} — missing required field (headline.en, sourceUrl, summary.en)`);
+        continue;
+      }
+
+      try {
+        // Normalize the topic so topic filters and badges line up with the manual form,
+        // and fill the date fields the form would otherwise require.
+        const today = new Date().toISOString().split('T')[0];
+        const payload = {
+          ...item,
+          topic: normalizeTopic(item.topic),
+          eventDate: item.eventDate || today,
+          publishedAt: item.publishedAt || today,
+          status: item.status || 'Published'
+        };
+        // Sequential on purpose: surfaces the first real Firestore error (e.g.
+        // permission-denied) instead of firing N failing writes at once.
+        // eslint-disable-next-line no-await-in-loop
+        await saveCurrentAffair(payload);
+        ok += 1;
+      } catch (err) {
+        errors.push(`${label} — ${err.message}`);
+      }
+    }
+
+    setCaImportBusy(false);
+    setCaImportSummary({ ok, failed: errors.length, errors });
+
+    if (ok > 0) {
+      await loadAllAdminData();
+      triggerToast(`Imported ${ok} current affairs article${ok === 1 ? '' : 's'}`);
+    }
+  };
+
+  const handleGkBulkImport = async () => {
+    setGkImportSummary(null);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(gkImportJson);
+    } catch (e) {
+      setGkImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`] });
+      return;
+    }
+
+    const items = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.questions)
+        ? parsed.questions
+        : null;
+    if (!items || items.length === 0) {
+      setGkImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of GK questions.'] });
+      return;
+    }
+
+    setGkImportBusy(true);
+    const errors = [];
+    let ok = 0;
+
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      const label = item?.question?.en || item?.id || `item ${i + 1}`;
+
+      const enOptions = Array.isArray(item?.options?.en) ? item.options.en : null;
+      if (!item?.question?.en || !enOptions || enOptions.length < 4 || enOptions.slice(0, 4).some((o) => !o || !String(o).trim()) || !item?.explanation?.en) {
+        errors.push(`${label} — missing required field (question.en, 4 options in options.en, explanation.en)`);
+        continue;
+      }
+
+      // Accept correctAnswer as a number (0-3) or a letter (A-D).
+      let correctAnswer = item.correctAnswer;
+      if (typeof correctAnswer === 'string') {
+        correctAnswer = 'ABCD'.indexOf(correctAnswer.trim().toUpperCase());
+      }
+      if (!Number.isInteger(correctAnswer) || correctAnswer < 0 || correctAnswer > 3) {
+        errors.push(`${label} — correctAnswer must be 0-3 or "A"-"D"`);
+        continue;
+      }
+
+      try {
+        const payload = {
+          ...item,
+          options: { ...item.options, en: enOptions.slice(0, 4) },
+          correctAnswer,
+          topic: item.topic || 'General Knowledge',
+          isPyq: Boolean(item.isPyq),
+          examSource: item.examSource || 'ExamQuestHub Practice'
+        };
+        // Sequential on purpose: surfaces the first real Firestore error (e.g.
+        // permission-denied) instead of firing N failing writes at once.
+        // eslint-disable-next-line no-await-in-loop
+        await saveQuestion(payload);
+        ok += 1;
+      } catch (err) {
+        errors.push(`${label} — ${err.message}`);
+      }
+    }
+
+    setGkImportBusy(false);
+    setGkImportSummary({ ok, failed: errors.length, errors });
+
+    if (ok > 0) {
+      await loadAllAdminData();
+      triggerToast(`Imported ${ok} GK question${ok === 1 ? '' : 's'}`);
     }
   };
 
@@ -838,32 +989,46 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setEditingItem({
-                  headline: { en: '', te: '' },
-                  summary: { en: '', te: '' },
-                  content: { en: '', te: '' },
-                  topic: 'National news',
-                  eventDate: new Date().toISOString().split('T')[0],
-                  publishedAt: new Date().toISOString().split('T')[0],
-                  sourceName: 'PIB New Delhi',
-                  sourceUrl: 'https://pib.gov.in',
-                  imageUrl: '',
-                  status: 'Published',
-                  createdAt: new Date().toISOString(),
-                  examRelevance: ['UPSC', 'APPSC', 'SSC'],
-                  tags: ['Current Affairs']
-                });
-                setEditType('ca');
-                setIsFormOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{t('addNewCA')}</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setCaImportSummary(null);
+                  setCaImportOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white border border-[#12345A]/20 text-[#12345A] hover:bg-[#EAF3FF] text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer"
+              >
+                <Clipboard className="w-4 h-4" />
+                <span>Bulk Import</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingItem({
+                    headline: { en: '', te: '' },
+                    summary: { en: '', te: '' },
+                    content: { en: '', te: '' },
+                    topic: 'National news',
+                    eventDate: new Date().toISOString().split('T')[0],
+                    publishedAt: new Date().toISOString().split('T')[0],
+                    sourceName: 'PIB New Delhi',
+                    sourceUrl: 'https://pib.gov.in',
+                    imageUrl: '',
+                    status: 'Published',
+                    createdAt: new Date().toISOString(),
+                    examRelevance: ['UPSC', 'APPSC', 'SSC'],
+                    tags: ['Current Affairs']
+                  });
+                  setEditType('ca');
+                  setIsFormOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t('addNewCA')}</span>
+              </button>
+            </div>
           </div>
 
           {/* Current Affairs Topic Filter & Search Bar */}
@@ -1069,29 +1234,43 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setEditingItem({
-                  topic: 'Polity',
-                  isPyq: false,
-                  examSource: 'ExamQuestHub Practice',
-                  question: { en: '', te: '' },
-                  options: {
-                    en: ['', '', '', ''],
-                    te: ['', '', '', '']
-                  },
-                  correctAnswer: 0,
-                  explanation: { en: '', te: '' }
-                });
-                setEditType('gk');
-                setIsFormOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{t('addNewGK')}</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setGkImportSummary(null);
+                  setGkImportOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white border border-[#12345A]/20 text-[#12345A] hover:bg-[#EAF3FF] text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer"
+              >
+                <Clipboard className="w-4 h-4" />
+                <span>Bulk Import</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingItem({
+                    topic: 'Polity',
+                    isPyq: false,
+                    examSource: 'ExamQuestHub Practice',
+                    question: { en: '', te: '' },
+                    options: {
+                      en: ['', '', '', ''],
+                      te: ['', '', '', '']
+                    },
+                    correctAnswer: 0,
+                    explanation: { en: '', te: '' }
+                  });
+                  setEditType('gk');
+                  setIsFormOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t('addNewGK')}</span>
+              </button>
+            </div>
           </div>
 
           <div className="divide-y divide-slate-100 text-xs">
@@ -2096,6 +2275,201 @@ export default function AdminPage() {
               >
                 {importBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {importBusy ? 'Importing...' : 'Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal — Current Affairs (supports per-article images) */}
+      {caImportOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-1.5">
+                  <Clipboard className="w-4 h-4 text-[#2468B4]" />
+                  Bulk Import Current Affairs
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Paste a JSON array below. Each article is written to Firestore and is editable here afterwards.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCaImportOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-[#F6F8FC] border border-[#E3EAF2] p-3 text-[11px] text-slate-600 space-y-1">
+              <p className="font-semibold text-slate-700">Required per article</p>
+              <p>
+                <code>headline.en</code>, <code>sourceUrl</code>, <code>summary.en</code>
+              </p>
+              <p className="font-semibold text-slate-700 pt-1">Optional</p>
+              <p>
+                <code>id</code>, <code>headline.te</code>, <code>summary.te</code>, <code>content.en</code> /{' '}
+                <code>content.te</code>, <code>topic</code>, <code>sourceName</code>, <code>status</code> (
+                <code>Published</code> / <code>Draft</code>), <code>eventDate</code> (YYYY-MM-DD),{' '}
+                <code>examRelevance</code> (array)
+              </p>
+              <p className="font-semibold text-slate-700 pt-1">Images</p>
+              <p>
+                Add <code>imageUrl</code> (full https URL) per article. If omitted, a topic-based default image is used.
+              </p>
+              <p className="pt-1 text-slate-500">
+                Topics: {CURRENT_AFFAIR_TOPICS.join(', ')}
+              </p>
+            </div>
+
+            <textarea
+              rows={12}
+              value={caImportJson}
+              onChange={(e) => setCaImportJson(e.target.value)}
+              spellCheck={false}
+              placeholder='[ { "headline": { "en": "...", "te": "..." }, "summary": { "en": "..." }, "sourceUrl": "https://...", "topic": "National Affairs", "imageUrl": "https://..." } ]'
+              className="w-full p-3 bg-[#F6F8FC] border border-slate-200 rounded-xl focus:bg-white font-mono text-[11px] leading-relaxed"
+            />
+
+            {caImportSummary && (
+              <div
+                className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                  caImportSummary.ok > 0
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-red-50 border-red-200 text-red-700'
+                }`}
+              >
+                <p className="font-bold">
+                  {caImportSummary.ok} imported
+                  {caImportSummary.failed > 0 ? `, ${caImportSummary.failed} failed` : ''}
+                </p>
+                {caImportSummary.errors.length > 0 && (
+                  <ul className="space-y-0.5 max-h-40 overflow-y-auto font-mono text-[11px]">
+                    {caImportSummary.errors.map((msg, i) => (
+                      <li key={i} className="break-words">
+                        • {msg}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setCaImportOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                disabled={caImportBusy || !caImportJson.trim()}
+                onClick={handleCaBulkImport}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-bold disabled:opacity-50 cursor-pointer"
+              >
+                {caImportBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {caImportBusy ? 'Importing...' : 'Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal — GK Practice Questions */}
+      {gkImportOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-1.5">
+                  <Clipboard className="w-4 h-4 text-[#2468B4]" />
+                  Bulk Import GK Questions
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Paste a JSON array below. Each question is written to Firestore and is editable here afterwards.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGkImportOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-[#F6F8FC] border border-[#E3EAF2] p-3 text-[11px] text-slate-600 space-y-1">
+              <p className="font-semibold text-slate-700">Required per question</p>
+              <p>
+                <code>question.en</code>, <code>options.en</code> (exactly 4 strings), <code>explanation.en</code>,{' '}
+                <code>correctAnswer</code> (0-3 or "A"-"D")
+              </p>
+              <p className="font-semibold text-slate-700 pt-1">Optional</p>
+              <p>
+                <code>id</code>, <code>topic</code>, <code>question.te</code>, <code>options.te</code> (4),{' '}
+                <code>explanation.te</code>, <code>examSource</code>, <code>isPyq</code>
+              </p>
+              <p className="pt-1 text-slate-500">
+                If Telugu text is omitted, the English version is shown automatically.
+              </p>
+            </div>
+
+            <textarea
+              rows={12}
+              value={gkImportJson}
+              onChange={(e) => setGkImportJson(e.target.value)}
+              spellCheck={false}
+              placeholder='[ { "topic": "Polity", "question": { "en": "..." }, "options": { "en": ["A", "B", "C", "D"] }, "correctAnswer": 2, "explanation": { "en": "..." } } ]'
+              className="w-full p-3 bg-[#F6F8FC] border border-slate-200 rounded-xl focus:bg-white font-mono text-[11px] leading-relaxed"
+            />
+
+            {gkImportSummary && (
+              <div
+                className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                  gkImportSummary.ok > 0
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-red-50 border-red-200 text-red-700'
+                }`}
+              >
+                <p className="font-bold">
+                  {gkImportSummary.ok} imported
+                  {gkImportSummary.failed > 0 ? `, ${gkImportSummary.failed} failed` : ''}
+                </p>
+                {gkImportSummary.errors.length > 0 && (
+                  <ul className="space-y-0.5 max-h-40 overflow-y-auto font-mono text-[11px]">
+                    {gkImportSummary.errors.map((msg, i) => (
+                      <li key={i} className="break-words">
+                        • {msg}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setGkImportOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                disabled={gkImportBusy || !gkImportJson.trim()}
+                onClick={handleGkBulkImport}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-bold disabled:opacity-50 cursor-pointer"
+              >
+                {gkImportBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {gkImportBusy ? 'Importing...' : 'Import'}
               </button>
             </div>
           </div>
