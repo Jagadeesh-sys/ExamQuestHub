@@ -508,7 +508,7 @@ export default function EditorialCurrentAffairsSection({
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
-        <div className="fixed top-0 left-0 right-0 bottom-16 z-30 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden">
+        <div className="fixed top-0 left-0 right-0 bottom-16 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden">
           {/* Top Bar Overlay */}
           <div className="absolute top-0 inset-x-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between safe-area-pt">
             <div className="flex items-center gap-2.5">
