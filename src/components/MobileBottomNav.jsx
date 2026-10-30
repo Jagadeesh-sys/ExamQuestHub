@@ -45,7 +45,7 @@ export default function MobileBottomNav() {
                 <>
                   <div
                     className={`w-9 h-7 rounded-xl flex items-center justify-center transition-colors ${
-                      isActive ? 'bg-[#EAF3FF] text-[#12345A]' : 'text-slate-500'
+                      isActive ? 'bg-white text-[#12345A]' : 'text-slate-500'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
