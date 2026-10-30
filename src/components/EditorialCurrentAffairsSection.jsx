@@ -158,20 +158,6 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
           )}
         </div>
 
-        {/* Main Image */}
-        <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-100 shadow-sm border border-slate-200/50">
-          <img
-            src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
-            alt={headline}
-            loading="lazy"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
-            }}
-          />
-        </div>
-
         {/* Summary Box (Yellow Highlight) */}
         <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60 text-slate-700 text-xs leading-relaxed font-medium">
           {summary}
@@ -179,10 +165,24 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
 
         {/* Detailed Content */}
         {content && (
-          <div className="text-slate-600 text-xs leading-relaxed space-y-3 pb-4">
+          <div className="text-slate-600 text-xs leading-relaxed space-y-3 pb-2">
             {content}
           </div>
         )}
+
+        {/* Main Image - Now below the matter, full view, no cut */}
+        <div className="relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/50 shadow-sm">
+          <img
+            src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
+            alt={headline}
+            loading="lazy"
+            className="w-full h-auto object-contain max-h-[400px]"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
+            }}
+          />
+        </div>
 
         {/* Action Buttons Overlay */}
         <div className="absolute right-4 bottom-8 z-20 flex flex-col gap-3">
@@ -508,7 +508,7 @@ export default function EditorialCurrentAffairsSection({
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
-        <div className="fixed inset-0 z-[100] bg-white animate-in fade-in duration-200 lg:hidden">
+        <div className="fixed top-0 left-0 right-0 bottom-16 z-30 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden">
           {/* Top Bar Overlay */}
           <div className="absolute top-0 inset-x-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between safe-area-pt">
             <div className="flex items-center gap-2.5">
@@ -543,7 +543,7 @@ export default function EditorialCurrentAffairsSection({
               </button>
             </div>
           ) : (
-            <div className="h-full snap-y snap-mandatory overflow-y-auto no-scrollbar overscroll-contain">
+            <div className="h-full snap-y snap-mandatory overflow-y-auto no-scrollbar overscroll-contain pb-20">
               <div className="h-16" /> {/* Spacer for top bar */}
               {filtered.map((item) => (
                 <div key={item.id} className="h-full w-full snap-start snap-always">
