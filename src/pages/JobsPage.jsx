@@ -12,7 +12,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { getUpdates } from '../firebase/firestoreService.js';
+import { getUpdates, subscribeToUpdates } from '../firebase/firestoreService.js';
 import NotificationCard from '../components/NotificationCard.jsx';
 import StraightLineNotification from '../components/StraightLineNotification.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
@@ -44,17 +44,13 @@ export default function JobsPage() {
   };
 
   useEffect(() => {
-    async function loadJobs() {
-      try {
-        const data = await getUpdates(false);
-        setUpdates(data);
-      } catch (e) {
-        console.error('Failed to load jobs directory', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadJobs();
+    setLoading(true);
+    const unsub = subscribeToUpdates((data) => {
+      setUpdates(data);
+      setLoading(false);
+    }, false);
+
+    return () => unsub();
   }, []);
 
   const updateParam = (key, value) => {

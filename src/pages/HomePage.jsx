@@ -23,7 +23,12 @@ import {
   Columns3
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { getUpdates, getCurrentAffairs } from '../firebase/firestoreService.js';
+import {
+  getUpdates,
+  getCurrentAffairs,
+  subscribeToUpdates,
+  subscribeToCurrentAffairs
+} from '../firebase/firestoreService.js';
 import NotificationCard from '../components/NotificationCard.jsx';
 import StraightLineNotification from '../components/StraightLineNotification.jsx';
 import StraightLineCurrentAffair from '../components/StraightLineCurrentAffair.jsx';
@@ -61,21 +66,20 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [upData, caData] = await Promise.all([
-          getUpdates(false),
-          getCurrentAffairs()
-        ]);
-        setUpdates(upData);
-        setCurrentAffairs(caData.slice(0, 4));
-      } catch (err) {
-        console.error('Error fetching homepage data:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
+    setLoading(true);
+    const unsubUpdates = subscribeToUpdates((data) => {
+      setUpdates(data);
+      setLoading(false);
+    }, false);
+
+    const unsubCA = subscribeToCurrentAffairs((data) => {
+      setCurrentAffairs(data.slice(0, 4));
+    });
+
+    return () => {
+      unsubUpdates();
+      unsubCA();
+    };
   }, []);
 
   const handleSearchSubmit = (e) => {

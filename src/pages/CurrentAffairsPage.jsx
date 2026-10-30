@@ -6,7 +6,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { getCurrentAffairs } from '../firebase/firestoreService.js';
+import { getCurrentAffairs, subscribeToCurrentAffairs } from '../firebase/firestoreService.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EditorialCurrentAffairsSection from '../components/EditorialCurrentAffairsSection.jsx';
@@ -17,17 +17,13 @@ export default function CurrentAffairsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadAffairs() {
-      try {
-        const data = await getCurrentAffairs();
-        setArticles(data);
-      } catch (e) {
-        console.error('Failed to load current affairs', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadAffairs();
+    setLoading(true);
+    const unsub = subscribeToCurrentAffairs((data) => {
+      setArticles(data);
+      setLoading(false);
+    });
+
+    return () => unsub();
   }, []);
 
   return (
