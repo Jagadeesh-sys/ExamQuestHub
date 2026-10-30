@@ -23,7 +23,7 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white px-2 py-1.5 safe-area-pb border-none shadow-none"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[110] bg-white px-2 py-1.5 safe-area-pb"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map((item) => {

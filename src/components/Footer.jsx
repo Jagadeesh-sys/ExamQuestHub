@@ -16,7 +16,7 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-[#0B1F3A] text-slate-300 pt-12 pb-8 border-t border-[#12345A]">
+    <footer className="bg-[#0B1F3A] text-slate-300 pt-12 pb-8">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         
         {/* Prominent Mandatory Disclaimer Callout */}

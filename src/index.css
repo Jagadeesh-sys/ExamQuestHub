@@ -107,6 +107,14 @@ button, a, input, select, textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Force remove any border or shadow from mobile bottom nav to prevent "black line" */
+nav[aria-label="Mobile Bottom Navigation"] {
+  border-top: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 /* Print styles for notifications & question sheets */
 @media print {
   header, footer, .no-print, nav {
