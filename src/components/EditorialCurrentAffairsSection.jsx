@@ -523,11 +523,15 @@ export default function EditorialCurrentAffairsSection({
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
         <div className="fixed top-0 left-0 right-0 bottom-16 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
           {/* Reels Header Block (Matches Image) */}
-          <div className="bg-white px-4 py-4 space-y-4 safe-area-pt">
+          <div className="bg-white px-4 pt-2 pb-3 space-y-3 safe-area-pt">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#0B1F3A] flex items-center justify-center shadow-lg shadow-[#0B1F3A]/20">
-                  <Film className="w-5 h-5 text-[#F2BE4F]" />
+                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden">
+                  <img 
+                    src="/assets/aistudio/examquesthub-logo.png" 
+                    alt="ExamQuestHub" 
+                    className="w-7 h-7 object-contain"
+                  />
                 </div>
                 <div className="leading-tight">
                   <h2 className="font-heading font-black text-[#0B1F3A] text-base uppercase tracking-tight">News Reels</h2>
