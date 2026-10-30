@@ -184,7 +184,7 @@ export default function HomePage() {
           {/* Brand Logo Emblem */}
           <div className="flex justify-center -mb-2">
             <img
-              src="/assets/aistudio/file_000000006a4881f4be54dc3e116f9bc0_65b76b0e.png"
+              src="/assets/aistudio/examquesthub-logo.png"
               alt="ExamQuestHub Brand Logo"
               className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-contain bg-white/10 p-1.5 backdrop-blur-xs shadow-xl border border-white/20 animate-in zoom-in-95 duration-200 hover:scale-105 transition-transform"
             />

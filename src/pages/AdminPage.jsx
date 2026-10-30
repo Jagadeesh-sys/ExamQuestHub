@@ -460,7 +460,7 @@ export default function AdminPage() {
         <div className="bg-white rounded-3xl p-8 border border-[#E3EAF2] shadow-sm space-y-6">
           <div className="text-center space-y-2">
             <img
-              src="/assets/aistudio/file_000000006a4881f4be54dc3e116f9bc0_65b76b0e.png"
+              src="/assets/aistudio/examquesthub-logo.png"
               alt="ExamQuestHub Logo"
               className="w-16 h-16 object-contain mx-auto drop-shadow-sm"
             />
@@ -576,7 +576,7 @@ export default function AdminPage() {
       <div className="bg-white rounded-3xl p-6 border border-[#E3EAF2] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <img
-            src="/assets/aistudio/file_000000006a4881f4be54dc3e116f9bc0_65b76b0e.png"
+            src="/assets/aistudio/examquesthub-logo.png"
             alt="ExamQuestHub Logo"
             className="w-12 h-12 object-contain rounded-full shadow-xs"
           />

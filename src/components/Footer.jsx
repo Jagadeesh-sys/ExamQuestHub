@@ -41,7 +41,7 @@ export default function Footer() {
           <div className="space-y-4 md:col-span-1">
             <Link to="/" className="flex items-center gap-2.5">
               <img
-                src="/assets/aistudio/file_000000006a4881f4be54dc3e116f9bc0_65b76b0e.png"
+                src="/assets/aistudio/examquesthub-logo.png"
                 alt="ExamQuestHub Logo"
                 className="w-10 h-10 rounded-full object-contain bg-white/10 p-0.5 border border-white/20"
               />

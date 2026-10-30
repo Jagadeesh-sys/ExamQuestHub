@@ -121,7 +121,7 @@ export default function Header() {
               aria-label="ExamQuestHub Home"
             >
               <img
-                src="/assets/aistudio/file_000000006a4881f4be54dc3e116f9bc0_65b76b0e.png"
+                src="/assets/aistudio/examquesthub-logo.png"
                 alt="ExamQuestHub Logo"
                 className="w-7 h-7 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform drop-shadow-xs shrink-0"
               />
@@ -237,7 +237,7 @@ export default function Header() {
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex flex-col items-start">
                   <img
-                    src="/assets/aistudio/file_000000006a4881f4be54dc3e116f9bc0_65b76b0e.png"
+                    src="/assets/aistudio/examquesthub-logo.png"
                     alt="ExamQuestHub Logo"
                     className="w-10 h-10 object-contain drop-shadow-xs"
                   />
