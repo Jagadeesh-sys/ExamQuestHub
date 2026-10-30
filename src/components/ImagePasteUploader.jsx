@@ -69,21 +69,46 @@ export default function ImagePasteUploader({ value, onChange, label = 'Current A
     }
   }, [value]);
 
-  // Convert File / Blob to Base64
+  // Convert File / Blob to a compressed JPEG data URL (Firestore 1 MB doc limit)
   const processImageFile = (file) => {
     if (!file || !file.type.startsWith('image/')) {
       setPasteError('Pasted item is not a recognized image.');
       return;
     }
     setPasteError('');
-    setPasteStatus('Reading image...');
+    setPasteStatus('Compressing image...');
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      onChange(dataUrl);
-      setPasteStatus('Image loaded from clipboard!');
-      setTimeout(() => setPasteStatus(''), 3000);
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1200;
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        let quality = 0.72;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        while (dataUrl.length > 700000 && quality > 0.4) {
+          quality -= 0.1;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        if (dataUrl.length > 700000) {
+          setPasteError('Image is still too large. Use an image URL instead.');
+          setPasteStatus('');
+          return;
+        }
+        onChange(dataUrl);
+        setPasteStatus('Image loaded from clipboard!');
+        setTimeout(() => setPasteStatus(''), 3000);
+      };
+      img.onerror = () => {
+        setPasteError('Failed to process image.');
+        setPasteStatus('');
+      };
+      img.src = e.target.result;
     };
     reader.onerror = () => {
       setPasteError('Failed to read image file.');

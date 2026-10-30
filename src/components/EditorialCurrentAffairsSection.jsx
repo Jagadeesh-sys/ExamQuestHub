@@ -23,6 +23,7 @@ import {
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StraightLineCurrentAffair from './StraightLineCurrentAffair.jsx';
 import CurrentAffairCard from './CurrentAffairCard.jsx';
+import { CURRENT_AFFAIR_TOPICS, topicMatches } from '../constants/currentAffairs.js';
 
 // Golden leaf corner SVG decoration matching image_1b19ce6e.png
 function GoldenCornerFlourish() {
@@ -79,19 +80,7 @@ export default function EditorialCurrentAffairsSection({
   const [bookmarkedIds, setBookmarkedIds] = useState({});
   const [expandedIds, setExpandedIds] = useState({});
 
-  const topics = [
-    'All',
-    'National news',
-    'International affairs',
-    'Economy',
-    'Science and technology',
-    'Environment',
-    'Awards and honours',
-    'Sports',
-    'Government schemes',
-    'Andhra Pradesh current affairs',
-    'Telangana current affairs'
-  ];
+  const topics = ['All', ...CURRENT_AFFAIR_TOPICS];
 
   const trendingTags = [
     'Space Research',
@@ -142,7 +131,7 @@ export default function EditorialCurrentAffairsSection({
     const s = searchQuery.toLowerCase();
 
     const matchSearch = !s || headline.includes(s) || summary.includes(s);
-    const matchTopic = selectedTopic === 'All' || item.topic === selectedTopic;
+    const matchTopic = topicMatches(item.topic, selectedTopic);
     return matchSearch && matchTopic;
   });
 

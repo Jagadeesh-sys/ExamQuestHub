@@ -17,7 +17,7 @@ import {
   List,
   LayoutGrid
 } from 'lucide-react';
-import { MOCK_TESTS_METADATA } from '../data/mockTestsData.js';
+import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import MockTestCard from '../components/MockTestCard.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';

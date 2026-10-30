@@ -101,6 +101,12 @@ export default function DocumentFileUploader({
       return;
     }
 
+    if (file.size > 700000) {
+      setUploadError('This file is too large to store in Firestore. Host the PDF and paste the official URL instead.');
+      setUploadStatus('');
+      return;
+    }
+
     const calculatedSize = `${formatBytes(file.size)} ${file.name.split('.').pop().toUpperCase()}`;
     setFileName(file.name);
     if (onFileSizeChange) onFileSizeChange(calculatedSize);

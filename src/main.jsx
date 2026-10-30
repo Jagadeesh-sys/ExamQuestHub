@@ -13,4 +13,6 @@ if (rootElement) {
       </ErrorBoundary>
     </React.StrictMode>
   );
+} else if (typeof window !== 'undefined' && typeof window.__EQH_BOOT_FAIL === 'function') {
+  window.__EQH_BOOT_FAIL('The application root element is missing. Please reload the page.');
 }

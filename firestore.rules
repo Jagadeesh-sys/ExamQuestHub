@@ -1,83 +1,51 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Global Safety Net: Default-deny all unspecified document paths
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Security Helper Functions
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    function isBootstrapEmail() {
-      return isSignedIn() && (
-        request.auth.token.email.lower() == 'koppisettijagadeesh123@gmail.com' ||
-        request.auth.token.email.lower() == 'admin@examquesthub.com'
-      );
+    function bootstrapAdmin() {
+      return signedIn() && request.auth.token.email in [
+        'koppisettijagadesh916@gmail.com',
+        'admin@examquesthub.com'
+      ];
     }
 
     function isAdmin() {
-      return isSignedIn() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        isBootstrapEmail()
-      );
+      return bootstrapAdmin() ||
+        (signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
-    function isValidId(id) {
-      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    // Health-check / connection test
-    match /test/{testId} {
-      allow read, write: if true;
-    }
-
-    // 1. UPDATES (Recruitment Notifications, Admit Cards, Results)
-    match /updates/{updateId} {
-      // Public visitors can read notifications
+    match /updates/{id} {
       allow read: if true;
-
-      // Only authorized admins can create, update, or delete notifications
-      allow create: if isAdmin() && isValidId(updateId);
-      allow update: if isAdmin() && isValidId(updateId);
-      allow delete: if isAdmin() && isValidId(updateId);
+      allow create, update, delete: if isAdmin();
     }
 
-    // 2. CURRENT AFFAIRS
-    match /currentAffairs/{articleId} {
-      allow read: if true; // Public verified factual summaries
-
-      allow create: if isAdmin() && isValidId(articleId);
-      allow update: if isAdmin() && isValidId(articleId);
-      allow delete: if isAdmin() && isValidId(articleId);
+    match /currentAffairs/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // 3. QUESTIONS (GK Quiz)
-    match /questions/{questionId} {
-      allow read: if true; // Public self-assessment questions
-
-      allow create: if isAdmin() && isValidId(questionId);
-      allow update: if isAdmin() && isValidId(questionId);
-      allow delete: if isAdmin() && isValidId(questionId);
+    match /questions/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // 4. RESOURCES (Syllabus & Previous Papers)
-    match /resources/{resourceId} {
-      allow read: if true; // Public educational materials
-
-      allow create: if isAdmin() && isValidId(resourceId);
-      allow update: if isAdmin() && isValidId(resourceId);
-      allow delete: if isAdmin() && isValidId(resourceId);
+    match /resources/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    // 5. ADMINS COLLECTION
-    match /admins/{adminId} {
-      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
-      allow write: if isBootstrapEmail() || isAdmin();
+    match /admins/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid && bootstrapAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /test/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

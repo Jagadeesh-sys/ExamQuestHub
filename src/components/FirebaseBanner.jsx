@@ -11,12 +11,13 @@ export default function FirebaseBanner({ forceShow = false }) {
     return null;
   }
 
-  const sampleEnv = `VITE_FIREBASE_API_KEY="AIzaSy..."
+  const sampleEnv = `VITE_FIREBASE_API_KEY="AIzaSyBpzxeB87P4A0PC4K8rhj-KJZU70WSvSMw"
 VITE_FIREBASE_AUTH_DOMAIN="examquesthub.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="examquesthub-prod"
-VITE_FIREBASE_STORAGE_BUCKET="examquesthub.appspot.com"
-VITE_FIREBASE_MESSAGING_SENDER_ID="1234567890"
-VITE_FIREBASE_APP_ID="1:1234567890:web:abcdef"`;
+VITE_FIREBASE_PROJECT_ID="examquesthub"
+VITE_FIREBASE_STORAGE_BUCKET="examquesthub.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID="991312604879"
+VITE_FIREBASE_APP_ID="1:991312604879:web:f26ff50aa0f9c13ee091ba"
+VITE_FIREBASE_MEASUREMENT_ID="G-X70K1F3PS4"`;
 
   const copyEnv = () => {
     navigator.clipboard.writeText(sampleEnv);

@@ -94,6 +94,11 @@ button, a, input, select, textarea {
   touch-action: manipulation;
 }
 
+/* Respect iOS/Android home-indicator inset for fixed bottom bars */
+.safe-area-pb {
+  padding-bottom: calc(0.375rem + env(safe-area-inset-bottom, 0px));
+}
+
 /* Print styles for notifications & question sheets */
 @media print {
   header, footer, .no-print, nav {

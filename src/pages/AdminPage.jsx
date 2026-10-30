@@ -40,7 +40,9 @@ import {
   getResources,
   saveResource,
   deleteResource,
-  resetDemonstrationData
+  resetDemonstrationData,
+  getSyncState,
+  subscribeToSyncState
 } from '../firebase/firestoreService.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
@@ -48,9 +50,10 @@ import FirebaseBanner from '../components/FirebaseBanner.jsx';
 import ImagePasteUploader from '../components/ImagePasteUploader.jsx';
 import DocumentFileUploader from '../components/DocumentFileUploader.jsx';
 import AdminDiagnosticsTab from '../components/AdminDiagnosticsTab.jsx';
+import { CURRENT_AFFAIR_TOPICS, topicMatches } from '../constants/currentAffairs.js';
 
 export default function AdminPage() {
-  const { currentUser, isAdmin, loginWithGoogle, loginWithEmail, logoutAdmin, authError, isFirebaseConfigured } = useAuth();
+  const { currentUser, isAdmin, loading: authLoading, loginWithGoogle, loginWithEmail, logoutAdmin, authError, isFirebaseConfigured } = useAuth();
   const { t, getLocalized } = useLanguage();
 
   // Login form state
@@ -79,9 +82,11 @@ export default function AdminPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null, type: null, title: '' });
   const [successToast, setSuccessToast] = useState('');
+  const [toastType, setToastType] = useState('success');
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState('');
-  const [lastSyncTime, setLastSyncTime] = useState(new Date().toISOString());
+  // Verified live-sync state (only ever set from real Firestore responses).
+  const [syncState, setSyncState] = useState(getSyncState);
 
   // Quick image modal state for Current Affairs
   const [imageModalItem, setImageModalItem] = useState(null);
@@ -94,12 +99,18 @@ export default function AdminPage() {
   const [quickDocSize, setQuickDocSize] = useState('');
   const [docSaving, setDocSaving] = useState(false);
 
+  // Bulk JSON import for notifications
+  const [importOpen, setImportOpen] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [importBusy, setImportBusy] = useState(false);
+  const [importSummary, setImportSummary] = useState(null);
+
   const loadAllAdminData = async () => {
     setLoading(true);
     try {
       const [up, ca, gk, res] = await Promise.all([
         getUpdates(true), // include drafts
-        getCurrentAffairs(),
+        getCurrentAffairs(true),
         getQuestions(),
         getResources()
       ]);
@@ -107,7 +118,6 @@ export default function AdminPage() {
       setCurrentAffairs(ca);
       setQuestions(gk);
       setResources(res);
-      setLastSyncTime(new Date().toISOString());
     } catch (e) {
       console.error('Error loading admin dataset:', e);
     } finally {
@@ -138,9 +148,63 @@ export default function AdminPage() {
     }
   }, [currentUser, isAdmin]);
 
-  const triggerToast = (msg) => {
+  // Track verified Firestore sync health for the dashboard banner + diagnostics.
+  useEffect(() => subscribeToSyncState(setSyncState), []);
+
+  const triggerToast = (msg, type = 'success') => {
+    setToastType(type);
     setSuccessToast(msg);
-    setTimeout(() => setSuccessToast(''), 3000);
+    setTimeout(() => setSuccessToast(''), type === 'error' ? 5000 : 3000);
+  };
+
+  const handleBulkImport = async () => {
+    setImportSummary(null);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(importJson);
+    } catch (e) {
+      setImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`] });
+      return;
+    }
+
+    const items = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.updates) ? parsed.updates : null;
+    if (!items || items.length === 0) {
+      setImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of notifications.'] });
+      return;
+    }
+
+    setImportBusy(true);
+    const errors = [];
+    let ok = 0;
+
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      const label = item?.title?.en || item?.id || `item ${i + 1}`;
+
+      if (!item?.title?.en || !item?.organization?.en || !item?.officialUrl || !item?.summary?.en) {
+        errors.push(`${label} — missing required field (title.en, organization.en, officialUrl, summary.en)`);
+        continue;
+      }
+
+      try {
+        // Sequential on purpose: keeps ordering predictable and surfaces the first real
+        // Firestore error (e.g. permission-denied) instead of firing N failing writes.
+        // eslint-disable-next-line no-await-in-loop
+        await saveUpdate(item);
+        ok += 1;
+      } catch (err) {
+        errors.push(`${label} — ${err.message}`);
+      }
+    }
+
+    setImportBusy(false);
+    setImportSummary({ ok, failed: errors.length, errors });
+
+    if (ok > 0) {
+      await loadAllAdminData();
+      triggerToast(`Imported ${ok} notification${ok === 1 ? '' : 's'}`);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -167,22 +231,26 @@ export default function AdminPage() {
     const { id, type } = deleteConfirm;
     if (!id || !type) return;
 
-    if (type === 'update') {
-      await deleteUpdate(id);
-      setUpdates(prev => prev.filter(i => i.id !== id));
-      triggerToast('Notification deleted successfully.');
-    } else if (type === 'ca') {
-      await deleteCurrentAffair(id);
-      setCurrentAffairs(prev => prev.filter(i => i.id !== id));
-      triggerToast('Current affairs item removed.');
-    } else if (type === 'gk') {
-      await deleteQuestion(id);
-      setQuestions(prev => prev.filter(i => i.id !== id));
-      triggerToast('GK Question deleted.');
-    } else if (type === 'resource') {
-      await deleteResource(id);
-      setResources(prev => prev.filter(i => i.id !== id));
-      triggerToast('Study resource deleted.');
+    try {
+      if (type === 'update') {
+        await deleteUpdate(id);
+        setUpdates(prev => prev.filter(i => i.id !== id));
+        triggerToast('Notification deleted successfully.');
+      } else if (type === 'ca') {
+        await deleteCurrentAffair(id);
+        setCurrentAffairs(prev => prev.filter(i => i.id !== id));
+        triggerToast('Current affairs item removed.');
+      } else if (type === 'gk') {
+        await deleteQuestion(id);
+        setQuestions(prev => prev.filter(i => i.id !== id));
+        triggerToast('GK Question deleted.');
+      } else if (type === 'resource') {
+        await deleteResource(id);
+        setResources(prev => prev.filter(i => i.id !== id));
+        triggerToast('Study resource deleted.');
+      }
+    } catch (err) {
+      triggerToast(`Delete failed: ${err.message}`);
     }
     setDeleteConfirm({ isOpen: false, id: null, type: null, title: '' });
   };
@@ -193,6 +261,17 @@ export default function AdminPage() {
     loadAllAdminData();
     triggerToast('Demonstration records restored to initial state.');
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-[#12345A] rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm font-semibold text-[#12345A]">Checking admin session...</p>
+        </div>
+      </div>
+    );
+  }
 
   // -----------------------------------------------------------------
   // 1. RENDER LOGIN SCREEN IF NOT AUTHENTICATED OR NOT ADMIN
@@ -290,10 +369,10 @@ export default function AdminPage() {
             </button>
           </form>
 
-          {/* Quick Demo Access Trigger for Testing */}
+          {!isFirebaseConfigured && (
           <div className="pt-4 border-t border-slate-100 text-center">
             <p className="text-[11px] text-slate-400 mb-2">
-              Evaluating in Preview? Instant login is enabled:
+              Firebase is not connected. Local preview login only:
             </p>
             <button
               type="button"
@@ -303,6 +382,7 @@ export default function AdminPage() {
               Log in as Demo Administrator
             </button>
           </div>
+          )}
         </div>
       </div>
     );
@@ -338,6 +418,7 @@ export default function AdminPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {!isFirebaseConfigured && (
           <button
             type="button"
             onClick={handleResetData}
@@ -347,6 +428,7 @@ export default function AdminPage() {
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Demo Data</span>
           </button>
+          )}
 
           <button
             type="button"
@@ -364,8 +446,18 @@ export default function AdminPage() {
 
       {/* Success Toast */}
       {successToast && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-150">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        <div
+          className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-150 border ${
+            toastType === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+          }`}
+        >
+          {toastType === 'error' ? (
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          )}
           <span>{successToast}</span>
         </div>
       )}
@@ -420,6 +512,31 @@ export default function AdminPage() {
           </span>
         </div>
       </div>
+
+      {/* Verified sync health — never claims success unless Firestore actually answered */}
+      {!syncState.live && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-xs sm:text-sm font-bold text-red-800">
+              Live Firebase sync is not active
+            </p>
+            <p className="text-[11px] sm:text-xs text-red-700 leading-relaxed break-words">
+              {syncState.configured
+                ? 'Firestore has not answered yet. Anything you publish now is stored only in this browser and will NOT reach other devices.'
+                : 'Firebase is not configured in this build. Changes stay local to this browser only.'}
+              {syncState.lastError ? ` (${syncState.lastError})` : ''}
+            </p>
+            <button
+              type="button"
+              onClick={() => setActiveTab('diagnostics')}
+              className="text-[11px] font-bold text-red-800 underline underline-offset-2 cursor-pointer"
+            >
+              Open diagnostics to see the exact cause
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Tab Bar */}
       <div className="bg-white rounded-2xl p-1.5 border border-[#E3EAF2] flex items-center gap-1 overflow-x-auto text-xs font-semibold no-scrollbar">
@@ -525,6 +642,19 @@ export default function AdminPage() {
             >
               <Plus className="w-4 h-4" />
               <span>{t('addNewUpdate')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setImportJson('');
+                setImportSummary(null);
+                setImportOpen(true);
+              }}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-[#12345A] text-[#12345A] hover:bg-[#EAF3FF] text-xs font-bold rounded-xl transition-colors shadow-xs w-full sm:w-auto active:scale-95"
+            >
+              <Clipboard className="w-4 h-4" />
+              <span>Bulk Import</span>
             </button>
           </div>
 
@@ -721,6 +851,8 @@ export default function AdminPage() {
                   sourceName: 'PIB New Delhi',
                   sourceUrl: 'https://pib.gov.in',
                   imageUrl: '',
+                  status: 'Published',
+                  createdAt: new Date().toISOString(),
                   examRelevance: ['UPSC', 'APPSC', 'SSC'],
                   tags: ['Current Affairs']
                 });
@@ -744,18 +876,11 @@ export default function AdminPage() {
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:outline-hidden focus:border-[#2468B4]"
               >
                 <option value="All">All Topics ({currentAffairs.length})</option>
-                <option value="Government schemes">
-                  Government schemes ({currentAffairs.filter(c => c.topic === 'Government schemes').length})
-                </option>
-                <option value="National news">National news</option>
-                <option value="International affairs">International affairs</option>
-                <option value="Economy">Economy</option>
-                <option value="Science and technology">Science & Technology</option>
-                <option value="Environment">Environment</option>
-                <option value="Awards and honours">Awards & Honours</option>
-                <option value="Sports">Sports</option>
-                <option value="Andhra Pradesh current affairs">Andhra Pradesh</option>
-                <option value="Telangana current affairs">Telangana</option>
+                {CURRENT_AFFAIR_TOPICS.map((topicName) => (
+                  <option key={topicName} value={topicName}>
+                    {topicName} ({currentAffairs.filter((c) => topicMatches(c.topic, topicName)).length})
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -788,7 +913,7 @@ export default function AdminPage() {
           <div className="divide-y divide-slate-100 text-xs">
             {currentAffairs
               .filter((ca) => {
-                const matchesTopic = caTopicFilter === 'All' || ca.topic === caTopicFilter;
+                const matchesTopic = topicMatches(ca.topic, caTopicFilter);
                 const text = ((ca.headline?.en || '') + ' ' + (ca.headline?.te || '') + ' ' + (ca.summary?.en || '')).toLowerCase();
                 const matchesSearch = !caSearchQuery || text.includes(caSearchQuery.toLowerCase());
                 return matchesTopic && matchesSearch;
@@ -916,7 +1041,7 @@ export default function AdminPage() {
             ))}
 
             {currentAffairs.filter((ca) => {
-              const matchesTopic = caTopicFilter === 'All' || ca.topic === caTopicFilter;
+              const matchesTopic = topicMatches(ca.topic, caTopicFilter);
               const text = ((ca.headline?.en || '') + ' ' + (ca.headline?.te || '') + ' ' + (ca.summary?.en || '')).toLowerCase();
               return matchesTopic && (!caSearchQuery || text.includes(caSearchQuery.toLowerCase()));
             }).length === 0 && (
@@ -1156,7 +1281,7 @@ export default function AdminPage() {
       {activeTab === 'diagnostics' && (
         <AdminDiagnosticsTab
           currentUser={currentUser}
-          lastSyncTime={lastSyncTime}
+          lastSyncTime={syncState.lastSyncAt}
           onRefreshData={loadAllAdminData}
         />
       )}
@@ -1197,6 +1322,14 @@ export default function AdminPage() {
                     }
                     if (!editingItem.officialUrl?.trim()) {
                       throw new Error('Official Portal URL is required.');
+                    }
+                    const duplicate = updates.find((existing) =>
+                      existing.id !== editingItem.id &&
+                      (existing.title?.en || '').trim().toLowerCase() === editingItem.title.en.trim().toLowerCase() &&
+                      (existing.organization?.en || '').trim().toLowerCase() === (editingItem.organization?.en || '').trim().toLowerCase()
+                    );
+                    if (duplicate) {
+                      throw new Error('A notification with this title and organization already exists.');
                     }
                     await saveUpdate(editingItem);
                     await loadAllAdminData();
@@ -1363,6 +1496,23 @@ export default function AdminPage() {
                     className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
                   />
                 </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Summary (Telugu)</label>
+                  <textarea
+                    rows={2}
+                    value={editingItem.summary?.te || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, summary: { ...editingItem.summary, te: e.target.value } })}
+                    className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
+                  />
+                </div>
+
+                <DocumentFileUploader
+                  value={editingItem.pdfUrl || ''}
+                  onChange={(url) => setEditingItem({ ...editingItem, pdfUrl: url })}
+                  currentFileSize={editingItem.pdfSize || ''}
+                  onFileSizeChange={(size) => setEditingItem({ ...editingItem, pdfSize: size })}
+                  label="Official Notification PDF (URL preferred)"
+                />
 
                 <div className="flex items-center justify-end gap-2 pt-2 border-t">
                   <button
@@ -1400,6 +1550,13 @@ export default function AdminPage() {
                     }
                     if (!editingItem.summary?.en?.trim()) {
                       throw new Error('Summary (English) is required.');
+                    }
+                    const duplicateCa = currentAffairs.find((existing) =>
+                      existing.id !== editingItem.id &&
+                      (existing.headline?.en || '').trim().toLowerCase() === editingItem.headline.en.trim().toLowerCase()
+                    );
+                    if (duplicateCa) {
+                      throw new Error('A current affairs article with this English headline already exists.');
                     }
                     await saveCurrentAffair(editingItem);
                     await loadAllAdminData();
@@ -1452,20 +1609,9 @@ export default function AdminPage() {
                       onChange={(e) => setEditingItem({ ...editingItem, topic: e.target.value })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
                     >
-                      <option value="National Affairs">National Affairs</option>
-                      <option value="International Affairs">International Affairs</option>
-                      <option value="Science and Technology">Science and Technology</option>
-                      <option value="Defence">Defence</option>
-                      <option value="Economy">Economy</option>
-                      <option value="Banking">Banking</option>
-                      <option value="Sports">Sports</option>
-                      <option value="Awards and Honours">Awards and Honours</option>
-                      <option value="Appointments">Appointments</option>
-                      <option value="Important Days">Important Days</option>
-                      <option value="Environment">Environment</option>
-                      <option value="Government Schemes">Government Schemes</option>
-                      <option value="Andhra Pradesh current affairs">Andhra Pradesh</option>
-                      <option value="Telangana current affairs">Telangana</option>
+                      {CURRENT_AFFAIR_TOPICS.map((topicName) => (
+                        <option key={topicName} value={topicName}>{topicName}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -1634,10 +1780,20 @@ export default function AdminPage() {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  await saveQuestion(editingItem);
-                  await loadAllAdminData();
-                  setIsFormOpen(false);
-                  triggerToast('GK Question saved.');
+                  setIsSaving(true);
+                  try {
+                    if (!editingItem.question?.en?.trim()) {
+                      throw new Error('Question (English) is required.');
+                    }
+                    await saveQuestion(editingItem);
+                    await loadAllAdminData();
+                    setIsFormOpen(false);
+                    triggerToast('GK Question saved and synced to Firestore.');
+                  } catch (err) {
+                    triggerToast(`Question not saved: ${err.message}`, 'error');
+                  } finally {
+                    setIsSaving(false);
+                  }
                 }}
                 className="space-y-4 text-xs"
               >
@@ -1743,9 +1899,11 @@ export default function AdminPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-semibold"
+                    disabled={isSaving}
+                    className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-semibold disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
                   >
-                    Save Question
+                    {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{isSaving ? 'Saving to Firestore...' : 'Save Question'}</span>
                   </button>
                 </div>
               </form>
@@ -1756,10 +1914,20 @@ export default function AdminPage() {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  await saveResource(editingItem);
-                  await loadAllAdminData();
-                  setIsFormOpen(false);
-                  triggerToast('Study resource saved.');
+                  setIsSaving(true);
+                  try {
+                    if (!editingItem.title?.en?.trim()) {
+                      throw new Error('Title (English) is required.');
+                    }
+                    await saveResource(editingItem);
+                    await loadAllAdminData();
+                    setIsFormOpen(false);
+                    triggerToast('Study resource saved and synced to Firestore.');
+                  } catch (err) {
+                    triggerToast(`Resource not saved: ${err.message}`, 'error');
+                  } finally {
+                    setIsSaving(false);
+                  }
                 }}
                 className="space-y-4 text-xs"
               >
@@ -1828,14 +1996,108 @@ export default function AdminPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-semibold"
+                    disabled={isSaving}
+                    className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-semibold disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
                   >
-                    Save Resource
+                    {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{isSaving ? 'Saving to Firestore...' : 'Save Resource'}</span>
                   </button>
                 </div>
               </form>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal — Notifications */}
+      {importOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-1.5">
+                  <Clipboard className="w-4 h-4 text-[#2468B4]" />
+                  Bulk Import Notifications
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Paste a JSON array below. Each item is written to Firestore and is editable here afterwards.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImportOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-[#F6F8FC] border border-[#E3EAF2] p-3 text-[11px] text-slate-600 space-y-1">
+              <p className="font-semibold text-slate-700">Required per item</p>
+              <p>
+                <code>title.en</code>, <code>organization.en</code>, <code>officialUrl</code>, <code>summary.en</code>
+              </p>
+              <p className="font-semibold text-slate-700 pt-1">Optional</p>
+              <p>
+                <code>id</code>, <code>title.te</code>, <code>summary.te</code>, <code>category</code>, <code>region</code>,{' '}
+                <code>publishedAt</code> / <code>deadline</code> (YYYY-MM-DD), <code>status</code>,{' '}
+                <code>vacancies</code>, <code>applyUrl</code>, <code>pdfUrl</code>
+              </p>
+            </div>
+
+            <textarea
+              rows={12}
+              value={importJson}
+              onChange={(e) => setImportJson(e.target.value)}
+              spellCheck={false}
+              placeholder='[ { "title": { "en": "...", "te": "..." }, "organization": { "en": "..." } } ]'
+              className="w-full p-3 bg-[#F6F8FC] border border-slate-200 rounded-xl focus:bg-white font-mono text-[11px] leading-relaxed"
+            />
+
+            {importSummary && (
+              <div
+                className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                  importSummary.ok > 0
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-red-50 border-red-200 text-red-700'
+                }`}
+              >
+                <p className="font-bold">
+                  {importSummary.ok} imported
+                  {importSummary.failed > 0 ? `, ${importSummary.failed} failed` : ''}
+                </p>
+                {importSummary.errors.length > 0 && (
+                  <ul className="space-y-0.5 max-h-40 overflow-y-auto font-mono text-[11px]">
+                    {importSummary.errors.map((msg, i) => (
+                      <li key={i} className="break-words">
+                        • {msg}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setImportOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                disabled={importBusy || !importJson.trim()}
+                onClick={handleBulkImport}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-bold disabled:opacity-50 cursor-pointer"
+              >
+                {importBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {importBusy ? 'Importing...' : 'Import'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1882,14 +2144,19 @@ export default function AdminPage() {
                 disabled={imageSaving}
                 onClick={async () => {
                   setImageSaving(true);
-                  await saveCurrentAffair({
-                    ...imageModalItem,
-                    imageUrl: quickImageUrl
-                  });
-                  await loadAllAdminData();
-                  setImageSaving(false);
-                  setImageModalItem(null);
-                  triggerToast('Current affair image updated successfully!');
+                  try {
+                    await saveCurrentAffair({
+                      ...imageModalItem,
+                      imageUrl: quickImageUrl
+                    });
+                    await loadAllAdminData();
+                    setImageModalItem(null);
+                    triggerToast('Current affair image updated successfully!');
+                  } catch (err) {
+                    triggerToast(`Image not saved: ${err.message}`, 'error');
+                  } finally {
+                    setImageSaving(false);
+                  }
                 }}
                 className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition-all shadow-xs"
               >
@@ -1944,15 +2211,20 @@ export default function AdminPage() {
                 disabled={docSaving}
                 onClick={async () => {
                   setDocSaving(true);
-                  await saveResource({
-                    ...documentModalItem,
-                    downloadUrl: quickDocUrl,
-                    fileSize: quickDocSize || documentModalItem.fileSize || 'PDF Document'
-                  });
-                  await loadAllAdminData();
-                  setDocSaving(false);
-                  setDocumentModalItem(null);
-                  triggerToast('Document attached and saved successfully!');
+                  try {
+                    await saveResource({
+                      ...documentModalItem,
+                      downloadUrl: quickDocUrl,
+                      fileSize: quickDocSize || documentModalItem.fileSize || 'PDF Document'
+                    });
+                    await loadAllAdminData();
+                    setDocumentModalItem(null);
+                    triggerToast('Document attached and saved successfully!');
+                  } catch (err) {
+                    triggerToast(`Document not saved: ${err.message}`, 'error');
+                  } finally {
+                    setDocSaving(false);
+                  }
                 }}
                 className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition-all shadow-xs"
               >

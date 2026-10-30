@@ -131,6 +131,11 @@ export default function AdminDiagnosticsTab({ currentUser, lastSyncTime, onRefre
           <div className="text-[11px] text-slate-500 truncate" title={resolvedConfig.firestoreDatabaseId}>
             DB: <span className="font-mono text-slate-700 font-semibold">{resolvedConfig.firestoreDatabaseId || '(default)'}</span>
           </div>
+          {!connectionStatus.testing && connectionStatus.result && !connectionStatus.result.connected && connectionStatus.result.error && (
+            <p className="text-[10px] leading-relaxed text-red-600 break-words">
+              {connectionStatus.result.error}
+            </p>
+          )}
         </div>
 
         {/* 2. Authentication Status */}
@@ -230,7 +235,7 @@ export default function AdminDiagnosticsTab({ currentUser, lastSyncTime, onRefre
             <div className="text-slate-400 font-semibold text-[10px] uppercase">Last Data Sync</div>
             <div className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1">
               <Clock className="w-3 h-3 text-slate-400" />
-              <span>{lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString() : 'Just now'}</span>
+              <span>{lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString() : 'Never'}</span>
             </div>
           </div>
         </div>
@@ -292,9 +297,19 @@ export default function AdminDiagnosticsTab({ currentUser, lastSyncTime, onRefre
         {/* Logs List */}
         {filteredLogs.length === 0 ? (
           <div className="py-10 text-center text-slate-400 space-y-2 border border-dashed border-slate-200 rounded-2xl">
-            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-            <p className="text-xs font-bold text-slate-700">All systems operational</p>
-            <p className="text-[11px] text-slate-400">No runtime errors captured in this session.</p>
+            {connectionStatus.result?.connected ? (
+              <>
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                <p className="text-xs font-bold text-slate-700">Firestore verified — no runtime errors</p>
+                <p className="text-[11px] text-slate-400">Live read confirmed and no errors captured in this session.</p>
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
+                <p className="text-xs font-bold text-slate-700">No errors logged — but Firebase is not verified</p>
+                <p className="text-[11px] text-slate-400">Run the diagnostics test above to confirm the Firestore connection.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden text-xs">

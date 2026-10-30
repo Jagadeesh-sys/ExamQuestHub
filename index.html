@@ -17,28 +17,92 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body class="bg-[#F6F8FC] text-[#182B45] antialiased selection:bg-[#EAF3FF] selection:text-[#12345A]">
-    <div id="root">
-      <div id="eqh-initial-loader" style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #F6F8FC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; text-align: center;">
-        <div style="width: 44px; height: 44px; border: 3.5px solid #E3EAF2; border-top-color: #12345A; border-radius: 50%; animation: eqh-spin 0.85s linear infinite; margin-bottom: 14px;"></div>
-        <div style="font-size: 15px; font-weight: 700; color: #12345A; margin-bottom: 4px;">ExamQuestHub</div>
-        <div style="font-size: 12px; color: #718096;">Loading verified notifications...</div>
-        <div id="eqh-timeout-msg" style="display: none; margin-top: 14px;">
-          <p style="font-size: 12px; color: #C64545; margin-bottom: 10px;">Taking longer than expected on your network connection.</p>
-          <button onclick="window.location.reload()" style="background-color: #12345A; color: white; border: none; padding: 8px 18px; font-size: 12px; font-weight: bold; border-radius: 10px; cursor: pointer;">Reload Page</button>
-        </div>
+    <div id="root"></div>
+
+    <!--
+      Boot overlay lives OUTSIDE #root so the user never sees a blank white screen.
+      It is only removed once React has actually committed its first render.
+    -->
+    <div
+      id="eqh-boot"
+      role="status"
+      aria-live="polite"
+      style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #F6F8FC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; text-align: center;"
+    >
+      <div id="eqh-boot-spinner" style="width: 44px; height: 44px; border: 3.5px solid #E3EAF2; border-top-color: #12345A; border-radius: 50%; animation: eqh-spin 0.85s linear infinite; margin-bottom: 14px;"></div>
+      <div id="eqh-boot-title" style="font-size: 15px; font-weight: 700; color: #12345A; margin-bottom: 4px;">ExamQuestHub</div>
+      <div id="eqh-boot-text" style="font-size: 12px; color: #718096;">Loading verified notifications...</div>
+      <div id="eqh-boot-actions" style="display: none; margin-top: 16px; max-width: 340px;">
+        <p id="eqh-boot-msg" style="font-size: 12px; color: #C64545; margin: 0 0 12px; line-height: 1.6;">We could not load the page on this connection.</p>
+        <button type="button" onclick="window.location.reload()" style="background-color: #12345A; color: #ffffff; border: none; padding: 10px 20px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer;">Retry</button>
       </div>
-      <style>
-        @keyframes eqh-spin { to { transform: rotate(360deg); } }
-      </style>
-      <script>
-        setTimeout(function() {
-          var msg = document.getElementById('eqh-timeout-msg');
-          if (msg && document.getElementById('eqh-initial-loader')) {
-            msg.style.display = 'block';
-          }
-        }, 7000);
-      </script>
     </div>
+
+    <noscript>
+      <style>#eqh-boot { display: none !important; }</style>
+      <div style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #F6F8FC; padding: 24px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="font-size: 17px; font-weight: 700; color: #12345A; margin-bottom: 8px;">ExamQuestHub</div>
+        <p style="font-size: 13px; color: #182B45; max-width: 360px; line-height: 1.6; margin: 0;">
+          JavaScript is disabled in this browser, so the app cannot start. Please enable JavaScript and reload this page.
+        </p>
+      </div>
+    </noscript>
+
+    <style>
+      @keyframes eqh-spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <script>
+      (function () {
+        var boot = document.getElementById('eqh-boot');
+        var spinner = document.getElementById('eqh-boot-spinner');
+        var title = document.getElementById('eqh-boot-title');
+        var text = document.getElementById('eqh-boot-text');
+        var actions = document.getElementById('eqh-boot-actions');
+        var msg = document.getElementById('eqh-boot-msg');
+
+        function bootIsAlive() {
+          return !!(boot && boot.parentNode && document.body.contains(boot));
+        }
+
+        // Called when the bundle fails to load / throws before React mounts.
+        window.__EQH_BOOT_FAIL = function (message) {
+          if (!bootIsAlive()) return;
+          if (spinner) spinner.style.display = 'none';
+          if (text) text.style.display = 'none';
+          if (title) title.style.display = 'none';
+          if (message && msg) msg.textContent = message;
+          if (actions) actions.style.display = 'block';
+        };
+
+        // Called by the app once React has committed its first render.
+        window.__EQH_BOOT_DONE = function () {
+          if (boot && boot.parentNode) {
+            boot.parentNode.removeChild(boot);
+          }
+          boot = null;
+        };
+
+        // Detect a failed <script> fetch or a module evaluation error.
+        window.addEventListener(
+          'error',
+          function (event) {
+            if (!bootIsAlive()) return;
+            var target = event && event.target;
+            if (target && target.tagName === 'SCRIPT') {
+              window.__EQH_BOOT_FAIL('A required script failed to load. Please check your connection and tap Retry.');
+            }
+          },
+          true
+        );
+
+        // Last resort: never leave the spinner spinning forever.
+        setTimeout(function () {
+          window.__EQH_BOOT_FAIL('Taking longer than expected on your network connection.');
+        }, 8000);
+      })();
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

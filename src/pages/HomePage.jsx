@@ -38,7 +38,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import MockTestCard from '../components/MockTestCard.jsx';
 import EditorialCurrentAffairsSection from '../components/EditorialCurrentAffairsSection.jsx';
-import { MOCK_TESTS_METADATA } from '../data/mockTestsData.js';
+import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 
 export default function HomePage() {
   const { t, getLocalized } = useLanguage();

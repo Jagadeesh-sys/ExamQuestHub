@@ -18,6 +18,10 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // Release the boot overlay so this fallback is never hidden behind it.
+    if (typeof window !== 'undefined' && typeof window.__EQH_BOOT_DONE === 'function') {
+      window.__EQH_BOOT_DONE();
+    }
     this.setState({ errorInfo });
     logAppError({
       category: 'React',
