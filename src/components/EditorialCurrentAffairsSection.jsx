@@ -230,40 +230,16 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
         </div>
       </div>
 
-      {/* Floating Action Rail - Matches Image */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-5 items-center">
-        <div className="flex flex-col items-center gap-1">
-          <button
-            type="button"
-            onClick={(e) => onToggleBookmark(item.id, e)}
-            className={`w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center transition-all active:scale-90 ${
-              isBookmarked
-                ? 'bg-[#F2BE4F] text-[#0B1F3A]'
-                : 'bg-slate-50/80 backdrop-blur-md text-slate-700 border border-white'
-            }`}
-          >
-            <Bookmark className={`w-6 h-6 ${isBookmarked ? 'fill-current' : ''}`} />
-          </button>
-          <span className="text-[10px] font-extrabold text-slate-500 uppercase">Save</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-1">
-          <button
-            type="button"
-            onClick={handleShare}
-            className="w-14 h-14 rounded-2xl bg-slate-50/80 backdrop-blur-md text-slate-700 border border-white shadow-xl flex items-center justify-center active:scale-90"
-          >
-            <Share2 className="w-6 h-6" />
-          </button>
-          <span className="text-[10px] font-extrabold text-slate-500 uppercase">Share</span>
-        </div>
-        
-        <div className="flex flex-col items-center gap-1 mt-4">
-          <div className="w-14 h-14 rounded-full bg-[#0B1F3A] text-white shadow-2xl flex items-center justify-center animate-pulse">
-            <ArrowRight className="w-7 h-7" />
-          </div>
-          <span className="text-[10px] font-extrabold text-slate-700 uppercase">Next</span>
-        </div>
+      {/* Simplified Floating Share Button - Bottom Right */}
+      <div className="absolute right-4 bottom-28 z-30">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="w-12 h-12 rounded-full bg-[#0B1F3A]/90 backdrop-blur-md text-[#F2BE4F] shadow-2xl flex items-center justify-center active:scale-90 border border-white/20 transition-transform"
+          aria-label="Share story"
+        >
+          <Share2 className="w-5 h-5" />
+        </button>
       </div>
     </article>
   );
