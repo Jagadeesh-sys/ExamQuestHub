@@ -102,6 +102,11 @@ button, a, input, select, textarea {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Utility to remove mobile tap highlight */
+.tap-highlight-transparent {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Print styles for notifications & question sheets */
 @media print {
   header, footer, .no-print, nav {

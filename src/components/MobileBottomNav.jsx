@@ -23,7 +23,7 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-md border-t border-[#E3EAF2] px-2 py-1.5 shadow-lg safe-area-pb"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-md border-t border-slate-100 px-2 py-1.5 shadow-lg safe-area-pb"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map((item) => {
@@ -34,7 +34,7 @@ export default function MobileBottomNav() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 min-w-[56px] ${
+                `flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 min-w-[56px] outline-none focus:outline-none focus:ring-0 select-none tap-highlight-transparent ${
                   isActive
                     ? 'text-[#12345A] font-bold'
                     : 'text-slate-500 hover:text-[#12345A]'
