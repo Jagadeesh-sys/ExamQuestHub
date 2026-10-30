@@ -20,7 +20,8 @@ import {
   LayoutGrid,
   Play,
   TrendingUp,
-  Bookmark
+  Bookmark,
+  Share2
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StraightLineCurrentAffair from './StraightLineCurrentAffair.jsx';
@@ -87,94 +88,123 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
   const { getLocalized } = useLanguage();
   const headline = getLocalized(item.headline);
   const summary = getLocalized(item.summary);
+  const content = getLocalized(item.content);
   const detailSlug = item.slug || item.id;
-  const examTags = (item.examRelevance || ['UPSC', 'APPSC', 'SSC']).slice(0, 4);
+
+  const handleShare = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: headline,
+          text: summary,
+          url: window.location.origin + '/current-affairs/' + detailSlug,
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    }
+  };
 
   return (
-    <article className="relative h-full w-full snap-start snap-always overflow-hidden rounded-3xl bg-[#0B1F3A]">
-      <img
-        src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
-        alt={headline}
-        loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover"
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#06111F] via-[#06111F]/75 to-[#06111F]/10" />
-
-      {/* Right-hand action rail */}
-      <div className="absolute right-3 bottom-28 z-10 flex flex-col items-center gap-3">
-        <button
-          type="button"
-          onClick={(e) => onToggleBookmark(item.id, e)}
-          aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this article'}
-          className={`w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-colors cursor-pointer ${
-            isBookmarked
-              ? 'bg-[#F2BE4F] border-[#F2BE4F] text-[#0B1F3A]'
-              : 'bg-white/10 border-white/25 text-white hover:bg-white/20'
-          }`}
-        >
-          <Star className={`w-4 h-4 ${isBookmarked ? 'fill-[#0B1F3A]' : ''}`} />
-        </button>
-
-        <Link
-          to={`/current-affairs/${detailSlug}`}
-          aria-label="Read full article"
-          className="w-10 h-10 rounded-full bg-white/10 border border-white/25 text-white backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors"
-        >
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-
-        {item.sourceUrl && (
-          <a
-            href={item.sourceUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Open original source"
-            className="w-10 h-10 rounded-full bg-white/10 border border-white/25 text-white backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        )}
-      </div>
-
-      {/* Story copy */}
-      <div className="absolute inset-x-0 bottom-0 z-10 p-4 pr-16 space-y-2.5">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="px-2.5 py-0.5 rounded-full bg-[#F2BE4F] text-[#0B1F3A] text-[10px] font-bold">
-            {item.topic || 'Current Affairs'}
-          </span>
-          {examTags.map((tag, idx) => (
-            <span
-              key={idx}
-              className="px-2 py-0.5 rounded-full bg-white/15 border border-white/20 text-white text-[10px] font-semibold backdrop-blur-sm"
-            >
-              {tag}
+    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-20">
+      <div className="p-4 space-y-4">
+        {/* Top Header: Topic + Date + Share */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100 uppercase tracking-wide">
+              {item.topic || 'General'}
             </span>
-          ))}
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
+              <Calendar className="w-3 h-3" />
+              <span>Event Date: {item.eventDate || ''}</span>
+            </div>
+          </div>
+          <button
+            onClick={handleShare}
+            className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors border border-slate-100"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        <h4 className="font-heading font-extrabold text-white text-base leading-snug line-clamp-3">
+        {/* Headline */}
+        <h2 className="font-heading font-extrabold text-[#182B45] text-xl leading-tight tracking-tight">
           {headline}
-        </h4>
+        </h2>
 
-        <p className="text-slate-200 text-xs leading-relaxed line-clamp-3">{summary}</p>
-
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-300">
-          <Calendar className="w-3 h-3" />
-          <span>{item.eventDate || ''}</span>
-          {item.sourceName && <span className="truncate">• {item.sourceName}</span>}
+        {/* Verified Source Bar */}
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-[10px]">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-emerald-600 font-bold">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Verified Source:</span>
+            </div>
+            <span className="text-slate-700 font-extrabold truncate max-w-[120px]">
+              {item.sourceName || 'Official Source'}
+            </span>
+          </div>
+          {item.sourceUrl && (
+            <a
+              href={item.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#2468B4] font-bold flex items-center gap-0.5 hover:underline"
+            >
+              <span>View Source</span>
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+          )}
         </div>
 
-        <Link
-          to={`/current-affairs/${detailSlug}`}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-[#0B1F3A] text-xs font-bold hover:bg-slate-100 transition-colors"
-        >
-          <span>Read Full Story</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
+        {/* Main Image */}
+        <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-100 shadow-sm border border-slate-200/50">
+          <img
+            src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
+            alt={headline}
+            loading="lazy"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
+            }}
+          />
+        </div>
+
+        {/* Summary Box (Yellow Highlight) */}
+        <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60 text-slate-700 text-xs leading-relaxed font-medium">
+          {summary}
+        </div>
+
+        {/* Detailed Content */}
+        {content && (
+          <div className="text-slate-600 text-xs leading-relaxed space-y-3 pb-4">
+            {content}
+          </div>
+        )}
+
+        {/* Action Buttons Overlay */}
+        <div className="fixed right-4 bottom-24 z-20 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={(e) => onToggleBookmark(item.id, e)}
+            className={`w-10 h-10 rounded-full shadow-lg border flex items-center justify-center transition-all scale-95 active:scale-105 ${
+              isBookmarked
+                ? 'bg-[#F2BE4F] border-[#F2BE4F] text-[#0B1F3A]'
+                : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:border-amber-200'
+            }`}
+          >
+            <Star className={`w-4.5 h-4.5 ${isBookmarked ? 'fill-[#0B1F3A]' : ''}`} />
+          </button>
+          
+          <Link
+            to={`/current-affairs/${detailSlug}`}
+            className="w-10 h-10 rounded-full bg-[#12345A] text-white shadow-lg flex items-center justify-center hover:bg-[#0B1F3A] transition-all scale-95 active:scale-105"
+          >
+            <ArrowRight className="w-4.5 h-4.5" />
+          </Link>
+        </div>
       </div>
     </article>
   );
