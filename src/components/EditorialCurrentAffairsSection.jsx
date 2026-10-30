@@ -521,7 +521,7 @@ export default function EditorialCurrentAffairsSection({
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
-        <div className="fixed top-0 left-0 right-0 bottom-16 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
+        <div className="fixed top-0 left-0 right-0 bottom-0 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
           {/* Reels Header Block (Matches Image) */}
           <div className="bg-white px-4 pt-2 pb-3 space-y-3 safe-area-pt">
             <div className="flex items-center justify-between">
