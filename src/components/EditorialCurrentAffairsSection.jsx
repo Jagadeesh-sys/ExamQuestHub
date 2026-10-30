@@ -115,6 +115,11 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
 
   return (
     <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-24 pt-2">
+      {/* Decorative Corner */}
+      <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] pointer-events-none overflow-hidden">
+        <GoldenCornerFlourish />
+      </div>
+
       <div className="px-4 pb-12 space-y-4">
         {/* Top Info: Category + Date + Page Indicator */}
         <div className="flex items-center justify-between text-[10px] font-bold pt-2">
@@ -143,7 +148,7 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
             src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
             alt={headline}
             loading="lazy"
-            className="w-full h-auto object-contain max-h-[400px]"
+            className="w-full aspect-video object-cover"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
@@ -210,7 +215,7 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
         <button
           type="button"
           onClick={handleShare}
-          className="w-12 h-12 rounded-full bg-[#0B1F3A]/90 backdrop-blur-md text-[#F2BE4F] shadow-2xl flex items-center justify-center active:scale-90 border border-white/20 transition-transform"
+          className="w-12 h-12 rounded-full bg-[#0B1F3A]/80 backdrop-blur-md text-[#F2BE4F] shadow-2xl flex items-center justify-center active:scale-90 border border-white/10 transition-transform"
           aria-label="Share story"
         >
           <Share2 className="w-5 h-5" />
@@ -520,7 +525,7 @@ export default function EditorialCurrentAffairsSection({
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
         <div className="fixed top-0 left-0 right-0 bottom-16 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
           {/* Reels Header Block (Matches Image) */}
-          <div className="bg-white px-4 py-4 border-b border-slate-100 space-y-4 safe-area-pt">
+          <div className="bg-white px-4 py-4 space-y-4 safe-area-pt">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#0B1F3A] flex items-center justify-center shadow-lg shadow-[#0B1F3A]/20">
