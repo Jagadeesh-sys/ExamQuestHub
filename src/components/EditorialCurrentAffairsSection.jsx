@@ -115,10 +115,15 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
   };
 
   return (
-    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-24 pt-4">
-      <div className="px-4 pb-12 space-y-5">
+    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-24 pt-6">
+      <div className="px-4 pb-12 space-y-6">
+        {/* Title / Headline - First */}
+        <h2 className="font-heading font-black text-[#0B1F3A] text-2xl leading-[1.2] tracking-tight pt-2">
+          {headline}
+        </h2>
+
         {/* Top Info: Category + Date + Page Indicator */}
-        <div className="flex items-center justify-between text-[10px] font-bold">
+        <div className="flex items-center justify-between text-[10px] font-bold border-b border-slate-100 pb-3">
           <div className="flex items-center gap-3">
             <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wide">
               {item.topic || 'International Affairs'}
@@ -133,10 +138,19 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           </span>
         </div>
 
-        {/* Headline */}
-        <h2 className="font-heading font-black text-[#0B1F3A] text-2xl leading-[1.2] tracking-tight">
-          {headline}
-        </h2>
+        {/* Main Image - Second */}
+        <div className="relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/50 shadow-sm">
+          <img
+            src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
+            alt={headline}
+            loading="lazy"
+            className="w-full h-auto object-contain max-h-[450px]"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
+            }}
+          />
+        </div>
 
         {/* Verified Source Bar */}
         <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-[11px]">
@@ -162,62 +176,51 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           )}
         </div>
 
-        {/* Main Image */}
-        <div className="relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/50 shadow-sm">
-          <img
-            src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
-            alt={headline}
-            loading="lazy"
-            className="w-full h-auto object-contain max-h-[450px]"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
-            }}
-          />
-        </div>
-
-        {/* Yellow Highlight Summary Box */}
-        <div className="relative p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 flex gap-3.5">
-          <div className="w-10 h-10 rounded-lg bg-[#0B1F3A] flex items-center justify-center shrink-0 shadow-md">
-            <Newspaper className="w-5 h-5 text-[#F2BE4F]" />
+        {/* Matter (Summary + Content) - Third */}
+        <div className="space-y-5">
+          {/* Yellow Highlight Summary Box */}
+          <div className="relative p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 flex gap-3.5">
+            <div className="w-10 h-10 rounded-lg bg-[#0B1F3A] flex items-center justify-center shrink-0 shadow-md">
+              <Newspaper className="w-5 h-5 text-[#F2BE4F]" />
+            </div>
+            <p className="text-slate-800 text-[13px] leading-relaxed font-semibold">
+              {summary}
+            </p>
           </div>
-          <p className="text-slate-800 text-[13px] leading-relaxed font-semibold">
-            {summary}
-          </p>
-        </div>
 
-        {/* Detailed News Header */}
-        <div className="flex items-center gap-3 pt-2">
-          <div className="w-1.5 h-6 bg-[#2468B4] rounded-full" />
-          <h3 className="font-heading font-black text-[#0B1F3A] text-lg">Detailed News</h3>
-        </div>
-
-        {/* Detailed Content */}
-        {content && (
-          <div className="text-slate-600 text-[13.5px] leading-relaxed space-y-4 font-medium px-1">
-            {content}
+          {/* Detailed News Header */}
+          <div className="flex items-center gap-3 pt-2">
+            <div className="w-1.5 h-6 bg-[#2468B4] rounded-full" />
+            <h3 className="font-heading font-black text-[#0B1F3A] text-lg">Detailed News</h3>
           </div>
-        )}
 
-        {/* Key Highlights Section (Auto-generated Mock or Data Driven) */}
-        <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-3.5">
-          <div className="flex items-center gap-2.5 text-[#2468B4] font-bold">
-            <Zap className="w-5 h-5 fill-current" />
-            <span className="text-sm">Key Highlights</span>
+          {/* Detailed Content */}
+          {content && (
+            <div className="text-slate-600 text-[13.5px] leading-relaxed space-y-4 font-medium px-1">
+              {content}
+            </div>
+          )}
+
+          {/* Key Highlights Section */}
+          <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-3.5">
+            <div className="flex items-center gap-2.5 text-[#2468B4] font-bold">
+              <Zap className="w-5 h-5 fill-current" />
+              <span className="text-sm">Key Highlights</span>
+            </div>
+            <ul className="space-y-2.5">
+              {[
+                "Important international summit held in New Delhi",
+                "Adopted the landmark New Delhi Declaration",
+                "Focus on resilience, innovation and cooperation",
+                "Strengthened multilateralism and people-to-people ties"
+              ].map((highlight, idx) => (
+                <li key={idx} className="flex gap-3 text-slate-700 text-[13px] leading-tight font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2468B4] mt-1.5 shrink-0" />
+                  <span>{highlight}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="space-y-2.5">
-            {[
-              "Important international summit held in New Delhi",
-              "Adopted the landmark New Delhi Declaration",
-              "Focus on resilience, innovation and cooperation",
-              "Strengthened multilateralism and people-to-people ties"
-            ].map((highlight, idx) => (
-              <li key={idx} className="flex gap-3 text-slate-700 text-[13px] leading-tight font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#2468B4] mt-1.5 shrink-0" />
-                <span>{highlight}</span>
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* Bottom Pagination Dots & Swipe Indicator */}
@@ -577,67 +580,31 @@ export default function EditorialCurrentAffairsSection({
       {viewMode === 'reels' ? (
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
         <div className="fixed top-0 left-0 right-0 bottom-16 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
-          {/* Site Branding Header (Matches Image) */}
-          <div className="bg-[#0B1F3A] px-4 py-3 flex items-center justify-between safe-area-pt">
-            <div className="flex items-center gap-2.5">
-              <img src="/assets/aistudio/examquesthub-logo.png" alt="Logo" className="w-9 h-9 object-contain" />
-              <div className="leading-none">
-                <h1 className="font-heading font-black text-white text-lg tracking-tighter">
-                  ExamQuest<span className="text-[#2468B4]">Hub</span>
-                </h1>
-                <p className="text-[7px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-0.5">Learn Prepare Succeed</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-white/80">
-              <Search className="w-5 h-5" />
-              <div className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0B1F3A]" />
-              </div>
-            </div>
-          </div>
+          {/* Floating Exit Button */}
+          <button
+            type="button"
+            onClick={() => setViewMode('editorial')}
+            className="absolute top-4 left-4 z-[60] p-2.5 rounded-xl bg-white/80 backdrop-blur-md text-[#0B1F3A] border border-slate-200 shadow-lg active:scale-95 transition-all"
+            aria-label="Exit Reels"
+          >
+            <Grid className="w-5 h-5" />
+          </button>
 
-          {/* Reels Control Header (Matches Image) */}
-          <div className="bg-white px-4 py-4 border-b border-slate-100 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#0B1F3A] flex items-center justify-center shadow-lg shadow-[#0B1F3A]/20">
-                  <Film className="w-5 h-5 text-[#F2BE4F]" />
-                </div>
-                <div className="leading-tight">
-                  <h2 className="font-heading font-black text-[#0B1F3A] text-base">News Reels</h2>
-                  <p className="text-[10px] text-slate-500 font-bold">Swipe up for next update</p>
-                </div>
-              </div>
+          {/* Floating Topic Filters (Horizontal Scroll) */}
+          <div className="absolute top-4 right-4 left-16 z-[60] flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {topics.map((topic) => (
               <button
-                type="button"
-                onClick={() => setViewMode('editorial')}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black text-[#0B1F3A] bg-slate-50 border border-slate-200 shadow-sm active:scale-95 transition-all"
+                key={topic}
+                onClick={() => setSelectedTopic(topic)}
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-black whitespace-nowrap border transition-all ${
+                  selectedTopic === topic
+                    ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-md'
+                    : 'bg-white/80 backdrop-blur-md text-slate-600 border-slate-200'
+                }`}
               >
-                <Grid className="w-3.5 h-3.5" />
-                <span>Classic View</span>
+                {topic}
               </button>
-            </div>
-
-            {/* Topic Pills (Matches Image) */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              {topics.map((topic) => (
-                <button
-                  key={topic}
-                  onClick={() => setSelectedTopic(topic)}
-                  className={`px-4 py-1.5 rounded-xl text-[11px] font-black whitespace-nowrap border transition-all ${
-                    selectedTopic === topic
-                      ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-md'
-                      : 'bg-slate-50 text-slate-600 border-slate-200'
-                  }`}
-                >
-                  {topic}
-                </button>
-              ))}
-              <button className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 shrink-0">
-                <LayoutList className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            ))}
           </div>
 
           {filtered.length === 0 ? (
