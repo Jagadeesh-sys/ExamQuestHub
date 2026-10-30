@@ -66,6 +66,20 @@ function GoldenNestIcon() {
   );
 }
 
+// Month + year section header used by the list views
+function MonthGroupHeader({ label, count }) {
+  return (
+    <div className="flex items-center gap-2.5 pt-1">
+      <span className="h-5 w-1.5 rounded-full bg-[#2468B4]" />
+      <h3 className="font-heading font-extrabold text-sm text-[#182B45]">{label}</h3>
+      <span className="px-2 py-0.5 rounded-full bg-[#F0F4F9] border border-[#E3EAF2] text-[10px] font-semibold text-[#1E3A5F]">
+        {count} {count === 1 ? 'article' : 'articles'}
+      </span>
+      <span className="flex-1 h-px bg-[#E3EAF2]" />
+    </div>
+  );
+}
+
 export default function EditorialCurrentAffairsSection({
   articles = [],
   loading = false,
@@ -139,6 +153,30 @@ export default function EditorialCurrentAffairsSection({
   const mainCards = filtered.slice(0, 6);
   // Compact mini cards (top right 2x2 grid in screenshot)
   const miniCards = filtered.slice(0, 4);
+
+  // Month + year grouping for the list views, driven by each article's eventDate.
+  // Groups are ordered newest first; articles without a valid date fall into "Undated".
+  const monthGroups = (() => {
+    const groups = new Map();
+    filtered.forEach((item) => {
+      const time = new Date(`${item.eventDate}T00:00:00`).getTime();
+      const valid = !Number.isNaN(time);
+      const date = valid ? new Date(time) : null;
+      const key = valid ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}` : 'undated';
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: valid ? date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : 'Undated',
+          sortTime: valid ? time : -Infinity,
+          items: []
+        });
+      }
+      groups.get(key).items.push(item);
+    });
+
+    return Array.from(groups.values()).sort((a, b) => b.sortTime - a.sortTime);
+  })();
 
   return (
     <div className="space-y-6">
@@ -672,28 +710,47 @@ export default function EditorialCurrentAffairsSection({
         </div>
       ) : viewMode === 'singleAlign' ? (
         /* STRAIGHT LINE LIST VIEW */
-        <div className="space-y-2.5">
-          {filtered.map((item) => (
-            <StraightLineCurrentAffair
-              key={item.id}
-              item={item}
-              isExpanded={!!expandedIds[item.id]}
-              onToggle={() => toggleExpand(item.id)}
-            />
+        <div className="space-y-6">
+          {monthGroups.map((group) => (
+            <section key={group.key} className="space-y-2.5">
+              <MonthGroupHeader label={group.label} count={group.items.length} />
+              {group.items.map((item) => (
+                <StraightLineCurrentAffair
+                  key={item.id}
+                  item={item}
+                  isExpanded={!!expandedIds[item.id]}
+                  onToggle={() => toggleExpand(item.id)}
+                />
+              ))}
+            </section>
           ))}
         </div>
       ) : viewMode === 'threeInRow' ? (
         /* 3-IN-A-ROW CARD VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((item) => (
-            <CurrentAffairCard key={item.id} item={item} layout="threeInRow" />
+        <div className="space-y-7">
+          {monthGroups.map((group) => (
+            <section key={group.key} className="space-y-4">
+              <MonthGroupHeader label={group.label} count={group.items.length} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {group.items.map((item) => (
+                  <CurrentAffairCard key={item.id} item={item} layout="threeInRow" />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       ) : (
         /* GRID VIEW */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filtered.map((item) => (
-            <CurrentAffairCard key={item.id} item={item} layout="grid" />
+        <div className="space-y-7">
+          {monthGroups.map((group) => (
+            <section key={group.key} className="space-y-4">
+              <MonthGroupHeader label={group.label} count={group.items.length} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {group.items.map((item) => (
+                  <CurrentAffairCard key={item.id} item={item} layout="grid" />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
