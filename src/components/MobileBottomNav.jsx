@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   Home,
   Briefcase,
-  FileCheck2,
+  Newspaper,
   Award,
   GraduationCap
 } from 'lucide-react';
@@ -16,7 +16,7 @@ export default function MobileBottomNav() {
     { to: '/', label: t('navHome'), icon: Home, end: true },
     { to: '/jobs', label: t('navJobs'), icon: Briefcase },
     { to: '/mocks', label: 'Mock Tests', icon: GraduationCap },
-    { to: '/admit-cards', label: t('navAdmitCards'), icon: FileCheck2 },
+    { to: '/current-affairs', label: t('navCurrentAffairs'), icon: Newspaper },
     { to: '/results', label: t('navResults'), icon: Award },
   ];
 

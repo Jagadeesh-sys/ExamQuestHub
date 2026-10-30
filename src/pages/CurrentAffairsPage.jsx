@@ -41,6 +41,7 @@ export default function CurrentAffairsPage() {
           loading={loading}
           showViewToggle={true}
           initialViewMode="editorial"
+          mobileReels={true}
         />
       )}
 
