@@ -108,17 +108,17 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
   };
 
   return (
-    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-20">
+    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-32">
       <div className="p-4 space-y-4">
         {/* Top Header: Topic + Date + Share */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between sticky top-0 bg-white z-10 py-1">
           <div className="flex items-center gap-3">
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100 uppercase tracking-wide">
               {item.topic || 'General'}
             </span>
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
               <Calendar className="w-3 h-3" />
-              <span>Event Date: {item.eventDate || ''}</span>
+              <span>{item.eventDate || ''}</span>
             </div>
           </div>
           <button
@@ -136,13 +136,13 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
 
         {/* Verified Source Bar */}
         <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-[10px]">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 text-emerald-600 font-bold">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1 text-emerald-600 font-bold shrink-0">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Verified Source:</span>
+              <span>Verified:</span>
             </div>
-            <span className="text-slate-700 font-extrabold truncate max-w-[120px]">
-              {item.sourceName || 'Official Source'}
+            <span className="text-slate-700 font-extrabold truncate">
+              {item.sourceName || 'Official'}
             </span>
           </div>
           {item.sourceUrl && (
@@ -150,9 +150,9 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
               href={item.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-[#2468B4] font-bold flex items-center gap-0.5 hover:underline"
+              className="text-[#2468B4] font-bold flex items-center gap-0.5 hover:underline shrink-0 ml-2"
             >
-              <span>View Source</span>
+              <span>Source</span>
               <ExternalLink className="w-2.5 h-2.5" />
             </a>
           )}
@@ -185,24 +185,24 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
         )}
 
         {/* Action Buttons Overlay */}
-        <div className="fixed right-4 bottom-24 z-20 flex flex-col gap-3">
+        <div className="absolute right-4 bottom-8 z-20 flex flex-col gap-3">
           <button
             type="button"
             onClick={(e) => onToggleBookmark(item.id, e)}
-            className={`w-10 h-10 rounded-full shadow-lg border flex items-center justify-center transition-all scale-95 active:scale-105 ${
+            className={`w-11 h-11 rounded-full shadow-xl border flex items-center justify-center transition-all scale-95 active:scale-105 ${
               isBookmarked
                 ? 'bg-[#F2BE4F] border-[#F2BE4F] text-[#0B1F3A]'
                 : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:border-amber-200'
             }`}
           >
-            <Star className={`w-4.5 h-4.5 ${isBookmarked ? 'fill-[#0B1F3A]' : ''}`} />
+            <Star className={`w-5 h-5 ${isBookmarked ? 'fill-[#0B1F3A]' : ''}`} />
           </button>
           
           <Link
             to={`/current-affairs/${detailSlug}`}
-            className="w-10 h-10 rounded-full bg-[#12345A] text-white shadow-lg flex items-center justify-center hover:bg-[#0B1F3A] transition-all scale-95 active:scale-105"
+            className="w-11 h-11 rounded-full bg-[#12345A] text-white shadow-xl flex items-center justify-center hover:bg-[#0B1F3A] transition-all scale-95 active:scale-105"
           >
-            <ArrowRight className="w-4.5 h-4.5" />
+            <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </div>
@@ -228,6 +228,18 @@ export default function EditorialCurrentAffairsSection({
   );
   const [bookmarkedIds, setBookmarkedIds] = useState({});
   const [expandedIds, setExpandedIds] = useState({});
+
+  // Lock body scroll when in full-screen Reels mode
+  useEffect(() => {
+    if (viewMode === 'reels') {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [viewMode]);
 
   const topics = ['All', ...CURRENT_AFFAIR_TOPICS];
 
@@ -481,39 +493,51 @@ export default function EditorialCurrentAffairsSection({
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-[#0B1F3A] text-[#F2BE4F] flex items-center justify-center">
-                <Film className="w-4 h-4" />
-              </span>
+        <div className="fixed inset-0 z-[100] bg-white animate-in fade-in duration-200 lg:hidden">
+          {/* Top Bar Overlay */}
+          <div className="absolute top-0 inset-x-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between safe-area-pt">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-[#0B1F3A] text-[#F2BE4F] flex items-center justify-center shadow-sm">
+                <Film className="w-4.5 h-4.5" />
+              </div>
               <div className="leading-tight">
-                <p className="font-heading font-extrabold text-sm text-[#182B45]">Reels</p>
-                <p className="text-[10px] text-slate-500">Swipe up for the next story</p>
+                <p className="font-heading font-extrabold text-sm text-[#182B45]">News Reels</p>
+                <p className="text-[10px] text-slate-500 font-medium tracking-tight">Swipe up for more stories</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setViewMode('editorial')}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#12345A] bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-[#12345A] bg-[#EAF3FF] hover:bg-[#D5E8F3] transition-all cursor-pointer active:scale-95 shadow-xs border border-[#2468B4]/10"
             >
               Classic view
             </button>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="rounded-3xl border border-[#E3EAF2] bg-white p-10 text-center text-sm text-slate-500">
-              No current affairs match your filters yet.
+            <div className="h-full flex flex-col items-center justify-center p-10 text-center text-sm text-slate-500 space-y-4">
+              <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
+                <Search className="w-8 h-8 text-slate-300" />
+              </div>
+              <p>No current affairs match your filters yet.</p>
+              <button 
+                onClick={() => setSelectedTopic('All')}
+                className="text-[#2468B4] font-bold text-xs hover:underline"
+              >
+                Clear all filters
+              </button>
             </div>
           ) : (
-            <div className="h-[calc(100dvh-11rem)] min-h-[420px] max-h-[780px] snap-y snap-mandatory overflow-y-auto no-scrollbar overscroll-contain rounded-3xl shadow-sm">
+            <div className="h-full snap-y snap-mandatory overflow-y-auto no-scrollbar overscroll-contain">
+              <div className="h-16" /> {/* Spacer for top bar */}
               {filtered.map((item) => (
-                <ReelCard
-                  key={item.id}
-                  item={item}
-                  isBookmarked={!!bookmarkedIds[item.id]}
-                  onToggleBookmark={toggleBookmark}
-                />
+                <div key={item.id} className="h-full w-full snap-start snap-always">
+                  <ReelCard
+                    item={item}
+                    isBookmarked={!!bookmarkedIds[item.id]}
+                    onToggleBookmark={toggleBookmark}
+                  />
+                </div>
               ))}
             </div>
           )}
