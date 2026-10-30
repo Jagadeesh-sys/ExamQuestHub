@@ -300,7 +300,7 @@ export default function AdminPage() {
     try {
       parsed = JSON.parse(gkImportJson);
     } catch (e) {
-      setGkImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`] });
+      setGkImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`], duplicates: [] });
       return;
     }
 
@@ -310,12 +310,19 @@ export default function AdminPage() {
         ? parsed.questions
         : null;
     if (!items || items.length === 0) {
-      setGkImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of GK questions.'] });
+      setGkImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of GK questions.'], duplicates: [] });
       return;
     }
 
+    // Duplicate detection is based on the English question text, ignoring case and
+    // extra whitespace.
+    const normalizeText = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const dbText = new Set(questions.map((q) => normalizeText(q?.question?.en)).filter(Boolean));
+    const payloadText = new Set();
+
     setGkImportBusy(true);
     const errors = [];
+    const duplicates = [];
     let ok = 0;
 
     for (let i = 0; i < items.length; i += 1) {
@@ -338,6 +345,18 @@ export default function AdminPage() {
         continue;
       }
 
+      // Skip questions that already exist in Firestore, or repeat within this payload.
+      const key = normalizeText(item.question.en);
+      if (dbText.has(key)) {
+        duplicates.push(`${label} — already exists in the database`);
+        continue;
+      }
+      if (payloadText.has(key)) {
+        duplicates.push(`${label} — repeated earlier in this import`);
+        continue;
+      }
+      payloadText.add(key);
+
       try {
         const payload = {
           ...item,
@@ -358,11 +377,11 @@ export default function AdminPage() {
     }
 
     setGkImportBusy(false);
-    setGkImportSummary({ ok, failed: errors.length, errors });
+    setGkImportSummary({ ok, failed: errors.length, errors, duplicates });
 
     if (ok > 0) {
       await loadAllAdminData();
-      triggerToast(`Imported ${ok} GK question${ok === 1 ? '' : 's'}`);
+      triggerToast(`Imported ${ok} GK question${ok === 1 ? '' : 's'}${duplicates.length ? `, ${duplicates.length} duplicate skipped` : ''}`);
     }
   };
 
@@ -2440,6 +2459,10 @@ export default function AdminPage() {
               <p className="pt-1 text-slate-500">
                 If Telugu text is omitted, the English version is shown automatically.
               </p>
+              <p className="text-amber-700 pt-1">
+                Questions whose English text already exists in the database, or repeats within this payload, are
+                skipped and listed separately.
+              </p>
             </div>
 
             <textarea
@@ -2462,12 +2485,22 @@ export default function AdminPage() {
                 <p className="font-bold">
                   {gkImportSummary.ok} imported
                   {gkImportSummary.failed > 0 ? `, ${gkImportSummary.failed} failed` : ''}
+                  {gkImportSummary.duplicates?.length > 0 ? `, ${gkImportSummary.duplicates.length} duplicate skipped` : ''}
                 </p>
                 {gkImportSummary.errors.length > 0 && (
                   <ul className="space-y-0.5 max-h-40 overflow-y-auto font-mono text-[11px]">
                     {gkImportSummary.errors.map((msg, i) => (
                       <li key={i} className="break-words">
                         • {msg}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {gkImportSummary.duplicates?.length > 0 && (
+                  <ul className="space-y-0.5 max-h-32 overflow-y-auto font-mono text-[11px] text-amber-700">
+                    {gkImportSummary.duplicates.map((msg, i) => (
+                      <li key={i} className="break-words">
+                        ⚠ {msg}
                       </li>
                     ))}
                   </ul>
