@@ -226,7 +226,7 @@ export default function AdminPage() {
     try {
       parsed = JSON.parse(caImportJson);
     } catch (e) {
-      setCaImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`] });
+      setCaImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`], warnings: [] });
       return;
     }
 
@@ -238,12 +238,13 @@ export default function AdminPage() {
           ? parsed.articles
           : null;
     if (!items || items.length === 0) {
-      setCaImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of current affairs articles.'] });
+      setCaImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of current affairs articles.'], warnings: [] });
       return;
     }
 
     setCaImportBusy(true);
     const errors = [];
+    const warnings = [];
     let ok = 0;
 
     for (let i = 0; i < items.length; i += 1) {
@@ -255,13 +256,20 @@ export default function AdminPage() {
         continue;
       }
 
+      // `category` is accepted as an alias for `topic` so payloads carried over from the
+      // notifications importer still land in the right section instead of defaulting.
+      const rawTopic = item.topic ?? item.category ?? item.subject;
+      if (!rawTopic) {
+        warnings.push(`${label} — no topic given, defaulted to "National Affairs"`);
+      }
+
       try {
         // Normalize the topic so topic filters and badges line up with the manual form,
         // and fill the date fields the form would otherwise require.
         const today = new Date().toISOString().split('T')[0];
         const payload = {
           ...item,
-          topic: normalizeTopic(item.topic),
+          topic: normalizeTopic(rawTopic),
           eventDate: item.eventDate || today,
           publishedAt: item.publishedAt || today,
           status: item.status || 'Published'
@@ -277,7 +285,7 @@ export default function AdminPage() {
     }
 
     setCaImportBusy(false);
-    setCaImportSummary({ ok, failed: errors.length, errors });
+    setCaImportSummary({ ok, failed: errors.length, errors, warnings });
 
     if (ok > 0) {
       await loadAllAdminData();
@@ -2317,6 +2325,10 @@ export default function AdminPage() {
                 <code>Published</code> / <code>Draft</code>), <code>eventDate</code> (YYYY-MM-DD),{' '}
                 <code>examRelevance</code> (array)
               </p>
+              <p className="text-amber-700 pt-1">
+                Set <code>topic</code> on every article or it defaults to &quot;National Affairs&quot;.{' '}
+                <code>category</code> is also accepted as an alias.
+              </p>
               <p className="font-semibold text-slate-700 pt-1">Images</p>
               <p>
                 Add <code>imageUrl</code> (full https URL) per article. If omitted, a topic-based default image is used.
@@ -2352,6 +2364,15 @@ export default function AdminPage() {
                     {caImportSummary.errors.map((msg, i) => (
                       <li key={i} className="break-words">
                         • {msg}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {caImportSummary.warnings?.length > 0 && (
+                  <ul className="space-y-0.5 max-h-32 overflow-y-auto font-mono text-[11px] text-amber-700">
+                    {caImportSummary.warnings.map((msg, i) => (
+                      <li key={i} className="break-words">
+                        ⚠ {msg}
                       </li>
                     ))}
                   </ul>
