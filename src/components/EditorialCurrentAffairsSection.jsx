@@ -178,6 +178,17 @@ export default function EditorialCurrentAffairsSection({
     return Array.from(groups.values()).sort((a, b) => b.sortTime - a.sortTime);
   })();
 
+  // "Editor's Picks" always shows the two most recent articles, so the section
+  // refreshes on its own as new current affairs are published — nothing hardcoded.
+  const editorPicks = [...articles]
+    .filter((item) => item?.headline)
+    .sort((a, b) => {
+      const ta = new Date(`${a.eventDate}T00:00:00`).getTime();
+      const tb = new Date(`${b.eventDate}T00:00:00`).getTime();
+      return (Number.isNaN(tb) ? -Infinity : tb) - (Number.isNaN(ta) ? -Infinity : ta);
+    })
+    .slice(0, 2);
+
   return (
     <div className="space-y-6">
       
@@ -606,105 +617,114 @@ export default function EditorialCurrentAffairsSection({
               </div>
             </div>
 
-            {/* Editor's Picks (Two wide highlight cards matching bottom of image_1b19ce6e.png) */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <h3 className="font-heading font-extrabold text-xs sm:text-sm text-[#182B45]">
-                  Editor's Picks
-                </h3>
-                <Link
-                  to="/current-affairs"
-                  className="text-xs font-bold text-[#2468B4] hover:underline"
-                >
-                  View All &gt;
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Editor Pick 1: Navy rounded card */}
-                <div className="bg-[#0B1F3A] rounded-2xl p-4 sm:p-5 text-white flex flex-col justify-between relative overflow-hidden shadow-xs">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-[#F2BE4F] text-[10px] font-bold border border-[#F2BE4F]/30">
-                        Exam-Targeted Editorial Desk
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <h4 className="font-heading font-extrabold text-sm sm:text-base text-white leading-snug">
-                          Cabinet Approves Pradhan Mantri Viksit Gram Swaraj Yojana
-                        </h4>
-                      </div>
-                      <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 border-2 border-white/20">
-                        <img
-                          src="https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=600&q=80"
-                          alt="Cabinet meeting"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="text-[11px] text-slate-300 leading-relaxed">
-                      <strong className="text-white">SIMBEX-2026:</strong> The Union Cabinet approved the Pradhan Mantri Viksit Gram Swaraj Yojana as a Centrally Sponsored Scheme with ₹97,395 crore outlay, fostering saturation of grassroots amenities.
-                    </div>
-                  </div>
-
-                  <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>Oct 28, 2026 • Cabinet Communique</span>
-                    <Link to="/current-affairs" className="text-[#F2BE4F] font-bold hover:underline flex items-center gap-1">
-                      <span>Read Feature</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-
-                  <GoldenCornerFlourish />
+            {/* Editor's Picks — driven by the two newest articles in the database */}
+            {editorPicks.length > 0 && (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-heading font-extrabold text-xs sm:text-sm text-[#182B45]">
+                    Editor's Picks
+                  </h3>
+                  <Link
+                    to="/current-affairs"
+                    className="text-xs font-bold text-[#2468B4] hover:underline"
+                  >
+                    View All &gt;
+                  </Link>
                 </div>
 
-                {/* Editor Pick 2: Mint/Sky soft card */}
-                <div className="bg-[#F0F7FB] rounded-2xl p-4 sm:p-5 border border-[#D5E8F3] text-[#182B45] flex flex-col justify-between relative overflow-hidden shadow-xs">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                        Economy
-                      </span>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {editorPicks.map((item, index) => {
+                    const isNavy = index === 0;
+                    const headline = getLocalized(item.headline);
+                    const summary = getLocalized(item.summary);
+                    const detailSlug = item.slug || item.id;
 
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <h4 className="font-heading font-extrabold text-sm sm:text-base text-[#182B45] leading-snug">
-                          Cabinet Approves Pradhan Mantri Viksit Gram Swaraj Yojana
-                        </h4>
+                    return (
+                      <div
+                        key={item.id}
+                        className={
+                          isNavy
+                            ? 'bg-[#0B1F3A] rounded-2xl p-4 sm:p-5 text-white flex flex-col justify-between relative overflow-hidden shadow-xs'
+                            : 'bg-[#F0F7FB] rounded-2xl p-4 sm:p-5 border border-[#D5E8F3] text-[#182B45] flex flex-col justify-between relative overflow-hidden shadow-xs'
+                        }
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={
+                                isNavy
+                                  ? 'px-2.5 py-0.5 rounded-full bg-white/10 text-[#F2BE4F] text-[10px] font-bold border border-[#F2BE4F]/30'
+                                  : 'px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold'
+                              }
+                            >
+                              {item.topic || "Editor's Pick"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <Link
+                                to={`/current-affairs/${detailSlug}`}
+                                className={`font-heading font-extrabold text-sm sm:text-base leading-snug hover:underline ${
+                                  isNavy ? 'text-white' : 'text-[#182B45]'
+                                }`}
+                              >
+                                {headline}
+                              </Link>
+                            </div>
+                            <div
+                              className={`w-14 h-14 overflow-hidden shrink-0 ${
+                                isNavy ? 'rounded-full border-2 border-white/20' : 'rounded-xl border border-slate-200'
+                              }`}
+                            >
+                              <img
+                                src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=600&q=80'}
+                                alt={headline}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80';
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <p
+                            className={`text-[11px] leading-relaxed line-clamp-3 ${
+                              isNavy ? 'text-slate-300' : 'text-slate-600'
+                            }`}
+                          >
+                            {summary}
+                          </p>
+                        </div>
+
+                        <div
+                          className={`pt-3 mt-3 border-t flex items-center justify-between text-[11px] ${
+                            isNavy ? 'border-white/10 text-slate-400' : 'border-slate-200/60 text-slate-500'
+                          }`}
+                        >
+                          <span className="truncate">
+                            {item.eventDate || ''}
+                            {item.sourceName ? ` • ${item.sourceName}` : ''}
+                          </span>
+                          <Link
+                            to={`/current-affairs/${detailSlug}`}
+                            className={`font-bold hover:underline flex items-center gap-1 shrink-0 ${
+                              isNavy ? 'text-[#F2BE4F]' : 'text-[#2468B4]'
+                            }`}
+                          >
+                            <span>Read Feature</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+
+                        <GoldenCornerFlourish />
                       </div>
-                      <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-slate-200">
-                        <img
-                          src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80"
-                          alt="Rural development"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="text-[11px] text-slate-600 leading-relaxed">
-                      <strong className="text-slate-900">Pradhan Mantri Yojana:</strong> The Union Cabinet approved the rural infrastructure scheme comprising a central share of ₹64,499.48 crore and state share of ₹32,896.07 crore.
-                    </div>
-                  </div>
-
-                  <div className="pt-3 mt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
-                    <span>Oct 28, 2026 • Ministry of Finance</span>
-                    <Link to="/current-affairs" className="text-[#2468B4] font-bold hover:underline flex items-center gap-1">
-                      <span>Read Feature</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-
-                  <GoldenCornerFlourish />
+                    );
+                  })}
                 </div>
-
               </div>
-            </div>
-
+            )}
           </div>
 
         </div>
