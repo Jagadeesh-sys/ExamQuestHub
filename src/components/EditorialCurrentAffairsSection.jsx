@@ -7,7 +7,6 @@ import {
   Calendar,
   ExternalLink,
   ChevronRight,
-  ShieldCheck,
   Star,
   Sparkles,
   ArrowRight,
@@ -138,31 +137,7 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           {headline}
         </h2>
 
-        {/* Verified Source Bar - Below Headline */}
-        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-[10px]">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 text-emerald-600 font-bold shrink-0">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Verified:</span>
-            </div>
-            <span className="text-slate-700 font-extrabold truncate">
-              {item.sourceName || 'Press Information Bureau - BRICS Summit'}
-            </span>
-          </div>
-          {item.sourceUrl && (
-            <a
-              href={item.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[#2468B4] font-bold flex items-center gap-0.5 hover:underline shrink-0 ml-2"
-            >
-              <span>Source</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          )}
-        </div>
-
-        {/* Main Image - Below Verified */}
+        {/* Main Image - Below Headline */}
         <div className="relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/50 shadow-sm">
           <img
             src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
