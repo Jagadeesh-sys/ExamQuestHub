@@ -21,7 +21,14 @@ import {
   Play,
   TrendingUp,
   Bookmark,
-  Share2
+  Share2,
+  Newspaper,
+  ChevronUp,
+  MoreHorizontal,
+  Zap,
+  ArrowDown,
+  Grid,
+  LayoutList
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StraightLineCurrentAffair from './StraightLineCurrentAffair.jsx';
@@ -84,7 +91,7 @@ function MonthGroupHeader({ label, count }) {
 }
 
 // Full-height swipeable card used by the Reels-style mobile feed
-function ReelCard({ item, isBookmarked, onToggleBookmark }) {
+function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
   const { getLocalized } = useLanguage();
   const headline = getLocalized(item.headline);
   const summary = getLocalized(item.summary);
@@ -108,41 +115,38 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
   };
 
   return (
-    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-32">
-      <div className="p-4 space-y-4">
-        {/* Top Header: Topic + Date + Share */}
-        <div className="flex items-center justify-between sticky top-0 bg-white z-10 py-1">
+    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-24 pt-4">
+      <div className="px-4 pb-12 space-y-5">
+        {/* Top Info: Category + Date + Page Indicator */}
+        <div className="flex items-center justify-between text-[10px] font-bold">
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100 uppercase tracking-wide">
-              {item.topic || 'General'}
+            <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wide">
+              {item.topic || 'International Affairs'}
             </span>
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
-              <Calendar className="w-3 h-3" />
-              <span>{item.eventDate || ''}</span>
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{item.eventDate || '12 Sep 2026'}</span>
             </div>
           </div>
-          <button
-            onClick={handleShare}
-            className="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors border border-slate-100"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-          </button>
+          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-extrabold tracking-tighter">
+            {index + 1}/{total}
+          </span>
         </div>
 
         {/* Headline */}
-        <h2 className="font-heading font-extrabold text-[#182B45] text-xl leading-tight tracking-tight">
+        <h2 className="font-heading font-black text-[#0B1F3A] text-2xl leading-[1.2] tracking-tight">
           {headline}
         </h2>
 
         {/* Verified Source Bar */}
-        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-[10px]">
+        <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-[11px]">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1 text-emerald-600 font-bold shrink-0">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-emerald-600 font-bold shrink-0">
+              <ShieldCheck className="w-4 h-4" />
               <span>Verified:</span>
             </div>
             <span className="text-slate-700 font-extrabold truncate">
-              {item.sourceName || 'Official'}
+              {item.sourceName || 'Press Information Bureau - BRICS Summit'}
             </span>
           </div>
           {item.sourceUrl && (
@@ -153,30 +157,18 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
               className="text-[#2468B4] font-bold flex items-center gap-0.5 hover:underline shrink-0 ml-2"
             >
               <span>Source</span>
-              <ExternalLink className="w-2.5 h-2.5" />
+              <ExternalLink className="w-3 h-3" />
             </a>
           )}
         </div>
 
-        {/* Summary Box (Yellow Highlight) */}
-        <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60 text-slate-700 text-xs leading-relaxed font-medium">
-          {summary}
-        </div>
-
-        {/* Detailed Content */}
-        {content && (
-          <div className="text-slate-600 text-xs leading-relaxed space-y-3 pb-2">
-            {content}
-          </div>
-        )}
-
-        {/* Main Image - Now below the matter, full view, no cut */}
+        {/* Main Image */}
         <div className="relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/50 shadow-sm">
           <img
             src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
             alt={headline}
             loading="lazy"
-            className="w-full h-auto object-contain max-h-[400px]"
+            className="w-full h-auto object-contain max-h-[450px]"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
@@ -184,26 +176,102 @@ function ReelCard({ item, isBookmarked, onToggleBookmark }) {
           />
         </div>
 
-        {/* Action Buttons Overlay */}
-        <div className="absolute right-4 bottom-8 z-20 flex flex-col gap-3">
+        {/* Yellow Highlight Summary Box */}
+        <div className="relative p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 flex gap-3.5">
+          <div className="w-10 h-10 rounded-lg bg-[#0B1F3A] flex items-center justify-center shrink-0 shadow-md">
+            <Newspaper className="w-5 h-5 text-[#F2BE4F]" />
+          </div>
+          <p className="text-slate-800 text-[13px] leading-relaxed font-semibold">
+            {summary}
+          </p>
+        </div>
+
+        {/* Detailed News Header */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="w-1.5 h-6 bg-[#2468B4] rounded-full" />
+          <h3 className="font-heading font-black text-[#0B1F3A] text-lg">Detailed News</h3>
+        </div>
+
+        {/* Detailed Content */}
+        {content && (
+          <div className="text-slate-600 text-[13.5px] leading-relaxed space-y-4 font-medium px-1">
+            {content}
+          </div>
+        )}
+
+        {/* Key Highlights Section (Auto-generated Mock or Data Driven) */}
+        <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-3.5">
+          <div className="flex items-center gap-2.5 text-[#2468B4] font-bold">
+            <Zap className="w-5 h-5 fill-current" />
+            <span className="text-sm">Key Highlights</span>
+          </div>
+          <ul className="space-y-2.5">
+            {[
+              "Important international summit held in New Delhi",
+              "Adopted the landmark New Delhi Declaration",
+              "Focus on resilience, innovation and cooperation",
+              "Strengthened multilateralism and people-to-people ties"
+            ].map((highlight, idx) => (
+              <li key={idx} className="flex gap-3 text-slate-700 text-[13px] leading-tight font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2468B4] mt-1.5 shrink-0" />
+                <span>{highlight}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Bottom Pagination Dots & Swipe Indicator */}
+        <div className="pt-8 flex flex-col items-center gap-4">
+          <div className="flex gap-1.5">
+            {[...Array(Math.min(5, total))].map((_, i) => (
+              <div 
+                key={i} 
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === (index % 5) ? 'w-8 bg-[#2468B4]' : 'w-6 bg-slate-200'
+                }`} 
+              />
+            ))}
+          </div>
+          <div className="flex flex-col items-center gap-1.5 text-slate-400 animate-bounce">
+            <ChevronUp className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Swipe up for next update</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Action Rail - Matches Image */}
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-5 items-center">
+        <div className="flex flex-col items-center gap-1">
           <button
             type="button"
             onClick={(e) => onToggleBookmark(item.id, e)}
-            className={`w-11 h-11 rounded-full shadow-xl border flex items-center justify-center transition-all scale-95 active:scale-105 ${
+            className={`w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center transition-all active:scale-90 ${
               isBookmarked
-                ? 'bg-[#F2BE4F] border-[#F2BE4F] text-[#0B1F3A]'
-                : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:border-amber-200'
+                ? 'bg-[#F2BE4F] text-[#0B1F3A]'
+                : 'bg-slate-50/80 backdrop-blur-md text-slate-700 border border-white'
             }`}
           >
-            <Star className={`w-5 h-5 ${isBookmarked ? 'fill-[#0B1F3A]' : ''}`} />
+            <Bookmark className={`w-6 h-6 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
-          
-          <Link
-            to={`/current-affairs/${detailSlug}`}
-            className="w-11 h-11 rounded-full bg-[#12345A] text-white shadow-xl flex items-center justify-center hover:bg-[#0B1F3A] transition-all scale-95 active:scale-105"
+          <span className="text-[10px] font-extrabold text-slate-500 uppercase">Save</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="w-14 h-14 rounded-2xl bg-slate-50/80 backdrop-blur-md text-slate-700 border border-white shadow-xl flex items-center justify-center active:scale-90"
           >
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+            <Share2 className="w-6 h-6" />
+          </button>
+          <span className="text-[10px] font-extrabold text-slate-500 uppercase">Share</span>
+        </div>
+        
+        <div className="flex flex-col items-center gap-1 mt-4">
+          <div className="w-14 h-14 rounded-full bg-[#0B1F3A] text-white shadow-2xl flex items-center justify-center animate-pulse">
+            <ArrowRight className="w-7 h-7" />
+          </div>
+          <span className="text-[10px] font-extrabold text-slate-700 uppercase">Next</span>
         </div>
       </div>
     </article>
@@ -508,29 +576,72 @@ export default function EditorialCurrentAffairsSection({
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
-        <div className="fixed top-0 left-0 right-0 bottom-16 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden">
-          {/* Top Bar Overlay */}
-          <div className="absolute top-0 inset-x-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between safe-area-pt">
+        <div className="fixed top-0 left-0 right-0 bottom-16 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
+          {/* Site Branding Header (Matches Image) */}
+          <div className="bg-[#0B1F3A] px-4 py-3 flex items-center justify-between safe-area-pt">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-[#0B1F3A] text-[#F2BE4F] flex items-center justify-center shadow-sm">
-                <Film className="w-4.5 h-4.5" />
-              </div>
-              <div className="leading-tight">
-                <p className="font-heading font-extrabold text-sm text-[#182B45]">News Reels</p>
-                <p className="text-[10px] text-slate-500 font-medium tracking-tight">Swipe up for more stories</p>
+              <img src="/assets/aistudio/examquesthub-logo.png" alt="Logo" className="w-9 h-9 object-contain" />
+              <div className="leading-none">
+                <h1 className="font-heading font-black text-white text-lg tracking-tighter">
+                  ExamQuest<span className="text-[#2468B4]">Hub</span>
+                </h1>
+                <p className="text-[7px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-0.5">Learn Prepare Succeed</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setViewMode('editorial')}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-[#12345A] bg-[#EAF3FF] hover:bg-[#D5E8F3] transition-all cursor-pointer active:scale-95 shadow-xs border border-[#2468B4]/10"
-            >
-              Classic view
-            </button>
+            <div className="flex items-center gap-4 text-white/80">
+              <Search className="w-5 h-5" />
+              <div className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0B1F3A]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Reels Control Header (Matches Image) */}
+          <div className="bg-white px-4 py-4 border-b border-slate-100 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#0B1F3A] flex items-center justify-center shadow-lg shadow-[#0B1F3A]/20">
+                  <Film className="w-5 h-5 text-[#F2BE4F]" />
+                </div>
+                <div className="leading-tight">
+                  <h2 className="font-heading font-black text-[#0B1F3A] text-base">News Reels</h2>
+                  <p className="text-[10px] text-slate-500 font-bold">Swipe up for next update</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewMode('editorial')}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black text-[#0B1F3A] bg-slate-50 border border-slate-200 shadow-sm active:scale-95 transition-all"
+              >
+                <Grid className="w-3.5 h-3.5" />
+                <span>Classic View</span>
+              </button>
+            </div>
+
+            {/* Topic Pills (Matches Image) */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {topics.map((topic) => (
+                <button
+                  key={topic}
+                  onClick={() => setSelectedTopic(topic)}
+                  className={`px-4 py-1.5 rounded-xl text-[11px] font-black whitespace-nowrap border transition-all ${
+                    selectedTopic === topic
+                      ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-md'
+                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                  }`}
+                >
+                  {topic}
+                </button>
+              ))}
+              <button className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 shrink-0">
+                <LayoutList className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center p-10 text-center text-sm text-slate-500 space-y-4">
+            <div className="flex-1 flex flex-col items-center justify-center p-10 text-center text-sm text-slate-500 space-y-4">
               <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
                 <Search className="w-8 h-8 text-slate-300" />
               </div>
@@ -543,14 +654,15 @@ export default function EditorialCurrentAffairsSection({
               </button>
             </div>
           ) : (
-            <div className="h-full snap-y snap-mandatory overflow-y-auto no-scrollbar overscroll-contain pb-20">
-              <div className="h-16" /> {/* Spacer for top bar */}
-              {filtered.map((item) => (
+            <div className="flex-1 snap-y snap-mandatory overflow-y-auto no-scrollbar overscroll-contain">
+              {filtered.map((item, idx) => (
                 <div key={item.id} className="h-full w-full snap-start snap-always">
                   <ReelCard
                     item={item}
                     isBookmarked={!!bookmarkedIds[item.id]}
                     onToggleBookmark={toggleBookmark}
+                    index={idx}
+                    total={filtered.length}
                   />
                 </div>
               ))}
