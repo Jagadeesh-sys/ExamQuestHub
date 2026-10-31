@@ -218,19 +218,48 @@ function renderArticleBody(article, siteUrl) {
     .join('\n');
 }
 
-function renderStaticBody(page) {
-  const links = STATIC_PAGES.filter((other) => !other.noindex && other.path !== page.path)
+// Which records belong on which hub page. Hub pages link to their own detail
+// pages so crawlers that do not execute JavaScript can still discover them.
+const HUB_COLLECTIONS = {
+  '/jobs': (jobs) => jobs.filter((item) => !item.type || item.type === 'job'),
+  '/admit-cards': (jobs) => jobs.filter((item) => item.type === 'admit-card'),
+  '/results': (jobs) => jobs.filter((item) => item.type === 'result'),
+  '/current-affairs': (_jobs, articles) => articles
+};
+
+const MAX_COLLECTION_LINKS = 200;
+
+function renderStaticBody(page, jobs = [], articles = []) {
+  const hubLinks = STATIC_PAGES.filter((other) => !other.noindex && other.path !== page.path)
     .map((other) => `<li><a href="${other.path}">${escapeHtml(other.title || other.h1)}</a></li>`)
     .join('\n');
+
+  const select = HUB_COLLECTIONS[page.path];
+  const isArticleHub = page.path === '/current-affairs';
+  const itemLinks = select
+    ? select(jobs, articles)
+        .slice(0, MAX_COLLECTION_LINKS)
+        .map((item) => {
+          const href = isArticleHub
+            ? `/current-affairs/${item.slug || item.id}`
+            : `/jobs/${item.slug || item.id}`;
+          const label = isArticleHub ? pickLocalized(item.headline) : pickLocalized(item.title);
+          return `<li><a href="${escapeHtml(href)}">${escapeHtml(label)}</a></li>`;
+        })
+        .join('\n')
+    : '';
 
   return [
     '<main>',
     `<h1>${escapeHtml(page.h1 || page.title)}</h1>`,
     `<p>${escapeHtml(page.description)}</p>`,
+    itemLinks ? `<h2>Latest updates</h2>\n<ul>\n${itemLinks}\n</ul>` : '',
     '<h2>Explore ExamQuestHub</h2>',
-    `<ul>\n${links}\n</ul>`,
+    `<ul>\n${hubLinks}\n</ul>`,
     '</main>'
-  ].join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 /* ------------------------------ Page output ------------------------------ */
@@ -303,27 +332,7 @@ async function main() {
     priority: page.priority
   }));
 
-  // Prerender every static route as its own file. This matters because the SPA
-  // fallback serves dist/index.html, whose canonical points at "/" — without a
-  // per-route file, hub URLs like /jobs would be reported as duplicates of the
-  // homepage by search engines.
-  for (const page of STATIC_PAGES) {
-    const head = buildSeoHead({
-      siteUrl,
-      path: page.path,
-      title: page.title,
-      description: page.description,
-      noindex: page.noindex,
-      jsonLd:
-        page.path === '/'
-          ? [buildWebSiteSchema(siteUrl), buildOrganizationSchema(siteUrl)]
-          : []
-    });
-    const fileName =
-      page.path === '/' ? 'index.html' : `${page.path.replace(/^\//, '')}.html`;
-    await writeDistFile(fileName, buildPageHtml(template, head, renderStaticBody(page)));
-  }
-
+  // Firestore is queried first so hub pages can link to their own detail pages.
   let jobs = [];
   let articles = [];
 
@@ -343,6 +352,30 @@ async function main() {
     console.log(`[seo] Loaded ${jobs.length} notifications and ${articles.length} articles.`);
   } catch (err) {
     console.warn(`[seo] Skipping page prerender (${err.message})`);
+  }
+
+  // Prerender every static route as its own file. This matters because the SPA
+  // fallback serves dist/index.html, whose canonical points at "/" — without a
+  // per-route file, hub URLs like /jobs would be reported as duplicates of the
+  // homepage by search engines.
+  for (const page of STATIC_PAGES) {
+    const head = buildSeoHead({
+      siteUrl,
+      path: page.path,
+      title: page.title,
+      description: page.description,
+      noindex: page.noindex,
+      jsonLd:
+        page.path === '/'
+          ? [buildWebSiteSchema(siteUrl), buildOrganizationSchema(siteUrl)]
+          : []
+    });
+    const fileName =
+      page.path === '/' ? 'index.html' : `${page.path.replace(/^\//, '')}.html`;
+    await writeDistFile(
+      fileName,
+      buildPageHtml(template, head, renderStaticBody(page, jobs, articles))
+    );
   }
 
   for (const job of jobs) {
