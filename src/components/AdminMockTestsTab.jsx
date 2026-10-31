@@ -611,8 +611,8 @@ export default function AdminMockTestsTab({ onNotify }) {
 
       {/* Add / edit modal */}
       {formOpen && draft && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 my-6">
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 my-6 max-h-[calc(100dvh-3rem)] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-heading font-extrabold text-base text-[#182B45]">
@@ -945,8 +945,8 @@ export default function AdminMockTestsTab({ onNotify }) {
 
       {/* Bulk import modal */}
       {bulkOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 my-6">
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 my-6 max-h-[calc(100dvh-3rem)] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-2">
