@@ -8,7 +8,8 @@ import {
   BadgeCheck,
   AlertTriangle,
   X,
-  Save
+  Save,
+  Upload
 } from 'lucide-react';
 import {
   deleteMockQuestion,
@@ -27,9 +28,47 @@ import {
   findDuplicateQuestion,
   getSubjectName,
   getSubjectsForCategory,
+  normalizeQuestionText,
   normalizeQuestionType,
   validateMockQuestion
 } from '../constants/mockTaxonomy.js';
+
+/** Resolves a loose category value (id, name or short name) to a taxonomy category. */
+function matchCategory(value) {
+  const key = String(value || '').trim().toLowerCase();
+  if (!key) return null;
+
+  return (
+    MOCK_CATEGORIES.find((category) => category.id.toLowerCase() === key) ||
+    MOCK_CATEGORIES.find((category) => category.name.toLowerCase() === key) ||
+    MOCK_CATEGORIES.find((category) => category.shortName.toLowerCase() === key) ||
+    null
+  );
+}
+
+/** Resolves a loose subject value (id or name) inside a category. */
+function matchSubject(categoryId, value) {
+  const key = String(value || '').trim().toLowerCase();
+  if (!key) return null;
+
+  const subjects = getSubjectsForCategory(categoryId);
+  return (
+    subjects.find((subject) => subject.id.toLowerCase() === key) ||
+    subjects.find((subject) => subject.name.toLowerCase() === key) ||
+    null
+  );
+}
+
+/**
+ * Decides which bank an uploaded question belongs to.
+ * A question only ever reaches the previous-year bank when it is explicitly
+ * flagged as a PYQ; everything else stays in the important/practice banks.
+ */
+function detectQuestionType(item) {
+  if (item?.isPyq === true) return 'PYQ';
+  const raw = item?.questionType || item?.type || '';
+  return normalizeQuestionType(raw);
+}
 
 function createEmptyQuestion(categoryId = MOCK_CATEGORIES[0].id) {
   return {
@@ -77,6 +116,11 @@ export default function AdminMockTestsTab({ onNotify }) {
   const [formErrors, setFormErrors] = useState([]);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkJson, setBulkJson] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkSummary, setBulkSummary] = useState(null);
 
   const loadQuestions = async () => {
     setLoading(true);
@@ -209,6 +253,180 @@ export default function AdminMockTestsTab({ onNotify }) {
     setDeleteTarget(null);
   };
 
+  const openBulk = () => {
+    setBulkJson('');
+    setBulkSummary(null);
+    setBulkOpen(true);
+  };
+
+  /**
+   * Bulk JSON import with automatic bank separation.
+   *
+   * Each uploaded question is classified on its own: a question is routed to the
+   * Previous Year bank only when it is explicitly flagged as a PYQ (and then it
+   * must carry an exam name, year and — to be marked verified — a source).
+   * Every other question goes to the Important or Practice bank with no
+   * examination attribution, exactly as `handleSave` enforces.
+   */
+  const handleBulkImport = async () => {
+    setBulkSummary(null);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(bulkJson);
+    } catch (err) {
+      setBulkSummary({
+        ok: 0,
+        failed: 0,
+        byType: { PYQ: 0, IMPORTANT: 0, PRACTICE: 0 },
+        errors: [`Invalid JSON: ${err.message}`],
+        duplicates: []
+      });
+      return;
+    }
+
+    const items = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.questions)
+        ? parsed.questions
+        : null;
+
+    if (!items || items.length === 0) {
+      setBulkSummary({
+        ok: 0,
+        failed: 0,
+        byType: { PYQ: 0, IMPORTANT: 0, PRACTICE: 0 },
+        errors: ['Provide a JSON array of questions, or an object shaped { "questions": [ ... ] }.'],
+        duplicates: []
+      });
+      return;
+    }
+
+    setBulkBusy(true);
+
+    const errors = [];
+    const duplicates = [];
+    const byType = { PYQ: 0, IMPORTANT: 0, PRACTICE: 0 };
+    const dbKeys = new Set(
+      questions.map(
+        (q) =>
+          `${q.categoryId}::${q.subjectId}::${normalizeQuestionText(q.question?.en)}`
+      )
+    );
+    const payloadKeys = new Set();
+    let ok = 0;
+
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i] || {};
+      const label = item?.question?.en || item?.id || `item ${i + 1}`;
+
+      const category = matchCategory(item.categoryId || item.category);
+      if (!category) {
+        errors.push(
+          `${label} — unknown category "${item.categoryId || item.category || ''}". Use one of: ${MOCK_CATEGORIES.map((c) => c.id).join(', ')}.`
+        );
+        continue;
+      }
+
+      const subject = matchSubject(category.id, item.subjectId || item.subject);
+      if (!subject) {
+        errors.push(
+          `${label} — unknown subject "${item.subjectId || item.subject || ''}" under ${category.name}.`
+        );
+        continue;
+      }
+
+      const type = detectQuestionType(item);
+      const enOptions = Array.isArray(item.options?.en) ? item.options.en : [];
+      const teOptions = Array.isArray(item.options?.te) ? item.options.te : [];
+
+      let correctAnswer = item.correctAnswer;
+      if (typeof correctAnswer === 'string') {
+        const letter = correctAnswer.trim().toUpperCase();
+        correctAnswer = /^[A-D]$/.test(letter)
+          ? letter.charCodeAt(0) - 65
+          : parseInt(correctAnswer, 10);
+      }
+
+      const teluguPresent = Boolean(
+        String(item.question?.te || '').trim() ||
+          teOptions.some((option) => String(option || '').trim()) ||
+          String(item.explanation?.te || '').trim()
+      );
+
+      const candidate = {
+        categoryId: category.id,
+        subjectId: subject.id,
+        questionType: type,
+        difficulty: MOCK_DIFFICULTY_LEVELS.includes(item.difficulty) ? item.difficulty : 'Medium',
+        examName: type === 'PYQ' ? String(item.examName || '').trim() : '',
+        examYear:
+          type === 'PYQ' ? String(item.examYear || '').replace(/[^0-9]/g, '').slice(0, 4) : '',
+        source: type === 'PYQ' ? String(item.source || '').trim() : '',
+        verificationStatus:
+          type === 'PYQ' &&
+          String(item.verificationStatus || '').toUpperCase() === MOCK_VERIFICATION.VERIFIED
+            ? MOCK_VERIFICATION.VERIFIED
+            : MOCK_VERIFICATION.UNVERIFIED,
+        question: {
+          en: String(item.question?.en || '').trim(),
+          te: String(item.question?.te || '').trim()
+        },
+        options: {
+          en: enOptions.slice(0, 4).map((option) => String(option || '').trim()),
+          te: [0, 1, 2, 3].map((idx) => String(teOptions[idx] || '').trim())
+        },
+        correctAnswer: Number.isInteger(correctAnswer) ? correctAnswer : -1,
+        explanation: {
+          en: String(item.explanation?.en || '').trim(),
+          te: String(item.explanation?.te || '').trim()
+        },
+        language: teluguPresent ? 'en+te' : 'en',
+        paperUrl: item.paperUrl || '',
+        paperFileName: item.paperFileName || '',
+        paperFileSize: item.paperFileSize || ''
+      };
+
+      const validationErrors = validateMockQuestion(candidate);
+      if (validationErrors.length > 0) {
+        errors.push(`${label} — ${validationErrors.join(' ')}`);
+        continue;
+      }
+
+      const key = `${category.id}::${subject.id}::${normalizeQuestionText(candidate.question.en)}`;
+      if (dbKeys.has(key)) {
+        duplicates.push(`${label} — already exists in the database`);
+        continue;
+      }
+      if (payloadKeys.has(key)) {
+        duplicates.push(`${label} — repeated earlier in this import`);
+        continue;
+      }
+      payloadKeys.add(key);
+
+      try {
+        // Sequential on purpose: surfaces the first real Firestore error
+        // (e.g. permission-denied) instead of firing N failing writes at once.
+        // eslint-disable-next-line no-await-in-loop
+        await saveMockQuestion(candidate);
+        ok += 1;
+        byType[type] += 1;
+      } catch (err) {
+        errors.push(`${label} — ${err.message}`);
+      }
+    }
+
+    setBulkBusy(false);
+    setBulkSummary({ ok, failed: errors.length, byType, errors, duplicates });
+
+    if (ok > 0) {
+      await loadQuestions();
+      onNotify?.(
+        `Imported ${ok} question${ok === 1 ? '' : 's'} — ${byType.PYQ} to Previous Year, ${byType.IMPORTANT} to Most Important, ${byType.PRACTICE} to Practice.`
+      );
+    }
+  };
+
   const isPyq = normalizeQuestionType(draft?.questionType) === 'PYQ';
 
   return (
@@ -224,14 +442,25 @@ export default function AdminMockTestsTab({ onNotify }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Question</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={openBulk}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-[#C9D8E8] hover:bg-[#F6F8FC] text-[#12345A] text-xs font-bold rounded-xl transition-colors cursor-pointer"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Bulk Import</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Question</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -710,6 +939,170 @@ export default function AdminMockTestsTab({ onNotify }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk import modal */}
+      {bulkOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 my-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-[#2468B4]" />
+                  Bulk Import Mock Questions
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Every question is filed into its own bank automatically — nothing is queued for
+                  manual sorting.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBulkOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#EAF3FF]/60 border border-[#2468B4]/20 text-[11px] space-y-1.5">
+              <p className="font-bold text-[#12345A]">Automatic bank routing</p>
+              <p className="text-slate-600 leading-relaxed">
+                <span className="font-semibold text-[#12345A]">Previous Year bank</span> — only
+                questions explicitly flagged as a PYQ (<code>questionType: "PYQ"</code> or{' '}
+                <code>isPyq: true</code>). These must carry <code>examName</code> and{' '}
+                <code>examYear</code>, plus a <code>source</code> before they can be marked{' '}
+                <code>VERIFIED</code>.
+              </p>
+              <p className="text-slate-600 leading-relaxed">
+                <span className="font-semibold text-[#9A3412]">Most Important bank</span> —{' '}
+                <code>questionType: "IMPORTANT"</code>. Syllabus-mapped, no exam attribution.
+              </p>
+              <p className="text-slate-600 leading-relaxed">
+                <span className="font-semibold text-[#065F46]">Practice bank</span> — anything else
+                (<code>questionType: "PRACTICE"</code> or omitted). Never presented as a previous
+                year question.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#F6F8FC] border border-[#E3EAF2] text-[11px] text-slate-600 space-y-1">
+              <p className="font-bold text-[#12345A]">Field reference</p>
+              <p>
+                <span className="text-red-600">Required:</span> categoryId, subjectId, question.en,
+                options.en (exactly 4), correctAnswer (0-3 or "A"-"D"), explanation.en
+              </p>
+              <p>
+                <span className="text-amber-600">PYQ only:</span> examName, examYear, source (source
+                needed only when verificationStatus is "VERIFIED")
+              </p>
+              <p>
+                <span className="text-slate-500">Optional:</span> difficulty (Easy/Medium/Hard),
+                question.te, options.te, explanation.te, paperUrl, paperFileName
+              </p>
+              <p className="text-slate-500">
+                Valid categoryIds: {MOCK_CATEGORIES.map((c) => c.id).join(', ')}
+              </p>
+            </div>
+
+            <textarea
+              rows={12}
+              spellCheck={false}
+              value={bulkJson}
+              onChange={(e) => setBulkJson(e.target.value)}
+              placeholder={`[
+  {
+    "categoryId": "gk",
+    "subjectId": "indian-polity",
+    "questionType": "PYQ",
+    "difficulty": "Medium",
+    "examName": "SSC CGL",
+    "examYear": "2023",
+    "source": "SSC CGL 2023 Tier-I official paper, Q.42",
+    "verificationStatus": "VERIFIED",
+    "question": { "en": "Which Article of the Constitution guarantees equality before the law?" },
+    "options": { "en": ["Article 12", "Article 14", "Article 19", "Article 21"] },
+    "correctAnswer": 1,
+    "explanation": { "en": "Article 14 guarantees equality before the law and equal protection of the laws." }
+  },
+  {
+    "categoryId": "gk",
+    "subjectId": "indian-polity",
+    "questionType": "PRACTICE",
+    "difficulty": "Easy",
+    "question": { "en": "The Preamble of the Constitution declares India a ..." },
+    "options": { "en": ["Monarchy", "Sovereign Democratic Republic", "Military state", "Unitary state"] },
+    "correctAnswer": "B",
+    "explanation": { "en": "The Preamble declares India a Sovereign, Socialist, Secular, Democratic Republic." }
+  }
+]`}
+              className="w-full p-3 font-mono text-[11px] bg-[#F6F8FC] border rounded-2xl focus:bg-white"
+            />
+
+            {bulkSummary && (
+              <div className="space-y-2 text-[11px]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                    <p className="font-bold text-emerald-800 text-sm">{bulkSummary.ok}</p>
+                    <p className="text-emerald-700">Imported</p>
+                  </div>
+                  <div className="p-2 rounded-xl bg-[#EAF3FF] border border-[#2468B4]/20 text-center">
+                    <p className="font-bold text-[#12345A] text-sm">{bulkSummary.byType.PYQ}</p>
+                    <p className="text-[#12345A]">Previous Year</p>
+                  </div>
+                  <div className="p-2 rounded-xl bg-[#FDF0E6] border border-[#EA580C]/20 text-center">
+                    <p className="font-bold text-[#9A3412] text-sm">{bulkSummary.byType.IMPORTANT}</p>
+                    <p className="text-[#9A3412]">Most Important</p>
+                  </div>
+                  <div className="p-2 rounded-xl bg-[#E7F7ED] border border-[#047857]/20 text-center">
+                    <p className="font-bold text-[#065F46] text-sm">{bulkSummary.byType.PRACTICE}</p>
+                    <p className="text-[#065F46]">Practice</p>
+                  </div>
+                </div>
+
+                {(bulkSummary.errors.length > 0 || bulkSummary.duplicates.length > 0) && (
+                  <div className="max-h-52 overflow-y-auto p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 space-y-1">
+                    {bulkSummary.duplicates.map((message) => (
+                      <p key={`dup-${message}`} className="flex items-start gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px text-amber-500" />
+                        <span>{message}</span>
+                      </p>
+                    ))}
+                    {bulkSummary.errors.map((message) => (
+                      <p key={`err-${message}`} className="flex items-start gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
+                        <span>{message}</span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setBulkOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkImport}
+                disabled={bulkBusy || !bulkJson.trim()}
+                className="px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-semibold disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {bulkBusy ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5" />
+                )}
+                <span>{bulkBusy ? 'Importing to Firestore...' : 'Import Questions'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
