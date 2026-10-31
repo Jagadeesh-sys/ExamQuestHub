@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import MobileBottomNav from './components/MobileBottomNav.jsx';
+import RouteSeo from './components/RouteSeo.jsx';
 
 import HomePage from './pages/HomePage.jsx';
 
@@ -58,6 +59,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <RouteSeo />
           <div className="min-h-screen flex flex-col bg-[#F6F8FC] text-[#182B45] selection:bg-[#EAF3FF] selection:text-[#12345A] overflow-x-hidden w-full">
             <Header />
             <main className="flex-1 pb-16 lg:pb-0">

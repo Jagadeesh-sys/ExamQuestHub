@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getCurrentAffairById } from '../firebase/firestoreService.js';
+import useSeo from '../hooks/useSeo.js';
+import { buildArticlePageSeo, buildNotFoundSeo, getOrigin } from '../utils/seo.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 
@@ -39,6 +41,14 @@ export default function CurrentAffairDetailPage() {
     }
     loadItem();
   }, [id]);
+
+  useSeo(
+    article
+      ? buildArticlePageSeo(article, getOrigin())
+      : loading
+        ? null
+        : buildNotFoundSeo(`/current-affairs/${id}`, 'Article Not Found')
+  );
 
   const handleCopy = () => {
     navigator.clipboard.writeText(window.location.href);

@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getUpdateById, getUpdates } from '../firebase/firestoreService.js';
+import useSeo from '../hooks/useSeo.js';
+import { buildJobPageSeo, buildNotFoundSeo, getOrigin } from '../utils/seo.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
@@ -55,6 +57,14 @@ export default function JobDetailPage() {
     }
     loadDetail();
   }, [slug]);
+
+  useSeo(
+    job
+      ? buildJobPageSeo(job, getOrigin())
+      : loading
+        ? null
+        : buildNotFoundSeo(`/jobs/${slug}`, 'Notification Not Found')
+  );
 
   const handleShare = () => {
     if (navigator.share) {
