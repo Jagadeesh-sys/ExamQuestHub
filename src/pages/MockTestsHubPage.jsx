@@ -1,34 +1,57 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  FileCheck2,
   Sparkles,
   BookOpen,
-  Filter,
   CheckCircle2,
-  Clock,
-  Award,
   Search,
-  ExternalLink,
   ChevronRight,
   ShieldCheck,
-  FileText,
   Columns3,
   List,
-  LayoutGrid
+  LayoutGrid,
+  Layers
 } from 'lucide-react';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import MockTestCard from '../components/MockTestCard.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { getMockQuestions } from '../firebase/firestoreService.js';
+import { MOCK_CATEGORIES, MOCK_TEST_TYPES, countQuestionsBySubject } from '../constants/mockTaxonomy.js';
 
 export default function MockTestsHubPage() {
   const { t } = useLanguage();
-  const navigate = useNavigate();
 
   const [selectedMonth, setSelectedMonth] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('threeInRow'); // 'threeInRow' | 'singleAlign' | 'grid'
+
+  const [questions, setQuestions] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const data = await getMockQuestions();
+      if (active) setQuestions(data);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const subjectCounts = useMemo(() => countQuestionsBySubject(questions), [questions]);
+
+  const categoryStats = useMemo(() => {
+    return MOCK_CATEGORIES.map((category) => {
+      let total = 0;
+      category.subjects.forEach((subject) => {
+        total += subjectCounts[`${category.id}::${subject.id}`]?.total || 0;
+      });
+      return { category, total };
+    });
+  }, [subjectCounts]);
+
+  const totalSubjectQuestions = questions.length;
 
   const months = ['All', 'January 2026', 'December 2025', 'November 2025', 'October 2025'];
 
@@ -46,7 +69,7 @@ export default function MockTestsHubPage() {
     });
   }, [selectedMonth, searchQuery]);
 
-  // Overall statistics
+  // Overall statistics for the monthly Current Affairs compilations
   const totalQuestions = MOCK_TESTS_METADATA.reduce((acc, m) => acc + m.questionsCount, 0);
 
   return (
@@ -67,185 +90,272 @@ export default function MockTestsHubPage() {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#F2BE4F] text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Official PDF-Grounded Test Series</span>
+            <span>Previous Year · Most Important · Practice</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-            Current Affairs <span className="text-[#F2BE4F]">Mock Tests & CBT Hub</span>
+            Mock Tests & <span className="text-[#F2BE4F]">CBT Hub</span>
           </h1>
 
           <p className="text-slate-200 text-sm sm:text-base leading-relaxed">
-            Practice realistic online computer-based tests (CBT) compiled from verified
-            monthly Current Affairs compilations (Jan 2026, Dec 2025, Nov 2025 & Oct 2025).
-            Equipped with instant practice mode, detailed explanations, and authentic PDF downloads.
+            Pick a category and subject to attempt Previous Year Questions from genuine
+            government examination papers, syllabus-mapped Most Important Questions and
+            syllabus-based Practice Questions — all in a realistic computer-based test interface.
           </p>
 
           {/* Quick Stats Counter */}
           <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
               <div className="text-2xl sm:text-3xl font-black text-[#F2BE4F]">
-                {totalQuestions}+
+                {MOCK_CATEGORIES.length}
               </div>
-              <div className="text-[11px] text-slate-300 font-medium">Verified MCQs</div>
+              <div className="text-[11px] text-slate-300 font-medium">Exam Categories</div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-white">6</div>
-              <div className="text-[11px] text-slate-300 font-medium">Full & Mini Mocks</div>
+              <div className="text-2xl sm:text-3xl font-black text-white">3</div>
+              <div className="text-[11px] text-slate-300 font-medium">Test Types per Subject</div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-emerald-400">100%</div>
-              <div className="text-[11px] text-slate-300 font-medium">Verified Solutions</div>
+              <div className="text-2xl sm:text-3xl font-black text-emerald-400">
+                {totalSubjectQuestions}
+              </div>
+              <div className="text-[11px] text-slate-300 font-medium">Subject-wise Questions</div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-sky-400">4 PDFs</div>
-              <div className="text-[11px] text-slate-300 font-medium">Authentic Files</div>
+              <div className="text-2xl sm:text-3xl font-black text-sky-400">
+                {MOCK_TESTS_METADATA.length}
+              </div>
+              <div className="text-[11px] text-slate-300 font-medium">Current Affairs Mocks</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-[#E3EAF2] shadow-xs">
-        {/* Month Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {months.map((m) => (
-            <button
-              key={m}
-              onClick={() => setSelectedMonth(m)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                selectedMonth === m
-                  ? 'bg-[#12345A] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              {m}
-            </button>
-          ))}
+      {/* Subject-wise Test Series */}
+      <section className="space-y-5">
+        <div className="flex items-center gap-2">
+          <Layers className="w-5 h-5 text-[#2468B4]" />
+          <h2 className="text-xl sm:text-2xl font-black text-[#12345A] tracking-tight">
+            Subject-wise Test Series
+          </h2>
         </div>
 
-        {/* Search Input */}
-        <div className="relative min-w-[240px]">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search mock test by month or title..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm bg-[#F6F8FC] border border-[#E3EAF2] rounded-full focus:outline-hidden focus:border-[#2468B4] focus:bg-white transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
-            >
-              ×
-            </button>
-          )}
-        </div>
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {categoryStats.map(({ category, total }) => {
+            const Icon = category.icon;
 
-      {/* Mock Cards Grid Matching UI Mockup */}
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            return (
+              <Link
+                key={category.id}
+                to={`/mocks/category/${category.id}`}
+                className="group bg-white rounded-3xl border border-[#E3EAF2] p-6 flex flex-col gap-4 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-[#2468B4]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${category.accent.chip}`}
+                  >
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                    {category.subjects.length} subjects
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-black text-[#12345A] tracking-tight leading-snug">
+                    {category.name}
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">{category.tagline}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {MOCK_TEST_TYPES.map((type) => (
+                    <span
+                      key={type.id}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${type.accent.chip}`}
+                    >
+                      {type.shortLabel}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {total > 0 ? `${total} questions available` : 'Questions coming soon'}
+                  </span>
+                  <span className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-[#12345A] group-hover:text-white text-slate-500 flex items-center justify-center transition-colors">
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Monthly Current Affairs Compilations */}
+      <section className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-[#2468B4]" />
             <h2 className="text-xl sm:text-2xl font-black text-[#12345A] tracking-tight">
-              Available Test Series
+              Monthly Current Affairs Mocks
             </h2>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A]">
-              {filteredMocks.length} Tests
+              {totalQuestions}+ MCQs
             </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Display Options: 3 in Row | Single Align | Grid */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
-              <button
-                type="button"
-                onClick={() => setViewMode('threeInRow')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  viewMode === 'threeInRow'
-                    ? 'bg-white text-[#12345A] shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-                title="Display 3 in a row"
-              >
-                <Columns3 className="w-3.5 h-3.5 text-[#2468B4]" />
-                <span>3 in Row</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setViewMode('singleAlign')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  viewMode === 'singleAlign'
-                    ? 'bg-white text-[#12345A] shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-                title="Display single align (stacked list)"
-              >
-                <List className="w-3.5 h-3.5 text-[#2468B4]" />
-                <span>Single Align</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-white text-[#12345A] shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-                title="Display grid cards"
-              >
-                <LayoutGrid className="w-3.5 h-3.5 text-[#2468B4]" />
-                <span>Grid</span>
-              </button>
-            </div>
           </div>
         </div>
 
-        {filteredMocks.length === 0 ? (
-          <div className="bg-white rounded-3xl p-10 text-center border border-[#E3EAF2] space-y-3">
-            <div className="w-12 h-12 rounded-full bg-[#EAF3FF] text-[#2468B4] flex items-center justify-center mx-auto">
-              <Search className="w-6 h-6" />
+        <p className="text-sm text-slate-600 leading-relaxed max-w-3xl">
+          Full-length CBTs compiled from verified monthly Current Affairs compilations
+          (Jan 2026, Dec 2025, Nov 2025 &amp; Oct 2025) — with instant practice mode, detailed
+          explanations and authentic PDF downloads.
+        </p>
+
+        {/* Filter and Search Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-[#E3EAF2] shadow-xs">
+          {/* Month Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            {months.map((m) => (
+              <button
+                key={m}
+                onClick={() => setSelectedMonth(m)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  selectedMonth === m
+                    ? 'bg-[#12345A] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Input */}
+          <div className="relative min-w-[240px]">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search mock test by month or title..."
+              className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm bg-[#F6F8FC] border border-[#E3EAF2] rounded-full focus:outline-hidden focus:border-[#2468B4] focus:bg-white transition"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Mock Cards Grid Matching UI Mockup */}
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg sm:text-xl font-black text-[#12345A] tracking-tight">
+                Available Test Series
+              </h3>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A]">
+                {filteredMocks.length} Tests
+              </span>
             </div>
-            <h3 className="text-lg font-bold text-slate-800">No mock tests match your filter</h3>
-            <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Try switching back to "All" months or clear your search keywords.
-            </p>
-            <button
-              onClick={() => {
-                setSelectedMonth('All');
-                setSearchQuery('');
-              }}
-              className="px-4 py-2 bg-[#12345A] text-white rounded-full text-xs font-bold hover:bg-[#0B1F3A]"
-            >
-              Reset Filters
-            </button>
+
+            <div className="flex items-center gap-3">
+              {/* Display Options: 3 in Row | Single Align | Grid */}
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('threeInRow')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    viewMode === 'threeInRow'
+                      ? 'bg-white text-[#12345A] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Display 3 in a row"
+                >
+                  <Columns3 className="w-3.5 h-3.5 text-[#2468B4]" />
+                  <span>3 in Row</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setViewMode('singleAlign')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    viewMode === 'singleAlign'
+                      ? 'bg-white text-[#12345A] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Display single align (stacked list)"
+                >
+                  <List className="w-3.5 h-3.5 text-[#2468B4]" />
+                  <span>Single Align</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-white text-[#12345A] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Display grid cards"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5 text-[#2468B4]" />
+                  <span>Grid</span>
+                </button>
+              </div>
+            </div>
           </div>
-        ) : viewMode === 'singleAlign' ? (
-          <div className="grid grid-cols-1 gap-4 max-w-3xl mx-auto">
-            {filteredMocks.map((mock) => (
-              <MockTestCard key={mock.id} mock={mock} />
-            ))}
-          </div>
-        ) : viewMode === 'threeInRow' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMocks.map((mock) => (
-              <MockTestCard key={mock.id} mock={mock} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {filteredMocks.map((mock) => (
-              <MockTestCard key={mock.id} mock={mock} />
-            ))}
-          </div>
-        )}
-      </div>
+
+          {filteredMocks.length === 0 ? (
+            <div className="bg-white rounded-3xl p-10 text-center border border-[#E3EAF2] space-y-3">
+              <div className="w-12 h-12 rounded-full bg-[#EAF3FF] text-[#2468B4] flex items-center justify-center mx-auto">
+                <Search className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800">No mock tests match your filter</h3>
+              <p className="text-sm text-slate-500 max-w-md mx-auto">
+                Try switching back to "All" months or clear your search keywords.
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedMonth('All');
+                  setSearchQuery('');
+                }}
+                className="px-4 py-2 bg-[#12345A] text-white rounded-full text-xs font-bold hover:bg-[#0B1F3A]"
+              >
+                Reset Filters
+              </button>
+            </div>
+          ) : viewMode === 'singleAlign' ? (
+            <div className="grid grid-cols-1 gap-4 max-w-3xl mx-auto">
+              {filteredMocks.map((mock) => (
+                <MockTestCard key={mock.id} mock={mock} />
+              ))}
+            </div>
+          ) : viewMode === 'threeInRow' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredMocks.map((mock) => (
+                <MockTestCard key={mock.id} mock={mock} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {filteredMocks.map((mock) => (
+                <MockTestCard key={mock.id} mock={mock} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Feature Guide & Instructions */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E3EAF2] space-y-6">
@@ -273,7 +383,7 @@ export default function MockTestsHubPage() {
             <h4 className="font-bold text-sm text-slate-900">Practice Mode</h4>
             <p className="text-xs text-slate-600 leading-relaxed">
               Self-paced learning mode. Selecting any option immediately reveals whether your
-              answer is correct, highlighting the right choice and unfolding the authentic explanation.
+              answer is correct, highlighting the right choice and unfolding the explanation.
             </p>
           </div>
 
@@ -281,12 +391,21 @@ export default function MockTestsHubPage() {
             <div className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
               3
             </div>
-            <h4 className="font-bold text-sm text-slate-900">Solutions & Compendiums</h4>
+            <h4 className="font-bold text-sm text-slate-900">Verified Sources</h4>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Review all questions with verified official rationales without taking the test. Download
-              original PDF compendiums directly using the top-right document button on each card.
+              Previous Year Questions display the examination name, year and a source reference,
+              and are marked verified only when a reliable source is recorded. Practice questions
+              are always labelled as practice, never as PYQs.
             </p>
           </div>
+        </div>
+
+        <div className="flex items-start gap-2.5 bg-[#EAF3FF]/70 border border-[#2468B4]/20 rounded-2xl p-4 text-xs text-[#12345A]">
+          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            Every question added from the admin console appears automatically in the correct
+            category and subject.
+          </p>
         </div>
       </div>
     </div>

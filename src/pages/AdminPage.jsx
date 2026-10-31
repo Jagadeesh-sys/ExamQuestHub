@@ -37,6 +37,7 @@ import {
   getQuestions,
   saveQuestion,
   deleteQuestion,
+  getMockQuestions,
   getResources,
   saveResource,
   deleteResource,
@@ -50,6 +51,7 @@ import FirebaseBanner from '../components/FirebaseBanner.jsx';
 import ImagePasteUploader from '../components/ImagePasteUploader.jsx';
 import DocumentFileUploader from '../components/DocumentFileUploader.jsx';
 import AdminDiagnosticsTab from '../components/AdminDiagnosticsTab.jsx';
+import AdminMockTestsTab from '../components/AdminMockTestsTab.jsx';
 import { CURRENT_AFFAIR_TOPICS, topicMatches, normalizeTopic } from '../constants/currentAffairs.js';
 
 export default function AdminPage() {
@@ -68,6 +70,7 @@ export default function AdminPage() {
   const [updates, setUpdates] = useState([]);
   const [currentAffairs, setCurrentAffairs] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [mockQuestions, setMockQuestions] = useState([]);
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -120,15 +123,17 @@ export default function AdminPage() {
   const loadAllAdminData = async () => {
     setLoading(true);
     try {
-      const [up, ca, gk, res] = await Promise.all([
+      const [up, ca, gk, mockGk, res] = await Promise.all([
         getUpdates(true), // include drafts
         getCurrentAffairs(true),
         getQuestions(),
+        getMockQuestions(),
         getResources()
       ]);
       setUpdates(up);
       setCurrentAffairs(ca);
       setQuestions(gk);
+      setMockQuestions(mockGk);
       setResources(res);
     } catch (e) {
       console.error('Error loading admin dataset:', e);
@@ -753,6 +758,17 @@ export default function AdminPage() {
         </button>
         <button
           type="button"
+          onClick={() => setActiveTab('mockTests')}
+          className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+            activeTab === 'mockTests'
+              ? 'bg-[#12345A] text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Mock Tests ({mockQuestions.length})
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab('resources')}
           className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
             activeTab === 'resources'
@@ -1359,7 +1375,19 @@ export default function AdminPage() {
       )}
 
       {/* -------------------------------------------------------------
-          TAB 4: STUDY RESOURCES & PREVIOUS PAPERS MANAGER
+          TAB 4: SUBJECT-WISE MOCK TEST QUESTIONS
+         ------------------------------------------------------------- */}
+      {activeTab === 'mockTests' && (
+        <AdminMockTestsTab
+          onNotify={(message, type) => {
+            triggerToast(message, type);
+            getMockQuestions().then(setMockQuestions);
+          }}
+        />
+      )}
+
+      {/* -------------------------------------------------------------
+          TAB 5: STUDY RESOURCES & PREVIOUS PAPERS MANAGER
          ------------------------------------------------------------- */}
       {activeTab === 'resources' && (
         <div className="bg-white rounded-3xl p-6 border border-[#E3EAF2] space-y-4">

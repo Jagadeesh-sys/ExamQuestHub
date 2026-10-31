@@ -119,6 +119,16 @@ export function resolveRouteMeta(pathname) {
   // Detail routes set their own metadata once their record has loaded.
   if (/^\/(jobs|current-affairs)\/[^/]+$/.test(pathname)) return null;
 
+  // Subject-wise browse routes: /mocks/category/:categoryId[/:subjectId]
+  if (/^\/mocks\/category\/[^/]+(\/[^/]+)?$/.test(pathname)) {
+    return {
+      path: pathname,
+      title: 'Mock Test Subjects',
+      description:
+        'Choose a subject and attempt Previous Year Questions, Most Important Questions and Practice Questions with a real exam interface and detailed explanations.'
+    };
+  }
+
   if (/^\/mocks\/[^/]+$/.test(pathname)) {
     return {
       path: pathname,

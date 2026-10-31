@@ -25,10 +25,89 @@ import {
   Sliders,
   Sparkles,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Loader2,
+  BadgeCheck
 } from 'lucide-react';
 import { MOCK_TESTS_METADATA, MOCK_QUESTIONS_DATABASE } from '../data/mockTestsData.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import { getMockQuestions } from '../firebase/firestoreService.js';
+import {
+  MOCK_VERIFICATION,
+  buildTestId,
+  getCategoryById,
+  getSubjectById,
+  getTestTypeById,
+  parseTestId,
+  selectTestQuestions,
+  toEngineQuestion
+} from '../constants/mockTaxonomy.js';
+
+/**
+ * Builds engine metadata for a Firestore-backed subject test
+ * (`/mocks/<categoryId>--<subjectId>--<type>`).
+ * Attribution fields are taken from the stored records only.
+ */
+function buildSubjectTestMeta({ categoryId, subjectId, questionType }, questions) {
+  const category = getCategoryById(categoryId);
+  const subject = getSubjectById(categoryId, subjectId);
+  const type = getTestTypeById(questionType);
+
+  return {
+    id: buildTestId(categoryId, subjectId, questionType),
+    code: category?.shortName || categoryId,
+    month: subject?.name || subjectId,
+    title: `${subject?.name || subjectId} — ${type?.label || questionType}`,
+    subtitle: type?.description || '',
+    questionsCount: questions.length,
+    // One minute per question keeps short subject tests from dragging.
+    timeMinutes: Math.min(180, Math.max(5, questions.length)),
+    marks: questions.length,
+    pdfUrl: '',
+    pdfFileName: '',
+    subjectTest: true
+  };
+}
+
+/**
+ * Attribution strip for a question. Shows the examination name, year and
+ * source exactly as stored — never inferred or generated.
+ */
+function QuestionAttribution({ question, className = '' }) {
+  if (!question?.examName && !question?.source && !question?.paperUrl) return null;
+
+  const verified = question.verificationStatus === MOCK_VERIFICATION.VERIFIED;
+
+  return (
+    <div className={`flex flex-wrap items-center gap-2 text-[11px] ${className}`}>
+      {question.examName && (
+        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold">
+          {question.examName}
+          {question.examYear ? ` · ${question.examYear}` : ''}
+        </span>
+      )}
+      {verified && (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+          <BadgeCheck className="w-3 h-3" />
+          Verified
+        </span>
+      )}
+      {question.source && <span className="text-slate-500">Source: {question.source}</span>}
+      {question.paperUrl && (
+        <a
+          href={question.paperUrl}
+          target="_blank"
+          rel="noreferrer"
+          download={question.paperFileName || undefined}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A] font-bold hover:bg-[#DCEBFF] transition"
+        >
+          <FileText className="w-3 h-3" />
+          Question Paper
+        </a>
+      )}
+    </div>
+  );
+}
 
 export default function MockTestEnginePage() {
   const { mockId } = useParams();
@@ -39,23 +118,54 @@ export default function MockTestEnginePage() {
   const modeParam = searchParams.get('mode') || 'cbt';
   const [activeMode, setActiveMode] = useState(modeParam);
 
-  const mockMeta = useMemo(() => {
-    return (
-      MOCK_TESTS_METADATA.find((m) => m.id === mockId) ||
-      MOCK_TESTS_METADATA[0]
-    );
-  }, [mockId]);
+  // A test id of the form `categoryId--subjectId--type` is served from the
+  // `mockQuestions` Firestore collection; everything else is a bundled CA mock.
+  const parsedTest = useMemo(() => parseTestId(mockId), [mockId]);
+  const isSubjectTest = Boolean(parsedTest);
+
+  const [subjectTest, setSubjectTest] = useState({ loading: isSubjectTest, meta: null, questions: [] });
+
+  useEffect(() => {
+    if (!isSubjectTest) {
+      setSubjectTest({ loading: false, meta: null, questions: [] });
+      return undefined;
+    }
+
+    let active = true;
+    setSubjectTest({ loading: true, meta: null, questions: [] });
+
+    (async () => {
+      const data = await getMockQuestions();
+      if (!active) return;
+
+      const picked = selectTestQuestions(data, parsedTest);
+      const questions = picked.map((question, index) => toEngineQuestion(question, index));
+      setSubjectTest({ loading: false, meta: buildSubjectTestMeta(parsedTest, questions), questions });
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [mockId, isSubjectTest]);
+
+  const staticMeta = useMemo(
+    () => MOCK_TESTS_METADATA.find((m) => m.id === mockId) || null,
+    [mockId]
+  );
+
+  const mockMeta = isSubjectTest ? subjectTest.meta : staticMeta;
 
   const allQuestions = useMemo(() => {
-    return MOCK_QUESTIONS_DATABASE[mockMeta.id] || [];
-  }, [mockMeta.id]);
+    if (isSubjectTest) return subjectTest.questions;
+    return staticMeta ? MOCK_QUESTIONS_DATABASE[staticMeta.id] || [] : [];
+  }, [isSubjectTest, subjectTest.questions, staticMeta]);
 
   // CBT & Practice State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({}); // { [qId]: 'A'|'B'|'C'|'D' }
   const [markedForReview, setMarkedForReview] = useState({}); // { [qId]: boolean }
   const [visitedQuestions, setVisitedQuestions] = useState(new Set([0]));
-  const [timeRemaining, setTimeRemaining] = useState(mockMeta.timeMinutes * 60);
+  const [timeRemaining, setTimeRemaining] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
   const [mobilePaletteOpen, setMobilePaletteOpen] = useState(false);
@@ -69,6 +179,18 @@ export default function MockTestEnginePage() {
     }
   }, [modeParam]);
 
+  // Reset every attempt-scoped value whenever a different test is opened.
+  useEffect(() => {
+    if (!mockMeta) return;
+    setCurrentIndex(0);
+    setSelectedAnswers({});
+    setMarkedForReview({});
+    setVisitedQuestions(new Set([0]));
+    setTimeRemaining(mockMeta.timeMinutes * 60);
+    setIsSubmitted(false);
+    setSolutionFilter('all');
+  }, [mockMeta?.id]);
+
   // Mark current question as visited
   useEffect(() => {
     setVisitedQuestions((prev) => new Set([...prev, currentIndex]));
@@ -76,7 +198,7 @@ export default function MockTestEnginePage() {
 
   // Timer for CBT mode
   useEffect(() => {
-    if (activeMode !== 'cbt' || isSubmitted) return;
+    if (activeMode !== 'cbt' || isSubmitted || !mockMeta || allQuestions.length === 0) return;
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -198,7 +320,7 @@ export default function MockTestEnginePage() {
     // Standard 1 mark correct, -0.25 negative mark
     const score = Math.max(0, correct * 1 - incorrect * 0.25);
     const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
-    const timeSpent = mockMeta.timeMinutes * 60 - timeRemaining;
+    const timeSpent = (mockMeta?.timeMinutes || 0) * 60 - timeRemaining;
 
     return {
       total: allQuestions.length,
@@ -210,7 +332,7 @@ export default function MockTestEnginePage() {
       accuracy,
       timeSpent: Math.max(0, timeSpent)
     };
-  }, [allQuestions, selectedAnswers, mockMeta.timeMinutes, timeRemaining]);
+  }, [allQuestions, selectedAnswers, mockMeta?.timeMinutes, timeRemaining]);
 
   // Question Status styling for Palette
   const getQuestionStatus = (index) => {
@@ -257,17 +379,38 @@ export default function MockTestEnginePage() {
     });
   }, [allQuestions, selectedAnswers, solutionFilter]);
 
-  if (!allQuestions || allQuestions.length === 0) {
+  if (isSubjectTest && subjectTest.loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-24 flex flex-col items-center gap-3">
+        <Loader2 className="w-7 h-7 text-[#2468B4] animate-spin" />
+        <p className="text-xs font-semibold text-slate-500">Loading test questions…</p>
+      </div>
+    );
+  }
+
+  if (!mockMeta || !allQuestions || allQuestions.length === 0) {
+    // Send the student back to the subject they came from so they can pick a
+    // test type that actually has questions.
+    const backTo = parsedTest
+      ? `/mocks/category/${parsedTest.categoryId}/${parsedTest.subjectId}`
+      : '/mocks';
+
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-800">Mock Test Not Found</h2>
-        <p className="text-slate-500">The requested test could not be loaded.</p>
+        <h2 className="text-2xl font-bold text-slate-800">
+          {mockMeta ? 'No Questions Published Yet' : 'Mock Test Not Found'}
+        </h2>
+        <p className="text-slate-500">
+          {mockMeta
+            ? 'This test does not have any published questions yet. Please check back soon.'
+            : 'The requested test could not be loaded.'}
+        </p>
         <Link
-          to="/mocks"
+          to={backTo}
           className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#12345A] text-white rounded-full font-bold text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Mock Hub</span>
+          <span>{parsedTest ? 'Back to Subject' : 'Return to Mock Hub'}</span>
         </Link>
       </div>
     );
@@ -493,7 +636,9 @@ export default function MockTestEnginePage() {
                         </span>
                       </div>
 
-                      <p className="text-sm font-bold text-slate-900 mb-3">{q.question}</p>
+                      <p className="text-sm font-bold text-slate-900 mb-2">{q.question}</p>
+
+                      <QuestionAttribution question={q} className="mb-3" />
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-3">
                         {['A', 'B', 'C', 'D'].map((opt) => (
@@ -599,6 +744,12 @@ export default function MockTestEnginePage() {
                     {q.question}
                   </h3>
 
+                  {q.questionTe && (
+                    <p className="text-sm text-slate-600 leading-relaxed -mt-1">{q.questionTe}</p>
+                  )}
+
+                  <QuestionAttribution question={q} />
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
                     {['A', 'B', 'C', 'D'].map((opt) => {
                       const isCorrect = opt === q.correctAnswer;
@@ -626,7 +777,14 @@ export default function MockTestEnginePage() {
                           >
                             {opt}
                           </span>
-                          <span className="pt-0.5">{q.options[opt]}</span>
+                          <span className="pt-0.5">
+                            {q.options[opt]}
+                            {q.optionsTe?.[opt] && (
+                              <span className="block text-[11px] font-normal text-slate-500 mt-0.5">
+                                {q.optionsTe[opt]}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       );
                     })}
@@ -641,6 +799,9 @@ export default function MockTestEnginePage() {
                       <p className="text-xs text-slate-700 leading-relaxed pt-1">
                         <strong className="text-slate-900">Explanation: </strong>
                         {q.explanation}
+                        {q.explanationTe && (
+                          <span className="block mt-1.5 text-slate-600">{q.explanationTe}</span>
+                        )}
                       </p>
                     )}
                   </div>
@@ -714,6 +875,9 @@ export default function MockTestEnginePage() {
                   </div>
                 </div>
 
+                {/* Exam / year / source attribution (PYQs only) */}
+                <QuestionAttribution question={currentQ} className="-mt-2" />
+
                 {/* Question Text */}
                 <div
                   className={`text-slate-900 font-bold leading-relaxed ${
@@ -725,6 +889,11 @@ export default function MockTestEnginePage() {
                   }`}
                 >
                   {currentQ.question}
+                  {currentQ.questionTe && (
+                    <p className="mt-2 text-sm font-normal text-slate-600 leading-relaxed">
+                      {currentQ.questionTe}
+                    </p>
+                  )}
                 </div>
 
                 {/* Options List */}
@@ -774,6 +943,11 @@ export default function MockTestEnginePage() {
 
                         <span className="pt-0.5 text-xs sm:text-sm font-medium leading-relaxed">
                           {currentQ.options[opt]}
+                          {currentQ.optionsTe?.[opt] && (
+                            <span className="block text-[11px] font-normal text-slate-500 mt-0.5">
+                              {currentQ.optionsTe[opt]}
+                            </span>
+                          )}
                         </span>
                       </button>
                     );
@@ -812,6 +986,11 @@ export default function MockTestEnginePage() {
                       <div className="text-xs text-slate-700 leading-relaxed pt-1 border-t border-black/5 mt-2">
                         <strong className="text-slate-900">Detailed Explanation: </strong>
                         {currentQ.explanation}
+                        {currentQ.explanationTe && (
+                          <span className="block mt-1.5 text-slate-600">
+                            {currentQ.explanationTe}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

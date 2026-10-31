@@ -24,6 +24,7 @@ const STORAGE_KEYS = {
   UPDATES: 'eqh_db_updates_v1',
   CURRENT_AFFAIRS: 'eqh_db_current_affairs_v1',
   QUESTIONS: 'eqh_db_questions_v1',
+  MOCK_QUESTIONS: 'eqh_db_mock_questions_v1',
   RESOURCES: 'eqh_db_resources_v1',
   ADMINS: 'eqh_db_admins_v1'
 };
@@ -533,6 +534,75 @@ export async function deleteQuestion(id) {
   return true;
 }
 
+/* --------------------------- Mock test questions --------------------------- */
+
+/**
+ * Subject-wise mock test questions (PYQ / IMPORTANT / PRACTICE).
+ *
+ * Deliberately has no seeded fallback: question content must only ever come
+ * from admin-authored Firestore records, so an empty database yields an empty
+ * bank rather than invented questions.
+ */
+export async function getMockQuestions() {
+  if (isFirebaseConfigured && db) {
+    try {
+      const items = await fetchCollection('mockQuestions');
+      saveLocalData(STORAGE_KEYS.MOCK_QUESTIONS, items);
+      markSyncSuccess();
+      return items;
+    } catch (err) {
+      recordError('firestoreService.getMockQuestions', err);
+      markSyncFailure(err);
+      return cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
+    }
+  }
+  return cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
+}
+
+export async function saveMockQuestion(question) {
+  requireFirebaseWrite();
+  const nowIso = new Date().toISOString();
+  const id = safeId(question.id || `mock-${Date.now()}`, 'mock');
+
+  const payload = stripUndefined({
+    ...question,
+    id,
+    createdAt: question.createdAt || nowIso,
+    updatedAt: nowIso
+  });
+
+  try {
+    await setDoc(doc(db, 'mockQuestions', id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });
+  } catch (err) {
+    const msg = recordError('firestoreService.saveMockQuestion', err);
+    markSyncFailure(err);
+    throw new Error(`Firestore save failed: ${msg}`);
+  }
+
+  const list = cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
+  const index = list.findIndex((entry) => entry.id === id);
+  if (index >= 0) list[index] = payload;
+  else list.unshift(payload);
+  saveLocalData(STORAGE_KEYS.MOCK_QUESTIONS, list);
+  markSyncSuccess();
+  return payload;
+}
+
+export async function deleteMockQuestion(id) {
+  requireFirebaseWrite();
+  try {
+    await deleteDoc(doc(db, 'mockQuestions', id));
+  } catch (err) {
+    const msg = recordError('firestoreService.deleteMockQuestion', err);
+    throw new Error(`Firestore delete failed: ${msg}`);
+  }
+  saveLocalData(
+    STORAGE_KEYS.MOCK_QUESTIONS,
+    cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS).filter((item) => item.id !== id)
+  );
+  return true;
+}
+
 export async function getResources() {
   if (isFirebaseConfigured && db) {
     try {
@@ -584,6 +654,7 @@ export function resetDemonstrationData() {
       window.localStorage.removeItem(STORAGE_KEYS.UPDATES);
       window.localStorage.removeItem(STORAGE_KEYS.CURRENT_AFFAIRS);
       window.localStorage.removeItem(STORAGE_KEYS.QUESTIONS);
+      window.localStorage.removeItem(STORAGE_KEYS.MOCK_QUESTIONS);
       window.localStorage.removeItem(STORAGE_KEYS.RESOURCES);
     }
   } catch (e) {

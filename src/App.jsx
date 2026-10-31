@@ -22,6 +22,8 @@ const GKPracticePage = lazy(() => import('./pages/GKPracticePage.jsx'));
 const PreviousPapersPage = lazy(() => import('./pages/PreviousPapersPage.jsx'));
 const StudyMaterialPage = lazy(() => import('./pages/StudyMaterialPage.jsx'));
 const MockTestsHubPage = lazy(() => import('./pages/MockTestsHubPage.jsx'));
+const MockCategoryPage = lazy(() => import('./pages/MockCategoryPage.jsx'));
+const MockSubjectPage = lazy(() => import('./pages/MockSubjectPage.jsx'));
 const MockTestEnginePage = lazy(() => import('./pages/MockTestEnginePage.jsx'));
 const AdminPage = lazy(() => import('./pages/AdminPage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
@@ -74,6 +76,13 @@ export default function App() {
                   <Route path="/current-affairs/:id" element={<CurrentAffairDetailPage />} />
                   <Route path="/gk-practice" element={<GKPracticePage />} />
                   <Route path="/mocks" element={<MockTestsHubPage />} />
+                  {/* Browse routes must be declared before the engine's single
+                      dynamic segment, otherwise "category" is read as a test id. */}
+                  <Route path="/mocks/category/:categoryId" element={<MockCategoryPage />} />
+                  <Route
+                    path="/mocks/category/:categoryId/:subjectId"
+                    element={<MockSubjectPage />}
+                  />
                   <Route path="/mocks/:mockId" element={<MockTestEnginePage />} />
                   <Route path="/previous-papers" element={<PreviousPapersPage />} />
                   <Route path="/study-material" element={<StudyMaterialPage />} />
