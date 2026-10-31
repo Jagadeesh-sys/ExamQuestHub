@@ -17,7 +17,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  DEFAULT_DESCRIPTION,
   FALLBACK_SITE_URL,
   buildArticlePageSeo,
   buildJobPageSeo,
@@ -28,21 +27,10 @@ import {
   renderHeadHtml,
   toAbsoluteUrl
 } from '../src/utils/seo.js';
+import { STATIC_PAGES, getSitemapStaticPages } from '../src/utils/routeMeta.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
-
-const STATIC_PAGES = [
-  { path: '/', changefreq: 'daily', priority: '1.0' },
-  { path: '/jobs', changefreq: 'daily', priority: '0.9' },
-  { path: '/current-affairs', changefreq: 'daily', priority: '0.9' },
-  { path: '/admit-cards', changefreq: 'daily', priority: '0.8' },
-  { path: '/results', changefreq: 'daily', priority: '0.8' },
-  { path: '/mocks', changefreq: 'weekly', priority: '0.8' },
-  { path: '/gk-practice', changefreq: 'weekly', priority: '0.7' },
-  { path: '/previous-papers', changefreq: 'weekly', priority: '0.7' },
-  { path: '/study-material', changefreq: 'weekly', priority: '0.6' }
-];
 
 function resolveSiteUrl() {
   const explicit = process.env.SITE_URL || process.env.VITE_SITE_URL;
@@ -230,22 +218,17 @@ function renderArticleBody(article, siteUrl) {
     .join('\n');
 }
 
-function renderHomeBody() {
+function renderStaticBody(page) {
+  const links = STATIC_PAGES.filter((other) => !other.noindex && other.path !== page.path)
+    .map((other) => `<li><a href="${other.path}">${escapeHtml(other.title || other.h1)}</a></li>`)
+    .join('\n');
+
   return [
     '<main>',
-    `<h1>ExamQuestHub — Your Exam. Your Next Step.</h1>`,
-    `<p>${escapeHtml(DEFAULT_DESCRIPTION)}</p>`,
-    '<h2>Explore</h2>',
-    '<ul>',
-    '<li><a href="/jobs">Latest government job notifications</a></li>',
-    '<li><a href="/current-affairs">Daily current affairs</a></li>',
-    '<li><a href="/admit-cards">Admit cards</a></li>',
-    '<li><a href="/results">Exam results</a></li>',
-    '<li><a href="/mocks">Free online mock tests</a></li>',
-    '<li><a href="/gk-practice">GK practice questions</a></li>',
-    '<li><a href="/previous-papers">Previous year question papers</a></li>',
-    '<li><a href="/study-material">Study material</a></li>',
-    '</ul>',
+    `<h1>${escapeHtml(page.h1 || page.title)}</h1>`,
+    `<p>${escapeHtml(page.description)}</p>`,
+    '<h2>Explore ExamQuestHub</h2>',
+    `<ul>\n${links}\n</ul>`,
     '</main>'
   ].join('\n');
 }
@@ -314,17 +297,32 @@ async function main() {
 
   const template = await readFile(path.join(DIST, 'index.html'), 'utf8');
 
-  const sitemapEntries = STATIC_PAGES.map((page) => ({ ...page }));
+  const sitemapEntries = getSitemapStaticPages().map((page) => ({
+    path: page.path,
+    changefreq: page.changefreq,
+    priority: page.priority
+  }));
 
-  // Homepage (also rewrites dist/index.html with a canonical URL + JSON-LD).
-  const homeHead = buildSeoHead({
-    siteUrl,
-    path: '/',
-    title: '',
-    description: DEFAULT_DESCRIPTION,
-    jsonLd: [buildWebSiteSchema(siteUrl), buildOrganizationSchema(siteUrl)]
-  });
-  await writeDistFile('index.html', buildPageHtml(template, homeHead, renderHomeBody()));
+  // Prerender every static route as its own file. This matters because the SPA
+  // fallback serves dist/index.html, whose canonical points at "/" — without a
+  // per-route file, hub URLs like /jobs would be reported as duplicates of the
+  // homepage by search engines.
+  for (const page of STATIC_PAGES) {
+    const head = buildSeoHead({
+      siteUrl,
+      path: page.path,
+      title: page.title,
+      description: page.description,
+      noindex: page.noindex,
+      jsonLd:
+        page.path === '/'
+          ? [buildWebSiteSchema(siteUrl), buildOrganizationSchema(siteUrl)]
+          : []
+    });
+    const fileName =
+      page.path === '/' ? 'index.html' : `${page.path.replace(/^\//, '')}.html`;
+    await writeDistFile(fileName, buildPageHtml(template, head, renderStaticBody(page)));
+  }
 
   let jobs = [];
   let articles = [];
@@ -377,8 +375,9 @@ async function main() {
   await writeDistFile('sitemap.xml', renderSitemap(sitemapEntries, siteUrl));
   await writeDistFile('robots.txt', renderRobots(siteUrl));
 
+  const totalPages = STATIC_PAGES.length + jobs.length + articles.length;
   console.log(
-    `[seo] Generated ${jobs.length + articles.length} prerendered pages, sitemap.xml (${sitemapEntries.length} URLs) and robots.txt for ${siteUrl}`
+    `[seo] Generated ${totalPages} prerendered pages (${STATIC_PAGES.length} static + ${jobs.length} jobs + ${articles.length} articles), sitemap.xml (${sitemapEntries.length} URLs) and robots.txt for ${siteUrl}`
   );
 }
 
