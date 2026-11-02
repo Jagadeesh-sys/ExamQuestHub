@@ -124,7 +124,18 @@ export default function MockTestEnginePage() {
   // everything else is a bundled CA mock.
   const parsedTest = useMemo(() => parseTestId(mockId), [mockId]);
   const isSubjectTest = Boolean(parsedTest);
-  const isRrbTest = useMemo(() => Boolean(mockId && mockId.startsWith('rrb-ntpc-')), [mockId]);
+  const isRrbTest = useMemo(
+    () =>
+      Boolean(
+        mockId &&
+          (mockId.startsWith('rrb-ntpc-') ||
+            mockId.startsWith('subject-') ||
+            mockId.startsWith('topic-') ||
+            mockId.startsWith('full-cbt-') ||
+            mockId.startsWith('unified-'))
+      ),
+    [mockId]
+  );
 
   const [subjectTest, setSubjectTest] = useState({ loading: isSubjectTest, meta: null, questions: [] });
   const [rrbTestState, setRrbTestState] = useState({ loading: isRrbTest, meta: null, questions: [] });

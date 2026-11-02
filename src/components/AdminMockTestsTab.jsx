@@ -92,15 +92,15 @@ export default function AdminMockTestsTab({ onNotify }) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkSummary, setBulkSummary] = useState(null);
 
-  // Load RRB Questions & Shifts
+  // Load Unified Questions (RRB 3,200 + Firestore Mock Questions)
   const loadRrbData = async () => {
     setRrbLoading(true);
     try {
-      const qList = await loadAllRRBQuestions();
+      const qList = await getMockQuestions();
       setRrbQuestions(qList);
       setShifts(getAllShifts());
     } catch (err) {
-      console.error('Failed to load RRB data:', err);
+      console.error('Failed to load unified mock data:', err);
     } finally {
       setRrbLoading(false);
     }
@@ -210,6 +210,12 @@ export default function AdminMockTestsTab({ onNotify }) {
     };
 
     saveLocalQuestionOverride(updatedQuestion);
+    try {
+      await saveMockQuestion(updatedQuestion);
+    } catch (err) {
+      // Offline or local write succeeded
+      console.warn('Firestore mock question save notice:', err.message);
+    }
 
     // Update state
     setRrbQuestions((prev) =>
@@ -223,9 +229,14 @@ export default function AdminMockTestsTab({ onNotify }) {
   };
 
   // Delete Question
-  const confirmDeleteQuestion = () => {
+  const confirmDeleteQuestion = async () => {
     if (!deleteTarget) return;
     deleteLocalQuestionOverride(deleteTarget.id);
+    try {
+      await deleteMockQuestion(deleteTarget.id);
+    } catch (err) {
+      console.warn('Firestore mock question delete notice:', err.message);
+    }
     setRrbQuestions((prev) => prev.filter((q) => q.id !== deleteTarget.id));
     setDeleteTarget(null);
     if (onNotify) onNotify('Question removed.', 'info');

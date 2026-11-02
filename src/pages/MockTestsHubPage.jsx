@@ -105,49 +105,201 @@ export default function MockTestsHubPage() {
     };
   }, [selectedSubject]);
 
-  // Filtered Shifts
-  const filteredShifts = useMemo(() => {
-    return shifts.filter((shift) => {
-      // Date filter
-      if (dateFilter === 'May 2026' && !shift.examDate.includes('May 2026')) return false;
-      if (dateFilter === 'June 2026' && !shift.examDate.includes('Jun 2026')) return false;
-      if (dateFilter === 'Morning' && !shift.shiftTiming.includes('9:00 AM')) return false;
-      if (dateFilter === 'Afternoon' && !shift.shiftTiming.includes('12:45 PM')) return false;
-      if (dateFilter === 'Evening' && !shift.shiftTiming.includes('4:30 PM')) return false;
+  // Active subject question pool
+  const currentSubjectQuestions = useMemo(() => {
+    if (!firestoreQuestions || firestoreQuestions.length === 0) return [];
+    if (selectedSubject === 'full') return firestoreQuestions;
+    const cleanTarget = selectedSubject.toLowerCase().replace(/[^a-z]/g, '');
 
-      // Text search
-      if (shiftSearch.trim()) {
-        const query = shiftSearch.toLowerCase().trim();
-        const matchTitle = shift.title.toLowerCase().includes(query);
-        const matchCode = shift.code.toLowerCase().includes(query);
-        const matchDate = shift.examDate.toLowerCase().includes(query);
-        const matchTiming = shift.shiftTiming.toLowerCase().includes(query);
-        const matchShiftNum = `shift ${shift.shiftNumber}`.includes(query) || `${shift.shiftNumber}` === query;
-        return matchTitle || matchCode || matchDate || matchTiming || matchShiftNum;
+    return firestoreQuestions.filter((q) => {
+      const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
+      const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
+      const qCat = (q.categoryId || '').toLowerCase().replace(/[^a-z]/g, '');
+
+      if (cleanTarget.includes('gk') || cleanTarget.includes('generalknowledge') || cleanTarget.includes('generalawareness')) {
+        return (
+          qSub.includes('generalknowledge') ||
+          qSubId.includes('generalknowledge') ||
+          (qCat === 'gk' && !qSub.includes('science') && qSubId !== 'general-science')
+        );
+      }
+      if (cleanTarget.includes('science') || cleanTarget.includes('generalscience')) {
+        return (
+          qSub.includes('generalscience') ||
+          qSubId.includes('generalscience') ||
+          qSub.includes('science') ||
+          qSubId.includes('science')
+        );
+      }
+      if (cleanTarget.includes('quant') || cleanTarget.includes('quantitative')) {
+        return qSub.includes('quantitative') || qSubId.includes('quantitative') || qCat === 'quant';
+      }
+      if (cleanTarget.includes('reason')) {
+        return qSub.includes('reasoning') || qSubId.includes('reasoning') || qCat === 'reasoning';
+      }
+      return qSub.includes(cleanTarget) || cleanTarget.includes(qSub);
+    });
+  }, [firestoreQuestions, selectedSubject]);
+
+  // Tab inside active subject: 'tests' | 'topics' | 'browser'
+  const [subjectViewTab, setSubjectViewTab] = useState('tests');
+
+  // Question bank search & filter
+  const [bankSearch, setBankSearch] = useState('');
+  const [bankSubtopic, setBankSubtopic] = useState('All');
+  const [expandedSolutions, setExpandedSolutions] = useState({});
+  const [browserPage, setBrowserPage] = useState(1);
+  const browserPageSize = 24;
+
+  const toggleSolution = (qId) => {
+    setExpandedSolutions((prev) => ({ ...prev, [qId]: !prev[qId] }));
+  };
+
+  // Subtopics extracted from current pool
+  const availableSubtopics = useMemo(() => {
+    const set = new Set();
+    currentSubjectQuestions.forEach((q) => {
+      if (q.subtopic) set.add(q.subtopic);
+    });
+    return ['All', ...Array.from(set)];
+  }, [currentSubjectQuestions]);
+
+  // Filtered browser questions
+  const filteredBrowserQuestions = useMemo(() => {
+    return currentSubjectQuestions.filter((q) => {
+      if (bankSubtopic !== 'All' && q.subtopic !== bankSubtopic) return false;
+      if (bankSearch.trim()) {
+        const query = bankSearch.toLowerCase().trim();
+        const matchQ = (q.question?.en || '').toLowerCase().includes(query);
+        const matchOpts = (q.options?.en || []).some((opt) => opt.toLowerCase().includes(query));
+        const matchSubtopic = (q.subtopic || '').toLowerCase().includes(query);
+        const matchId = (q.id || '').toLowerCase().includes(query);
+        return matchQ || matchOpts || matchSubtopic || matchId;
       }
       return true;
     });
-  }, [shifts, dateFilter, shiftSearch]);
+  }, [currentSubjectQuestions, bankSubtopic, bankSearch]);
 
-  // Subject question count helper
-  const getSubjectQuestionCount = (shift, subId) => {
-    if (subId === 'full') return 100;
-    if (subId === 'quantitative-aptitude') return shift.subjectCounts?.['Quantitative Aptitude'] || 30;
-    if (subId === 'reasoning') return shift.subjectCounts?.['Reasoning'] || 30;
-    if (subId === 'general-science') return shift.subjectCounts?.['General Science'] || 10;
-    if (subId === 'general-knowledge') return shift.subjectCounts?.['General Knowledge'] || 30;
-    return 30;
-  };
+  const paginatedBrowserQuestions = useMemo(() => {
+    const start = (browserPage - 1) * browserPageSize;
+    return filteredBrowserQuestions.slice(start, start + browserPageSize);
+  }, [filteredBrowserQuestions, browserPage]);
 
-  const getSubjectDuration = (subId) => {
-    if (subId === 'full') return 90;
-    return 30;
-  };
+  const totalBrowserPages = Math.ceil(filteredBrowserQuestions.length / browserPageSize);
 
-  const getSubjectMarks = (shift, subId) => {
-    if (subId === 'full') return 100;
-    return getSubjectQuestionCount(shift, subId);
-  };
+  // Pre-configured Subject Mock Tests (5 Comprehensive Tests per subject)
+  const subjectMockTests = useMemo(() => {
+    const sub = selectedSubject;
+    const subLabel = currentSubjectInfo.title;
+
+    if (sub === 'full') {
+      return [
+        {
+          id: 'full-cbt-master-1',
+          code: 'RRB-CBT-1',
+          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 1',
+          subtitle: 'Complete 100-Question CBT paper (30 Quant, 30 GK, 10 Science, 30 Reasoning)',
+          questionsCount: 100,
+          duration: 90,
+          marks: 100,
+          badge: 'Official CBT Full Mock'
+        },
+        {
+          id: 'full-cbt-master-2',
+          code: 'RRB-CBT-2',
+          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 2',
+          subtitle: 'Full 100 Questions covering all 4 subjects in standard exam sequence',
+          questionsCount: 100,
+          duration: 90,
+          marks: 100,
+          badge: 'Full CBT Shift'
+        },
+        {
+          id: 'full-cbt-master-3',
+          code: 'RRB-CBT-3',
+          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 3',
+          subtitle: 'Complete examination simulation with negative marking and timer',
+          questionsCount: 100,
+          duration: 90,
+          marks: 100,
+          badge: 'Full CBT Shift'
+        },
+        {
+          id: 'full-cbt-master-4',
+          code: 'RRB-CBT-4',
+          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 4',
+          subtitle: 'High-probability questions selected across 32 examination shifts',
+          questionsCount: 100,
+          duration: 90,
+          marks: 100,
+          badge: 'Full CBT Shift'
+        },
+        {
+          id: 'full-cbt-master-5',
+          code: 'RRB-CBT-5',
+          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 5',
+          subtitle: 'Comprehensive speed and accuracy examination test',
+          questionsCount: 100,
+          duration: 90,
+          marks: 100,
+          badge: 'Full CBT Shift'
+        }
+      ];
+    }
+
+    return [
+      {
+        id: `subject-${sub}-master-1`,
+        code: `${sub.slice(0, 3).toUpperCase()}-M1`,
+        title: `${subLabel} · Master PYQ Mock Test 1`,
+        subtitle: `Drawn from all 32 shifts with 100% official answer keys and solutions`,
+        questionsCount: Math.min(100, currentSubjectQuestions.length || 100),
+        duration: 90,
+        marks: Math.min(100, currentSubjectQuestions.length || 100),
+        badge: 'Full Subject Test'
+      },
+      {
+        id: `subject-${sub}-50q-2`,
+        code: `${sub.slice(0, 3).toUpperCase()}-T2`,
+        title: `${subLabel} · High-Yield Mock Test 2`,
+        subtitle: `50 Most important questions for rapid syllabus coverage and revision`,
+        questionsCount: 50,
+        duration: 45,
+        marks: 50,
+        badge: 'High-Yield 50Q'
+      },
+      {
+        id: `subject-${sub}-25q-3`,
+        code: `${sub.slice(0, 3).toUpperCase()}-T3`,
+        title: `${subLabel} · Speed Drill Test 3`,
+        subtitle: `25 Timed questions to build speed, accuracy, and examination stamina`,
+        questionsCount: 25,
+        duration: 25,
+        marks: 25,
+        badge: 'Speed Drill 25Q'
+      },
+      {
+        id: `subject-${sub}-master-4`,
+        code: `${sub.slice(0, 3).toUpperCase()}-M4`,
+        title: `${subLabel} · Comprehensive Mock Test 4`,
+        subtitle: `Comprehensive assessment covering all key concepts and PYQs`,
+        questionsCount: Math.min(100, currentSubjectQuestions.length || 100),
+        duration: 90,
+        marks: Math.min(100, currentSubjectQuestions.length || 100),
+        badge: 'Full Subject Test'
+      },
+      {
+        id: `subject-${sub}-50q-5`,
+        code: `${sub.slice(0, 3).toUpperCase()}-T5`,
+        title: `${subLabel} · Rapid Revision Mock 5`,
+        subtitle: `50 Questions focused on previous year repeated themes and problem types`,
+        questionsCount: 50,
+        duration: 45,
+        marks: 50,
+        badge: 'Rapid Revision 50Q'
+      }
+    ];
+  }, [selectedSubject, currentSubjectInfo, currentSubjectQuestions]);
 
   // Legacy CA filter
   const filteredCaMocks = useMemo(() => {
@@ -274,7 +426,7 @@ export default function MockTestsHubPage() {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 selectedSubject === 'general-knowledge' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
               }`}>
-                32 Shifts
+                1,000+ Questions
               </span>
             </div>
             <div className="mt-3">
@@ -282,7 +434,7 @@ export default function MockTestsHubPage() {
               <p className={`text-[11px] mt-1 line-clamp-2 ${
                 selectedSubject === 'general-knowledge' ? 'text-amber-100' : 'text-slate-500'
               }`}>
-                Polity, History, Geography, Economy, Static GK & Schemes
+                Polity, History, Geography, Economy, Static GK & Schemes (1,034+ PYQs)
               </p>
             </div>
           </button>
@@ -305,7 +457,7 @@ export default function MockTestsHubPage() {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 selectedSubject === 'reasoning' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
               }`}>
-                32 Shifts
+                960+ Questions
               </span>
             </div>
             <div className="mt-3">
@@ -336,7 +488,7 @@ export default function MockTestsHubPage() {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 selectedSubject === 'quantitative-aptitude' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'
               }`}>
-                32 Shifts
+                960+ Questions
               </span>
             </div>
             <div className="mt-3">
@@ -367,7 +519,7 @@ export default function MockTestsHubPage() {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 selectedSubject === 'general-science' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
               }`}>
-                Extracted from GA
+                246+ Questions
               </span>
             </div>
             <div className="mt-3">
@@ -375,7 +527,7 @@ export default function MockTestsHubPage() {
               <p className={`text-[11px] mt-1 line-clamp-2 ${
                 selectedSubject === 'general-science' ? 'text-purple-100' : 'text-slate-500'
               }`}>
-                Physics, Chemistry, Biology, Human Body & Scientific Principles
+                Physics, Chemistry, Biology & Principles (Separated from GA)
               </p>
             </div>
           </button>
@@ -413,269 +565,473 @@ export default function MockTestsHubPage() {
         </div>
       </section>
 
-      {/* SUBJECT BANNER & SEARCH/FILTER BAR */}
-      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E3EAF2] shadow-xs space-y-5">
+      {/* UNIFIED SUBJECT MOCK TEST SYSTEM & QUESTION BANK */}
+      <section className="bg-white rounded-3xl p-5 sm:p-7 border border-[#E3EAF2] shadow-xs space-y-6">
         {/* Active Subject Info Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#2468B4]" />
-              <h3 className="text-lg sm:text-xl font-black text-[#12345A]">
-                {currentSubjectInfo.title} — Available Shift Mock Tests
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="w-3 h-3 rounded-full bg-[#2468B4]" />
+              <h3 className="text-xl sm:text-2xl font-black text-[#12345A]">
+                {currentSubjectInfo.title} — Mock Tests &amp; Question Bank
               </h3>
+              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
+                {currentSubjectQuestions.length || (selectedSubject === 'general-knowledge' ? '1,034+' : selectedSubject === 'general-science' ? '246+' : '960+')} Questions Available
+              </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 max-w-2xl">
-              {currentSubjectInfo.description}
+              {currentSubjectInfo.description}. All 32 exam shifts unified into comprehensive practice tests and question banks.
             </p>
           </div>
 
-          {/* View mode switcher (User Request: 3 in row, single align, grid) */}
-          <div className="flex items-center gap-2 self-start md:self-auto shrink-0 bg-[#F6F8FC] p-1 rounded-xl border border-[#E3EAF2]">
-            <span className="text-[11px] font-bold text-slate-500 px-2">Layout:</span>
+          {/* Subject Navigation Tabs */}
+          <div className="flex items-center gap-1.5 bg-[#F6F8FC] p-1.5 rounded-2xl border border-[#E3EAF2] shrink-0">
             <button
-              onClick={() => setViewMode('threeInRow')}
-              title="3 in a row (Grid Cards)"
-              className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                viewMode === 'threeInRow' ? 'bg-white text-[#12345A] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              onClick={() => setSubjectViewTab('tests')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                subjectViewTab === 'tests'
+                  ? 'bg-[#12345A] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Columns3 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">3 in Row</span>
+              <Award className="w-3.5 h-3.5" />
+              <span>Mock Tests ({subjectMockTests.length})</span>
             </button>
+
             <button
-              onClick={() => setViewMode('singleAlign')}
-              title="Single Align (Horizontal Rows)"
-              className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                viewMode === 'singleAlign' ? 'bg-white text-[#12345A] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              onClick={() => setSubjectViewTab('topics')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                subjectViewTab === 'topics'
+                  ? 'bg-[#12345A] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <List className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Single Align</span>
+              <Layers className="w-3.5 h-3.5" />
+              <span>Topic Tests ({currentSubjectInfo.topics?.length || 6})</span>
             </button>
+
             <button
-              onClick={() => setViewMode('grid')}
-              title="Compact Grid"
-              className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                viewMode === 'grid' ? 'bg-white text-[#12345A] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              onClick={() => setSubjectViewTab('browser')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                subjectViewTab === 'browser'
+                  ? 'bg-[#12345A] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Grid</span>
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Question Bank ({currentSubjectQuestions.length || 1000}+)</span>
             </button>
           </div>
         </div>
 
-        {/* Filter & Search Bar */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          {/* Shift Date Quick Filters */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none text-xs">
-            {['All', 'May 2026', 'June 2026', 'Morning', 'Afternoon', 'Evening'].map((df) => (
-              <button
-                key={df}
-                onClick={() => setDateFilter(df)}
-                className={`px-3 py-1.5 rounded-full font-bold transition whitespace-nowrap cursor-pointer ${
-                  dateFilter === df
-                    ? 'bg-[#12345A] text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+        {/* TAB 1: SUBJECT MOCK TESTS */}
+        {subjectViewTab === 'tests' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F6F8FC] p-4 rounded-2xl border border-[#E3EAF2]">
+              <div>
+                <h4 className="font-black text-[#12345A] text-sm sm:text-base">
+                  Available CBT Mock Tests for {currentSubjectInfo.title}
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Select a test to begin a timed CBT examination simulation with negative marking (-0.33) and instant scorecard.
+                </p>
+              </div>
+
+              <Link
+                to={`/mocks/subject-${selectedSubject}-master-1?subject=${selectedSubject}&mode=practice`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#12345A] text-white text-xs font-bold hover:bg-[#1E4E8C] transition shrink-0"
               >
-                {df === 'All' ? 'All 32 Shifts' : df}
-              </button>
-            ))}
-          </div>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Start Full Master Mock</span>
+              </Link>
+            </div>
 
-          {/* Search Input */}
-          <div className="relative min-w-[280px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={shiftSearch}
-              onChange={(e) => setShiftSearch(e.target.value)}
-              placeholder="Search shift (e.g. Shift 1, 07 May, 12:45)..."
-              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-[#F6F8FC] border border-[#E3EAF2] rounded-full focus:outline-hidden focus:border-[#2468B4] focus:bg-white transition"
-            />
-            {shiftSearch && (
-              <button
-                onClick={() => setShiftSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* MOCK TESTS LIST (32 Shifts) */}
-        {filteredShifts.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 text-sm space-y-2">
-            <p>No examination shifts match your filter.</p>
-            <button
-              onClick={() => { setShiftSearch(''); setDateFilter('All'); }}
-              className="px-4 py-1.5 rounded-full bg-[#12345A] text-white text-xs font-bold"
-            >
-              Reset Filters
-            </button>
-          </div>
-        ) : (
-          <div
-            className={
-              viewMode === 'singleAlign'
-                ? 'space-y-3'
-                : viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-                : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'
-            }
-          >
-            {filteredShifts.map((shift) => {
-              const qCount = getSubjectQuestionCount(shift, selectedSubject);
-              const duration = getSubjectDuration(selectedSubject);
-              const totalMarks = getSubjectMarks(shift, selectedSubject);
-              const testUrl = selectedSubject === 'full' 
-                ? `/mocks/${shift.id}`
-                : `/mocks/${shift.id}--${selectedSubject}`;
-
-              if (viewMode === 'singleAlign') {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {subjectMockTests.map((mock) => {
+                const testUrl = `/mocks/${mock.id}?subject=${selectedSubject}`;
                 return (
                   <div
-                    key={shift.id}
-                    className="bg-white rounded-2xl border border-[#E3EAF2] p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#2468B4] hover:shadow-md transition"
+                    key={mock.id}
+                    className="bg-white rounded-3xl border border-[#E3EAF2] p-5 flex flex-col justify-between gap-4 hover:border-[#2468B4] hover:shadow-lg transition-all group"
                   >
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className="w-12 h-12 rounded-xl bg-[#EAF3FF] text-[#12345A] font-black flex flex-col items-center justify-center shrink-0 border border-[#2468B4]/20">
-                        <span className="text-[10px] text-slate-500 uppercase tracking-tighter">Set</span>
-                        <span className="text-base leading-none">{shift.shiftNumber}</span>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="w-8 h-8 rounded-xl bg-[#EAF3FF] text-[#12345A] font-black flex items-center justify-center text-xs border border-[#2468B4]/20">
+                          {mock.code.slice(-2)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3" />
+                          {mock.badge}
+                        </span>
                       </div>
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h4 className="font-black text-[#12345A] text-sm sm:text-base">
-                            {shift.title}
-                          </h4>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Official Key
-                          </span>
+
+                      <div>
+                        <h4 className="font-black text-[#12345A] text-base leading-snug group-hover:text-[#2468B4] transition">
+                          {mock.title}
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                          {mock.subtitle}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 pt-2 text-center">
+                        <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                          <div className="text-xs font-black text-[#12345A]">{mock.questionsCount}</div>
+                          <div className="text-[10px] text-slate-500 font-medium">Questions</div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                          <span className="font-semibold text-slate-700">{shift.examName} ({shift.examYear})</span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {shift.examDate}</span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {shift.shiftTiming}</span>
+                        <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                          <div className="text-xs font-black text-[#12345A]">{mock.duration}m</div>
+                          <div className="text-[10px] text-slate-500 font-medium">Duration</div>
+                        </div>
+                        <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                          <div className="text-xs font-black text-[#12345A]">{mock.marks}</div>
+                          <div className="text-[10px] text-slate-500 font-medium">Marks (-0.33)</div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-                      <div className="flex items-center gap-3 text-xs text-slate-600 mr-2">
-                        <span className="bg-slate-100 px-2 py-1 rounded-md font-bold">{qCount} Questions</span>
-                        <span className="bg-slate-100 px-2 py-1 rounded-md font-bold">{duration} Mins</span>
-                        <span className="bg-slate-100 px-2 py-1 rounded-md font-bold">{totalMarks} Marks</span>
-                      </div>
+                    <div className="pt-3 border-t border-slate-100 space-y-2">
                       <Link
                         to={testUrl}
-                        className="px-4 py-2 rounded-full bg-[#12345A] hover:bg-[#1E4E8C] text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
+                        className="w-full py-2.5 rounded-xl bg-[#12345A] hover:bg-[#1E4E8C] text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
                       >
                         <Play className="w-3.5 h-3.5 fill-current" />
                         <span>Start Test</span>
                       </Link>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Link
+                          to={`${testUrl}&mode=practice`}
+                          className="py-1.5 rounded-xl bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] text-[11px] font-bold text-center transition"
+                        >
+                          Practice Mode
+                        </Link>
+                        <Link
+                          to={`${testUrl}&mode=solutions`}
+                          className="py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold text-center transition"
+                        >
+                          Official Key
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: TOPIC-WISE PRACTICE TESTS */}
+        {subjectViewTab === 'topics' && (
+          <div className="space-y-6">
+            <div className="bg-[#F6F8FC] p-4 rounded-2xl border border-[#E3EAF2]">
+              <h4 className="font-black text-[#12345A] text-sm sm:text-base">
+                Topic-wise Mastery Tests for {currentSubjectInfo.title}
+              </h4>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Practice specific topics to eliminate weak areas and master previous year examination themes.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(currentSubjectInfo.topics || []).map((topic, idx) => {
+                const topicSlug = topic.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                const testUrl = `/mocks/topic-${selectedSubject}-${topicSlug}?subject=${selectedSubject}`;
+                return (
+                  <div
+                    key={topic}
+                    className="bg-white rounded-2xl border border-[#E3EAF2] p-5 flex flex-col justify-between gap-3 hover:border-[#2468B4] hover:shadow-md transition"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 font-bold flex items-center justify-center text-xs">
+                        #{idx + 1}
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        Topic Test
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-black text-[#12345A] text-base leading-snug">
+                        {topic}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Syllabus-aligned questions from official RRB CEN 07/2025 papers.
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
                       <Link
-                        to={`${testUrl}?mode=practice`}
-                        className="px-3 py-2 rounded-full bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] text-xs font-bold transition"
+                        to={testUrl}
+                        className="flex-1 py-2 rounded-xl bg-[#12345A] hover:bg-[#1E4E8C] text-white text-xs font-bold text-center transition"
+                      >
+                        Start Test
+                      </Link>
+                      <Link
+                        to={`${testUrl}&mode=practice`}
+                        className="py-2 px-3 rounded-xl bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] text-xs font-bold transition"
                       >
                         Practice
                       </Link>
                     </div>
                   </div>
                 );
-              }
+              })}
+            </div>
+          </div>
+        )}
 
-              // Card Layout (3 in a Row or Grid)
-              return (
-                <div
-                  key={shift.id}
-                  className="bg-white rounded-3xl border border-[#E3EAF2] p-5 flex flex-col justify-between gap-4 hover:border-[#2468B4] hover:shadow-lg transition-all group"
+        {/* TAB 3: COMPLETE QUESTION BANK BROWSER (1,000+ Questions) */}
+        {subjectViewTab === 'browser' && (
+          <div className="space-y-5">
+            {/* Search, Filter and View Mode Toolbar */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 p-4 bg-[#F6F8FC] rounded-2xl border border-[#E3EAF2]">
+              {/* Search input */}
+              <div className="relative flex-1 min-w-[260px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={bankSearch}
+                  onChange={(e) => {
+                    setBankSearch(e.target.value);
+                    setBrowserPage(1);
+                  }}
+                  placeholder="Search in question text, options, or subtopics..."
+                  className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-white border border-[#E3EAF2] rounded-full focus:outline-hidden focus:border-[#2468B4] transition"
+                />
+                {bankSearch && (
+                  <button
+                    onClick={() => { setBankSearch(''); setBrowserPage(1); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Subtopic Filter */}
+              {availableSubtopics.length > 2 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500 shrink-0">Subtopic:</span>
+                  <select
+                    value={bankSubtopic}
+                    onChange={(e) => {
+                      setBankSubtopic(e.target.value);
+                      setBrowserPage(1);
+                    }}
+                    className="text-xs bg-white border border-[#E3EAF2] rounded-full px-3 py-2 font-medium text-slate-700 focus:outline-hidden focus:border-[#2468B4]"
+                  >
+                    {availableSubtopics.map((st) => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Flexible View Mode Selector (User Request: 3 in row, single align, grid) */}
+              <div className="flex items-center gap-1.5 self-start lg:self-auto shrink-0 bg-white p-1 rounded-xl border border-[#E3EAF2]">
+                <span className="text-[11px] font-bold text-slate-500 px-2">View:</span>
+                <button
+                  onClick={() => setViewMode('threeInRow')}
+                  title="3 in a Row (Grid Cards)"
+                  className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                    viewMode === 'threeInRow' ? 'bg-[#12345A] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
                 >
-                  <div className="space-y-3">
-                    {/* Header badge & Shift */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-xl bg-[#EAF3FF] text-[#12345A] font-black flex items-center justify-center text-xs border border-[#2468B4]/20">
-                          S{shift.shiftNumber}
-                        </span>
-                        <div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                            {shift.examName} · {shift.examYear}
+                  <Columns3 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">3 in Row</span>
+                </button>
+
+                <button
+                  onClick={() => setViewMode('singleAlign')}
+                  title="Single Align (Horizontal Rows)"
+                  className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                    viewMode === 'singleAlign' ? 'bg-[#12345A] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Single Align</span>
+                </button>
+
+                <button
+                  onClick={() => setViewMode('grid')}
+                  title="Compact Grid"
+                  className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                    viewMode === 'grid' ? 'bg-[#12345A] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Grid</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Results count indicator */}
+            <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+              <span>
+                Showing <b>{paginatedBrowserQuestions.length}</b> of <b>{filteredBrowserQuestions.length}</b> questions in {currentSubjectInfo.title}
+              </span>
+              <span>Page {browserPage} of {totalBrowserPages || 1}</span>
+            </div>
+
+            {/* QUESTIONS LIST */}
+            {filteredBrowserQuestions.length === 0 ? (
+              <div className="text-center py-12 text-slate-500 text-sm space-y-2">
+                <p>No questions matched your search criteria.</p>
+                <button
+                  onClick={() => { setBankSearch(''); setBankSubtopic('All'); }}
+                  className="px-4 py-1.5 rounded-full bg-[#12345A] text-white text-xs font-bold"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              <div
+                className={
+                  viewMode === 'singleAlign'
+                    ? 'space-y-4'
+                    : viewMode === 'grid'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
+                    : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'
+                }
+              >
+                {paginatedBrowserQuestions.map((q, idx) => {
+                  const qNum = (browserPage - 1) * browserPageSize + idx + 1;
+                  const isExpanded = Boolean(expandedSolutions[q.id]);
+                  const correctIdx = Number(q.correctAnswer);
+                  const letters = ['A', 'B', 'C', 'D'];
+                  const enOptions = Array.isArray(q.options?.en) ? q.options.en : [];
+
+                  return (
+                    <div
+                      key={q.id}
+                      className="bg-white rounded-3xl border border-[#E3EAF2] p-5 flex flex-col justify-between gap-3 hover:border-[#2468B4] hover:shadow-md transition"
+                    >
+                      <div className="space-y-2.5">
+                        {/* Header: Q Number & Badges */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-7 h-7 rounded-xl bg-[#EAF3FF] text-[#12345A] font-black flex items-center justify-center text-xs border border-[#2468B4]/20">
+                              Q{qNum}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500">
+                              {q.subtopic || q.subject}
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Official Key
                           </span>
-                          <h4 className="font-black text-[#12345A] text-base leading-snug group-hover:text-[#2468B4] transition">
-                            {shift.title}
-                          </h4>
+                        </div>
+
+                        {/* Question Text */}
+                        <p className="text-sm font-bold text-slate-900 leading-snug">
+                          {q.question?.en}
+                        </p>
+
+                        {/* 4 Options */}
+                        <div className="space-y-1.5 pt-1">
+                          {enOptions.map((opt, oIdx) => {
+                            const isCorrect = oIdx === correctIdx;
+                            return (
+                              <div
+                                key={oIdx}
+                                className={`flex items-start gap-2 p-2 rounded-xl text-xs transition ${
+                                  isExpanded && isCorrect
+                                    ? 'bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold'
+                                    : 'bg-slate-50 text-slate-700 border border-slate-100'
+                                }`}
+                              >
+                                <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0 ${
+                                  isExpanded && isCorrect
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-slate-200 text-slate-700'
+                                }`}>
+                                  {letters[oIdx]}
+                                </span>
+                                <span className="leading-tight pt-0.5">{opt}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Explanation toggle & Source */}
+                      <div className="pt-2 border-t border-slate-100 space-y-2">
+                        {isExpanded && (
+                          <div className="bg-emerald-50/70 p-3 rounded-2xl text-xs text-slate-800 space-y-1.5 border border-emerald-100 animate-fadeIn">
+                            <div className="font-bold text-emerald-900 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Correct Answer: Option ({letters[correctIdx] || 'A'})</span>
+                            </div>
+                            <p className="text-slate-700 leading-relaxed text-[11px]">
+                              {q.explanation?.en || 'Official answer verified from examination answer key.'}
+                            </p>
+                            <div className="text-[10px] text-slate-500 font-semibold pt-1">
+                              Source: {q.source || 'RRB Official Answer Key (CEN 07/2025)'}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-xs">
+                          <button
+                            onClick={() => toggleSolution(q.id)}
+                            className="text-[#2468B4] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                          >
+                            <span>{isExpanded ? 'Hide Solution' : 'View Answer & Explanation'}</span>
+                          </button>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {q.examName ? `${q.examName} · 2025` : 'PYQ'}
+                          </span>
                         </div>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
 
-                    {/* Date and Timing */}
-                    <div className="bg-[#F6F8FC] rounded-2xl p-3 space-y-1.5 text-xs text-slate-600 border border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 font-semibold text-slate-700">
-                          <Calendar className="w-3.5 h-3.5 text-[#2468B4]" />
-                          {shift.examDate}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Official Key
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Shift Timing: {shift.shiftTiming}</span>
-                      </div>
-                    </div>
-
-                    {/* Metadata Chips: Questions, Duration, Marks */}
-                    <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                      <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                        <div className="text-xs font-black text-[#12345A]">{qCount}</div>
-                        <div className="text-[10px] text-slate-500 font-medium">Questions</div>
-                      </div>
-                      <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                        <div className="text-xs font-black text-[#12345A]">{duration}m</div>
-                        <div className="text-[10px] text-slate-500 font-medium">Duration</div>
-                      </div>
-                      <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                        <div className="text-xs font-black text-[#12345A]">{totalMarks}</div>
-                        <div className="text-[10px] text-slate-500 font-medium">Marks (-0.33)</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="pt-3 border-t border-slate-100 space-y-2">
-                    <Link
-                      to={testUrl}
-                      className="w-full py-2.5 rounded-xl bg-[#12345A] hover:bg-[#1E4E8C] text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-xs"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Start Test</span>
-                    </Link>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link
-                        to={`${testUrl}?mode=practice`}
-                        className="py-1.5 rounded-xl bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] text-[11px] font-bold text-center transition"
+            {/* Pagination Controls */}
+            {totalBrowserPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <button
+                  onClick={() => setBrowserPage((p) => Math.max(1, p - 1))}
+                  disabled={browserPage === 1}
+                  className="px-4 py-2 rounded-full border border-[#E3EAF2] text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer"
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalBrowserPages) }, (_, i) => {
+                    let pageNum = i + 1;
+                    if (browserPage > 3 && totalBrowserPages > 5) {
+                      pageNum = browserPage - 2 + i;
+                      if (pageNum > totalBrowserPages) pageNum = totalBrowserPages - (4 - i);
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setBrowserPage(pageNum)}
+                        className={`w-8 h-8 rounded-full text-xs font-bold transition cursor-pointer ${
+                          browserPage === pageNum
+                            ? 'bg-[#12345A] text-white'
+                            : 'bg-white border border-[#E3EAF2] text-slate-600 hover:bg-slate-50'
+                        }`}
                       >
-                        Practice Mode
-                      </Link>
-                      <Link
-                        to={`${testUrl}?mode=solutions`}
-                        className="py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold text-center transition"
-                      >
-                        Solutions Key
-                      </Link>
-                    </div>
-                  </div>
+                        {pageNum}
+                      </button>
+                    );
+                  })}
                 </div>
-              );
-            })}
+                <button
+                  onClick={() => setBrowserPage((p) => Math.min(totalBrowserPages, p + 1))}
+                  disabled={browserPage === totalBrowserPages}
+                  className="px-4 py-2 rounded-full border border-[#E3EAF2] text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>

@@ -147,6 +147,66 @@ export function saveShiftOverride(shiftId, updates) {
 
 /**
  * Get questions for a specific shift and optional subject
+/**
+ * Get all questions for a given subject (across all 32 shifts and local overrides)
+ * @param {string} subjectIdOrName e.g. 'general-knowledge', 'reasoning', 'quantitative-aptitude', 'general-science'
+ */
+export async function getQuestionsForSubject(subjectIdOrName) {
+  const all = await loadAllRRBQuestions();
+  if (!subjectIdOrName || subjectIdOrName === 'All' || subjectIdOrName === 'all' || subjectIdOrName === 'full') {
+    return all;
+  }
+
+  const cleanTarget = subjectIdOrName.toLowerCase().replace(/[^a-z]/g, '');
+
+  return all.filter((q) => {
+    const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
+    const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (cleanTarget.includes('gk') || cleanTarget.includes('generalknowledge') || cleanTarget.includes('generalawareness')) {
+      return qSub.includes('generalknowledge') || qSubId.includes('generalknowledge') || qSubId.includes('gk');
+    }
+    if (cleanTarget.includes('science') || cleanTarget.includes('generalscience')) {
+      return qSub.includes('generalscience') || qSubId.includes('generalscience') || qSub.includes('science');
+    }
+    if (cleanTarget.includes('quant') || cleanTarget.includes('quantitative') || cleanTarget.includes('aptitude') || cleanTarget.includes('math')) {
+      return qSub.includes('quantitative') || qSubId.includes('quantitative') || qSub.includes('quant');
+    }
+    if (cleanTarget.includes('reason') || cleanTarget.includes('reasoning') || cleanTarget.includes('intelligence')) {
+      return qSub.includes('reasoning') || qSubId.includes('reasoning');
+    }
+    return qSub.includes(cleanTarget) || cleanTarget.includes(qSub);
+  });
+}
+
+/**
+ * Get count summary for each subject
+ */
+export async function getSubjectStatistics() {
+  const all = await loadAllRRBQuestions();
+  let gk = 0;
+  let quant = 0;
+  let reasoning = 0;
+  let science = 0;
+
+  for (const q of all) {
+    const sub = (q.subject || '').toLowerCase();
+    if (sub.includes('science')) science++;
+    else if (sub.includes('knowledge') || sub.includes('gk')) gk++;
+    else if (sub.includes('quant') || sub.includes('math')) quant++;
+    else if (sub.includes('reason')) reasoning++;
+  }
+
+  return {
+    total: all.length,
+    gk,
+    quant,
+    reasoning,
+    science
+  };
+}
+
+/**
+ * Get questions for a specific shift and optional subject
  * @param {string|number} shiftNumberOrId e.g. 1 or 'rrb-ntpc-ug-2025-shift-1'
  * @param {string|null} subject e.g. 'Quantitative Aptitude', 'General Knowledge', 'General Science', 'Reasoning', or null for all
  */
@@ -171,38 +231,8 @@ export async function getQuestionsForShift(shiftNumberOrId, subject = null) {
   });
 }
 
-/**
- * Build Engine-compatible test object
- */
-export async function getEngineMockTest(testId, subjectParam = null) {
-  const shifts = getAllShifts();
-  
-  // Parse testId: could be rrb-ntpc-ug-2025-shift-1 or rrb-ntpc-ug-2025-shift-1--general-science
-  let shiftId = testId;
-  let targetSubject = subjectParam;
-
-  if (testId.includes('--')) {
-    const parts = testId.split('--');
-    shiftId = parts[0];
-    targetSubject = parts[1];
-  }
-
-  const shift = shifts.find((s) => s.id === shiftId || s.code.toLowerCase() === shiftId.toLowerCase()) || shifts[0];
-  const questions = await getQuestionsForShift(shift?.shiftNumber || 1, targetSubject);
-
-  // Subject title resolution
-  let subjectLabel = 'Full Shift CBT (All Subjects)';
-  if (targetSubject && targetSubject !== 'full') {
-    const foundSub = RRB_CORE_SUBJECTS.find((s) => s.id === targetSubject || s.title.toLowerCase() === targetSubject.toLowerCase());
-    subjectLabel = foundSub ? foundSub.title : targetSubject;
-  }
-
-  // Duration: 90 mins for full test, or proportional for subject test (approx 1 min/question, min 15 mins)
-  const isFull = !targetSubject || targetSubject === 'full' || questions.length >= 70;
-  const duration = isFull ? (shift?.durationMinutes || 90) : Math.max(15, questions.length);
-
-  // Format into engine format
-  const engineQuestions = questions.map((q, idx) => ({
+function formatToEngineQuestions(questions) {
+  return questions.map((q, idx) => ({
     id: q.id,
     number: idx + 1,
     originalNumber: q.questionNumber,
@@ -221,18 +251,128 @@ export async function getEngineMockTest(testId, subjectParam = null) {
       D: q.options?.te?.[3] || ''
     },
     correctOption: ['A', 'B', 'C', 'D'][q.correctAnswer] || q.correctLetter || 'A',
-    explanation: q.explanation?.en || `Official answer is Option (${q.correctLetter || 'A'}). Preserved from RRB NTPC UG 2025 Shift ${q.shiftNumber}.`,
+    explanation: q.explanation?.en || `Official answer is Option (${q.correctLetter || 'A'}). Preserved from RRB NTPC UG 2025 official answer key.`,
     explanationTe: q.explanation?.te || '',
     examName: q.examName || 'RRB NTPC UG 2025',
     examYear: q.examYear || '2025',
-    shift: `Shift ${q.shiftNumber}`,
+    shift: q.shiftNumber ? `Shift ${q.shiftNumber}` : 'Master PYQ Pool',
     examDate: q.examDate,
     shiftTiming: q.shiftTiming,
     subject: q.subject,
     subtopic: q.subtopic,
     verificationStatus: q.status === 'Published' ? 'VERIFIED' : 'UNVERIFIED',
-    source: q.source || 'RRB Official Key'
+    source: q.source || 'RRB Official Answer Key (CEN 07/2025)'
   }));
+}
+
+/**
+ * Build Engine-compatible test object
+ */
+export async function getEngineMockTest(testId, subjectParam = null) {
+  const shifts = getAllShifts();
+  const allQuestions = await loadAllRRBQuestions();
+
+  // 1. Unified Subject Tests: e.g. "subject-gk-master", "subject-reasoning-master", "subject-quant-50q", etc.
+  if (testId.startsWith('subject-') || testId.startsWith('unified-') || testId.startsWith('topic-') || testId.startsWith('full-cbt-')) {
+    let subject = subjectParam;
+    let title = 'Subject Master Mock Test';
+    let targetCount = 100;
+    let duration = 90;
+
+    if (testId.includes('gk') || subject === 'general-knowledge' || subject === 'General Knowledge') {
+      subject = 'General Knowledge';
+      title = 'General Knowledge Master PYQ Mock Test';
+    } else if (testId.includes('reasoning') || subject === 'reasoning' || subject === 'Reasoning') {
+      subject = 'Reasoning';
+      title = 'Reasoning & Mental Ability Master Mock Test';
+    } else if (testId.includes('quant') || subject === 'quantitative-aptitude' || subject === 'Quantitative Aptitude') {
+      subject = 'Quantitative Aptitude';
+      title = 'Quantitative Aptitude Master Mock Test';
+    } else if (testId.includes('science') || subject === 'general-science' || subject === 'General Science') {
+      subject = 'General Science';
+      title = 'General Science Master Mock Test';
+    } else if (testId.startsWith('full-cbt-')) {
+      subject = 'full';
+      title = 'RRB NTPC UG 2025 Full CBT Master Mock Test (100 Qs)';
+    }
+
+    if (testId.includes('25q') || testId.includes('speed') || testId.includes('practice-1')) {
+      targetCount = 25;
+      duration = 25;
+      title = `${subject} · Speed Practice Test (25 Qs)`;
+    } else if (testId.includes('50q') || testId.includes('high-yield') || testId.includes('test-2')) {
+      targetCount = 50;
+      duration = 45;
+      title = `${subject} · High-Yield PYQs Test (50 Qs)`;
+    } else if (testId.includes('master-2') || testId.includes('test-3')) {
+      targetCount = 100;
+      duration = 90;
+      title = `${subject} · Full Comprehensive Test 2 (100 Qs)`;
+    }
+
+    // Filter questions
+    let picked = [];
+    if (subject === 'full') {
+      const qQuant = allQuestions.filter((q) => q.subject === 'Quantitative Aptitude').slice(0, 30);
+      const qGk = allQuestions.filter((q) => q.subject === 'General Knowledge').slice(0, 30);
+      const qSci = allQuestions.filter((q) => q.subject === 'General Science').slice(0, 10);
+      const qReas = allQuestions.filter((q) => q.subject === 'Reasoning').slice(0, 30);
+      picked = [...qQuant, ...qGk, ...qSci, ...qReas];
+    } else {
+      const subjectPool = await getQuestionsForSubject(subject);
+      picked = subjectPool.slice(0, targetCount);
+      if (picked.length < targetCount && subjectPool.length > 0) {
+        picked = subjectPool;
+      }
+    }
+
+    const engineQuestions = formatToEngineQuestions(picked);
+
+    return {
+      meta: {
+        id: testId,
+        code: `MOCK-${(subject || 'CBT').slice(0, 5).toUpperCase()}`,
+        title,
+        subtitle: `ExamQuestHub Master CBT · Official 2025 Question Pool`,
+        examName: 'RRB NTPC Under Graduate 2025 (CEN 07/2025)',
+        examYear: '2025',
+        subjectLabel: subject === 'full' ? 'All 4 Subjects' : subject,
+        targetSubject: subject,
+        questionsCount: engineQuestions.length,
+        timeMinutes: duration,
+        marks: engineQuestions.length,
+        negativeMarking: 0.33,
+        pdfUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+        pdfFileName: 'RRB-NTPC-UG-2025-EN-All-Papers.pdf',
+        subjectTest: subject !== 'full'
+      },
+      questions: engineQuestions
+    };
+  }
+
+  // 2. Legacy / Individual Shift resolution if ever requested
+  let shiftId = testId;
+  let targetSubject = subjectParam;
+
+  if (testId.includes('--')) {
+    const parts = testId.split('--');
+    shiftId = parts[0];
+    targetSubject = parts[1];
+  }
+
+  const shift = shifts.find((s) => s.id === shiftId || s.code.toLowerCase() === shiftId.toLowerCase()) || shifts[0];
+  const questions = await getQuestionsForShift(shift?.shiftNumber || 1, targetSubject);
+
+  let subjectLabel = 'Full Shift CBT (All Subjects)';
+  if (targetSubject && targetSubject !== 'full') {
+    const foundSub = RRB_CORE_SUBJECTS.find((s) => s.id === targetSubject || s.title.toLowerCase() === targetSubject.toLowerCase());
+    subjectLabel = foundSub ? foundSub.title : targetSubject;
+  }
+
+  const isFull = !targetSubject || targetSubject === 'full' || questions.length >= 70;
+  const duration = isFull ? (shift?.durationMinutes || 90) : Math.max(15, questions.length);
+
+  const engineQuestions = formatToEngineQuestions(questions);
 
   return {
     meta: {
@@ -259,3 +399,4 @@ export async function getEngineMockTest(testId, subjectParam = null) {
 }
 
 export { RRB_CORE_SUBJECTS };
+

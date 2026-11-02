@@ -23,6 +23,7 @@ import {
   withEffectiveStatusList
 } from '../utils/notificationStatus.js';
 import { getDefaultImageForTopic as defaultImageForTopic, DEFAULT_TOPIC_IMAGES } from './topicImages.js';
+import { loadAllRRBQuestions } from '../services/rrbMockService.js';
 
 export { DEFAULT_TOPIC_IMAGES };
 
@@ -554,29 +555,90 @@ export async function deleteQuestion(id) {
   return true;
 }
 
-/* --------------------------- Mock test questions --------------------------- */
+function mapRrbToMockQuestion(q) {
+  let categoryId = 'gk';
+  let subjectId = 'static-gk';
+  const sub = (q.subject || '').toLowerCase();
+
+  if (sub.includes('science')) {
+    categoryId = 'gk';
+    subjectId = 'general-science';
+  } else if (sub.includes('quant') || sub.includes('math')) {
+    categoryId = 'quant';
+    subjectId = 'number-system';
+  } else if (sub.includes('reason')) {
+    categoryId = 'reasoning';
+    subjectId = 'series-coding-decoding';
+  } else {
+    categoryId = 'gk';
+    const text = ((q.question?.en || '') + ' ' + (q.subtopic || '')).toLowerCase();
+    if (text.includes('article') || text.includes('constitution') || text.includes('amendment') || text.includes('court') || text.includes('parliament') || text.includes('president') || text.includes('polity')) {
+      subjectId = 'indian-polity';
+    } else if (text.includes('dynasty') || text.includes('battle') || text.includes('british') || text.includes('gandhi') || text.includes('mughal') || text.includes('history') || text.includes('war')) {
+      subjectId = 'indian-history';
+    } else if (text.includes('river') || text.includes('mountain') || text.includes('soil') || text.includes('climate') || text.includes('geography') || text.includes('lake') || text.includes('ocean')) {
+      subjectId = 'geography';
+    } else if (text.includes('rbi') || text.includes('gdp') || text.includes('bank') || text.includes('inflation') || text.includes('economy') || text.includes('market') || text.includes('tax')) {
+      subjectId = 'indian-economy';
+    } else {
+      subjectId = 'static-gk';
+    }
+  }
+
+  return {
+    ...q,
+    categoryId,
+    subjectId: q.subjectId && q.subjectId !== 'general-knowledge' && q.subjectId !== 'quantitative-aptitude' ? q.subjectId : subjectId,
+    questionType: 'PYQ',
+    difficulty: q.difficulty || 'Medium',
+    verificationStatus: 'VERIFIED',
+    source: q.source || 'RRB Official Answer Key (CEN 07/2025)',
+    paperUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+    paperFileName: 'RRB-NTPC-UG-2025-EN-All-Papers.pdf'
+  };
+}
 
 /**
  * Subject-wise mock test questions (PYQ / IMPORTANT / PRACTICE).
- *
- * Deliberately has no seeded fallback: question content must only ever come
- * from admin-authored Firestore records, so an empty database yields an empty
- * bank rather than invented questions.
+ * Combines all questions extracted from the 32 official examination shifts
+ * with admin-authored and custom Firestore mock questions.
  */
 export async function getMockQuestions() {
+  let firestoreOrCached = [];
   if (isFirebaseConfigured && db) {
     try {
-      const items = await fetchCollection('mockQuestions');
-      saveLocalData(STORAGE_KEYS.MOCK_QUESTIONS, items);
+      firestoreOrCached = await fetchCollection('mockQuestions');
+      saveLocalData(STORAGE_KEYS.MOCK_QUESTIONS, firestoreOrCached);
       markSyncSuccess();
-      return items;
     } catch (err) {
       recordError('firestoreService.getMockQuestions', err);
       markSyncFailure(err);
-      return cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
+      firestoreOrCached = cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
     }
+  } else {
+    firestoreOrCached = cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
   }
-  return cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
+
+  // Combine with all 3,200 RRB questions bank
+  let rrbQuestions = [];
+  try {
+    const rawRrb = await loadAllRRBQuestions();
+    rrbQuestions = (rawRrb || []).map(mapRrbToMockQuestion);
+  } catch (err) {
+    console.error('Failed to load RRB questions for mock pool:', err);
+  }
+
+  const map = new Map();
+  // Add RRB questions
+  for (const q of rrbQuestions) {
+    map.set(q.id, q);
+  }
+  // Add/override with Firestore or custom questions
+  for (const q of firestoreOrCached) {
+    map.set(q.id, { ...(map.get(q.id) || {}), ...q });
+  }
+
+  return Array.from(map.values());
 }
 
 export async function saveMockQuestion(question) {
