@@ -2,7 +2,7 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
-import lazyWithRetry from './utils/lazyWithRetry.js';
+import { lazyWithRetry } from './utils/lazyWithRetry.js';
 
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
@@ -11,25 +11,22 @@ import RouteSeo from './components/RouteSeo.jsx';
 
 import HomePage from './pages/HomePage.jsx';
 
-// Route-level code splitting keeps the initial download small so mobile devices
-// on slow connections still render content instead of staying on a blank screen.
-// `lazyWithRetry` additionally recovers a tab that is still holding the previous
-// deployment's chunk names (see the helper for details).
-const JobsPage = lazyWithRetry(() => import('./pages/JobsPage.jsx'));
-const JobDetailPage = lazyWithRetry(() => import('./pages/JobDetailPage.jsx'));
-const AdmitCardsPage = lazyWithRetry(() => import('./pages/AdmitCardsPage.jsx'));
-const ResultsPage = lazyWithRetry(() => import('./pages/ResultsPage.jsx'));
-const CurrentAffairsPage = lazyWithRetry(() => import('./pages/CurrentAffairsPage.jsx'));
-const CurrentAffairDetailPage = lazyWithRetry(() => import('./pages/CurrentAffairDetailPage.jsx'));
-const GKPracticePage = lazyWithRetry(() => import('./pages/GKPracticePage.jsx'));
-const PreviousPapersPage = lazyWithRetry(() => import('./pages/PreviousPapersPage.jsx'));
-const StudyMaterialPage = lazyWithRetry(() => import('./pages/StudyMaterialPage.jsx'));
-const MockTestsHubPage = lazyWithRetry(() => import('./pages/MockTestsHubPage.jsx'));
-const MockCategoryPage = lazyWithRetry(() => import('./pages/MockCategoryPage.jsx'));
-const MockSubjectPage = lazyWithRetry(() => import('./pages/MockSubjectPage.jsx'));
-const MockTestEnginePage = lazyWithRetry(() => import('./pages/MockTestEnginePage.jsx'));
-const AdminPage = lazyWithRetry(() => import('./pages/AdminPage.jsx'));
-const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage.jsx'));
+// Resilient code-splitting with automatic recovery on stale chunk deployment errors
+const JobsPage = lazyWithRetry(() => import('./pages/JobsPage.jsx'), 'JobsPage');
+const JobDetailPage = lazyWithRetry(() => import('./pages/JobDetailPage.jsx'), 'JobDetailPage');
+const AdmitCardsPage = lazyWithRetry(() => import('./pages/AdmitCardsPage.jsx'), 'AdmitCardsPage');
+const ResultsPage = lazyWithRetry(() => import('./pages/ResultsPage.jsx'), 'ResultsPage');
+const CurrentAffairsPage = lazyWithRetry(() => import('./pages/CurrentAffairsPage.jsx'), 'CurrentAffairsPage');
+const CurrentAffairDetailPage = lazyWithRetry(() => import('./pages/CurrentAffairDetailPage.jsx'), 'CurrentAffairDetailPage');
+const GKPracticePage = lazyWithRetry(() => import('./pages/GKPracticePage.jsx'), 'GKPracticePage');
+const PreviousPapersPage = lazyWithRetry(() => import('./pages/PreviousPapersPage.jsx'), 'PreviousPapersPage');
+const StudyMaterialPage = lazyWithRetry(() => import('./pages/StudyMaterialPage.jsx'), 'StudyMaterialPage');
+const MockTestsHubPage = lazyWithRetry(() => import('./pages/MockTestsHubPage.jsx'), 'MockTestsHubPage');
+const MockCategoryPage = lazyWithRetry(() => import('./pages/MockCategoryPage.jsx'), 'MockCategoryPage');
+const MockSubjectPage = lazyWithRetry(() => import('./pages/MockSubjectPage.jsx'), 'MockSubjectPage');
+const MockTestEnginePage = lazyWithRetry(() => import('./pages/MockTestEnginePage.jsx'), 'MockTestEnginePage');
+const AdminPage = lazyWithRetry(() => import('./pages/AdminPage.jsx'), 'AdminPage');
+const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage.jsx'), 'NotFoundPage');
 
 // Scroll to top upon route change
 function ScrollToTop() {

@@ -122,8 +122,8 @@ export default function HomePage() {
       to: '/results'
     },
     {
-      title: 'Mock Tests (CBT)',
-      desc: 'Jan 2026, Dec, Nov & Oct 2025 Mocks',
+      title: 'Previous Year Mock Tests',
+      desc: 'RRB NTPC 2025 · 32 Shifts · 4 Subjects',
       icon: Sparkles,
       color: 'bg-amber-50 text-amber-900 border-amber-200',
       to: '/mocks'

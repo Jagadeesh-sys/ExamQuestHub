@@ -793,13 +793,14 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => setActiveTab('mockTests')}
-          className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+          className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === 'mockTests'
               ? 'bg-[#12345A] text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Mock Tests ({mockQuestions.length})
+          <Award className="w-3.5 h-3.5 text-[#F2BE4F]" />
+          <span>Mock Tests &amp; PYQ Studio (32 Shifts)</span>
         </button>
         <button
           type="button"

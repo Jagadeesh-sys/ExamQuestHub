@@ -53,22 +53,38 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       const deviceInfo = getDeviceInfo();
+      const errorMessage = String(this.state.error?.message || this.state.error || '');
+      const isDynamicChunkError =
+        errorMessage.includes('dynamically imported module') ||
+        errorMessage.includes('Loading chunk') ||
+        errorMessage.includes('ChunkLoadError') ||
+        errorMessage.includes('Lazy');
+
       return (
         <div className="min-h-screen bg-[#F6F8FC] flex items-center justify-center p-4">
           <div className="max-w-lg w-full bg-white rounded-3xl border border-[#E3EAF2] shadow-xl p-6 sm:p-8 space-y-6 text-center">
             {/* Icon */}
-            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 mx-auto flex items-center justify-center shadow-xs">
-              <AlertTriangle className="w-8 h-8" />
+            <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center shadow-xs ${
+              isDynamicChunkError
+                ? 'bg-[#EAF3FF] border border-[#2468B4]/20 text-[#12345A]'
+                : 'bg-amber-50 border border-amber-200 text-amber-700'
+            }`}>
+              {isDynamicChunkError ? (
+                <RefreshCw className="w-8 h-8 text-[#2468B4]" />
+              ) : (
+                <AlertTriangle className="w-8 h-8" />
+              )}
             </div>
 
             {/* Heading & Explanation */}
             <div className="space-y-2">
               <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-[#12345A]">
-                Unable to Load Content
+                {isDynamicChunkError ? 'New Update Available' : 'Unable to Load Content'}
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                An unexpected interface error occurred on this screen. Your data and session are safe.
-                Please retry or reload to restore normal operation.
+                {isDynamicChunkError
+                  ? 'A new version of ExamQuestHub has been published. Click "Update & Refresh" below to load the latest application bundle.'
+                  : 'An unexpected interface error occurred on this screen. Your data and session are safe. Please retry or reload to restore normal operation.'}
               </p>
             </div>
 

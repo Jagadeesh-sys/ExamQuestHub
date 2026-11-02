@@ -42,6 +42,7 @@ import {
   selectTestQuestions,
   toEngineQuestion
 } from '../constants/mockTaxonomy.js';
+import { getEngineMockTest } from '../services/rrbMockService.js';
 
 /**
  * Builds engine metadata for a Firestore-backed subject test
@@ -119,11 +120,14 @@ export default function MockTestEnginePage() {
   const [activeMode, setActiveMode] = useState(modeParam);
 
   // A test id of the form `categoryId--subjectId--type` is served from the
-  // `mockQuestions` Firestore collection; everything else is a bundled CA mock.
+  // `mockQuestions` Firestore collection; `rrb-ntpc-` tests are previous year CBT tests;
+  // everything else is a bundled CA mock.
   const parsedTest = useMemo(() => parseTestId(mockId), [mockId]);
   const isSubjectTest = Boolean(parsedTest);
+  const isRrbTest = useMemo(() => Boolean(mockId && mockId.startsWith('rrb-ntpc-')), [mockId]);
 
   const [subjectTest, setSubjectTest] = useState({ loading: isSubjectTest, meta: null, questions: [] });
+  const [rrbTestState, setRrbTestState] = useState({ loading: isRrbTest, meta: null, questions: [] });
 
   useEffect(() => {
     if (!isSubjectTest) {
@@ -148,17 +152,40 @@ export default function MockTestEnginePage() {
     };
   }, [mockId, isSubjectTest]);
 
+  // Load RRB NTPC 2025 Mock Tests (Shift or Subject)
+  useEffect(() => {
+    if (!isRrbTest) {
+      setRrbTestState({ loading: false, meta: null, questions: [] });
+      return undefined;
+    }
+
+    let active = true;
+    setRrbTestState({ loading: true, meta: null, questions: [] });
+
+    (async () => {
+      const subjectParam = searchParams.get('subject');
+      const data = await getEngineMockTest(mockId, subjectParam);
+      if (!active) return;
+      setRrbTestState({ loading: false, meta: data.meta, questions: data.questions });
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [mockId, searchParams, isRrbTest]);
+
   const staticMeta = useMemo(
     () => MOCK_TESTS_METADATA.find((m) => m.id === mockId) || null,
     [mockId]
   );
 
-  const mockMeta = isSubjectTest ? subjectTest.meta : staticMeta;
+  const mockMeta = isRrbTest ? rrbTestState.meta : (isSubjectTest ? subjectTest.meta : staticMeta);
 
   const allQuestions = useMemo(() => {
+    if (isRrbTest) return rrbTestState.questions;
     if (isSubjectTest) return subjectTest.questions;
     return staticMeta ? MOCK_QUESTIONS_DATABASE[staticMeta.id] || [] : [];
-  }, [isSubjectTest, subjectTest.questions, staticMeta]);
+  }, [isRrbTest, rrbTestState.questions, isSubjectTest, subjectTest.questions, staticMeta]);
 
   // CBT & Practice State
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -379,7 +406,7 @@ export default function MockTestEnginePage() {
     });
   }, [allQuestions, selectedAnswers, solutionFilter]);
 
-  if (isSubjectTest && subjectTest.loading) {
+  if ((isSubjectTest && subjectTest.loading) || (isRrbTest && rrbTestState.loading)) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 flex flex-col items-center gap-3">
         <Loader2 className="w-7 h-7 text-[#2468B4] animate-spin" />
