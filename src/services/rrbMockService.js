@@ -9,6 +9,160 @@ import { RRB_NTPC_SHIFTS, RRB_CORE_SUBJECTS } from '../data/rrbNtpcMetadata.js';
 const STORAGE_KEY_CUSTOM_QUESTIONS = 'eqh_custom_mock_questions_v1';
 const STORAGE_KEY_TEST_OVERRIDES = 'eqh_mock_test_overrides_v1';
 
+/**
+ * Computer Science is a syllabus unit of the General Awareness section. It gets its own
+ * subject entry in the mocks hub (rather than one General Knowledge topic) so it can carry
+ * the standard Computer Science units used by government examinations.
+ */
+export const COMPUTER_SCIENCE_SUBJECT = {
+  id: 'computer-science',
+  title: 'Computer Science',
+  name: 'Computer Science (Computer Awareness)',
+  description:
+    'Fundamentals, Operating Systems, Computer Networks, DBMS, DSA, Programming, Digital Logic & Software Engineering',
+  color: 'from-cyan-600 to-cyan-700',
+  badge: 'Computer',
+  topics: [
+    'Computer Fundamentals & Awareness',
+    'Operating Systems',
+    'Computer Networks',
+    'Database Management Systems',
+    'Data Structures & Algorithms',
+    'Programming & OOP',
+    'Digital Logic & Computer Organization',
+    'Software Engineering'
+  ]
+};
+
+/** Subjects offered in the mocks hub: the four core RRB NTPC subjects plus Computer Science. */
+export const RRB_MOCK_SUBJECTS = [...RRB_CORE_SUBJECTS, COMPUTER_SCIENCE_SUBJECT];
+
+const toKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** Stable slug for a topic name. Shared with the mock hub so topic links resolve here. */
+export function slugifyTopic(topic) {
+  return String(topic || '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** Splits `topic-<subjectId>-<topicSlug>` so the engine can scope the test by topic. */
+function parseTopicTestId(testId) {
+  const rest = String(testId).slice('topic-'.length);
+  const subjectId =
+    RRB_MOCK_SUBJECTS.map((subject) => subject.id).find(
+      (id) => rest === id || rest.startsWith(`${id}-`)
+    ) || null;
+  return { subjectId, topicSlug: subjectId ? rest.slice(subjectId.length + 1) : rest };
+}
+
+/** Maps a topic slug back to the topic name declared on that subject. */
+function resolveTopicName(subjectId, topicSlug) {
+  const subject = RRB_MOCK_SUBJECTS.find((item) => item.id === subjectId);
+  const declared = (subject?.topics || []).find((topic) => slugifyTopic(topic) === topicSlug);
+  return declared || titleCaseTopic(topicSlug);
+}
+
+/** 'computer-science' -> 'Computer Science' */
+function titleCaseTopic(topicSlug) {
+  return String(topicSlug || '')
+    .split(/[^a-z0-9]+/i)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+/**
+ * The extracted papers record every General Knowledge question as
+ * "General Awareness & Studies", so a GK topic test has to work out the topic from
+ * the question text. Rules are checked in order and the first match wins; questions
+ * that match nothing stay under Static GK.
+ */
+const GK_TOPIC_RULES = [
+  [
+    'Computer Science',
+    /\b(computer|cpu|software|hardware|internet|website|browser|http|url|binary|operating system|firewall|compiler|motherboard|database|network|email|keyboard|mouse|printer|byte|processor|cyber|algorithm|excel|ms word|powerpoint|wifi|bluetooth)\b/
+  ],
+  [
+    'Polity & Constitution',
+    /\b(constitution|article|amendment|parliament|lok sabha|rajya sabha|president|prime minister|vice president|supreme court|high court|governor|fundamental rights?|directive principles?|election commission|panchayat|judiciary|chief minister|speaker|attorney|census|bill|ordinance)\b/
+  ],
+  [
+    'Indian History',
+    /\b(ancient|medieval|mughal|sultanate|british|dynasty|battle|gandhi|nehru|independence|vedic|harappan|indus valley|ashoka|akbar|shivaji|maratha|revolt|freedom struggle|harappa|mohenjo)\b/
+  ],
+  [
+    'Geography',
+    /\b(river|mountain|plateau|desert|soil|climate|monsoon|lake|ocean|latitude|longitude|continent|tropic|glacier|valley|island|national park|forest|rainfall|mineral|dam|tributary|peninsula|delta)\b/
+  ],
+  [
+    'Economy',
+    /\b(gdp|gross domestic|inflation|rbi|reserve bank|budget|tax|gst|economy|economic|trade|currency|rupee|crore|lakh|agriculture|industry|five year plan|poverty|national income|fiscal|monetary|niti aayog|sebi|sensex)\b/
+  ],
+  [
+    'Government Schemes',
+    /\b(scheme|yojana|abhiyan|pradhan mantri|mudra|jan dhan|subsidy|welfare)\b/
+  ],
+  ['Current Affairs', /\b20(1[5-9]|2[0-9])\b/]
+];
+
+/** Topic a General Knowledge question belongs to. */
+export function classifyGkTopic(question) {
+  if (toKey(question?.subtopic) === 'computerawareness') return 'Computer Science';
+  const text = `${question?.question?.en || ''} ${(question?.options?.en || []).join(' ')}`.toLowerCase();
+  for (const [topic, pattern] of GK_TOPIC_RULES) {
+    if (pattern.test(text)) return topic;
+  }
+  return 'Static GK';
+}
+
+/**
+ * Computer Science unit a computer question belongs to, following the units used by
+ * government examinations. Basic awareness questions (hardware, memory, MS Office,
+ * shortcuts) fall through to the fundamentals bucket.
+ */
+const COMPUTER_TOPIC_RULES = [
+  [
+    'Database Management Systems',
+    /\b(database|dbms|rdbms|sql|primary key|foreign key|normalization|oracle|mysql|table|query)\b/
+  ],
+  [
+    'Operating Systems',
+    /\b(operating system|windows|linux|unix|ms-?dos|kernel|booting|bios|file system|taskbar|device driver|gui|command prompt)\b/
+  ],
+  [
+    'Computer Networks',
+    /\b(network|lan|wan|internet|intranet|protocol|http|https|ftp|smtp|tcp|ip address|router|switch|modem|ethernet|wifi|wi-fi|bluetooth|topology|server|client|url|www|browser|website|web page|email|e-mail|firewall|bandwidth|cloud)\b/
+  ],
+  [
+    'Data Structures & Algorithms',
+    /\b(data structure|array|stack|queue|linked list|binary tree|algorithm|sorting|searching|complexity|recursion|pointer)\b/
+  ],
+  [
+    'Programming & OOP',
+    /\b(programming language|programming|compiler|interpreter|assembler|java|python|c\+\+|object oriented|oop|inheritance|polymorphism|encapsulation|source code|machine language|high level language|assembly language|cobol|fortran|pascal|html|xml|javascript)\b/
+  ],
+  [
+    'Software Engineering',
+    /\b(software engineering|sdlc|waterfall|agile|software testing|debugging|malware|virus|antivirus|spyware|trojan|worm|hacking|phishing|encryption|backup|syntax error)\b/
+  ],
+  [
+    'Digital Logic & Computer Organization',
+    /\b(logic gate|gates|nand|nor|xor|truth table|flip.?flop|register|counter|number system|hexadecimal|octal|binary|ascii|ebcdic|unicode|alu|microprocessor|instruction|clock speed|system bus)\b/
+  ]
+];
+
+/** Computer Science topic a computer question belongs to. */
+export function classifyComputerTopic(question) {
+  const text = `${question?.question?.en || ''} ${(question?.options?.en || []).join(' ')}`.toLowerCase();
+  for (const [topic, pattern] of COMPUTER_TOPIC_RULES) {
+    if (pattern.test(text)) return topic;
+  }
+  return 'Computer Fundamentals & Awareness';
+}
+
 let cachedFullData = null;
 let cachedQuestions = null;
 
@@ -162,6 +316,9 @@ export async function getQuestionsForSubject(subjectIdOrName) {
   return all.filter((q) => {
     const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
     const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (cleanTarget.includes('computer')) {
+      return qSub.includes('generalknowledge') && classifyGkTopic(q) === 'Computer Science';
+    }
     if (cleanTarget.includes('gk') || cleanTarget.includes('generalknowledge') || cleanTarget.includes('generalawareness')) {
       return qSub.includes('generalknowledge') || qSubId.includes('generalknowledge') || qSubId.includes('gk');
     }
@@ -279,6 +436,15 @@ export async function getEngineMockTest(testId, subjectParam = null) {
     let targetCount = 100;
     let duration = 90;
 
+    // Topic-wise tests carry their topic in the id. Resolving it before the subject
+    // checks below keeps the test scoped to its own subject and topic.
+    let topicName = '';
+    if (testId.startsWith('topic-')) {
+      const { subjectId, topicSlug } = parseTopicTestId(testId);
+      if (subjectId) subject = subjectId;
+      topicName = resolveTopicName(subjectId, topicSlug);
+    }
+
     if (testId.includes('gk') || subject === 'general-knowledge' || subject === 'General Knowledge') {
       subject = 'General Knowledge';
       title = 'General Knowledge Master PYQ Mock Test';
@@ -288,6 +454,10 @@ export async function getEngineMockTest(testId, subjectParam = null) {
     } else if (testId.includes('quant') || subject === 'quantitative-aptitude' || subject === 'Quantitative Aptitude') {
       subject = 'Quantitative Aptitude';
       title = 'Quantitative Aptitude Master Mock Test';
+    } else if (testId.includes('computer') || subject === 'computer-science' || subject === 'Computer Science') {
+      // Checked before the science rule: "computer-science" contains "science".
+      subject = 'Computer Science';
+      title = 'Computer Science Master Mock Test';
     } else if (testId.includes('science') || subject === 'general-science' || subject === 'General Science') {
       subject = 'General Science';
       title = 'General Science Master Mock Test';
@@ -321,7 +491,20 @@ export async function getEngineMockTest(testId, subjectParam = null) {
     } else {
       const subjectPool = await getQuestionsForSubject(subject);
       picked = subjectPool.slice(0, targetCount);
-      if (picked.length < targetCount && subjectPool.length > 0) {
+
+      if (topicName) {
+        // A topic test serves only the questions classified under its own topic. When
+        // nothing matches we keep the full subject pool instead of showing an empty test.
+        const topicPool =
+          subject === 'General Knowledge'
+            ? subjectPool.filter((q) => classifyGkTopic(q) === topicName)
+            : subject === 'Computer Science'
+              ? subjectPool.filter((q) => classifyComputerTopic(q) === topicName)
+              : [];
+        if (topicPool.length > 0) picked = topicPool.slice(0, targetCount);
+        title = `${subject} · ${topicName} Topic Test`;
+        duration = Math.max(5, Math.min(duration, picked.length));
+      } else if (picked.length < targetCount && subjectPool.length > 0) {
         picked = subjectPool;
       }
     }

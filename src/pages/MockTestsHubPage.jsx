@@ -19,6 +19,7 @@ import {
   Calculator,
   Landmark,
   Atom,
+  Cpu,
   HelpCircle,
   ShieldCheck,
   Calendar,
@@ -26,7 +27,13 @@ import {
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { getAllShifts, RRB_CORE_SUBJECTS } from '../services/rrbMockService.js';
+import {
+  getAllShifts,
+  RRB_MOCK_SUBJECTS,
+  slugifyTopic,
+  classifyGkTopic,
+  classifyComputerTopic
+} from '../services/rrbMockService.js';
 import { MOCK_CATEGORIES, MOCK_TEST_TYPES, countQuestionsBySubject } from '../constants/mockTaxonomy.js';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import { getMockQuestions } from '../firebase/firestoreService.js';
@@ -85,19 +92,20 @@ export default function MockTestsHubPage() {
         topics: ['Quantitative Aptitude (30Q)', 'General Knowledge & Studies (30-32Q)', 'General Science (8-10Q)', 'Reasoning (30Q)']
       };
     }
-    const found = RRB_CORE_SUBJECTS.find((s) => s.id === selectedSubject);
+    const found = RRB_MOCK_SUBJECTS.find((s) => s.id === selectedSubject);
     if (found) {
       let icon = Landmark;
       if (found.id === 'reasoning') icon = BrainCircuit;
       if (found.id === 'quantitative-aptitude') icon = Calculator;
       if (found.id === 'general-science') icon = Atom;
+      if (found.id === 'computer-science') icon = Cpu;
       return { ...found, icon };
     }
     return {
       id: 'general-knowledge',
       title: 'General Knowledge',
       name: 'General Knowledge (GK & GA)',
-      description: 'Indian History, Geography, Indian Polity, Economy, Static GK, Current Affairs, Schemes',
+      description: 'Indian History, Geography, Indian Polity, Economy, Static GK, Current Affairs & Schemes',
       color: 'from-amber-600 to-amber-700',
       badge: 'GK & GA',
       icon: Landmark,
@@ -116,6 +124,13 @@ export default function MockTestsHubPage() {
       const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
       const qCat = (q.categoryId || '').toLowerCase().replace(/[^a-z]/g, '');
 
+      // Checked before the science rule: "computer-science" also contains "science".
+      if (cleanTarget.includes('computer')) {
+        return (
+          qSub.includes('generalknowledge') &&
+          classifyGkTopic(q) === 'Computer Science'
+        );
+      }
       if (cleanTarget.includes('gk') || cleanTarget.includes('generalknowledge') || cleanTarget.includes('generalawareness')) {
         return (
           qSub.includes('generalknowledge') ||
@@ -140,6 +155,39 @@ export default function MockTestsHubPage() {
       return qSub.includes(cleanTarget) || cleanTarget.includes(qSub);
     });
   }, [firestoreQuestions, selectedSubject]);
+
+  // Questions available under each topic. Topic tests serve only these questions.
+  const topicQuestionCounts = useMemo(() => {
+    const classifier =
+      selectedSubject === 'general-knowledge'
+        ? classifyGkTopic
+        : selectedSubject === 'computer-science'
+          ? classifyComputerTopic
+          : null;
+    if (!classifier) return {};
+    const counts = {};
+    currentSubjectQuestions.forEach((q) => {
+      const topic = classifier(q);
+      counts[topic] = (counts[topic] || 0) + 1;
+    });
+    return counts;
+  }, [currentSubjectQuestions, selectedSubject]);
+
+  // Topic-wise tests offered across all subjects in the mocks hub.
+  const totalTopics = useMemo(
+    () => RRB_MOCK_SUBJECTS.reduce((sum, subject) => sum + (subject.topics?.length || 0), 0),
+    []
+  );
+
+  // Live count of computer questions, shown on the Computer Science subject card.
+  const computerQuestionCount = useMemo(
+    () =>
+      firestoreQuestions.filter((q) => {
+        const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
+        return qSub.includes('generalknowledge') && classifyGkTopic(q) === 'Computer Science';
+      }).length,
+    [firestoreQuestions]
+  );
 
   // Tab inside active subject: 'tests' | 'topics' | 'browser'
   const [subjectViewTab, setSubjectViewTab] = useState('tests');
@@ -369,8 +417,8 @@ export default function MockTestsHubPage() {
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-emerald-400">4 Core</div>
-              <div className="text-[11px] text-slate-300 font-medium">Subjects Classified</div>
+              <div className="text-2xl sm:text-3xl font-black text-emerald-400">{totalTopics}</div>
+              <div className="text-[11px] text-slate-300 font-medium">Topics Covered</div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
@@ -381,7 +429,7 @@ export default function MockTestsHubPage() {
         </div>
       </div>
 
-      {/* CORE 4 SUBJECT CARDS + FULL MOCK TEST (User Request Item 3) */}
+      {/* SUBJECT CARDS + FULL MOCK TEST */}
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -406,8 +454,8 @@ export default function MockTestsHubPage() {
           </a>
         </div>
 
-        {/* The 4 Core Subject Cards + Full Mock Test */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        {/* Subject Cards + Full Mock Test */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {/* 1. General Knowledge */}
           <button
             onClick={() => handleSelectSubject('general-knowledge')}
@@ -532,7 +580,38 @@ export default function MockTestsHubPage() {
             </div>
           </button>
 
-          {/* 5. Optional Full Mock Test (All 4 Subjects Combined) */}
+          {/* 5. Computer Science (Own subject with syllabus subtopics) */}
+          <button
+            onClick={() => handleSelectSubject('computer-science')}
+            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+              selectedSubject === 'computer-science'
+                ? 'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg border-transparent scale-[1.02]'
+                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-cyan-400'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                selectedSubject === 'computer-science' ? 'bg-white/20 text-white' : 'bg-cyan-50 text-cyan-600'
+              }`}>
+                <Cpu className="w-5 h-5" />
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                selectedSubject === 'computer-science' ? 'bg-white/20 text-white' : 'bg-cyan-100 text-cyan-800'
+              }`}>
+                {computerQuestionCount > 0 ? `${computerQuestionCount} Questions` : '8 Topics'}
+              </span>
+            </div>
+            <div className="mt-3">
+              <h3 className="font-black text-sm sm:text-base leading-tight">Computer Science</h3>
+              <p className={`text-[11px] mt-1 line-clamp-2 ${
+                selectedSubject === 'computer-science' ? 'text-cyan-100' : 'text-slate-500'
+              }`}>
+                Fundamentals, OS, Computer Networks, DBMS, DSA, Programming &amp; Digital Logic
+              </p>
+            </div>
+          </button>
+
+          {/* 6. Optional Full Mock Test (All 4 Subjects Combined) */}
           <button
             onClick={() => handleSelectSubject('full')}
             className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
@@ -735,8 +814,8 @@ export default function MockTestsHubPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {(currentSubjectInfo.topics || []).map((topic, idx) => {
-                const topicSlug = topic.toLowerCase().replace(/[^a-z0-9]/g, '-');
-                const testUrl = `/mocks/topic-${selectedSubject}-${topicSlug}?subject=${selectedSubject}`;
+                const testUrl = `/mocks/topic-${selectedSubject}-${slugifyTopic(topic)}?subject=${selectedSubject}`;
+                const questionCount = topicQuestionCounts[topic] || 0;
                 return (
                   <div
                     key={topic}
@@ -747,7 +826,7 @@ export default function MockTestsHubPage() {
                         #{idx + 1}
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                        Topic Test
+                        {questionCount > 0 ? `${questionCount} Questions` : 'Syllabus Topic'}
                       </span>
                     </div>
 
@@ -756,7 +835,9 @@ export default function MockTestsHubPage() {
                         {topic}
                       </h4>
                       <p className="text-xs text-slate-500 mt-1">
-                        Syllabus-aligned questions from official RRB CEN 07/2025 papers.
+                        {questionCount > 0
+                          ? `${questionCount} previous year questions classified under this topic.`
+                          : 'Syllabus topic — practice set drawn from the official Computer Science question pool.'}
                       </p>
                     </div>
 
