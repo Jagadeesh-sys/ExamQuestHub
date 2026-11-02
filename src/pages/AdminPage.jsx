@@ -54,6 +54,18 @@ import AdminDiagnosticsTab from '../components/AdminDiagnosticsTab.jsx';
 import AdminMockTestsTab from '../components/AdminMockTestsTab.jsx';
 import { CURRENT_AFFAIR_TOPICS, topicMatches, normalizeTopic } from '../constants/currentAffairs.js';
 
+/**
+ * Comparison key for a current affairs headline. Case, spacing and punctuation
+ * are ignored so "India's GDP rises" and "indias gdp rises" count as the same
+ * article instead of slipping past duplicate detection.
+ */
+function normalizeHeadlineKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
 export default function AdminPage() {
   const { currentUser, isAdmin, loading: authLoading, loginWithGoogle, loginWithEmail, logoutAdmin, authError, isFirebaseConfigured } = useAuth();
   const { t, getLocalized } = useLanguage();
@@ -231,7 +243,7 @@ export default function AdminPage() {
     try {
       parsed = JSON.parse(caImportJson);
     } catch (e) {
-      setCaImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`], warnings: [] });
+      setCaImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`], warnings: [], duplicates: [] });
       return;
     }
 
@@ -243,13 +255,20 @@ export default function AdminPage() {
           ? parsed.articles
           : null;
     if (!items || items.length === 0) {
-      setCaImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of current affairs articles.'], warnings: [] });
+      setCaImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of current affairs articles.'], warnings: [], duplicates: [] });
       return;
     }
 
     setCaImportBusy(true);
     const errors = [];
     const warnings = [];
+    const duplicates = [];
+    // Duplicates are rejected on a normalized headline, so the same story cannot
+    // be imported twice under slightly different punctuation or casing.
+    const dbHeadlines = new Set(
+      currentAffairs.map((entry) => normalizeHeadlineKey(entry.headline?.en)).filter(Boolean)
+    );
+    const payloadHeadlines = new Set();
     let ok = 0;
 
     for (let i = 0; i < items.length; i += 1) {
@@ -260,6 +279,17 @@ export default function AdminPage() {
         errors.push(`${label} — missing required field (headline.en, sourceUrl, summary.en)`);
         continue;
       }
+
+      const headlineKey = normalizeHeadlineKey(item.headline.en);
+      if (dbHeadlines.has(headlineKey)) {
+        duplicates.push(`${label} — already exists in the database`);
+        continue;
+      }
+      if (payloadHeadlines.has(headlineKey)) {
+        duplicates.push(`${label} — repeated earlier in this import`);
+        continue;
+      }
+      payloadHeadlines.add(headlineKey);
 
       // `category` is accepted as an alias for `topic` so payloads carried over from the
       // notifications importer still land in the right section instead of defaulting.
@@ -290,11 +320,15 @@ export default function AdminPage() {
     }
 
     setCaImportBusy(false);
-    setCaImportSummary({ ok, failed: errors.length, errors, warnings });
+    setCaImportSummary({ ok, failed: errors.length, errors, warnings, duplicates });
 
     if (ok > 0) {
       await loadAllAdminData();
-      triggerToast(`Imported ${ok} current affairs article${ok === 1 ? '' : 's'}`);
+      triggerToast(
+        `Imported ${ok} current affairs article${ok === 1 ? '' : 's'}${
+          duplicates.length ? `, ${duplicates.length} duplicate skipped` : ''
+        }`
+      );
     }
   };
 
@@ -1785,12 +1819,18 @@ export default function AdminPage() {
                     if (!editingItem.summary?.en?.trim()) {
                       throw new Error('Summary (English) is required.');
                     }
-                    const duplicateCa = currentAffairs.find((existing) =>
-                      existing.id !== editingItem.id &&
-                      (existing.headline?.en || '').trim().toLowerCase() === editingItem.headline.en.trim().toLowerCase()
+                    const headlineKey = normalizeHeadlineKey(editingItem.headline.en);
+                    const duplicateCa = currentAffairs.find(
+                      (existing) =>
+                        existing.id !== editingItem.id &&
+                        normalizeHeadlineKey(existing.headline?.en) === headlineKey
                     );
                     if (duplicateCa) {
-                      throw new Error('A current affairs article with this English headline already exists.');
+                      throw new Error(
+                        `Duplicate blocked — "${duplicateCa.headline?.en}" is already published${
+                          duplicateCa.eventDate ? ` (${duplicateCa.eventDate})` : ''
+                        }. Edit that article instead of adding it again.`
+                      );
                     }
                     await saveCurrentAffair(editingItem);
                     await loadAllAdminData();
@@ -2405,12 +2445,24 @@ export default function AdminPage() {
                 <p className="font-bold">
                   {caImportSummary.ok} imported
                   {caImportSummary.failed > 0 ? `, ${caImportSummary.failed} failed` : ''}
+                  {caImportSummary.duplicates?.length > 0
+                    ? `, ${caImportSummary.duplicates.length} duplicate skipped`
+                    : ''}
                 </p>
                 {caImportSummary.errors.length > 0 && (
                   <ul className="space-y-0.5 max-h-40 overflow-y-auto font-mono text-[11px]">
                     {caImportSummary.errors.map((msg, i) => (
                       <li key={i} className="break-words">
                         • {msg}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {caImportSummary.duplicates?.length > 0 && (
+                  <ul className="space-y-0.5 max-h-40 overflow-y-auto font-mono text-[11px] text-amber-800">
+                    {caImportSummary.duplicates.map((msg, i) => (
+                      <li key={i} className="break-words">
+                        ⧉ {msg}
                       </li>
                     ))}
                   </ul>

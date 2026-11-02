@@ -28,6 +28,7 @@ import {
   toAbsoluteUrl
 } from '../src/utils/seo.js';
 import { STATIC_PAGES, getSitemapStaticPages } from '../src/utils/routeMeta.js';
+import { getEffectiveStatus } from '../src/utils/notificationStatus.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -152,7 +153,7 @@ function renderJobBody(job) {
     renderValueRow('Last Date to Apply', job.deadline),
     renderValueRow('Exam Date', job.examDate),
     renderValueRow('Total Vacancies', job.vacancies),
-    renderValueRow('Status', job.status)
+    renderValueRow('Status', getEffectiveStatus(job))
   ].join('');
 
   const eligibility = [

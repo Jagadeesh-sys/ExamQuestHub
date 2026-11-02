@@ -16,6 +16,12 @@ import {
   INITIAL_RESOURCES
 } from '../data/initialData.js';
 import { logAppError } from '../utils/errorLogger.js';
+import {
+  AUTO_CLOSED_FLAG,
+  hasDeadlinePassed,
+  withEffectiveStatus,
+  withEffectiveStatusList
+} from '../utils/notificationStatus.js';
 import { getDefaultImageForTopic as defaultImageForTopic, DEFAULT_TOPIC_IMAGES } from './topicImages.js';
 
 export { DEFAULT_TOPIC_IMAGES };
@@ -206,25 +212,27 @@ export async function getUpdates(includeDrafts = false) {
       const items = sortByDateDesc(await fetchCollection('updates'));
       saveLocalData(STORAGE_KEYS.UPDATES, items);
       markSyncSuccess();
-      return includeDrafts ? items : items.filter((item) => !isDraft(item));
+      return withEffectiveStatusList(includeDrafts ? items : items.filter((item) => !isDraft(item)));
     } catch (err) {
       recordError('firestoreService.getUpdates', err);
       markSyncFailure(err);
       const cached = cachedOrEmpty(STORAGE_KEYS.UPDATES);
       const list = cached.length ? cached : [];
-      return includeDrafts ? list : list.filter((item) => !isDraft(item));
+      return withEffectiveStatusList(includeDrafts ? list : list.filter((item) => !isDraft(item)));
     }
   }
 
   const list = getLocalData(STORAGE_KEYS.UPDATES, INITIAL_UPDATES);
-  return includeDrafts ? list : list.filter((item) => !isDraft(item));
+  return withEffectiveStatusList(includeDrafts ? list : list.filter((item) => !isDraft(item)));
 }
 
 export function subscribeToUpdates(callback, includeDrafts = false) {
   let settled = false;
   const emit = (items) => {
     settled = true;
-    callback(includeDrafts ? items : items.filter((item) => !isDraft(item)));
+    callback(
+      withEffectiveStatusList(includeDrafts ? items : items.filter((item) => !isDraft(item)))
+    );
   };
 
   if (isFirebaseConfigured && db) {
@@ -272,17 +280,19 @@ export async function getUpdateById(id) {
     try {
       const direct = await getDoc(doc(db, 'updates', id));
       if (direct.exists()) {
-        return hydrateDoc(direct.id, direct.data());
+        return withEffectiveStatus(hydrateDoc(direct.id, direct.data()));
       }
       const items = await fetchCollection('updates');
-      return items.find((item) => item.id === id || item.slug === id) || null;
+      const found = items.find((item) => item.id === id || item.slug === id);
+      return found ? withEffectiveStatus(found) : null;
     } catch (err) {
       recordError('firestoreService.getUpdateById', err);
     }
   }
 
   const list = getLocalData(STORAGE_KEYS.UPDATES, INITIAL_UPDATES);
-  return list.find((item) => item.id === id || item.slug === id) || null;
+  const found = list.find((item) => item.id === id || item.slug === id);
+  return found ? withEffectiveStatus(found) : null;
 }
 
 export async function saveUpdate(item) {
@@ -294,13 +304,23 @@ export async function saveUpdate(item) {
   const slug = safeId(rawSlug, id);
   const publishedAt = item.publishedAt || nowIso.split('T')[0];
 
+  // A "Closed" that was only worked out from a passed deadline is not the admin's
+  // own choice: the marker is never stored, and if the last date has since been
+  // moved into the future the notification reopens instead of staying closed.
+  const { [AUTO_CLOSED_FLAG]: statusAutoClosed, ...fields } = item;
+  const status =
+    statusAutoClosed && !hasDeadlinePassed(fields.deadline)
+      ? 'Applications Open'
+      : fields.status;
+
   const payload = stripUndefined({
-    ...item,
+    ...fields,
+    status,
     id,
     slug,
     publishedAt,
     updatedAt: nowIso,
-    verifiedAt: isDraft(item) ? item.verifiedAt || null : item.verifiedAt || nowIso
+    verifiedAt: isDraft(fields) ? fields.verifiedAt || null : fields.verifiedAt || nowIso
   });
   assertInlineSize(payload);
 
