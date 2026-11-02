@@ -23,6 +23,7 @@ import {
   Image as ImageIcon,
   Clipboard,
   Activity,
+  Award,
   Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
