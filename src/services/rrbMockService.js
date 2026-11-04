@@ -415,7 +415,9 @@ function formatToEngineQuestions(questions) {
       C: q.options?.te?.[2] || '',
       D: q.options?.te?.[3] || ''
     },
-    correctOption: ['A', 'B', 'C', 'D'][q.correctAnswer] || q.correctLetter || 'A',
+    // The engine UI compares options ('A'..'D') against `correctAnswer`, so expose
+    // the correct option letter under that name. Source banks store the index.
+    correctAnswer: ['A', 'B', 'C', 'D'][q.correctAnswer] || q.correctLetter || 'A',
     explanation: q.explanation?.en || `Official answer is Option (${q.correctLetter || 'A'}). Preserved from RRB NTPC UG 2025 official answer key.`,
     explanationTe: q.explanation?.te || '',
     examName: q.examName || 'RRB NTPC UG 2025',
