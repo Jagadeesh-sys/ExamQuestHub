@@ -5,6 +5,7 @@ import {
   getDoc,
   setDoc,
   deleteDoc,
+  writeBatch,
   serverTimestamp,
   onSnapshot
 } from 'firebase/firestore';
@@ -619,7 +620,7 @@ export async function getMockQuestions() {
     firestoreOrCached = cachedOrEmpty(STORAGE_KEYS.MOCK_QUESTIONS);
   }
 
-  // Combine with all 3,200 RRB questions bank
+  // Combine with the extracted RRB bank (Under-Graduate + Graduate)
   let rrbQuestions = [];
   try {
     const rawRrb = await loadAllRRBQuestions();
@@ -668,6 +669,43 @@ export async function saveMockQuestion(question) {
   saveLocalData(STORAGE_KEYS.MOCK_QUESTIONS, list);
   markSyncSuccess();
   return payload;
+}
+
+/**
+ * Bulk upsert mock questions into Firestore with batched writes (450 docs per
+ * commit, under the 500-operation limit). Used by the admin action that stores
+ * the entire RRB question bank on the server.
+ */
+export async function bulkSaveMockQuestions(questions, onProgress) {
+  requireFirebaseWrite();
+  const list = Array.isArray(questions) ? questions : [];
+  const CHUNK_SIZE = 450;
+  let saved = 0;
+
+  try {
+    for (let i = 0; i < list.length; i += CHUNK_SIZE) {
+      const batch = writeBatch(db);
+      const slice = list.slice(i, i + CHUNK_SIZE);
+      for (const question of slice) {
+        const id = safeId(question.id || `mock-${Date.now()}`, 'mock');
+        batch.set(
+          doc(db, 'mockQuestions', id),
+          { ...stripUndefined({ ...question, id }), serverUpdatedAt: serverTimestamp() },
+          { merge: true }
+        );
+      }
+      await batch.commit();
+      saved += slice.length;
+      if (typeof onProgress === 'function') onProgress(saved, list.length);
+    }
+  } catch (err) {
+    const msg = recordError('firestoreService.bulkSaveMockQuestions', err);
+    markSyncFailure(err);
+    throw new Error(`Firestore bulk save failed after ${saved} of ${list.length}: ${msg}`);
+  }
+
+  markSyncSuccess();
+  return saved;
 }
 
 export async function deleteMockQuestion(id) {

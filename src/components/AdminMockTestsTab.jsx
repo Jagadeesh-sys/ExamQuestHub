@@ -24,6 +24,7 @@ import {
   Calendar
 } from 'lucide-react';
 import {
+  bulkSaveMockQuestions,
   deleteMockQuestion,
   getMockQuestions,
   saveMockQuestion
@@ -84,6 +85,11 @@ export default function AdminMockTestsTab({ onNotify }) {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [extractionLog, setExtractionLog] = useState('');
+
+  // Server (Firestore) Seeding State
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedProgress, setSeedProgress] = useState(0);
+  const [seedLog, setSeedLog] = useState('');
 
   // Delete Confirmation State
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -232,6 +238,29 @@ export default function AdminMockTestsTab({ onNotify }) {
     setEditingQuestion(null);
     setEditFormData(null);
     if (onNotify) onNotify('Question updated and saved successfully!', 'success');
+  };
+
+  // Store the entire extracted question bank on the server (Firestore)
+  const handleSeedToFirestore = async () => {
+    if (isSeeding || rrbQuestions.length === 0) return;
+    setIsSeeding(true);
+    setSeedProgress(0);
+    setSeedLog(`Uploading 0 of ${rrbQuestions.length} questions...`);
+
+    try {
+      const saved = await bulkSaveMockQuestions(rrbQuestions, (done, total) => {
+        setSeedProgress(Math.round((done / total) * 100));
+        setSeedLog(`Uploading ${done} of ${total} questions...`);
+      });
+      setSeedProgress(100);
+      setSeedLog(`${saved} questions stored on the server.`);
+      if (onNotify) onNotify(`${saved} questions stored in Firestore!`, 'success');
+    } catch (err) {
+      setSeedLog(err.message || 'Upload failed.');
+      if (onNotify) onNotify('Failed to store questions on the server.', 'error');
+    } finally {
+      setIsSeeding(false);
+    }
   };
 
   // Delete Question
@@ -440,10 +469,35 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export JSON (3.8MB)</span>
+                    <span>Export JSON</span>
+                  </button>
+
+                  <button
+                    onClick={handleSeedToFirestore}
+                    disabled={isSeeding || rrbLoading || rrbQuestions.length === 0}
+                    className="px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Upload className={`w-3.5 h-3.5 ${isSeeding ? 'animate-pulse' : ''}`} />
+                    <span>{isSeeding ? 'Storing on Server...' : 'Store All on Server'}</span>
                   </button>
                 </div>
               </div>
+
+              {/* Server Seeding Progress Bar */}
+              {isSeeding && (
+                <div className="bg-black/20 p-4 rounded-2xl border border-white/10 space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-slate-200">
+                    <span>{seedLog}</span>
+                    <span>{seedProgress}%</span>
+                  </div>
+                  <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-emerald-400 h-full transition-all duration-300 rounded-full"
+                      style={{ width: `${seedProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Extraction Progress Bar */}
               {isExtracting && (
