@@ -163,36 +163,44 @@ export function classifyComputerTopic(question) {
   return 'Computer Fundamentals & Awareness';
 }
 
-let cachedFullData = null;
 let cachedQuestions = null;
 
 /**
- * Fetch and cache all questions from public/data/rrbNtpc2025Full.json
+ * Extracted question banks merged into one pool: the Under-Graduate 2025 papers
+ * and the Graduate 2025 (CEN 06/2025) papers. Both use the same question shape.
+ */
+const RRB_DATA_FILES = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json'];
+
+async function loadRrbDataFile(fileName) {
+  if (typeof window === 'undefined') {
+    const fs = await import('fs');
+    return JSON.parse(fs.readFileSync(`public/data/${fileName}`, 'utf-8'));
+  }
+  const res = await fetch(`${window.location.origin}/data/${fileName}`);
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+/**
+ * Fetch and cache all RRB questions from the merged JSON banks.
  */
 export async function loadAllRRBQuestions() {
   if (cachedQuestions && cachedQuestions.length > 0) {
     return applyLocalOverrides(cachedQuestions);
   }
 
-  try {
-    let data;
-    if (typeof window === 'undefined') {
-      const fs = await import('fs');
-      const content = fs.readFileSync('public/data/rrbNtpc2025Full.json', 'utf-8');
-      data = JSON.parse(content);
-    } else {
-      const url = `${window.location.origin}/data/rrbNtpc2025Full.json`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-      data = await res.json();
+  const merged = [];
+  for (const fileName of RRB_DATA_FILES) {
+    try {
+      const data = await loadRrbDataFile(fileName);
+      if (Array.isArray(data?.questions)) merged.push(...data.questions);
+    } catch (err) {
+      console.error(`Failed to load RRB questions from ${fileName}:`, err);
     }
-    cachedFullData = data;
-    cachedQuestions = data.questions || [];
-    return applyLocalOverrides(cachedQuestions);
-  } catch (err) {
-    console.error('Failed to load RRB questions JSON:', err);
-    return [];
   }
+
+  if (merged.length > 0) cachedQuestions = merged;
+  return applyLocalOverrides(cachedQuestions || []);
 }
 
 /**

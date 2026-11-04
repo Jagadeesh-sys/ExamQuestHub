@@ -65,6 +65,7 @@ export default function AdminMockTestsTab({ onNotify }) {
   const [rrbLoading, setRrbLoading] = useState(true);
   const [rrbSubjectFilter, setRrbSubjectFilter] = useState('All');
   const [rrbShiftFilter, setRrbShiftFilter] = useState('All');
+  const [rrbExamFilter, setRrbExamFilter] = useState('All'); // 'All' | 'Under Graduate' | 'Graduate'
   const [rrbStatusFilter, setRrbStatusFilter] = useState('All'); // 'All' | 'Published' | 'Needs Review'
   const [rrbSearch, setRrbSearch] = useState('');
   const [rrbPage, setRrbPage] = useState(1);
@@ -114,6 +115,7 @@ export default function AdminMockTestsTab({ onNotify }) {
   const filteredRrbQuestions = useMemo(() => {
     return rrbQuestions.filter((q) => {
       if (rrbSubjectFilter !== 'All' && q.subject !== rrbSubjectFilter) return false;
+      if (rrbExamFilter !== 'All' && (q.examLevel || 'Under Graduate') !== rrbExamFilter) return false;
       if (rrbShiftFilter !== 'All' && String(q.shiftNumber) !== String(rrbShiftFilter)) return false;
       if (rrbStatusFilter !== 'All' && q.status !== rrbStatusFilter) return false;
       if (rrbSearch.trim()) {
@@ -126,7 +128,7 @@ export default function AdminMockTestsTab({ onNotify }) {
       }
       return true;
     });
-  }, [rrbQuestions, rrbSubjectFilter, rrbShiftFilter, rrbStatusFilter, rrbSearch]);
+  }, [rrbQuestions, rrbSubjectFilter, rrbShiftFilter, rrbExamFilter, rrbStatusFilter, rrbSearch]);
 
   const totalPages = Math.ceil(filteredRrbQuestions.length / itemsPerPage);
   const paginatedQuestions = useMemo(() => {
@@ -138,6 +140,8 @@ export default function AdminMockTestsTab({ onNotify }) {
   const rrbStats = useMemo(() => {
     let published = 0;
     let needsReview = 0;
+    let underGraduate = 0;
+    let graduate = 0;
     const bySubject = {
       'Quantitative Aptitude': 0,
       'Reasoning': 0,
@@ -147,9 +151,11 @@ export default function AdminMockTestsTab({ onNotify }) {
     for (const q of rrbQuestions) {
       if (q.status === 'Published') published++;
       else needsReview++;
+      if ((q.examLevel || 'Under Graduate') === 'Graduate') graduate++;
+      else underGraduate++;
       if (bySubject[q.subject] !== undefined) bySubject[q.subject]++;
     }
-    return { total: rrbQuestions.length, published, needsReview, bySubject };
+    return { total: rrbQuestions.length, published, needsReview, underGraduate, graduate, bySubject };
   }, [rrbQuestions]);
 
   // Open Edit Modal for a question
@@ -348,13 +354,13 @@ export default function AdminMockTestsTab({ onNotify }) {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAF3FF] text-[#12345A] text-xs font-bold mb-2">
             <Award className="w-3.5 h-3.5 text-[#2468B4]" />
-            <span>RRB NTPC UG 2025 · 32 Shifts Previous Year CBT System</span>
+            <span>RRB NTPC UG &amp; Graduate 2025 · Previous Year CBT System</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-[#12345A]">
             Previous Year Mock Tests &amp; PDF Management Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Manage all 32 RRB NTPC shifts, 3,200 questions, automatic subject classification, and official answer keys.
+            Manage all RRB NTPC shifts (Under-Graduate + Graduate), {rrbStats.total} questions, automatic subject classification, and official answer keys.
           </p>
         </div>
 
@@ -381,7 +387,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Columns3 className="w-3.5 h-3.5" />
-            <span>32 Shifts Manager</span>
+            <span>Shifts Manager</span>
           </button>
 
           <button
@@ -508,7 +514,17 @@ export default function AdminMockTestsTab({ onNotify }) {
               </div>
 
               {/* Status Filter */}
-              <div className="flex items-center gap-2 self-start lg:self-auto shrink-0">
+              <div className="flex items-center gap-2 self-start lg:self-auto shrink-0 flex-wrap">
+                <select
+                  value={rrbExamFilter}
+                  onChange={(e) => { setRrbExamFilter(e.target.value); setRrbPage(1); }}
+                  className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
+                >
+                  <option value="All">All Exams ({rrbStats.total})</option>
+                  <option value="Under Graduate">Under Graduate ({rrbStats.underGraduate})</option>
+                  <option value="Graduate">Graduate ({rrbStats.graduate})</option>
+                </select>
+
                 <span className="text-xs font-bold text-slate-500">Status:</span>
                 <select
                   value={rrbStatusFilter}
@@ -525,7 +541,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbShiftFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
-                  <option value="All">All 32 Shifts</option>
+                  <option value="All">All Shifts</option>
                   {shifts.map((s) => (
                     <option key={s.id} value={s.shiftNumber}>
                       Shift {s.shiftNumber} ({s.examDate})
@@ -583,6 +599,15 @@ export default function AdminMockTestsTab({ onNotify }) {
                         </span>
                         <span className="px-2.5 py-0.5 rounded-md bg-[#EAF3FF] text-[#12345A] font-bold text-[11px]">
                           Shift {q.shiftNumber}
+                        </span>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-md font-bold text-[11px] ${
+                            q.examLevel === 'Graduate'
+                              ? 'bg-violet-50 text-violet-700 border border-violet-200'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {q.examLevel || 'UG'}
                         </span>
                         <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px]">
                           {q.subject}
@@ -806,7 +831,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                 Export Full Question Bank
               </h4>
               <p className="text-xs text-slate-600">
-                Download all {rrbQuestions.length} questions across all 32 shifts in standard JSON format.
+                Download all {rrbQuestions.length} questions across all shifts in standard JSON format.
               </p>
               <button
                 onClick={handleExportJson}

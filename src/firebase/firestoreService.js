@@ -593,8 +593,8 @@ function mapRrbToMockQuestion(q) {
     difficulty: q.difficulty || 'Medium',
     verificationStatus: 'VERIFIED',
     source: q.source || 'RRB Official Answer Key (CEN 07/2025)',
-    paperUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
-    paperFileName: 'RRB-NTPC-UG-2025-EN-All-Papers.pdf'
+    paperUrl: q.paperUrl || '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+    paperFileName: q.paperFileName || 'RRB-NTPC-UG-2025-EN-All-Papers.pdf'
   };
 }
 

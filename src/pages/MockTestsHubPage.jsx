@@ -189,6 +189,20 @@ export default function MockTestsHubPage() {
     [firestoreQuestions]
   );
 
+  // Live totals for the hero counters, derived from the extracted PYQ pool.
+  const extractedQuestions = useMemo(
+    () => firestoreQuestions.filter((q) => q.questionType === 'PYQ'),
+    [firestoreQuestions]
+  );
+  const extractedQuestionCount = extractedQuestions.length;
+  const officialShiftCount = useMemo(
+    () =>
+      new Set(
+        extractedQuestions.map((q) => `${q.examLevel || 'UG'}-${q.shiftNumber}`)
+      ).size,
+    [extractedQuestions]
+  );
+
   // Tab inside active subject: 'tests' | 'topics' | 'browser'
   const [subjectViewTab, setSubjectViewTab] = useState('tests');
 
@@ -300,7 +314,7 @@ export default function MockTestsHubPage() {
         id: `subject-${sub}-master-1`,
         code: `${sub.slice(0, 3).toUpperCase()}-M1`,
         title: `${subLabel} · Master PYQ Mock Test 1`,
-        subtitle: `Drawn from all 32 shifts with 100% official answer keys and solutions`,
+        subtitle: `Drawn from all official shifts with 100% official answer keys and solutions`,
         questionsCount: Math.min(100, currentSubjectQuestions.length || 100),
         duration: 90,
         marks: Math.min(100, currentSubjectQuestions.length || 100),
@@ -392,7 +406,7 @@ export default function MockTestsHubPage() {
         <div className="relative z-10 max-w-4xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#F2BE4F] text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>RRB NTPC UG 2025 · CEN 07/2025 · 32 Shifts CBT Compilation</span>
+            <span>RRB NTPC UG &amp; Graduate 2025 · Official CBT Compilation</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
@@ -400,19 +414,24 @@ export default function MockTestsHubPage() {
           </h1>
 
           <p className="text-slate-200 text-sm sm:text-base leading-relaxed max-w-3xl">
-            Real questions extracted directly from all 32 shifts of the RRB NTPC Under-Graduate 2025 examination 
-            with official answer keys preserved. Practice subject-wise tests or full-length CBT mock tests in realistic exam interface.
+            Real questions extracted directly from the RRB NTPC Under-Graduate (CEN 07/2025) and
+            Graduate (CEN 06/2025) 2025 examinations with official answer keys preserved. Practice
+            subject-wise tests or full-length CBT mock tests in a realistic exam interface.
           </p>
 
           {/* Quick Stats Counter */}
           <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-[#F2BE4F]">32</div>
+              <div className="text-2xl sm:text-3xl font-black text-[#F2BE4F]">
+                {officialShiftCount || '—'}
+              </div>
               <div className="text-[11px] text-slate-300 font-medium">Official Exam Shifts</div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-white">3,200</div>
+              <div className="text-2xl sm:text-3xl font-black text-white">
+                {extractedQuestionCount ? extractedQuestionCount.toLocaleString('en-IN') : '—'}
+              </div>
               <div className="text-[11px] text-slate-300 font-medium">Extracted Questions</div>
             </div>
 
@@ -438,7 +457,7 @@ export default function MockTestsHubPage() {
               Select Subject for Mock Tests
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
-              Click any subject below to load all 32 shift papers classified under that subject.
+              Click any subject below to load all official shift papers classified under that subject.
             </p>
           </div>
 
@@ -659,7 +678,7 @@ export default function MockTestsHubPage() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 max-w-2xl">
-              {currentSubjectInfo.description}. All 32 exam shifts unified into comprehensive practice tests and question banks.
+              {currentSubjectInfo.description}. All official exam shifts unified into comprehensive practice tests and question banks.
             </p>
           </div>
 

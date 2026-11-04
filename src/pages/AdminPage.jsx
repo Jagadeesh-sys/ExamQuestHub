@@ -801,7 +801,7 @@ export default function AdminPage() {
           }`}
         >
           <Award className="w-3.5 h-3.5 text-[#F2BE4F]" />
-          <span>Mock Tests &amp; PYQ Studio (32 Shifts)</span>
+          <span>Mock Tests &amp; PYQ Studio</span>
         </button>
         <button
           type="button"

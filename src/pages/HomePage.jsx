@@ -123,7 +123,7 @@ export default function HomePage() {
     },
     {
       title: 'Previous Year Mock Tests',
-      desc: 'RRB NTPC 2025 · 32 Shifts · 4 Subjects',
+      desc: 'RRB NTPC 2025 · UG & Graduate PYQ Shifts · 4 Subjects',
       icon: Sparkles,
       color: 'bg-amber-50 text-amber-900 border-amber-200',
       to: '/mocks'
