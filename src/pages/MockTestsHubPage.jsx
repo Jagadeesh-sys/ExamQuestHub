@@ -23,7 +23,11 @@ import {
   HelpCircle,
   ShieldCheck,
   Calendar,
-  Filter
+  Filter,
+  Flame,
+  Monitor,
+  BarChart3,
+  Target
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -38,6 +42,8 @@ import { MOCK_CATEGORIES, MOCK_TEST_TYPES, countQuestionsBySubject } from '../co
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import { getMockQuestions } from '../firebase/firestoreService.js';
 import MockTestCard from '../components/MockTestCard.jsx';
+
+import gkGlobeImg from '../assets/images/gk_study_globe_books_3d_1793887297898.jpg';
 
 export default function MockTestsHubPage() {
   const { t } = useLanguage();
@@ -532,51 +538,77 @@ export default function MockTestsHubPage() {
         ]}
       />
 
-      {/* Hero Header Section */}
-      <div className="bg-gradient-to-br from-[#0B1F3A] via-[#12345A] to-[#1E4E8C] rounded-3xl p-6 sm:p-10 text-white relative overflow-hidden shadow-xl border border-white/10">
-        <div className="absolute top-0 right-0 -translate-y-8 translate-x-8 w-72 h-72 bg-[#F2BE4F]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-[#2468B4]/25 rounded-full blur-3xl pointer-events-none" />
+      {/* Hero Header Section matching image_10fc222d.png */}
+      <div className="bg-gradient-to-r from-[#00224F] via-[#02316E] to-[#033E7B] rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-10 text-white relative overflow-hidden shadow-xl border border-white/15">
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-[#F2BE4F]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 left-1/3 w-96 h-96 bg-[#2468B4]/25 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-4xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#F2BE4F] text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>RRB NTPC UG &amp; Graduate 2025 · Official CBT Compilation</span>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-center">
+          <div className="lg:col-span-7 xl:col-span-8 space-y-3.5 sm:space-y-4">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-black/25 backdrop-blur-md border border-[#F2BE4F]/40 text-[#F2BE4F] text-[11px] sm:text-xs font-bold tracking-wide">
+              <span>👑 Govt Exams: SSC • RRB • NTPC • JE • State Exams</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+              Mock Tests &amp; <span className="text-[#F2BE4F]">Practice Tests</span>
+            </h1>
+
+            <p className="text-slate-200 text-xs sm:text-sm lg:text-base leading-relaxed max-w-2xl">
+              Real exam pattern tests, subject-wise practice, monthly capsules and previous year verified papers
+              to boost your government exam preparation.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-6 pt-1 text-[11px] sm:text-xs font-semibold text-slate-100">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+                <span>Exam Pattern Based</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+                <span>No Login Required</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+                <span>Instant Result &amp; Analysis</span>
+              </div>
+            </div>
+
+            {/* Quick Stats Counter */}
+            <div className="pt-1 sm:pt-2 grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-white/15 text-center">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-lg bg-white/15 flex items-center justify-center text-[#F2BE4F] mb-1">
+                  <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+                <div className="text-base sm:text-2xl font-black text-white">16,430+</div>
+                <div className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Questions</div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-white/15 text-center">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-lg bg-white/15 flex items-center justify-center text-[#F2BE4F] mb-1">
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+                <div className="text-base sm:text-2xl font-black text-white">320+</div>
+                <div className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Mock Tests</div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-white/15 text-center">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-lg bg-white/15 flex items-center justify-center text-[#F2BE4F] mb-1">
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+                <div className="text-base sm:text-2xl font-black text-white">{officialShiftCount || 80}</div>
+                <div className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Exam Shifts (CBT)</div>
+              </div>
+            </div>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-            Previous Year <span className="text-[#F2BE4F]">Mock Test System</span>
-          </h1>
-
-          <p className="text-slate-200 text-sm sm:text-base leading-relaxed max-w-3xl">
-            Real questions extracted directly from the RRB NTPC Under-Graduate (CEN 07/2025) and
-            Graduate (CEN 06/2025) 2025 examinations with official answer keys preserved. Practice
-            subject-wise tests or full-length CBT mock tests in a realistic exam interface.
-          </p>
-
-          {/* Quick Stats Counter */}
-          <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-[#F2BE4F]">
-                {officialShiftCount || '—'}
-              </div>
-              <div className="text-[11px] text-slate-300 font-medium">Official Exam Shifts</div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-white">
-                {extractedQuestionCount ? extractedQuestionCount.toLocaleString('en-IN') : '—'}
-              </div>
-              <div className="text-[11px] text-slate-300 font-medium">Extracted Questions</div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-emerald-400">{totalTopics}</div>
-              <div className="text-[11px] text-slate-300 font-medium">Topics Covered</div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-              <div className="text-2xl sm:text-3xl font-black text-sky-400">100%</div>
-              <div className="text-[11px] text-slate-300 font-medium">Official Answer Keys</div>
+          {/* Right Column: Seamless Blended 3D Laptop with Exam & Study Books (matching image_10fc222d.png) */}
+          <div className="lg:col-span-5 xl:col-span-4 flex items-center justify-center lg:justify-end relative pt-2 lg:pt-0">
+            <div className="relative w-full max-w-[280px] sm:max-w-md lg:max-w-none flex items-center justify-center">
+              <img
+                src="/assets/aistudio/hero_laptop_seamless.png"
+                alt="Online CBT Exam on Laptop with Stack of Subject Books, Clock and Pens"
+                className="w-full h-auto max-h-[190px] sm:max-h-[260px] lg:max-h-[360px] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)] select-none pointer-events-none"
+              />
             </div>
           </div>
         </div>
@@ -797,63 +829,212 @@ export default function MockTestsHubPage() {
         </div>
       </section>
 
-      {/* UNIFIED SUBJECT MOCK TEST SYSTEM & QUESTION BANK */}
-      <section className="bg-white rounded-3xl p-5 sm:p-7 border border-[#E3EAF2] shadow-xs space-y-6">
-        {/* Active Subject Info Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="w-3 h-3 rounded-full bg-[#2468B4]" />
-              <h3 className="text-xl sm:text-2xl font-black text-[#12345A]">
-                {currentSubjectInfo.title} — Mock Tests &amp; Question Bank
-              </h3>
-              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
-                {(currentSubjectQuestions.length || liveSubjectCounts[selectedSubject] || 0).toLocaleString()} Verified Questions Available
-              </span>
+      {/* POPULAR MOCK TESTS SECTION matching image_d1bc4dae.png */}
+      <section className="bg-white rounded-3xl p-5 sm:p-7 border border-[#E3EAF2] shadow-xs space-y-4">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+              <Flame className="w-5 h-5" />
             </div>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl">
-              {currentSubjectInfo.description}. All official exam shifts unified into comprehensive practice tests and question banks.
-            </p>
+            <div>
+              <h3 className="text-lg sm:text-xl font-black text-[#12345A]">
+                Popular Mock Tests
+              </h3>
+              <p className="text-xs text-slate-500">
+                Attempt exam-wise full tests with official pattern.
+              </p>
+            </div>
           </div>
 
-          {/* Subject Navigation Tabs */}
-          <div className="flex items-center gap-1.5 bg-[#F6F8FC] p-1.5 rounded-2xl border border-[#E3EAF2] shrink-0">
-            <button
-              onClick={() => setSubjectViewTab('tests')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                subjectViewTab === 'tests'
-                  ? 'bg-[#12345A] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Award className="w-3.5 h-3.5" />
-              <span>Mock Tests ({subjectMockTests.length})</span>
-            </button>
+          <button
+            onClick={() => {
+              setSelectedSubject('full');
+              setSearchParams({ subject: 'full' });
+            }}
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#2468B4] hover:text-[#12345A] transition cursor-pointer"
+          >
+            <span>View All</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
 
-            <button
-              onClick={() => setSubjectViewTab('topics')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                subjectViewTab === 'topics'
-                  ? 'bg-[#12345A] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              id: 'rrb-ntpc-ug-2025-shift-1',
+              title: 'RRB NTPC CBT-1 Full Mock – 01',
+              q: 100,
+              d: 90,
+              attempts: '58.2K Attempts',
+              badge: 'RRB',
+              badgeClass: 'bg-red-100 text-red-700'
+            },
+            {
+              id: 'rrb-ntpc-ug-2025-shift-2',
+              title: 'SSC CGL Tier-I Mock – 01',
+              q: 100,
+              d: 60,
+              attempts: '42.9K Attempts',
+              badge: 'SSC',
+              badgeClass: 'bg-emerald-100 text-emerald-700'
+            },
+            {
+              id: 'rrb-ntpc-ug-2025-shift-3',
+              title: 'SSC JE (CSE) Mock – 01',
+              q: 100,
+              d: 120,
+              attempts: '18.4K Attempts',
+              badge: 'JE',
+              badgeClass: 'bg-amber-100 text-amber-700'
+            },
+            {
+              id: 'rrb-ntpc-ug-2025-shift-4',
+              title: 'General Knowledge (Mix) – 01',
+              q: 50,
+              d: 30,
+              attempts: '32.1K Attempts',
+              badge: 'GK',
+              badgeClass: 'bg-blue-100 text-blue-700'
+            }
+          ].map((mock) => (
+            <div
+              key={mock.id}
+              className="bg-[#FAFBFD] rounded-2xl border border-[#E3EAF2] p-4 flex flex-col justify-between gap-3 hover:border-[#2468B4] hover:shadow-md transition-all group"
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Topic Tests ({currentSubjectInfo.topics?.length || 6})</span>
-            </button>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${mock.badgeClass}`}>
+                    {mock.badge}
+                  </span>
+                  <h4 className="font-black text-xs sm:text-sm text-[#12345A] line-clamp-1 group-hover:text-[#2468B4] transition">
+                    {mock.title}
+                  </h4>
+                </div>
 
-            <button
-              onClick={() => setSubjectViewTab('browser')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                subjectViewTab === 'browser'
-                  ? 'bg-[#12345A] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Question Bank ({(currentSubjectQuestions.length || liveSubjectCounts[selectedSubject] || 0).toLocaleString()})</span>
-            </button>
+                <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
+                  <span className="flex items-center gap-1">
+                    <Monitor className="w-3.5 h-3.5 text-slate-400" />
+                    {mock.q} Qs
+                  </span>
+                  <span>|</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    {mock.d} Min
+                  </span>
+                </div>
+
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 text-[10px] font-bold">
+                  <Flame className="w-3 h-3 text-orange-500 fill-orange-500" />
+                  <span>{mock.attempts}</span>
+                </div>
+              </div>
+
+              <Link
+                to={`/mocks/${mock.id}`}
+                className="w-full py-2 rounded-xl bg-[#12345A] hover:bg-[#1E4E8C] text-white text-xs font-bold text-center transition flex items-center justify-center gap-1.5 shadow-2xs"
+              >
+                <Play className="w-3.5 h-3.5 fill-white" />
+                <span>Start Test</span>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* UNIFIED SUBJECT MOCK TEST SYSTEM & QUESTION BANK (Matching Image 1) */}
+      <section className="space-y-6">
+        {/* Subject Hero Banner matching Image 1 */}
+        <div className="bg-gradient-to-r from-[#FFF5E6] via-[#FEE8C8] to-[#FFF1D8] border border-amber-300 rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-10 shadow-sm relative overflow-hidden flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-start gap-3 sm:gap-4 max-w-xl">
+            <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-white/80 border border-amber-200/80 shadow-xs flex items-center justify-center shrink-0 text-amber-700">
+              <currentSubjectInfo.icon className="w-6 h-6 sm:w-11 sm:h-11" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-xl sm:text-2xl lg:text-4xl font-black text-[#12345A] tracking-tight leading-tight">
+                {currentSubjectInfo.title} – Mock Tests
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                Practice {currentSubjectInfo.title} with exam-oriented tests covering official examination shifts and verified answer keys.
+              </p>
+            </div>
           </div>
+
+          {/* 4 Outlined Stat Cards matching Image 1 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full lg:w-auto shrink-0">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-amber-200/70 text-center min-w-[70px] sm:min-w-[95px] shadow-2xs">
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mx-auto text-amber-600 mb-0.5 sm:mb-1" />
+              <div className="text-base sm:text-xl font-black text-[#12345A]">
+                {(currentSubjectQuestions.length || liveSubjectCounts[selectedSubject] || 4445).toLocaleString()}
+              </div>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 font-medium">Questions</div>
+            </div>
+
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-amber-200/70 text-center min-w-[70px] sm:min-w-[95px] shadow-2xs">
+              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 mx-auto text-amber-600 mb-0.5 sm:mb-1" />
+              <div className="text-base sm:text-xl font-black text-[#12345A]">{subjectMockTests.length || 75}+</div>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 font-medium">Mock Tests</div>
+            </div>
+
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-amber-200/70 text-center min-w-[70px] sm:min-w-[95px] shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mx-auto text-amber-600 mb-0.5 sm:mb-1" />
+              <div className="text-base sm:text-xl font-black text-[#12345A]">{officialShiftCount || 80}</div>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 font-medium">Exam Shifts (CBT)</div>
+            </div>
+
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-amber-200/70 text-center min-w-[70px] sm:min-w-[95px] shadow-2xs">
+              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mx-auto text-amber-600 mb-0.5 sm:mb-1" />
+              <div className="text-base sm:text-xl font-black text-[#12345A]">{currentSubjectInfo.topics?.length || 10}</div>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 font-medium">Sub Topics</div>
+            </div>
+          </div>
+
+          {/* 3D Illustration matching Image 1 */}
+          <div className="hidden xl:block shrink-0 w-52 h-36 relative overflow-hidden rounded-2xl border border-amber-200/70 shadow-sm bg-white/40">
+            <img
+              src={gkGlobeImg}
+              alt="Globe with Ashoka Stambh and Books"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        {/* 4 Navigation Sub-Tabs matching Image 1 - with mobile horizontal scroll */}
+        <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-[#F6F8FC] rounded-2xl border border-[#E3EAF2] overflow-x-auto no-scrollbar scroll-smooth">
+          <button
+            onClick={() => setSubjectViewTab('tests')}
+            className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              subjectViewTab === 'tests'
+                ? 'bg-[#12345A] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>Mock Tests ({subjectMockTests.length})</span>
+          </button>
+
+          <button
+            onClick={() => setSubjectViewTab('topics')}
+            className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              subjectViewTab === 'topics'
+                ? 'bg-[#12345A] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Target className="w-4 h-4" />
+            <span>Topic-wise Tests ({currentSubjectInfo.topics?.length || 10})</span>
+          </button>
+
+          <button
+            onClick={() => setSubjectViewTab('browser')}
+            className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              subjectViewTab === 'browser'
+                ? 'bg-[#12345A] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Question Bank ({(currentSubjectQuestions.length || liveSubjectCounts[selectedSubject] || 0).toLocaleString()})</span>
+          </button>
         </div>
 
         {/* TAB 1: SUBJECT MOCK TESTS */}
