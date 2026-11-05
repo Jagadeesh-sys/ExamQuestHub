@@ -254,6 +254,13 @@ export default function EditorialCurrentAffairsSection({
     };
   }, [viewMode]);
 
+  // On mobile screens, automatically open in News Reels mode when mobileReels is true
+  useEffect(() => {
+    if (mobileReels && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setViewMode('reels');
+    }
+  }, [mobileReels]);
+
   // If window resizes to desktop, and we are in reels mode, switch back to editorial
   useEffect(() => {
     if (typeof window === 'undefined') return;
