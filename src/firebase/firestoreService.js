@@ -557,45 +557,85 @@ export async function deleteQuestion(id) {
 }
 
 function mapRrbToMockQuestion(q) {
-  let categoryId = 'gk';
-  let subjectId = 'static-gk';
-  const sub = (q.subject || '').toLowerCase();
+  let categoryId = q.categoryId || 'gk';
+  let subjectId = q.subjectId || 'static-gk';
 
-  if (sub.includes('science')) {
-    categoryId = 'gk';
-    subjectId = 'general-science';
-  } else if (sub.includes('quant') || sub.includes('math')) {
-    categoryId = 'quant';
-    subjectId = 'number-system';
-  } else if (sub.includes('reason')) {
-    categoryId = 'reasoning';
-    subjectId = 'series-coding-decoding';
-  } else {
-    categoryId = 'gk';
+  if (!q.categoryId || !q.subjectId || q.subjectId === 'general-knowledge' || q.subjectId === 'quantitative-aptitude') {
+    const sub = (q.subject || '').toLowerCase();
     const text = ((q.question?.en || '') + ' ' + (q.subtopic || '')).toLowerCase();
-    if (text.includes('article') || text.includes('constitution') || text.includes('amendment') || text.includes('court') || text.includes('parliament') || text.includes('president') || text.includes('polity')) {
-      subjectId = 'indian-polity';
-    } else if (text.includes('dynasty') || text.includes('battle') || text.includes('british') || text.includes('gandhi') || text.includes('mughal') || text.includes('history') || text.includes('war')) {
-      subjectId = 'indian-history';
-    } else if (text.includes('river') || text.includes('mountain') || text.includes('soil') || text.includes('climate') || text.includes('geography') || text.includes('lake') || text.includes('ocean')) {
-      subjectId = 'geography';
-    } else if (text.includes('rbi') || text.includes('gdp') || text.includes('bank') || text.includes('inflation') || text.includes('economy') || text.includes('market') || text.includes('tax')) {
-      subjectId = 'indian-economy';
+
+    if (text.includes('operating system') || text.includes('windows') || text.includes('linux')) {
+      categoryId = 'cse';
+      subjectId = 'operating-systems';
+    } else if (text.includes('network') || text.includes('internet') || text.includes('protocol') || text.includes('ip address')) {
+      categoryId = 'cse';
+      subjectId = 'computer-networks';
+    } else if (text.includes('database') || text.includes('dbms') || text.includes('sql')) {
+      categoryId = 'cse';
+      subjectId = 'dbms';
+    } else if (sub.includes('science')) {
+      categoryId = 'gk';
+      subjectId = 'general-science';
+    } else if (sub.includes('quant') || sub.includes('math')) {
+      categoryId = 'quant';
+      if (text.includes('work') || text.includes('pipe') || text.includes('speed') || text.includes('distance') || text.includes('train')) {
+        subjectId = 'time-speed-distance-work';
+      } else if (text.includes('profit') || text.includes('loss') || text.includes('discount') || text.includes('interest') || text.includes('percent')) {
+        subjectId = 'percentage-profit-loss';
+      } else if (text.includes('ratio') || text.includes('proportion') || text.includes('mixture') || text.includes('average')) {
+        subjectId = 'ratio-proportion-mixtures';
+      } else if (text.includes('area') || text.includes('perimeter') || text.includes('volume') || text.includes('triangle') || text.includes('circle')) {
+        subjectId = 'mensuration-geometry';
+      } else if (text.includes('algebra') || text.includes('equation') || text.includes('trigonometr') || text.includes('sin') || text.includes('cos')) {
+        subjectId = 'algebra-trigonometry';
+      } else {
+        subjectId = 'number-system';
+      }
+    } else if (sub.includes('reason')) {
+      categoryId = 'reasoning';
+      if (text.includes('blood') || text.includes('direction') || text.includes('facing')) {
+        subjectId = 'blood-relations-directions';
+      } else if (text.includes('syllogism') || text.includes('conclusion')) {
+        subjectId = 'syllogism-conclusions';
+      } else if (text.includes('circular') || text.includes('table') || text.includes('seating') || text.includes('row')) {
+        subjectId = 'puzzles-seating';
+      } else if (text.includes('mirror') || text.includes('water image') || text.includes('paper folding')) {
+        subjectId = 'non-verbal-reasoning';
+      } else if (text.includes('analogy') || text.includes('related') || text.includes('odd one')) {
+        subjectId = 'analogies-classification';
+      } else {
+        subjectId = 'series-coding-decoding';
+      }
     } else {
-      subjectId = 'static-gk';
+      categoryId = 'gk';
+      if (text.includes('article') || text.includes('constitution') || text.includes('amendment') || text.includes('court') || text.includes('parliament') || text.includes('president') || text.includes('polity')) {
+        subjectId = 'indian-polity';
+      } else if (text.includes('dynasty') || text.includes('battle') || text.includes('british') || text.includes('gandhi') || text.includes('mughal') || text.includes('history') || text.includes('war')) {
+        subjectId = 'indian-history';
+      } else if (text.includes('river') || text.includes('mountain') || text.includes('soil') || text.includes('climate') || text.includes('geography') || text.includes('lake') || text.includes('ocean')) {
+        subjectId = 'geography';
+      } else if (text.includes('rbi') || text.includes('gdp') || text.includes('bank') || text.includes('inflation') || text.includes('economy') || text.includes('market') || text.includes('tax')) {
+        subjectId = 'indian-economy';
+      } else if (text.includes('national park') || text.includes('sanctuary') || text.includes('biosphere') || text.includes('biodiversity') || text.includes('ecology')) {
+        subjectId = 'environment-ecology';
+      } else if (text.includes('2024') || text.includes('2025') || text.includes('2026') || text.includes('olympics') || text.includes('summit')) {
+        subjectId = 'current-affairs';
+      } else {
+        subjectId = 'static-gk';
+      }
     }
   }
 
   return {
     ...q,
     categoryId,
-    subjectId: q.subjectId && q.subjectId !== 'general-knowledge' && q.subjectId !== 'quantitative-aptitude' ? q.subjectId : subjectId,
+    subjectId,
     questionType: 'PYQ',
     difficulty: q.difficulty || 'Medium',
     verificationStatus: 'VERIFIED',
-    source: q.source || 'RRB Official Answer Key (CEN 07/2025)',
-    paperUrl: q.paperUrl || '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
-    paperFileName: q.paperFileName || 'RRB-NTPC-UG-2025-EN-All-Papers.pdf'
+    source: q.source || (q.examLevel === 'Graduate' ? 'RRB NTPC Graduate 2025 Official Answer Key (CEN 06/2025)' : 'RRB Official Answer Key (CEN 07/2025)'),
+    paperUrl: q.paperUrl || (q.examLevel === 'Graduate' ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf'),
+    paperFileName: q.paperFileName || (q.examLevel === 'Graduate' ? 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf')
   };
 }
 

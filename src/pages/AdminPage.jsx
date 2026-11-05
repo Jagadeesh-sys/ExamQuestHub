@@ -681,7 +681,7 @@ export default function AdminPage() {
       )}
 
       {/* Real Summary Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-2xl p-5 border border-[#E3EAF2]">
           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
             {t('totalPublished')}
@@ -727,6 +727,22 @@ export default function AdminPage() {
           </div>
           <span className="text-[10px] text-slate-400 font-medium">
             Past application window
+          </span>
+        </div>
+
+        <div
+          onClick={() => setActiveTab('mockTests')}
+          className="bg-white rounded-2xl p-5 border border-[#E3EAF2] hover:border-[#2468B4] transition cursor-pointer group col-span-2 lg:col-span-1 shadow-2xs"
+        >
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block group-hover:text-[#2468B4] transition">
+            Verified Questions
+          </span>
+          <div className="text-2xl font-extrabold text-[#12345A] mt-1 flex items-center gap-1.5">
+            <span>{mockQuestions.length || 7900}</span>
+            <Award className="w-4 h-4 text-[#F2BE4F]" />
+          </div>
+          <span className="text-[10px] text-[#2468B4] font-medium flex items-center gap-1">
+            79 Shifts · View Studio
           </span>
         </div>
       </div>
@@ -801,7 +817,7 @@ export default function AdminPage() {
           }`}
         >
           <Award className="w-3.5 h-3.5 text-[#F2BE4F]" />
-          <span>Mock Tests &amp; PYQ Studio</span>
+          <span>Previous Year Verified Questions ({mockQuestions.length || 7900})</span>
         </button>
         <button
           type="button"

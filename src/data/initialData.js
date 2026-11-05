@@ -861,5 +861,41 @@ export const INITIAL_RESOURCES = [
       en: 'Categorized quick-revision notes for National, International, AP, Telangana, Sports, and Science news with 100 revision MCQs.',
       te: 'అన్ని పోటీ పరీక్షల కోసం జనవరి నెల పూర్తి కరెంట్ అఫైర్స్ సంక్షిప్త నోట్స్ మరియు ప్రాక్టీస్ ప్రశ్నలు.'
     }
+  },
+  {
+    id: 'pyq-rrb-ntpc-graduate-2025-cbt1',
+    title: {
+      en: 'RRB NTPC Graduate Level 2025 (CEN 06/2025) CBT-1 Official Answer Key & Papers (All 47 Shifts)',
+      te: 'RRB NTPC గ్రాడ్యుయేట్ లెవెల్ 2025 (CEN 06/2025) CBT-1 అధికారిక కీ & ప్రశ్నాపత్రాలు (47 షిఫ్టులు)'
+    },
+    category: 'Previous Year Question Papers',
+    examBoard: 'RRB',
+    year: '2025',
+    type: 'Official Question Paper & Answer Key',
+    fileSize: '8.3 MB PDF (791 Pages)',
+    downloadUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf',
+    officialSource: 'https://rrbcdg.gov.in',
+    description: {
+      en: 'Complete authentic examination compilation of all 47 shifts with 4,700 questions and official green-tick verified answer keys.',
+      te: 'అన్ని 47 షిఫ్టుల అధికారిక ప్రశ్నాపత్రాలు మరియు రైల్వే రిక్రూట్‌మెంట్ బోర్డు వెరిఫై చేసిన సమాధానాలు (4,700 ప్రశ్నలు).'
+    }
+  },
+  {
+    id: 'pyq-rrb-ntpc-ug-2025-cbt1',
+    title: {
+      en: 'RRB NTPC Under-Graduate 2025 (CEN 07/2025) CBT-1 Official Answer Key & Papers (All 32 Shifts)',
+      te: 'RRB NTPC అండర్ గ్రాడ్యుయేట్ 2025 (CEN 07/2025) CBT-1 అధికారిక కీ & ప్రశ్నాపత్రాలు (32 షిఫ్టులు)'
+    },
+    category: 'Previous Year Question Papers',
+    examBoard: 'RRB',
+    year: '2025',
+    type: 'Official Question Paper & Answer Key',
+    fileSize: '17.5 MB PDF (416 Pages)',
+    downloadUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+    officialSource: 'https://rrbcdg.gov.in',
+    description: {
+      en: 'Complete 32 shifts of RRB NTPC Under-Graduate Level CBT-1 official question paper with 3,200 questions and official answer keys.',
+      te: 'అండర్ గ్రాడ్యుయేట్ లెవెల్ 32 షిఫ్టుల పూర్తి అధికారిక ప్రశ్నాపత్రాలు మరియు జవాబుల కీ (3,200 ప్రశ్నలు).'
+    }
   }
 ];

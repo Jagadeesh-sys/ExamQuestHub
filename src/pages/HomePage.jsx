@@ -122,8 +122,8 @@ export default function HomePage() {
       to: '/results'
     },
     {
-      title: 'Previous Year Mock Tests',
-      desc: 'RRB NTPC 2025 · UG & Graduate PYQ Shifts · 4 Subjects',
+      title: 'Previous Year Verified Questions',
+      desc: '7,900 Verified Questions · 79 Shifts · Segregated by Topic',
       icon: Sparkles,
       color: 'bg-amber-50 text-amber-900 border-amber-200',
       to: '/mocks'

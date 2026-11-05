@@ -164,6 +164,7 @@ export function classifyComputerTopic(question) {
 }
 
 let cachedQuestions = null;
+let cachedShifts = null;
 
 /**
  * Extracted question banks merged into one pool: the Under-Graduate 2025 papers
@@ -190,16 +191,19 @@ export async function loadAllRRBQuestions() {
   }
 
   const merged = [];
+  const mergedShifts = [];
   for (const fileName of RRB_DATA_FILES) {
     try {
       const data = await loadRrbDataFile(fileName);
       if (Array.isArray(data?.questions)) merged.push(...data.questions);
+      if (Array.isArray(data?.shifts)) mergedShifts.push(...data.shifts);
     } catch (err) {
       console.error(`Failed to load RRB questions from ${fileName}:`, err);
     }
   }
 
   if (merged.length > 0) cachedQuestions = merged;
+  if (mergedShifts.length > 0) cachedShifts = mergedShifts;
   return applyLocalOverrides(cachedQuestions || []);
 }
 
@@ -283,12 +287,13 @@ export function deleteLocalQuestionOverride(questionId) {
 export function getAllShifts() {
   try {
     const overrides = JSON.parse(localStorage.getItem(STORAGE_KEY_TEST_OVERRIDES) || '{}');
-    return RRB_NTPC_SHIFTS.map((shift) => {
+    const base = (cachedShifts && cachedShifts.length > 0) ? cachedShifts : RRB_NTPC_SHIFTS;
+    return base.map((shift) => {
       const ov = overrides[shift.id];
       return ov ? { ...shift, ...ov } : shift;
     });
   } catch {
-    return RRB_NTPC_SHIFTS;
+    return (cachedShifts && cachedShifts.length > 0) ? cachedShifts : RRB_NTPC_SHIFTS;
   }
 }
 
