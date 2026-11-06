@@ -27,6 +27,7 @@ import {
   Calculator,
   Atom,
   Cpu,
+  Languages,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -151,12 +152,23 @@ export default function AdminMockTestsTab({ onNotify }) {
         if (rrbSubjectFilter === 'Computer Science') {
           const isCs = q.categoryId === 'cse' || q.subject === 'Computer Science' || (q.subtopic && ['Operating Systems', 'Computer Networks', 'Database Management Systems', 'Digital Logic & Computer Organization', 'Software Engineering', 'Programming & OOP', 'Data Structures & Algorithms'].includes(q.subtopic));
           if (!isCs) return false;
+        } else if (rrbSubjectFilter === 'English Language') {
+          if (q.subject !== 'English Language' && q.categoryId !== 'english') return false;
         } else if (q.subject !== rrbSubjectFilter) {
           return false;
         }
       }
       if (rrbTopicFilter !== 'All' && q.subtopic !== rrbTopicFilter) return false;
-      if (rrbExamFilter !== 'All' && (q.examLevel || 'Under Graduate') !== rrbExamFilter) return false;
+      if (rrbExamFilter !== 'All') {
+        if (rrbExamFilter === 'SSC CGL' || rrbExamFilter === 'CGL Tier-I' || rrbExamFilter === 'SSC CGL 2020') {
+          const isSsc = q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl');
+          if (!isSsc) return false;
+        } else if (rrbExamFilter === 'Graduate') {
+          if (q.examType === 'SSC CGL' || (q.examLevel || '') !== 'Graduate') return false;
+        } else if (rrbExamFilter === 'Under Graduate') {
+          if (q.examType === 'SSC CGL' || (q.examLevel || 'Under Graduate') !== 'Under Graduate') return false;
+        }
+      }
       if (rrbShiftFilter !== 'All' && String(q.shiftNumber) !== String(rrbShiftFilter)) return false;
       if (rrbStatusFilter !== 'All' && q.status !== rrbStatusFilter) return false;
       if (rrbSearch.trim()) {
@@ -178,17 +190,19 @@ export default function AdminMockTestsTab({ onNotify }) {
     return filteredRrbQuestions.slice(start, start + itemsPerPage);
   }, [filteredRrbQuestions, rrbPage]);
 
-  // Statistics with exact counts for Reasoning, GK, Quant, Science, Computer Science & Subtopics
+  // Statistics with exact counts for Reasoning, GK, Quant, Science, English, Computer Science & Subtopics
   const rrbStats = useMemo(() => {
     let published = 0;
     let needsReview = 0;
     let underGraduate = 0;
     let graduate = 0;
+    let sscCgl = 0;
     const bySubject = {
       'General Knowledge': 0,
       'Reasoning': 0,
       'Quantitative Aptitude': 0,
       'General Science': 0,
+      'English Language': 0,
       'Computer Science': 0
     };
     const byTopic = {};
@@ -197,14 +211,21 @@ export default function AdminMockTestsTab({ onNotify }) {
       'Reasoning': {},
       'Quantitative Aptitude': {},
       'General Science': {},
+      'English Language': {},
       'Computer Science': {}
     };
 
     for (const q of rrbQuestions) {
       if (q.status === 'Published') published++;
       else needsReview++;
-      if ((q.examLevel || 'Under Graduate') === 'Graduate') graduate++;
-      else underGraduate++;
+
+      if (q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl')) {
+        sscCgl++;
+      } else if ((q.examLevel || 'Under Graduate') === 'Graduate') {
+        graduate++;
+      } else {
+        underGraduate++;
+      }
 
       const isCs = q.categoryId === 'cse' || q.subject === 'Computer Science' || (q.subtopic && ['Operating Systems', 'Computer Networks', 'Database Management Systems', 'Digital Logic & Computer Organization', 'Software Engineering', 'Programming & OOP', 'Data Structures & Algorithms'].includes(q.subtopic));
 
@@ -235,6 +256,11 @@ export default function AdminMockTestsTab({ onNotify }) {
         if (q.subtopic) {
           topicsBySubject['General Science'][q.subtopic] = (topicsBySubject['General Science'][q.subtopic] || 0) + 1;
         }
+      } else if (q.subject === 'English Language' || q.categoryId === 'english') {
+        bySubject['English Language']++;
+        if (q.subtopic) {
+          topicsBySubject['English Language'][q.subtopic] = (topicsBySubject['English Language'][q.subtopic] || 0) + 1;
+        }
       }
 
       if (q.subtopic) {
@@ -248,6 +274,7 @@ export default function AdminMockTestsTab({ onNotify }) {
       needsReview,
       underGraduate,
       graduate,
+      sscCgl,
       bySubject,
       byTopic,
       topicsBySubject
@@ -589,14 +616,14 @@ export default function AdminMockTestsTab({ onNotify }) {
               )}
 
               {/* Live Statistics Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 pt-2">
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
                   <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total}</div>
-                  <div className="text-[11px] text-slate-300">Total Verified Questions</div>
+                  <div className="text-[11px] text-slate-300">Total Verified Qs</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published}</div>
-                  <div className="text-[11px] text-slate-300">Verified &amp; Published</div>
+                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl || 2100}</div>
+                  <div className="text-[11px] text-slate-300">SSC CGL (21 Sets)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
                   <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate}</div>
@@ -607,8 +634,12 @@ export default function AdminMockTestsTab({ onNotify }) {
                   <div className="text-[11px] text-slate-300">UG (32 Shifts)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length || 79}</div>
-                  <div className="text-[11px] text-slate-300">Official Exam Shifts</div>
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length || 100}</div>
+                  <div className="text-[11px] text-slate-300">Official Shifts (CBT)</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published}</div>
+                  <div className="text-[11px] text-slate-300">Verified &amp; Active</div>
                 </div>
               </div>
 
@@ -626,7 +657,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
                   {/* General Knowledge */}
                   <div
                     onClick={() => {
@@ -776,6 +807,36 @@ export default function AdminMockTestsTab({ onNotify }) {
                       DBMS 128 · Logic 104 · OS 95 · Networks 45
                     </div>
                   </div>
+
+                  {/* English Language */}
+                  <div
+                    onClick={() => {
+                      setRrbSubjectFilter(rrbSubjectFilter === 'English Language' ? 'All' : 'English Language');
+                      setRrbTopicFilter('All');
+                      setRrbPage(1);
+                    }}
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                      rrbSubjectFilter === 'English Language'
+                        ? 'bg-white text-[#12345A] border-white shadow-md'
+                        : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Languages className="w-3.5 h-3.5 text-sky-300" />
+                        <span>English Language</span>
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-black bg-sky-400/20 text-sky-200">
+                        {rrbStats.bySubject['English Language'] || 525} Qs
+                      </span>
+                    </div>
+                    <div className="text-xl font-black mt-1">
+                      {(rrbStats.bySubject['English Language'] || 525).toLocaleString()}
+                    </div>
+                    <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
+                      Grammar · Vocab · Cloze · Idioms · One-word
+                    </div>
+                  </div>
                 </div>
 
                 {/* Collapsible Full Topic-Wise Counts Cloud */}
@@ -898,6 +959,18 @@ export default function AdminMockTestsTab({ onNotify }) {
                   <Cpu className="w-3 h-3 text-indigo-500" />
                   <span>Computer ({rrbStats.bySubject['Computer Science'] || 412})</span>
                 </button>
+
+                <button
+                  onClick={() => { setRrbSubjectFilter('English Language'); setRrbTopicFilter('All'); setRrbPage(1); }}
+                  className={`px-3 py-1.5 rounded-full font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 ${
+                    rrbSubjectFilter === 'English Language'
+                      ? 'bg-[#12345A] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <Languages className="w-3 h-3 text-sky-500" />
+                  <span>English ({rrbStats.bySubject['English Language'] || 525})</span>
+                </button>
               </div>
 
               {/* Status & Topic Filters */}
@@ -922,8 +995,9 @@ export default function AdminMockTestsTab({ onNotify }) {
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
                   <option value="All">All Exams ({rrbStats.total})</option>
-                  <option value="Graduate">Graduate ({rrbStats.graduate})</option>
-                  <option value="Under Graduate">Under Graduate ({rrbStats.underGraduate})</option>
+                  <option value="SSC CGL">SSC CGL 2020 Tier-I ({rrbStats.sscCgl || 2100})</option>
+                  <option value="Graduate">RRB NTPC Graduate ({rrbStats.graduate})</option>
+                  <option value="Under Graduate">RRB NTPC UG ({rrbStats.underGraduate})</option>
                 </select>
 
                 <select
@@ -1126,29 +1200,43 @@ export default function AdminMockTestsTab({ onNotify }) {
         </div>
       )}
 
-      {/* SUB-TAB 2: 32 SHIFTS CONFIGURATOR */}
+      {/* SUB-TAB 2: SHIFTS CONFIGURATOR */}
       {subTab === 'shiftsConfig' && (
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-5 border border-[#E3EAF2] shadow-xs">
             <h3 className="text-lg font-black text-[#12345A] mb-1">
-              32 Examination Shifts Configuration
+              {shifts.length || 100} Official Examination Shifts Configuration
             </h3>
             <p className="text-xs text-slate-500">
-              Update shift timing, exam dates, examination duration, total marks, and publish status.
+              Manage all official CBT shifts: SSC CGL 2020 Tier-I (21 Sets), RRB NTPC Graduate (47 Shifts), and RRB NTPC Under Graduate (32 Shifts).
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {shifts.map((shift) => (
+            {shifts.map((shift) => {
+              const isSsc = shift.examType === 'SSC CGL' || (shift.id || '').includes('ssc-cgl');
+              const isGrad = shift.examLevel === 'Graduate';
+              return (
               <div
                 key={shift.id}
                 className="bg-white rounded-2xl border border-[#E3EAF2] p-5 flex flex-col justify-between gap-3 shadow-2xs hover:border-[#2468B4] transition"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black px-2.5 py-0.5 rounded-md bg-[#12345A] text-white">
-                      Shift {shift.shiftNumber}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black px-2.5 py-0.5 rounded-md bg-[#12345A] text-white">
+                        Shift {shift.shiftNumber}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isSsc
+                          ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                          : isGrad
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                          : 'bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}>
+                        {isSsc ? 'SSC CGL 2020' : isGrad ? 'Graduate' : 'Under Graduate'}
+                      </span>
+                    </div>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         shift.status === 'Published'
@@ -1206,7 +1294,8 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </button>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
       )}

@@ -746,7 +746,18 @@ export const RRB_CORE_SUBJECTS = [
     description: 'Indian History, Geography, Indian Polity, Economy, Static GK, Current Affairs, Schemes',
     color: 'from-amber-600 to-amber-700',
     badge: 'GK & GA',
-    topics: ['Indian History', 'Geography', 'Polity & Constitution', 'Economy', 'Static GK', 'Current Affairs', 'Government Schemes']
+    topics: [
+      'Indian History',
+      'Geography',
+      'Indian Polity & Constitution',
+      'Indian Economy',
+      'General Science',
+      'Current Affairs',
+      'Static GK',
+      'Government Schemes',
+      'Environment & Ecology',
+      'Culture, Awards & Sports'
+    ]
   },
   {
     id: 'reasoning',

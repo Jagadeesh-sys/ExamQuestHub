@@ -34,8 +34,26 @@ export const COMPUTER_SCIENCE_SUBJECT = {
   ]
 };
 
-/** Subjects offered in the mocks hub: the four core RRB NTPC subjects plus Computer Science. */
-export const RRB_MOCK_SUBJECTS = [...RRB_CORE_SUBJECTS, COMPUTER_SCIENCE_SUBJECT];
+export const ENGLISH_SUBJECT = {
+  id: 'english-language',
+  title: 'English Language',
+  name: 'English Comprehension & Grammar',
+  description:
+    'Grammar & Error Spotting, Vocabulary, Synonyms & Antonyms, Idioms & Phrases, Reading Comprehension & Cloze Test',
+  color: 'from-sky-600 to-sky-700',
+  badge: 'English',
+  topics: [
+    'Reading Comprehension & Cloze Test',
+    'Grammar & Error Spotting',
+    'Vocabulary, Synonyms & Antonyms',
+    'Idioms & Phrases',
+    'One Word Substitution & Spelling',
+    'Sentence Rearrangement & Para Jumbles'
+  ]
+};
+
+/** Subjects offered in the mocks hub: core subjects, English Language, plus Computer Science. */
+export const RRB_MOCK_SUBJECTS = [...RRB_CORE_SUBJECTS, ENGLISH_SUBJECT, COMPUTER_SCIENCE_SUBJECT];
 
 const toKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -167,10 +185,13 @@ let cachedQuestions = null;
 let cachedShifts = null;
 
 /**
- * Extracted question banks merged into one pool: the Under-Graduate 2025 papers
- * and the Graduate 2025 (CEN 06/2025) papers. Both use the same question shape.
+ * Extracted question banks merged into one pool:
+ * - RRB NTPC Under-Graduate 2025 papers (32 shifts, 3,200 Qs)
+ * - RRB NTPC Graduate 2025 papers (47 shifts, 4,700 Qs)
+ * - SSC CGL 2020 Tier-I papers (21 sets, 2,100 Qs)
+ * Total: 10,000 official examination questions across 100 shifts!
  */
-const RRB_DATA_FILES = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json'];
+const RRB_DATA_FILES = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json', 'sscCgl2020Full.json'];
 
 async function loadRrbDataFile(fileName) {
   if (typeof window === 'undefined') {
@@ -329,6 +350,9 @@ export async function getQuestionsForSubject(subjectIdOrName) {
   return all.filter((q) => {
     const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
     const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (cleanTarget.includes('english')) {
+      return qSub.includes('english') || qSubId.includes('english') || (q.categoryId || '').toLowerCase() === 'english';
+    }
     if (cleanTarget.includes('computer')) {
       return qSub.includes('generalknowledge') && classifyGkTopic(q) === 'Computer Science';
     }
@@ -357,10 +381,12 @@ export async function getSubjectStatistics() {
   let quant = 0;
   let reasoning = 0;
   let science = 0;
+  let english = 0;
 
   for (const q of all) {
     const sub = (q.subject || '').toLowerCase();
-    if (sub.includes('science')) science++;
+    if (sub.includes('english')) english++;
+    else if (sub.includes('science')) science++;
     else if (sub.includes('knowledge') || sub.includes('gk')) gk++;
     else if (sub.includes('quant') || sub.includes('math')) quant++;
     else if (sub.includes('reason')) reasoning++;
@@ -371,7 +397,8 @@ export async function getSubjectStatistics() {
     gk,
     quant,
     reasoning,
-    science
+    science,
+    english
   };
 }
 
@@ -469,6 +496,9 @@ export async function getEngineMockTest(testId, subjectParam = null) {
     } else if (testId.includes('quant') || subject === 'quantitative-aptitude' || subject === 'Quantitative Aptitude') {
       subject = 'Quantitative Aptitude';
       title = 'Quantitative Aptitude Master Mock Test';
+    } else if (testId.includes('english') || subject === 'english-language' || subject === 'English Language') {
+      subject = 'English Language';
+      title = 'English Language Master Mock Test';
     } else if (testId.includes('computer') || subject === 'computer-science' || subject === 'Computer Science') {
       // Checked before the science rule: "computer-science" contains "science".
       subject = 'Computer Science';
@@ -526,22 +556,25 @@ export async function getEngineMockTest(testId, subjectParam = null) {
 
     const engineQuestions = formatToEngineQuestions(picked);
 
+    const isEnglish = subject === 'English Language';
     return {
       meta: {
         id: testId,
         code: `MOCK-${(subject || 'CBT').slice(0, 5).toUpperCase()}`,
         title,
-        subtitle: `ExamQuestHub Master CBT · Official 2025 Question Pool`,
-        examName: 'RRB NTPC Under Graduate 2025 (CEN 07/2025)',
-        examYear: '2025',
+        subtitle: isEnglish ? `SSC CGL 2020 Official Tier-I Question Bank` : `ExamQuestHub Master CBT · Official 2025 Question Pool`,
+        examName: isEnglish ? 'SSC CGL 2020 Tier-I (CBE)' : 'RRB NTPC Under Graduate 2025 (CEN 07/2025)',
+        examYear: isEnglish ? '2020' : '2025',
         subjectLabel: subject === 'full' ? 'All 4 Subjects' : subject,
         targetSubject: subject,
         questionsCount: engineQuestions.length,
         timeMinutes: duration,
-        marks: engineQuestions.length,
-        negativeMarking: 0.33,
-        pdfUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
-        pdfFileName: 'RRB-NTPC-UG-2025-EN-All-Papers.pdf',
+        marks: isEnglish ? engineQuestions.length * 2 : engineQuestions.length,
+        negativeMarking: isEnglish ? 0.5 : 0.33,
+        pdfUrl: isEnglish
+          ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf'
+          : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+        pdfFileName: isEnglish ? 'SSC_CGL_2020_All_21_Sets_English.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf',
         subjectTest: subject !== 'full'
       },
       questions: engineQuestions

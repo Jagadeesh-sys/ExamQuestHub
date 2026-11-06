@@ -606,6 +606,21 @@ function mapRrbToMockQuestion(q) {
       } else {
         subjectId = 'series-coding-decoding';
       }
+    } else if (sub.includes('english')) {
+      categoryId = 'english';
+      if (text.includes('idiom') || text.includes('phrase')) {
+        subjectId = 'idioms-phrases';
+      } else if (text.includes('synonym') || text.includes('antonym')) {
+        subjectId = 'vocabulary';
+      } else if (text.includes('one word') || text.includes('spelt') || text.includes('spelling')) {
+        subjectId = 'one-word-substitution';
+      } else if (text.includes('passage') || text.includes('comprehension') || text.includes('cloze')) {
+        subjectId = 'reading-comprehension';
+      } else if (text.includes('jumbled') || text.includes('rearrangement')) {
+        subjectId = 'sentence-rearrangement';
+      } else {
+        subjectId = 'grammar-error-spotting';
+      }
     } else {
       categoryId = 'gk';
       if (text.includes('article') || text.includes('constitution') || text.includes('amendment') || text.includes('court') || text.includes('parliament') || text.includes('president') || text.includes('polity')) {
@@ -626,6 +641,8 @@ function mapRrbToMockQuestion(q) {
     }
   }
 
+  const isSsc = q.examType === 'SSC CGL' || String(q.id || '').startsWith('ssc-cgl');
+
   return {
     ...q,
     categoryId,
@@ -633,9 +650,9 @@ function mapRrbToMockQuestion(q) {
     questionType: 'PYQ',
     difficulty: q.difficulty || 'Medium',
     verificationStatus: 'VERIFIED',
-    source: q.source || (q.examLevel === 'Graduate' ? 'RRB NTPC Graduate 2025 Official Answer Key (CEN 06/2025)' : 'RRB Official Answer Key (CEN 07/2025)'),
-    paperUrl: q.paperUrl || (q.examLevel === 'Graduate' ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf'),
-    paperFileName: q.paperFileName || (q.examLevel === 'Graduate' ? 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf')
+    source: q.source || (isSsc ? 'SSC CGL 2020 Tier-I Official Question Paper (QMaths)' : q.examLevel === 'Graduate' ? 'RRB NTPC Graduate 2025 Official Answer Key (CEN 06/2025)' : 'RRB Official Answer Key (CEN 07/2025)'),
+    paperUrl: q.paperUrl || (isSsc ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf' : q.examLevel === 'Graduate' ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf'),
+    paperFileName: q.paperFileName || (isSsc ? 'SSC_CGL_2020_All_21_Sets_English.pdf' : q.examLevel === 'Graduate' ? 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf')
   };
 }
 

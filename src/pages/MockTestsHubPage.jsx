@@ -27,7 +27,9 @@ import {
   Flame,
   Monitor,
   BarChart3,
-  Target
+  Target,
+  Languages,
+  ClipboardList
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -105,6 +107,7 @@ export default function MockTestsHubPage() {
       if (found.id === 'quantitative-aptitude') icon = Calculator;
       if (found.id === 'general-science') icon = Atom;
       if (found.id === 'computer-science') icon = Cpu;
+      if (found.id === 'english-language') icon = Languages;
       return { ...found, icon };
     }
     return {
@@ -115,7 +118,18 @@ export default function MockTestsHubPage() {
       color: 'from-amber-600 to-amber-700',
       badge: 'GK & GA',
       icon: Landmark,
-      topics: ['Indian History', 'Geography', 'Polity & Constitution', 'Economy', 'Static GK', 'Current Affairs', 'Government Schemes']
+      topics: [
+        'Indian History',
+        'Geography',
+        'Indian Polity & Constitution',
+        'Indian Economy',
+        'General Science',
+        'Current Affairs',
+        'Static GK',
+        'Government Schemes',
+        'Environment & Ecology',
+        'Culture, Awards & Sports'
+      ]
     };
   }, [selectedSubject]);
 
@@ -130,6 +144,13 @@ export default function MockTestsHubPage() {
       const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
       const qCat = (q.categoryId || '').toLowerCase().replace(/[^a-z]/g, '');
 
+      if (cleanTarget.includes('english')) {
+        return (
+          qSub.includes('english') ||
+          qSubId.includes('english') ||
+          qCat === 'english'
+        );
+      }
       // Checked before the science rule: "computer-science" also contains "science".
       if (cleanTarget.includes('computer')) {
         return (
@@ -167,13 +188,14 @@ export default function MockTestsHubPage() {
     const list = firestoreQuestions && firestoreQuestions.length > 0 ? firestoreQuestions : [];
     if (list.length === 0) {
       return {
-        'general-knowledge': 3911,
-        'reasoning': 1631,
-        'quantitative-aptitude': 1876,
-        'general-science': 482,
+        'general-knowledge': 4364,
+        'reasoning': 2156,
+        'quantitative-aptitude': 2401,
+        'general-science': 554,
+        'english-language': 525,
         'computer-science': 278,
-        'full': 7900,
-        total: 7900
+        'full': 10000,
+        total: 10000
       };
     }
 
@@ -182,13 +204,16 @@ export default function MockTestsHubPage() {
     let quant = 0;
     let science = 0;
     let computer = 0;
+    let english = 0;
 
     for (const q of list) {
       const sub = (q.subject || '').toLowerCase();
       const subId = (q.subjectId || '').toLowerCase();
       const cat = (q.categoryId || '').toLowerCase();
 
-      if (sub.includes('science') || subId.includes('science')) {
+      if (sub.includes('english') || subId.includes('english') || cat === 'english') {
+        english++;
+      } else if (sub.includes('science') || subId.includes('science')) {
         science++;
       } else if (sub.includes('quant') || subId.includes('quant') || cat === 'quant') {
         quant++;
@@ -212,6 +237,7 @@ export default function MockTestsHubPage() {
       'reasoning': reasoning,
       'quantitative-aptitude': quant,
       'general-science': science,
+      'english-language': english || 525,
       'computer-science': computer || 278,
       'full': list.length,
       total: list.length
@@ -248,6 +274,15 @@ export default function MockTestsHubPage() {
         }
         if (t.includes('scheme')) {
           return st.includes('scheme') || txt.includes('yojana') || txt.includes('mission') || txt.includes('scheme');
+        }
+        if (t.includes('environ') || t.includes('ecolog')) {
+          return st.includes('environ') || st.includes('ecolog') || txt.includes('pollution') || txt.includes('forest') || txt.includes('wildlife') || txt.includes('sanctuary') || txt.includes('national park') || txt.includes('biodiversity');
+        }
+        if (t.includes('culture') || t.includes('award') || t.includes('sport')) {
+          return st.includes('culture') || st.includes('award') || st.includes('sport') || txt.includes('dance') || txt.includes('festival') || txt.includes('trophy') || txt.includes('medal') || txt.includes('book') || txt.includes('author') || txt.includes('temple');
+        }
+        if (t.includes('science')) {
+          return st.includes('science') || txt.includes('physics') || txt.includes('chemistry') || txt.includes('biology') || txt.includes('vitamin') || txt.includes('disease');
         }
         if (t.includes('static')) {
           return st.includes('static') || (!st.includes('history') && !st.includes('geo') && !st.includes('polity') && !st.includes('economy'));
@@ -389,119 +424,202 @@ export default function MockTestsHubPage() {
 
   const totalBrowserPages = Math.ceil(filteredBrowserQuestions.length / browserPageSize);
 
-  // Pre-configured Subject Mock Tests (5 Comprehensive Tests per subject)
-  const subjectMockTests = useMemo(() => {
+  // Test Filtering & Sorting States matching Image 3
+  const [testCategoryFilter, setTestCategoryFilter] = useState('all'); // 'all' | 'full' | 'sectional' | 'quick' | 'mixed'
+  const [testSortBy, setTestSortBy] = useState('latest'); // 'latest' | 'popular' | 'questions' | 'duration'
+  const [activeTopicFilter, setActiveTopicFilter] = useState(null);
+  const [testPage, setTestPage] = useState(1);
+  const testPageSize = 10;
+
+  const shortSubjectLabel = useMemo(() => {
+    if (selectedSubject === 'general-knowledge') return 'GK';
+    if (selectedSubject === 'reasoning') return 'Reasoning';
+    if (selectedSubject === 'quantitative-aptitude') return 'Quant';
+    if (selectedSubject === 'general-science') return 'Science';
+    if (selectedSubject === 'computer-science') return 'Computer';
+    if (selectedSubject === 'english-language') return 'English';
+    return 'CBT';
+  }, [selectedSubject]);
+
+  // Pre-configured Subject Mock Tests: 75 Comprehensive Tests matching Image 3!
+  // Breakdown: 20 Full Mock + 15 Sectional + 20 Quick + 20 Mixed = 75 Tests
+  const allSubjectMockTests = useMemo(() => {
     const sub = selectedSubject;
     const subLabel = currentSubjectInfo.title;
+    const short = shortSubjectLabel;
+    const topics = currentSubjectInfo.topics || [];
+    const isSsc = sub === 'english-language';
 
-    if (sub === 'full') {
-      return [
-        {
-          id: 'full-cbt-master-1',
-          code: 'RRB-CBT-1',
-          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 1',
-          subtitle: 'Complete 100-Question CBT paper (30 Quant, 30 GK, 10 Science, 30 Reasoning)',
-          questionsCount: 100,
-          duration: 90,
-          marks: 100,
-          badge: 'Official CBT Full Mock'
-        },
-        {
-          id: 'full-cbt-master-2',
-          code: 'RRB-CBT-2',
-          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 2',
-          subtitle: 'Full 100 Questions covering all 4 subjects in standard exam sequence',
-          questionsCount: 100,
-          duration: 90,
-          marks: 100,
-          badge: 'Full CBT Shift'
-        },
-        {
-          id: 'full-cbt-master-3',
-          code: 'RRB-CBT-3',
-          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 3',
-          subtitle: 'Complete examination simulation with negative marking and timer',
-          questionsCount: 100,
-          duration: 90,
-          marks: 100,
-          badge: 'Full CBT Shift'
-        },
-        {
-          id: 'full-cbt-master-4',
-          code: 'RRB-CBT-4',
-          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 4',
-          subtitle: 'High-probability questions selected across 32 examination shifts',
-          questionsCount: 100,
-          duration: 90,
-          marks: 100,
-          badge: 'Full CBT Shift'
-        },
-        {
-          id: 'full-cbt-master-5',
-          code: 'RRB-CBT-5',
-          title: 'RRB NTPC UG 2025 · Full CBT Master Mock 5',
-          subtitle: 'Comprehensive speed and accuracy examination test',
-          questionsCount: 100,
-          duration: 90,
-          marks: 100,
-          badge: 'Full CBT Shift'
-        }
-      ];
+    const tests = [];
+
+    // 1. 20 Full Mock Tests (Full-length 100 Qs / 200 Marks)
+    for (let i = 1; i <= 20; i++) {
+      const pad = String(i).padStart(2, '0');
+      const difficulty = i % 3 === 0 ? 'Hard' : i % 2 === 0 ? 'Easy' : 'Medium';
+      const difficultyBadgeClass =
+        difficulty === 'Easy'
+          ? 'bg-emerald-100 text-emerald-800'
+          : difficulty === 'Hard'
+          ? 'bg-purple-100 text-purple-800'
+          : 'bg-amber-100 text-amber-800';
+      const attempts = `${(58.2 - (i - 1) * 1.8).toFixed(1)}K Attempts`;
+
+      tests.push({
+        id: `subject-${sub}-full-${i}`,
+        code: `${short}-F${pad}`,
+        title: `${subLabel} – Full Mock Test ${pad}`,
+        subtitle: `Complete 100-Question comprehensive examination test with official answer keys`,
+        category: 'full',
+        questionsCount: 100,
+        duration: isSsc ? 60 : 90,
+        marks: 200,
+        difficulty,
+        difficultyBadgeClass,
+        attempts,
+        topicTag: 'Comprehensive',
+        attemptsNum: 58200 - (i - 1) * 1800,
+        order: i
+      });
     }
 
-    return [
-      {
-        id: `subject-${sub}-master-1`,
-        code: `${sub.slice(0, 3).toUpperCase()}-M1`,
-        title: `${subLabel} · Master PYQ Mock Test 1`,
-        subtitle: `Drawn from all official shifts with 100% official answer keys and solutions`,
-        questionsCount: Math.min(100, currentSubjectQuestions.length || 100),
-        duration: 90,
-        marks: Math.min(100, currentSubjectQuestions.length || 100),
-        badge: 'Full Subject Test'
-      },
-      {
-        id: `subject-${sub}-50q-2`,
-        code: `${sub.slice(0, 3).toUpperCase()}-T2`,
-        title: `${subLabel} · High-Yield Mock Test 2`,
-        subtitle: `50 Most important questions for rapid syllabus coverage and revision`,
+    // 2. 15 Sectional Tests (50 Qs / 100 Marks / 45 Min)
+    for (let i = 1; i <= 15; i++) {
+      const pad = String(i).padStart(2, '0');
+      const t1 = topics[(i - 1) % topics.length] || 'General';
+      const t2 = topics[i % topics.length] || 'Syllabus';
+      const difficulty = i % 2 === 0 ? 'Medium' : 'Easy';
+      const difficultyBadgeClass =
+        difficulty === 'Easy'
+          ? 'bg-emerald-100 text-emerald-800'
+          : 'bg-amber-100 text-amber-800';
+      const attempts = `${(42.9 - (i - 1) * 1.5).toFixed(1)}K Attempts`;
+
+      tests.push({
+        id: `subject-${sub}-sec-${i}`,
+        code: `${short}-S${pad}`,
+        title: `${short} – Sectional Test (${t1} + ${t2})`,
+        subtitle: `In-depth sectional test focusing on ${t1} and ${t2}`,
+        category: 'sectional',
         questionsCount: 50,
         duration: 45,
-        marks: 50,
-        badge: 'High-Yield 50Q'
-      },
-      {
-        id: `subject-${sub}-25q-3`,
-        code: `${sub.slice(0, 3).toUpperCase()}-T3`,
-        title: `${subLabel} · Speed Drill Test 3`,
-        subtitle: `25 Timed questions to build speed, accuracy, and examination stamina`,
+        marks: 100,
+        difficulty,
+        difficultyBadgeClass,
+        attempts,
+        topicTag: `${t1}, ${t2}`,
+        attemptsNum: 42900 - (i - 1) * 1500,
+        order: i + 20
+      });
+    }
+
+    // 3. 20 Quick Tests (25 Qs / 50 Marks / 25 Min)
+    for (let i = 1; i <= 20; i++) {
+      const pad = String(i).padStart(2, '0');
+      const t = topics[(i - 1) % topics.length] || 'Speed Drill';
+      const difficulty = i % 2 === 0 ? 'Medium' : 'Hard';
+      const difficultyBadgeClass =
+        difficulty === 'Hard'
+          ? 'bg-purple-100 text-purple-800'
+          : 'bg-amber-100 text-amber-800';
+      const attempts = `${(32.1 - (i - 1) * 0.9).toFixed(1)}K Attempts`;
+
+      tests.push({
+        id: `subject-${sub}-quick-${i}`,
+        code: `${short}-Q${pad}`,
+        title: `${short} – Speed Drill Test ${pad}`,
+        subtitle: `25 Timed speed questions on ${t} to build examination speed and accuracy`,
+        category: 'quick',
         questionsCount: 25,
         duration: 25,
-        marks: 25,
-        badge: 'Speed Drill 25Q'
-      },
-      {
-        id: `subject-${sub}-master-4`,
-        code: `${sub.slice(0, 3).toUpperCase()}-M4`,
-        title: `${subLabel} · Comprehensive Mock Test 4`,
-        subtitle: `Comprehensive assessment covering all key concepts and PYQs`,
-        questionsCount: Math.min(100, currentSubjectQuestions.length || 100),
-        duration: 90,
-        marks: Math.min(100, currentSubjectQuestions.length || 100),
-        badge: 'Full Subject Test'
-      },
-      {
-        id: `subject-${sub}-50q-5`,
-        code: `${sub.slice(0, 3).toUpperCase()}-T5`,
-        title: `${subLabel} · Rapid Revision Mock 5`,
-        subtitle: `50 Questions focused on previous year repeated themes and problem types`,
-        questionsCount: 50,
-        duration: 45,
         marks: 50,
-        badge: 'Rapid Revision 50Q'
-      }
-    ];
-  }, [selectedSubject, currentSubjectInfo, currentSubjectQuestions]);
+        difficulty,
+        difficultyBadgeClass,
+        attempts,
+        topicTag: t,
+        attemptsNum: 32100 - (i - 1) * 900,
+        order: i + 35
+      });
+    }
+
+    // 4. 20 Mixed Practice Tests (25 Qs / 50 Marks / 25 Min)
+    for (let i = 1; i <= 20; i++) {
+      const pad = String(i).padStart(2, '0');
+      const difficulty = i % 3 === 0 ? 'Easy' : i % 2 === 0 ? 'Medium' : 'Hard';
+      const difficultyBadgeClass =
+        difficulty === 'Easy'
+          ? 'bg-emerald-100 text-emerald-800'
+          : difficulty === 'Hard'
+          ? 'bg-purple-100 text-purple-800'
+          : 'bg-amber-100 text-amber-800';
+      const attempts = `${(18.4 + (i - 1) * 0.7).toFixed(1)}K Attempts`;
+
+      tests.push({
+        id: `subject-${sub}-mixed-${i}`,
+        code: `${short}-M${pad}`,
+        title: `${short} – Mixed Practice Test ${pad}`,
+        subtitle: `Cross-topic mixed assessment covering high-yield repeat questions`,
+        category: 'mixed',
+        questionsCount: 25,
+        duration: 25,
+        marks: 50,
+        difficulty,
+        difficultyBadgeClass,
+        attempts,
+        topicTag: 'Mixed Syllabus',
+        attemptsNum: 18400 + (i - 1) * 700,
+        order: i + 55
+      });
+    }
+
+    return tests;
+  }, [selectedSubject, currentSubjectInfo, shortSubjectLabel]);
+
+  // Filtered & Sorted tests list
+  const filteredSubjectTests = useMemo(() => {
+    let list = allSubjectMockTests;
+    if (testCategoryFilter !== 'all') {
+      list = list.filter((t) => t.category === testCategoryFilter);
+    }
+    if (activeTopicFilter) {
+      const q = activeTopicFilter.toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          (t.topicTag && t.topicTag.toLowerCase().includes(q)) ||
+          t.subtitle.toLowerCase().includes(q)
+      );
+    }
+
+    return [...list].sort((a, b) => {
+      if (testSortBy === 'popular') return b.attemptsNum - a.attemptsNum;
+      if (testSortBy === 'questions') return b.questionsCount - a.questionsCount;
+      if (testSortBy === 'duration') return b.duration - a.duration;
+      return a.order - b.order;
+    });
+  }, [allSubjectMockTests, testCategoryFilter, activeTopicFilter, testSortBy]);
+
+  const paginatedSubjectTests = useMemo(() => {
+    const start = (testPage - 1) * testPageSize;
+    return filteredSubjectTests.slice(start, start + testPageSize);
+  }, [filteredSubjectTests, testPage]);
+
+  const totalTestPages = Math.ceil(filteredSubjectTests.length / testPageSize);
+
+  // Category counts for filter pills (e.g. All Tests 75, Full Mock 20, Sectional 15, Quick Test 20, Mixed 20)
+  const testCategoryCounts = useMemo(() => {
+    let all = allSubjectMockTests.length;
+    let full = 0;
+    let sec = 0;
+    let quick = 0;
+    let mixed = 0;
+    for (const t of allSubjectMockTests) {
+      if (t.category === 'full') full++;
+      else if (t.category === 'sectional') sec++;
+      else if (t.category === 'quick') quick++;
+      else if (t.category === 'mixed') mixed++;
+    }
+    return { all, full, sec, quick, mixed };
+  }, [allSubjectMockTests]);
 
   // Legacy CA filter
   const filteredCaMocks = useMemo(() => {
@@ -530,11 +648,12 @@ export default function MockTestsHubPage() {
 
   return (
     <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8">
-      {/* Breadcrumb Navigation */}
+      {/* Breadcrumb Navigation matching Image 3: Home > Mock Tests > Subject */}
       <Breadcrumbs
         items={[
           { label: t('navHome') || 'Home', path: '/' },
-          { label: 'Previous Year Mock Test System' }
+          { label: 'Mock Tests', path: '/mock-tests' },
+          { label: currentSubjectInfo.title }
         ]}
       />
 
@@ -579,7 +698,9 @@ export default function MockTestsHubPage() {
                 <div className="w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-lg bg-white/15 flex items-center justify-center text-[#F2BE4F] mb-1">
                   <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <div className="text-base sm:text-2xl font-black text-white">16,430+</div>
+                <div className="text-base sm:text-2xl font-black text-white">
+                  {firestoreQuestions.length ? `${firestoreQuestions.length.toLocaleString()}+` : '10,000+'}
+                </div>
                 <div className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Questions</div>
               </div>
 
@@ -595,7 +716,7 @@ export default function MockTestsHubPage() {
                 <div className="w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-lg bg-white/15 flex items-center justify-center text-[#F2BE4F] mb-1">
                   <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <div className="text-base sm:text-2xl font-black text-white">{officialShiftCount || 80}</div>
+                <div className="text-base sm:text-2xl font-black text-white">{shifts.length || 100}</div>
                 <div className="text-[9px] sm:text-xs text-slate-300 font-medium leading-tight">Exam Shifts (CBT)</div>
               </div>
             </div>
@@ -796,7 +917,38 @@ export default function MockTestsHubPage() {
             </div>
           </button>
 
-          {/* 6. Optional Full Mock Test (All 4 Subjects Combined) */}
+          {/* 6. English Language (SSC CGL Official Syllabus) */}
+          <button
+            onClick={() => handleSelectSubject('english-language')}
+            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+              selectedSubject === 'english-language'
+                ? 'bg-gradient-to-br from-sky-600 to-sky-700 text-white shadow-lg border-transparent scale-[1.02]'
+                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-sky-400'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                selectedSubject === 'english-language' ? 'bg-white/20 text-white' : 'bg-sky-50 text-sky-600'
+              }`}>
+                <Languages className="w-5 h-5" />
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                selectedSubject === 'english-language' ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-800'
+              }`}>
+                {(liveSubjectCounts['english-language'] || 525).toLocaleString()} Questions
+              </span>
+            </div>
+            <div className="mt-3">
+              <h3 className="font-black text-sm sm:text-base leading-tight">English Language</h3>
+              <p className={`text-[11px] mt-1 line-clamp-2 ${
+                selectedSubject === 'english-language' ? 'text-sky-100' : 'text-slate-500'
+              }`}>
+                Grammar, Synonyms, Antonyms, Idioms, Cloze Test &amp; Comprehension ({(liveSubjectCounts['english-language'] || 525).toLocaleString()} PYQs)
+              </p>
+            </div>
+          </button>
+
+          {/* 7. Optional Full Mock Test (All Subjects Combined) */}
           <button
             onClick={() => handleSelectSubject('full')}
             className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
@@ -822,7 +974,7 @@ export default function MockTestsHubPage() {
               <p className={`text-[11px] mt-1 line-clamp-2 ${
                 selectedSubject === 'full' ? 'text-slate-200' : 'text-slate-500'
               }`}>
-                Complete 100-Q CBT Shifts ({officialShiftCount || 79} Official Examination Shifts)
+                Complete 100-Q CBT Shifts ({shifts.length || 100} Official Examination Shifts)
               </p>
             </div>
           </button>
@@ -998,10 +1150,10 @@ export default function MockTestsHubPage() {
           </div>
         </div>
 
-        {/* 4 Navigation Sub-Tabs matching Image 1 - with mobile horizontal scroll */}
+        {/* 4 Navigation Sub-Tabs matching Image 3 - with mobile horizontal scroll */}
         <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-[#F6F8FC] rounded-2xl border border-[#E3EAF2] overflow-x-auto no-scrollbar scroll-smooth">
           <button
-            onClick={() => setSubjectViewTab('tests')}
+            onClick={() => { setSubjectViewTab('tests'); setTestPage(1); }}
             className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               subjectViewTab === 'tests'
                 ? 'bg-[#12345A] text-white shadow-xs'
@@ -1009,19 +1161,19 @@ export default function MockTestsHubPage() {
             }`}
           >
             <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Mock Tests ({subjectMockTests.length})</span>
+            <span>Mock Tests ({testCategoryCounts.all || 75})</span>
           </button>
 
           <button
-            onClick={() => setSubjectViewTab('topics')}
+            onClick={() => { setSubjectViewTab('practice'); setTestPage(1); }}
             className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-              subjectViewTab === 'topics'
+              subjectViewTab === 'practice'
                 ? 'bg-[#12345A] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Target className="w-4 h-4" />
-            <span>Topic-wise Tests ({currentSubjectInfo.topics?.length || 10})</span>
+            <Layers className="w-4 h-4" />
+            <span>Practice Tests (320)</span>
           </button>
 
           <button
@@ -1035,101 +1187,249 @@ export default function MockTestsHubPage() {
             <BookOpen className="w-4 h-4" />
             <span>Question Bank ({(currentSubjectQuestions.length || liveSubjectCounts[selectedSubject] || 0).toLocaleString()})</span>
           </button>
+
+          <button
+            onClick={() => setSubjectViewTab('topics')}
+            className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              subjectViewTab === 'topics'
+                ? 'bg-[#12345A] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Target className="w-4 h-4" />
+            <span>Topic-wise Tests ({currentSubjectInfo.topics?.length || 10})</span>
+          </button>
         </div>
 
-        {/* TAB 1: SUBJECT MOCK TESTS */}
-        {subjectViewTab === 'tests' && (
+        {/* TAB 1 & 2: SUBJECT MOCK TESTS & PRACTICE TESTS (Matching Image 3 Exactly) */}
+        {(subjectViewTab === 'tests' || subjectViewTab === 'practice') && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F6F8FC] p-4 rounded-2xl border border-[#E3EAF2]">
-              <div>
-                <h4 className="font-black text-[#12345A] text-sm sm:text-base">
-                  Available CBT Mock Tests for {currentSubjectInfo.title}
-                </h4>
-                <p className="text-xs text-slate-500">
-                  Select a test to begin a timed CBT examination simulation with negative marking (-0.33) and instant scorecard.
-                </p>
+            {/* Header + Sort by */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2468B4] border border-blue-100 flex items-center justify-center shrink-0">
+                  <Target className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-[#12345A]">
+                    Select {shortSubjectLabel} {subjectViewTab === 'practice' ? 'Practice Test' : 'Mock Test'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Attempt full-length and topic-wise {shortSubjectLabel} tests based on the latest exam pattern.
+                  </p>
+                </div>
               </div>
 
-              <Link
-                to={`/mocks/subject-${selectedSubject}-master-1?subject=${selectedSubject}&mode=practice`}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#12345A] text-white text-xs font-bold hover:bg-[#1E4E8C] transition shrink-0"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Start Full Master Mock</span>
-              </Link>
+              {/* Sort by Dropdown */}
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs font-semibold text-slate-500">Sort by:</span>
+                <select
+                  value={testSortBy}
+                  onChange={(e) => setTestSortBy(e.target.value)}
+                  className="text-xs bg-white border border-[#E3EAF2] rounded-xl px-3 py-1.5 font-bold text-[#12345A] focus:outline-hidden focus:border-[#2468B4] shadow-2xs cursor-pointer"
+                >
+                  <option value="latest">Latest</option>
+                  <option value="popular">Most Popular</option>
+                  <option value="questions">Questions Count</option>
+                  <option value="duration">Duration</option>
+                </select>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {subjectMockTests.map((mock) => {
-                const testUrl = `/mocks/${mock.id}?subject=${selectedSubject}`;
-                return (
-                  <div
-                    key={mock.id}
-                    className="bg-white rounded-3xl border border-[#E3EAF2] p-5 flex flex-col justify-between gap-4 hover:border-[#2468B4] hover:shadow-lg transition-all group"
+            {/* Filter Pills matching Image 3 */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {[
+                { id: 'all', label: `All Tests (${testCategoryCounts.all})` },
+                { id: 'full', label: `Full Mock (${testCategoryCounts.full})` },
+                { id: 'sectional', label: `Sectional (${testCategoryCounts.sec})` },
+                { id: 'quick', label: `Quick Test (${testCategoryCounts.quick})` },
+                { id: 'mixed', label: `Mixed (${testCategoryCounts.mixed})` }
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => {
+                    setTestCategoryFilter(f.id);
+                    setTestPage(1);
+                  }}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    testCategoryFilter === f.id
+                      ? 'bg-[#12345A] text-white shadow-xs'
+                      : 'bg-white border border-[#E3EAF2] text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+
+              {activeTopicFilter && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#2468B4] text-xs font-bold shrink-0">
+                  <span>Topic: {activeTopicFilter}</span>
+                  <button
+                    onClick={() => { setActiveTopicFilter(null); setTestPage(1); }}
+                    className="hover:text-red-600 font-black cursor-pointer"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="w-8 h-8 rounded-xl bg-[#EAF3FF] text-[#12345A] font-black flex items-center justify-center text-xs border border-[#2468B4]/20">
-                          {mock.code.slice(-2)}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
-                          <CheckCircle2 className="w-3 h-3" />
-                          {mock.badge}
-                        </span>
-                      </div>
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
 
-                      <div>
-                        <h4 className="font-black text-[#12345A] text-base leading-snug group-hover:text-[#2468B4] transition">
-                          {mock.title}
-                        </h4>
-                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                          {mock.subtitle}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 pt-2 text-center">
-                        <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                          <div className="text-xs font-black text-[#12345A]">{mock.questionsCount}</div>
-                          <div className="text-[10px] text-slate-500 font-medium">Questions</div>
-                        </div>
-                        <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                          <div className="text-xs font-black text-[#12345A]">{mock.duration}m</div>
-                          <div className="text-[10px] text-slate-500 font-medium">Duration</div>
-                        </div>
-                        <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                          <div className="text-xs font-black text-[#12345A]">{mock.marks}</div>
-                          <div className="text-[10px] text-slate-500 font-medium">Marks (-0.33)</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-100 space-y-2">
-                      <Link
-                        to={testUrl}
-                        className="w-full py-2.5 rounded-xl bg-[#12345A] hover:bg-[#1E4E8C] text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
-                      >
-                        <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>Start Test</span>
-                      </Link>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <Link
-                          to={`${testUrl}&mode=practice`}
-                          className="py-1.5 rounded-xl bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] text-[11px] font-bold text-center transition"
-                        >
-                          Practice Mode
-                        </Link>
-                        <Link
-                          to={`${testUrl}&mode=solutions`}
-                          className="py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold text-center transition"
-                        >
-                          Official Key
-                        </Link>
-                      </div>
-                    </div>
+            {/* 2-Columns Layout: Left Test List + Right Topics Covered Sidebar (Image 3) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Test Cards List */}
+              <div className="lg:col-span-8 space-y-3.5">
+                {paginatedSubjectTests.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-[#E3EAF2] p-8 text-center space-y-2">
+                    <p className="text-sm font-semibold text-slate-600">No mock tests found for the selected filter.</p>
+                    <button
+                      onClick={() => { setTestCategoryFilter('all'); setActiveTopicFilter(null); setTestPage(1); }}
+                      className="px-4 py-1.5 rounded-full bg-[#12345A] text-white text-xs font-bold cursor-pointer"
+                    >
+                      Reset Filters
+                    </button>
                   </div>
-                );
-              })}
+                ) : (
+                  paginatedSubjectTests.map((mock) => {
+                    const isPracticeMode = subjectViewTab === 'practice';
+                    const testUrl = `/mocks/${mock.id}?subject=${selectedSubject}${isPracticeMode ? '&mode=practice' : ''}`;
+                    return (
+                      <div
+                        key={mock.id}
+                        className="bg-white rounded-2xl border border-[#E3EAF2] hover:border-[#2468B4] hover:shadow-md transition-all p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                      >
+                        <div className="flex items-start sm:items-center gap-3.5">
+                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#EAF3FF] text-[#2468B4] border border-[#2468B4]/20 flex items-center justify-center shrink-0">
+                            <ClipboardList className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="font-black text-sm sm:text-base text-[#12345A] group-hover:text-[#2468B4] transition">
+                              {mock.title}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-500 font-medium">
+                              <span className="flex items-center gap-1">
+                                <Monitor className="w-3.5 h-3.5 text-slate-400" />
+                                {mock.questionsCount} Questions
+                              </span>
+                              <span className="text-slate-300">|</span>
+                              <span>{mock.marks} Marks</span>
+                              <span className="text-slate-300">|</span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                {mock.duration} Minutes
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between md:justify-end gap-2.5 sm:gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                          {/* Difficulty Badge */}
+                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${mock.difficultyBadgeClass}`}>
+                            {mock.difficulty}
+                          </span>
+
+                          {/* Attempts Badge */}
+                          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-[11px] font-bold">
+                            <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                            <span>{mock.attempts}</span>
+                          </div>
+
+                          {/* Action Button */}
+                          <Link
+                            to={testUrl}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#12345A] hover:bg-[#1E4E8C] text-white text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-white" />
+                            <span>{isPracticeMode ? 'Start Practice' : 'Start Test'}</span>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+
+                {/* Pagination for Test List */}
+                {totalTestPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 pt-4">
+                    <button
+                      onClick={() => setTestPage((p) => Math.max(1, p - 1))}
+                      disabled={testPage === 1}
+                      className="px-3.5 py-1.5 rounded-full border border-[#E3EAF2] text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer"
+                    >
+                      Previous
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalTestPages) }, (_, i) => {
+                        let pageNum = i + 1;
+                        if (testPage > 3 && totalTestPages > 5) {
+                          pageNum = testPage - 2 + i;
+                          if (pageNum > totalTestPages) pageNum = totalTestPages - (4 - i);
+                        }
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setTestPage(pageNum)}
+                            className={`w-8 h-8 rounded-full text-xs font-bold transition cursor-pointer ${
+                              testPage === pageNum
+                                ? 'bg-[#12345A] text-white'
+                                : 'bg-white border border-[#E3EAF2] text-slate-600 hover:bg-slate-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      onClick={() => setTestPage((p) => Math.min(totalTestPages, p + 1))}
+                      disabled={testPage === totalTestPages}
+                      className="px-3.5 py-1.5 rounded-full border border-[#E3EAF2] text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Topics Covered Sidebar Card matching Image 3 */}
+              <div className="lg:col-span-4 bg-white rounded-3xl border border-[#E3EAF2] p-5 sm:p-6 space-y-4 shadow-xs sticky top-20">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                  <BookOpen className="w-5 h-5 text-[#2468B4]" />
+                  <h3 className="font-black text-base sm:text-lg text-[#12345A]">
+                    {shortSubjectLabel} Topics Covered ({currentSubjectInfo.topics?.length || 10})
+                  </h3>
+                </div>
+
+                <div className="space-y-1.5">
+                  {(currentSubjectInfo.topics || []).map((t) => {
+                    const isSelected = activeTopicFilter === t;
+                    const count = topicQuestionCounts[t] || 0;
+                    return (
+                      <div
+                        key={t}
+                        onClick={() => {
+                          setActiveTopicFilter(isSelected ? null : t);
+                          setTestPage(1);
+                        }}
+                        className={`flex items-center justify-between p-2.5 rounded-xl transition cursor-pointer group ${
+                          isSelected ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 fill-emerald-100 shrink-0" />
+                          <span className={`text-xs sm:text-sm font-semibold transition ${
+                            isSelected ? 'text-[#2468B4] font-bold' : 'text-slate-800 group-hover:text-[#2468B4]'
+                          }`}>
+                            {t}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 group-hover:bg-[#EAF3FF] group-hover:text-[#12345A] transition">
+                          {count > 0 ? `${count} Qs` : 'PYQs'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         )}
