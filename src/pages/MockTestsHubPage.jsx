@@ -574,6 +574,9 @@ export default function MockTestsHubPage() {
     return tests;
   }, [selectedSubject, currentSubjectInfo, shortSubjectLabel]);
 
+  // Backward-compatible alias
+  const subjectMockTests = allSubjectMockTests;
+
   // Filtered & Sorted tests list
   const filteredSubjectTests = useMemo(() => {
     let list = allSubjectMockTests;
