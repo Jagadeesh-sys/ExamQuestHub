@@ -195,10 +195,10 @@ const RRB_DATA_FILES = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json', 
 
 async function loadRrbDataFile(fileName) {
   if (typeof window === 'undefined') {
-    const fs = await import('fs');
-    return JSON.parse(fs.readFileSync(`public/data/${fileName}`, 'utf-8'));
+    return [];
   }
-  const res = await fetch(`${window.location.origin}/data/${fileName}`);
+  const base = window.location.origin || '';
+  const res = await fetch(`${base}/data/${fileName}`);
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   return res.json();
 }

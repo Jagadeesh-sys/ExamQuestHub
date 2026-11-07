@@ -7,6 +7,7 @@ import { lazyWithRetry } from './utils/lazyWithRetry.js';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import MobileBottomNav from './components/MobileBottomNav.jsx';
+import PWAInstallBanner from './components/PWAInstallBanner.jsx';
 import RouteSeo from './components/RouteSeo.jsx';
 
 import HomePage from './pages/HomePage.jsx';
@@ -92,6 +93,7 @@ export default function App() {
               </Suspense>
             </main>
             <Footer />
+            <PWAInstallBanner />
             <MobileBottomNav />
           </div>
         </BrowserRouter>

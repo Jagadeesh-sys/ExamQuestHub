@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="eqhBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1F3A" />
+      <stop offset="60%" stop-color="#12345A" />
+      <stop offset="100%" stop-color="#2468B4" />
+    </linearGradient>
+    <linearGradient id="eqhGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700" />
+      <stop offset="100%" stop-color="#F2BE4F" />
+    </linearGradient>
+  </defs>
+  <!-- Background with smooth rounded squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#eqhBg)" />
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#F2BE4F" stroke-width="6" opacity="0.4" />
+  
+  <!-- Graduation / Success Crown -->
+  <path d="M 176 195 L 210 235 L 256 185 L 302 235 L 336 195 L 330 260 L 182 260 Z" fill="url(#eqhGold)" />
+  <circle cx="176" cy="190" r="10" fill="#FFF" />
+  <circle cx="256" cy="180" r="12" fill="#FFF" />
+  <circle cx="336" cy="190" r="10" fill="#FFF" />
+  
+  <!-- Open Book of Knowledge -->
+  <path d="M 256 280 C 220 255 160 258 136 270 L 136 376 C 165 362 225 360 256 385 C 287 360 347 362 376 376 L 376 270 C 352 258 292 255 256 280 Z" fill="#FFFFFF" />
+  <path d="M 256 280 L 256 385" stroke="#12345A" stroke-width="4" stroke-linecap="round" />
+  
+  <!-- Achievement Star / Check -->
+  <polygon points="256,410 265,432 288,432 269,446 276,468 256,454 236,468 243,446 224,432 247,432" fill="url(#eqhGold)" />
+</svg>

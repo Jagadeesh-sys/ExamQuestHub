@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.examquesthub.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7F:05:2F:97:04:8D:24:16:53:5A:CC:A4:42:9F:A4:B3:CE:B9:C9:84:64:41:92:81:3F:77:43:E0:55"
+      ]
+    }
+  }
+]

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import LanguageSelector from './LanguageSelector.jsx';
+import { PWAInstallButton } from './PWAInstallBanner.jsx';
 
 export default function Header() {
   const { t } = useLanguage();
@@ -160,10 +161,11 @@ export default function Header() {
 
             {/* Desktop Actions */}
             <div className="hidden lg:flex items-center gap-3">
+              <PWAInstallButton className="bg-[#12345A] text-white hover:bg-[#0B1F3A] shadow-xs" />
               <button
                 type="button"
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2 text-slate-500 hover:text-[#12345A] hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 text-slate-500 hover:text-[#12345A] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                 title="Search exams"
                 aria-label="Search exams"
               >
@@ -292,7 +294,10 @@ export default function Header() {
                   </NavLink>
                 ))}
 
-                <div className="pt-3 border-t border-slate-100">
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <div className="px-1">
+                    <PWAInstallButton className="w-full justify-center bg-[#12345A] text-white hover:bg-[#0B1F3A] py-2.5 shadow-xs" />
+                  </div>
                   <Link
                     to="/admin"
                     onClick={() => setMobileMenuOpen(false)}
