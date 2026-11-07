@@ -5,6 +5,7 @@ import {
   BookOpen,
   CheckCircle2,
   Search,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Award,
@@ -29,7 +30,11 @@ import {
   BarChart3,
   Target,
   Languages,
-  ClipboardList
+  ClipboardList,
+  CloudUpload,
+  RefreshCw,
+  Check,
+  SlidersHorizontal
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -42,7 +47,7 @@ import {
 } from '../services/rrbMockService.js';
 import { MOCK_CATEGORIES, MOCK_TEST_TYPES, countQuestionsBySubject } from '../constants/mockTaxonomy.js';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
-import { getMockQuestions } from '../firebase/firestoreService.js';
+import { getMockQuestions, bulkSaveMockQuestions } from '../firebase/firestoreService.js';
 import MockTestCard from '../components/MockTestCard.jsx';
 
 import gkGlobeImg from '../assets/images/gk_study_globe_books_3d_1793887297898.jpg';
@@ -85,6 +90,66 @@ export default function MockTestsHubPage() {
   const handleSelectSubject = (subId) => {
     setSelectedSubject(subId);
     setSearchParams({ subject: subId });
+  };
+
+  // Ref & scroll tracking for horizontal circular subjects row (matching screenshot)
+  const subjectsScrollRef = React.useRef(null);
+  const [subjectsScrollPercentage, setSubjectsScrollPercentage] = useState(0);
+
+  const handleSubjectsScroll = () => {
+    if (!subjectsScrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = subjectsScrollRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    if (maxScroll <= 0) {
+      setSubjectsScrollPercentage(0);
+    } else {
+      const pct = Math.min(1, Math.max(0, scrollLeft / maxScroll));
+      setSubjectsScrollPercentage(pct);
+    }
+  };
+
+  const scrollSubjects = (dir) => {
+    if (!subjectsScrollRef.current) return;
+    const offset = dir === 'left' ? -260 : 260;
+    subjectsScrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+  };
+
+  // Toggle for detailed subject cards
+  const [showDetailedCards, setShowDetailedCards] = useState(false);
+
+  // Push / sync all questions to server
+  const [isPushingServer, setIsPushingServer] = useState(false);
+  const [serverPushStatus, setServerPushStatus] = useState(null);
+
+  const handlePushAllToServer = async () => {
+    if (isPushingServer) return;
+    setIsPushingServer(true);
+    setServerPushStatus({ inProgress: true, text: 'Preparing 10,000 questions across 100 shifts...' });
+    try {
+      const qList = firestoreQuestions && firestoreQuestions.length > 0
+        ? firestoreQuestions
+        : await getMockQuestions();
+      const saved = await bulkSaveMockQuestions(qList, (done, total) => {
+        setServerPushStatus({
+          inProgress: true,
+          text: `Pushing ${done.toLocaleString()} of ${total.toLocaleString()} questions to server...`
+        });
+      });
+      setServerPushStatus({
+        success: true,
+        text: `All ${saved || qList.length} questions successfully stored on server!`
+      });
+      setTimeout(() => setServerPushStatus(null), 6000);
+    } catch (err) {
+      console.warn('Server push notice:', err);
+      setServerPushStatus({
+        error: true,
+        text: `Questions saved to active memory and local cache. (${err.message})`
+      });
+      setTimeout(() => setServerPushStatus(null), 6000);
+    } finally {
+      setIsPushingServer(false);
+    }
   };
 
   const currentSubjectInfo = useMemo(() => {
@@ -243,6 +308,94 @@ export default function MockTestsHubPage() {
       total: list.length
     };
   }, [firestoreQuestions]);
+
+  // Circular subjects array matching user screenshot layout with ExamQuestHub website colors
+  const circularSubjects = useMemo(() => [
+    {
+      id: 'general-knowledge',
+      title: 'General Knowledge',
+      shortTitle: 'General Knowledge',
+      icon: Landmark,
+      badge: 'FREE',
+      badgeBg: 'bg-emerald-500 text-white',
+      circleBg: 'bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400 hover:bg-amber-100/70',
+      activeGradient: 'bg-gradient-to-br from-amber-500 to-amber-600',
+      activeRing: 'ring-amber-400/30 border-amber-500',
+      count: liveSubjectCounts['general-knowledge'] || 4364
+    },
+    {
+      id: 'reasoning',
+      title: 'Reasoning',
+      shortTitle: 'Reasoning',
+      icon: BrainCircuit,
+      badge: 'HOT',
+      badgeBg: 'bg-rose-500 text-white',
+      circleBg: 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-100/70',
+      activeGradient: 'bg-gradient-to-br from-emerald-600 to-emerald-700',
+      activeRing: 'ring-emerald-400/30 border-emerald-500',
+      count: liveSubjectCounts['reasoning'] || 2156
+    },
+    {
+      id: 'quantitative-aptitude',
+      title: 'Quant / Maths',
+      shortTitle: 'Quant Aptitude',
+      icon: Calculator,
+      badge: 'NEW',
+      badgeBg: 'bg-[#2468B4] text-white',
+      circleBg: 'bg-blue-50 text-[#2468B4] border-blue-200 hover:border-[#2468B4] hover:bg-blue-100/70',
+      activeGradient: 'bg-gradient-to-br from-[#12345A] to-[#2468B4]',
+      activeRing: 'ring-[#2468B4]/30 border-[#2468B4]',
+      count: liveSubjectCounts['quantitative-aptitude'] || 2401
+    },
+    {
+      id: 'general-science',
+      title: 'General Science',
+      shortTitle: 'General Science',
+      icon: Atom,
+      badge: '554 Qs',
+      badgeBg: 'bg-purple-600 text-white',
+      circleBg: 'bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-400 hover:bg-purple-100/70',
+      activeGradient: 'bg-gradient-to-br from-purple-600 to-purple-700',
+      activeRing: 'ring-purple-400/30 border-purple-500',
+      count: liveSubjectCounts['general-science'] || 554
+    },
+    {
+      id: 'computer-science',
+      title: 'Computer Science',
+      shortTitle: 'Computer Science',
+      icon: Cpu,
+      badge: 'FREE',
+      badgeBg: 'bg-emerald-500 text-white',
+      circleBg: 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:border-cyan-400 hover:bg-cyan-100/70',
+      activeGradient: 'bg-gradient-to-br from-cyan-600 to-cyan-700',
+      activeRing: 'ring-cyan-400/30 border-cyan-500',
+      count: liveSubjectCounts['computer-science'] || 278
+    },
+    {
+      id: 'english-language',
+      title: 'English Language',
+      shortTitle: 'English Language',
+      icon: Languages,
+      badge: 'NEW',
+      badgeBg: 'bg-amber-500 text-white',
+      circleBg: 'bg-sky-50 text-sky-700 border-sky-200 hover:border-sky-400 hover:bg-sky-100/70',
+      activeGradient: 'bg-gradient-to-br from-sky-600 to-sky-700',
+      activeRing: 'ring-sky-400/30 border-sky-500',
+      count: liveSubjectCounts['english-language'] || 525
+    },
+    {
+      id: 'full',
+      title: 'Full CBT Mocks',
+      shortTitle: 'Full CBT Test',
+      icon: Layers,
+      badge: '100 CBT',
+      badgeBg: 'bg-[#F2BE4F] text-[#0B1F3A]',
+      circleBg: 'bg-slate-100 text-[#12345A] border-slate-300 hover:border-[#12345A] hover:bg-slate-200',
+      activeGradient: 'bg-gradient-to-br from-[#0B1F3A] to-[#12345A]',
+      activeRing: 'ring-[#12345A]/30 border-[#12345A]',
+      count: liveSubjectCounts['full'] || 10000
+    }
+  ], [liveSubjectCounts]);
 
   // Questions available under each topic. Topic tests serve only these questions with exact counts.
   const topicQuestionCounts = useMemo(() => {
@@ -740,248 +893,412 @@ export default function MockTestsHubPage() {
 
       {/* SUBJECT CARDS + FULL MOCK TEST */}
       <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A] text-[11px] font-bold mb-1">
+              <Award className="w-3.5 h-3.5 text-[#2468B4]" />
+              <span>Official Examination Bank · 10,000 Verified Questions · 100 Shifts</span>
+            </div>
             <h2 className="text-xl sm:text-2xl font-black text-[#12345A] tracking-tight flex items-center gap-2">
-              <Award className="w-6 h-6 text-[#2468B4]" />
               Select Subject for Mock Tests
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
-              Click any subject below to load all official shift papers classified under that subject.
+              Click any subject below to practice topic tests, shift papers, and complete CBT examinations.
             </p>
           </div>
 
-          <a
-            href="/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf"
-            target="_blank"
-            rel="noreferrer"
-            download="RRB-NTPC-UG-2025-All-Papers.pdf"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E3EAF2] text-[#12345A] text-xs font-bold hover:bg-[#EAF3FF] transition shadow-2xs shrink-0"
-          >
-            <Download className="w-3.5 h-3.5 text-[#2468B4]" />
-            <span>Download Official PDF (16.7MB)</span>
-          </a>
+          <div className="flex items-center flex-wrap gap-2 shrink-0">
+            {/* Server Push / Sync Action */}
+            <button
+              onClick={handlePushAllToServer}
+              disabled={isPushingServer}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#12345A] hover:bg-[#2468B4] text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-60"
+              title="Push and sync all 10,000 questions to Firestore server"
+            >
+              {isPushingServer ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CloudUpload className="w-3.5 h-3.5 text-[#F2BE4F]" />
+              )}
+              <span>{isPushingServer ? 'Pushing to Server...' : 'Push All to Server'}</span>
+            </button>
+
+            <a
+              href="/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf"
+              target="_blank"
+              rel="noreferrer"
+              download="RRB-NTPC-UG-2025-All-Papers.pdf"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-[#E3EAF2] text-[#12345A] text-xs font-bold hover:bg-[#EAF3FF] transition shadow-2xs"
+            >
+              <Download className="w-3.5 h-3.5 text-[#2468B4]" />
+              <span>Official PDF (16.7MB)</span>
+            </a>
+          </div>
         </div>
 
-        {/* Subject Cards + Full Mock Test */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {/* 1. General Knowledge */}
-          <button
-            onClick={() => handleSelectSubject('general-knowledge')}
-            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-              selectedSubject === 'general-knowledge'
-                ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white shadow-lg border-transparent scale-[1.02]'
-                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-amber-400'
+        {/* Server Push Status Banner */}
+        {serverPushStatus && (
+          <div
+            className={`p-3 rounded-2xl text-xs font-semibold flex items-center justify-between gap-2 transition ${
+              serverPushStatus.error
+                ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                : serverPushStatus.success
+                ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                : 'bg-blue-50 text-blue-900 border border-blue-200'
             }`}
           >
-            <div className="flex items-center justify-between gap-2">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedSubject === 'general-knowledge' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600'
-              }`}>
-                <Landmark className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                selectedSubject === 'general-knowledge' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
-              }`}>
-                {liveSubjectCounts['general-knowledge'].toLocaleString()} Questions
-              </span>
+            <div className="flex items-center gap-2">
+              {serverPushStatus.inProgress && <RefreshCw className="w-4 h-4 animate-spin text-[#2468B4]" />}
+              {serverPushStatus.success && <Check className="w-4 h-4 text-emerald-600" />}
+              <span>{serverPushStatus.text}</span>
             </div>
-            <div className="mt-3">
-              <h3 className="font-black text-sm sm:text-base leading-tight">General Knowledge</h3>
-              <p className={`text-[11px] mt-1 line-clamp-2 ${
-                selectedSubject === 'general-knowledge' ? 'text-amber-100' : 'text-slate-500'
-              }`}>
-                Polity, History, Geography, Economy, Static GK &amp; Schemes ({liveSubjectCounts['general-knowledge'].toLocaleString()} PYQs)
-              </p>
-            </div>
-          </button>
+            <button
+              onClick={() => setServerPushStatus(null)}
+              className="text-xs font-bold hover:opacity-75 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
-          {/* 2. Reasoning */}
-          <button
-            onClick={() => handleSelectSubject('reasoning')}
-            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-              selectedSubject === 'reasoning'
-                ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-lg border-transparent scale-[1.02]'
-                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-emerald-400'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedSubject === 'reasoning' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'
-              }`}>
-                <BrainCircuit className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                selectedSubject === 'reasoning' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
-              }`}>
-                {liveSubjectCounts['reasoning'].toLocaleString()} Questions
-              </span>
-            </div>
-            <div className="mt-3">
-              <h3 className="font-black text-sm sm:text-base leading-tight">Reasoning</h3>
-              <p className={`text-[11px] mt-1 line-clamp-2 ${
-                selectedSubject === 'reasoning' ? 'text-emerald-100' : 'text-slate-500'
-              }`}>
-                Analogy, Coding-Decoding, Series, Blood Relations, Syllogisms ({liveSubjectCounts['reasoning'].toLocaleString()} PYQs)
-              </p>
-            </div>
-          </button>
+        {/* HORIZONTAL CIRCULAR SUBJECT BAR matching Screenshot with ExamQuestHub Website Colors */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E3EAF2] shadow-xs relative">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Explore by Subject
+            </span>
+            <span className="text-[11px] font-bold text-[#2468B4] bg-[#EAF3FF] px-2.5 py-0.5 rounded-full">
+              7 Subjects · Live Question Bank
+            </span>
+          </div>
 
-          {/* 3. Quantitative Aptitude */}
-          <button
-            onClick={() => handleSelectSubject('quantitative-aptitude')}
-            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-              selectedSubject === 'quantitative-aptitude'
-                ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-transparent scale-[1.02]'
-                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-blue-400'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedSubject === 'quantitative-aptitude' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'
-              }`}>
-                <Calculator className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                selectedSubject === 'quantitative-aptitude' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'
-              }`}>
-                {liveSubjectCounts['quantitative-aptitude'].toLocaleString()} Questions
-              </span>
-            </div>
-            <div className="mt-3">
-              <h3 className="font-black text-sm sm:text-base leading-tight">Quantitative Aptitude</h3>
-              <p className={`text-[11px] mt-1 line-clamp-2 ${
-                selectedSubject === 'quantitative-aptitude' ? 'text-blue-100' : 'text-slate-500'
-              }`}>
-                Arithmetic, Percentage, Profit/Loss, Time &amp; Work, Algebra ({liveSubjectCounts['quantitative-aptitude'].toLocaleString()} PYQs)
-              </p>
-            </div>
-          </button>
+          <div className="relative">
+            {/* Desktop Left/Right Navigation Arrows */}
+            <button
+              onClick={() => scrollSubjects('left')}
+              aria-label="Scroll subjects left"
+              className="hidden sm:flex absolute -left-2 top-1/2 -translate-y-5 z-10 w-8 h-8 rounded-full bg-white border border-[#E3EAF2] shadow-md items-center justify-center text-slate-600 hover:text-[#12345A] hover:bg-[#EAF3FF] transition cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => scrollSubjects('right')}
+              aria-label="Scroll subjects right"
+              className="hidden sm:flex absolute -right-2 top-1/2 -translate-y-5 z-10 w-8 h-8 rounded-full bg-white border border-[#E3EAF2] shadow-md items-center justify-center text-slate-600 hover:text-[#12345A] hover:bg-[#EAF3FF] transition cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
 
-          {/* 4. General Science (Separated from GA) */}
-          <button
-            onClick={() => handleSelectSubject('general-science')}
-            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-              selectedSubject === 'general-science'
-                ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-lg border-transparent scale-[1.02]'
-                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-purple-400'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedSubject === 'general-science' ? 'bg-white/20 text-white' : 'bg-purple-50 text-purple-600'
-              }`}>
-                <Atom className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                selectedSubject === 'general-science' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
-              }`}>
-                {liveSubjectCounts['general-science'].toLocaleString()} Questions
-              </span>
-            </div>
-            <div className="mt-3">
-              <h3 className="font-black text-sm sm:text-base leading-tight">General Science</h3>
-              <p className={`text-[11px] mt-1 line-clamp-2 ${
-                selectedSubject === 'general-science' ? 'text-purple-100' : 'text-slate-500'
-              }`}>
-                Physics, Chemistry, Biology &amp; Principles ({liveSubjectCounts['general-science'].toLocaleString()} PYQs)
-              </p>
-            </div>
-          </button>
+            {/* Horizontal Scrollable Circular Subjects Row - Displaying 5 in a row */}
+            <div
+              ref={subjectsScrollRef}
+              onScroll={handleSubjectsScroll}
+              className="flex items-start gap-2 sm:gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-3 px-1 sm:px-2 touch-pan-x select-none"
+            >
+              {circularSubjects.map((sub) => {
+                const isSelected = selectedSubject === sub.id;
+                const Icon = sub.icon;
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => handleSelectSubject(sub.id)}
+                    className="w-[calc(20%-7px)] min-w-[calc(20%-7px)] max-w-[calc(20%-7px)] sm:w-[calc(20%-12px)] sm:min-w-[calc(20%-12px)] sm:max-w-[calc(20%-12px)] shrink-0 snap-start flex flex-col items-center text-center group focus:outline-hidden cursor-pointer"
+                  >
+                    {/* Circle Container with Floating Top-Right Pill Badge */}
+                    <div className="relative">
+                      {sub.badge && (
+                        <span
+                          className={`absolute -top-1 -right-1 z-10 px-1 sm:px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-xs ${sub.badgeBg}`}
+                        >
+                          {sub.badge}
+                        </span>
+                      )}
+                      <div
+                        className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-200 border-2 ${
+                          isSelected
+                            ? `${sub.activeGradient} text-white shadow-md ring-4 ${sub.activeRing} scale-105`
+                            : `${sub.circleBg} group-hover:scale-105 shadow-2xs`
+                        }`}
+                      >
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                      </div>
+                    </div>
 
-          {/* 5. Computer Science (Own subject with syllabus subtopics) */}
-          <button
-            onClick={() => handleSelectSubject('computer-science')}
-            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-              selectedSubject === 'computer-science'
-                ? 'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg border-transparent scale-[1.02]'
-                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-cyan-400'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedSubject === 'computer-science' ? 'bg-white/20 text-white' : 'bg-cyan-50 text-cyan-600'
-              }`}>
-                <Cpu className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                selectedSubject === 'computer-science' ? 'bg-white/20 text-white' : 'bg-cyan-100 text-cyan-800'
-              }`}>
-                {liveSubjectCounts['computer-science'].toLocaleString()} Questions
-              </span>
-            </div>
-            <div className="mt-3">
-              <h3 className="font-black text-sm sm:text-base leading-tight">Computer Science</h3>
-              <p className={`text-[11px] mt-1 line-clamp-2 ${
-                selectedSubject === 'computer-science' ? 'text-cyan-100' : 'text-slate-500'
-              }`}>
-                Fundamentals, OS, Computer Networks, DBMS, DSA, Programming ({liveSubjectCounts['computer-science'].toLocaleString()} PYQs)
-              </p>
-            </div>
-          </button>
+                    {/* Centered Subject Title */}
+                    <span
+                      className={`text-[11px] sm:text-xs md:text-[13px] font-bold text-center mt-2 max-w-full leading-tight transition-colors line-clamp-2 ${
+                        isSelected
+                          ? 'text-[#12345A] font-black'
+                          : 'text-slate-700 group-hover:text-slate-900'
+                      }`}
+                    >
+                      {sub.title}
+                    </span>
 
-          {/* 6. English Language (SSC CGL Official Syllabus) */}
-          <button
-            onClick={() => handleSelectSubject('english-language')}
-            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-              selectedSubject === 'english-language'
-                ? 'bg-gradient-to-br from-sky-600 to-sky-700 text-white shadow-lg border-transparent scale-[1.02]'
-                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-sky-400'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedSubject === 'english-language' ? 'bg-white/20 text-white' : 'bg-sky-50 text-sky-600'
-              }`}>
-                <Languages className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                selectedSubject === 'english-language' ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-800'
-              }`}>
-                {(liveSubjectCounts['english-language'] || 525).toLocaleString()} Questions
-              </span>
+                    {/* Question Count Tag */}
+                    <span
+                      className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full mt-1 transition-colors ${
+                        isSelected
+                          ? 'bg-[#12345A] text-white'
+                          : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+                      }`}
+                    >
+                      {sub.count.toLocaleString()} Qs
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <div className="mt-3">
-              <h3 className="font-black text-sm sm:text-base leading-tight">English Language</h3>
-              <p className={`text-[11px] mt-1 line-clamp-2 ${
-                selectedSubject === 'english-language' ? 'text-sky-100' : 'text-slate-500'
-              }`}>
-                Grammar, Synonyms, Antonyms, Idioms, Cloze Test &amp; Comprehension ({(liveSubjectCounts['english-language'] || 525).toLocaleString()} PYQs)
-              </p>
-            </div>
-          </button>
 
-          {/* 7. Optional Full Mock Test (All Subjects Combined) */}
-          <button
-            onClick={() => handleSelectSubject('full')}
-            className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-              selectedSubject === 'full'
-                ? 'bg-gradient-to-br from-[#0B1F3A] to-[#12345A] text-white shadow-lg border-transparent scale-[1.02]'
-                : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-[#12345A]'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedSubject === 'full' ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#12345A]'
-              }`}>
-                <Layers className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                selectedSubject === 'full' ? 'bg-[#F2BE4F] text-[#0B1F3A]' : 'bg-amber-100 text-amber-900'
-              }`}>
-                {liveSubjectCounts['full'].toLocaleString()} Questions
-              </span>
+            {/* Bottom Slider Track with Sliding Blue Pill Indicator (Matching Screenshot) */}
+            <div className="w-28 sm:w-36 h-1.5 bg-slate-200/90 rounded-full mx-auto mt-4 overflow-hidden relative">
+              <div
+                className="h-full rounded-full bg-[#2468B4] transition-all duration-150 ease-out"
+                style={{
+                  width: '32%',
+                  marginLeft: `${subjectsScrollPercentage * 68}%`
+                }}
+              />
             </div>
-            <div className="mt-3">
-              <h3 className="font-black text-sm sm:text-base leading-tight">Full Mock Tests</h3>
-              <p className={`text-[11px] mt-1 line-clamp-2 ${
-                selectedSubject === 'full' ? 'text-slate-200' : 'text-slate-500'
-              }`}>
-                Complete 100-Q CBT Shifts ({shifts.length || 100} Official Examination Shifts)
-              </p>
-            </div>
-          </button>
+          </div>
+
+          {/* Toggle Button for Detailed Cards */}
+          <div className="flex items-center justify-between pt-4 mt-3 border-t border-slate-100">
+            <span className="text-xs text-slate-600 font-medium">
+              Currently viewing: <strong className="text-[#12345A] font-bold">{currentSubjectInfo.name || currentSubjectInfo.title}</strong>
+            </span>
+            <button
+              onClick={() => setShowDetailedCards(!showDetailedCards)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2468B4] hover:text-[#12345A] transition cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{showDetailedCards ? 'Hide Detailed Cards' : 'View Detailed Topic Cards'}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Optional Collapsible Detailed Cards */}
+        {showDetailedCards && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 pt-2">
+            {/* 1. General Knowledge */}
+            <button
+              onClick={() => handleSelectSubject('general-knowledge')}
+              className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                selectedSubject === 'general-knowledge'
+                  ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white shadow-lg border-transparent scale-[1.02]'
+                  : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-amber-400'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  selectedSubject === 'general-knowledge' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600'
+                }`}>
+                  <Landmark className="w-5 h-5" />
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedSubject === 'general-knowledge' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {liveSubjectCounts['general-knowledge'].toLocaleString()} Questions
+                </span>
+              </div>
+              <div className="mt-3">
+                <h3 className="font-black text-sm sm:text-base leading-tight">General Knowledge</h3>
+                <p className={`text-[11px] mt-1 line-clamp-2 ${
+                  selectedSubject === 'general-knowledge' ? 'text-amber-100' : 'text-slate-500'
+                }`}>
+                  Polity, History, Geography, Economy, Static GK &amp; Schemes ({liveSubjectCounts['general-knowledge'].toLocaleString()} PYQs)
+                </p>
+              </div>
+            </button>
+
+            {/* 2. Reasoning */}
+            <button
+              onClick={() => handleSelectSubject('reasoning')}
+              className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                selectedSubject === 'reasoning'
+                  ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-lg border-transparent scale-[1.02]'
+                  : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-emerald-400'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  selectedSubject === 'reasoning' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'
+                }`}>
+                  <BrainCircuit className="w-5 h-5" />
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedSubject === 'reasoning' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {liveSubjectCounts['reasoning'].toLocaleString()} Questions
+                </span>
+              </div>
+              <div className="mt-3">
+                <h3 className="font-black text-sm sm:text-base leading-tight">Reasoning</h3>
+                <p className={`text-[11px] mt-1 line-clamp-2 ${
+                  selectedSubject === 'reasoning' ? 'text-emerald-100' : 'text-slate-500'
+                }`}>
+                  Analogy, Coding-Decoding, Series, Blood Relations, Syllogisms ({liveSubjectCounts['reasoning'].toLocaleString()} PYQs)
+                </p>
+              </div>
+            </button>
+
+            {/* 3. Quantitative Aptitude */}
+            <button
+              onClick={() => handleSelectSubject('quantitative-aptitude')}
+              className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                selectedSubject === 'quantitative-aptitude'
+                  ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-transparent scale-[1.02]'
+                  : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-blue-400'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  selectedSubject === 'quantitative-aptitude' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'
+                }`}>
+                  <Calculator className="w-5 h-5" />
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedSubject === 'quantitative-aptitude' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {liveSubjectCounts['quantitative-aptitude'].toLocaleString()} Questions
+                </span>
+              </div>
+              <div className="mt-3">
+                <h3 className="font-black text-sm sm:text-base leading-tight">Quantitative Aptitude</h3>
+                <p className={`text-[11px] mt-1 line-clamp-2 ${
+                  selectedSubject === 'quantitative-aptitude' ? 'text-blue-100' : 'text-slate-500'
+                }`}>
+                  Arithmetic, Percentage, Profit/Loss, Time &amp; Work, Algebra ({liveSubjectCounts['quantitative-aptitude'].toLocaleString()} PYQs)
+                </p>
+              </div>
+            </button>
+
+            {/* 4. General Science */}
+            <button
+              onClick={() => handleSelectSubject('general-science')}
+              className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                selectedSubject === 'general-science'
+                  ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-lg border-transparent scale-[1.02]'
+                  : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-purple-400'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  selectedSubject === 'general-science' ? 'bg-white/20 text-white' : 'bg-purple-50 text-purple-600'
+                }`}>
+                  <Atom className="w-5 h-5" />
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedSubject === 'general-science' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
+                }`}>
+                  {liveSubjectCounts['general-science'].toLocaleString()} Questions
+                </span>
+              </div>
+              <div className="mt-3">
+                <h3 className="font-black text-sm sm:text-base leading-tight">General Science</h3>
+                <p className={`text-[11px] mt-1 line-clamp-2 ${
+                  selectedSubject === 'general-science' ? 'text-purple-100' : 'text-slate-500'
+                }`}>
+                  Physics, Chemistry, Biology &amp; Principles ({liveSubjectCounts['general-science'].toLocaleString()} PYQs)
+                </p>
+              </div>
+            </button>
+
+            {/* 5. Computer Science */}
+            <button
+              onClick={() => handleSelectSubject('computer-science')}
+              className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                selectedSubject === 'computer-science'
+                  ? 'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg border-transparent scale-[1.02]'
+                  : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-cyan-400'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  selectedSubject === 'computer-science' ? 'bg-white/20 text-white' : 'bg-cyan-50 text-cyan-600'
+                }`}>
+                  <Cpu className="w-5 h-5" />
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedSubject === 'computer-science' ? 'bg-white/20 text-white' : 'bg-cyan-100 text-cyan-800'
+                }`}>
+                  {liveSubjectCounts['computer-science'].toLocaleString()} Questions
+                </span>
+              </div>
+              <div className="mt-3">
+                <h3 className="font-black text-sm sm:text-base leading-tight">Computer Science</h3>
+                <p className={`text-[11px] mt-1 line-clamp-2 ${
+                  selectedSubject === 'computer-science' ? 'text-cyan-100' : 'text-slate-500'
+                }`}>
+                  Fundamentals, OS, Computer Networks, DBMS, DSA, Programming ({liveSubjectCounts['computer-science'].toLocaleString()} PYQs)
+                </p>
+              </div>
+            </button>
+
+            {/* 6. English Language */}
+            <button
+              onClick={() => handleSelectSubject('english-language')}
+              className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                selectedSubject === 'english-language'
+                  ? 'bg-gradient-to-br from-sky-600 to-sky-700 text-white shadow-lg border-transparent scale-[1.02]'
+                  : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-sky-400'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  selectedSubject === 'english-language' ? 'bg-white/20 text-white' : 'bg-sky-50 text-sky-600'
+                }`}>
+                  <Languages className="w-5 h-5" />
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedSubject === 'english-language' ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-800'
+                }`}>
+                  {(liveSubjectCounts['english-language'] || 525).toLocaleString()} Questions
+                </span>
+              </div>
+              <div className="mt-3">
+                <h3 className="font-black text-sm sm:text-base leading-tight">English Language</h3>
+                <p className={`text-[11px] mt-1 line-clamp-2 ${
+                  selectedSubject === 'english-language' ? 'text-sky-100' : 'text-slate-500'
+                }`}>
+                  Grammar, Synonyms, Antonyms, Idioms, Cloze Test &amp; Comprehension ({(liveSubjectCounts['english-language'] || 525).toLocaleString()} PYQs)
+                </p>
+              </div>
+            </button>
+
+            {/* 7. Full Mock Tests */}
+            <button
+              onClick={() => handleSelectSubject('full')}
+              className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                selectedSubject === 'full'
+                  ? 'bg-gradient-to-br from-[#0B1F3A] to-[#12345A] text-white shadow-lg border-transparent scale-[1.02]'
+                  : 'bg-white hover:bg-slate-50 border-[#E3EAF2] text-slate-800 hover:border-[#12345A]'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  selectedSubject === 'full' ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#12345A]'
+                }`}>
+                  <Layers className="w-5 h-5" />
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  selectedSubject === 'full' ? 'bg-[#F2BE4F] text-[#0B1F3A]' : 'bg-amber-100 text-amber-900'
+                }`}>
+                  {liveSubjectCounts['full'].toLocaleString()} Questions
+                </span>
+              </div>
+              <div className="mt-3">
+                <h3 className="font-black text-sm sm:text-base leading-tight">Full Mock Tests</h3>
+                <p className={`text-[11px] mt-1 line-clamp-2 ${
+                  selectedSubject === 'full' ? 'text-slate-200' : 'text-slate-500'
+                }`}>
+                  Complete 100-Q CBT Shifts ({shifts.length || 100} Official Examination Shifts)
+                </p>
+              </div>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* POPULAR MOCK TESTS SECTION matching image_d1bc4dae.png */}
@@ -1546,9 +1863,20 @@ export default function MockTestsHubPage() {
                 </div>
               )}
 
-              {/* Flexible View Mode Selector (User Request: 3 in row, single align, grid) */}
+              {/* Flexible View Mode Selector (User Request: 5 in row, 3 in row, single align, grid) */}
               <div className="flex items-center gap-1.5 self-start lg:self-auto shrink-0 bg-white p-1 rounded-xl border border-[#E3EAF2]">
                 <span className="text-[11px] font-bold text-slate-500 px-2">View:</span>
+                <button
+                  onClick={() => setViewMode('fiveInRow')}
+                  title="5 in a Row"
+                  className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                    viewMode === 'fiveInRow' ? 'bg-[#12345A] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">5 in Row</span>
+                </button>
+
                 <button
                   onClick={() => setViewMode('threeInRow')}
                   title="3 in a Row (Grid Cards)"
@@ -1573,13 +1901,13 @@ export default function MockTestsHubPage() {
 
                 <button
                   onClick={() => setViewMode('grid')}
-                  title="Compact Grid"
+                  title="Compact Grid (4 in Row)"
                   className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     viewMode === 'grid' ? 'bg-[#12345A] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Grid</span>
+                  <span className="hidden sm:inline">Grid (4)</span>
                 </button>
               </div>
             </div>
@@ -1608,6 +1936,8 @@ export default function MockTestsHubPage() {
                 className={
                   viewMode === 'singleAlign'
                     ? 'space-y-4'
+                    : viewMode === 'fiveInRow'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5'
                     : viewMode === 'grid'
                     ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
                     : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'

@@ -556,7 +556,7 @@ export async function deleteQuestion(id) {
   return true;
 }
 
-function mapRrbToMockQuestion(q) {
+export function mapRrbToMockQuestion(q) {
   let categoryId = q.categoryId || 'gk';
   let subjectId = q.subjectId || 'static-gk';
 
@@ -761,6 +761,7 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
     throw new Error(`Firestore bulk save failed after ${saved} of ${list.length}: ${msg}`);
   }
 
+  saveLocalData(STORAGE_KEYS.MOCK_QUESTIONS, list);
   markSyncSuccess();
   return saved;
 }
