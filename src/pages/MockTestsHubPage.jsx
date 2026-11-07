@@ -962,8 +962,8 @@ export default function MockTestsHubPage() {
         )}
 
         {/* HORIZONTAL CIRCULAR SUBJECT BAR matching Screenshot with ExamQuestHub Website Colors */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E3EAF2] shadow-xs relative">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-transparent sm:bg-white rounded-none sm:rounded-3xl p-0 sm:p-6 border-0 sm:border sm:border-[#E3EAF2] shadow-none sm:shadow-xs relative">
+          <div className="hidden sm:flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Explore by Subject
             </span>
@@ -989,11 +989,11 @@ export default function MockTestsHubPage() {
               <ChevronRight className="w-4 h-4" />
             </button>
 
-            {/* Horizontal Scrollable Circular Subjects Row - Displaying 5 in a row */}
+            {/* Horizontal Scrollable Circular Subjects Row - Displaying 5 in a row with exact equal space from starting */}
             <div
               ref={subjectsScrollRef}
               onScroll={handleSubjectsScroll}
-              className="flex items-start gap-2 sm:gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-3 px-1 sm:px-2 touch-pan-x select-none"
+              className="flex items-start gap-2 sm:gap-3 md:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1.5 sm:py-3 px-0.5 sm:px-2 touch-pan-x select-none snap-x snap-mandatory"
             >
               {circularSubjects.map((sub) => {
                 const isSelected = selectedSubject === sub.id;
@@ -1003,21 +1003,21 @@ export default function MockTestsHubPage() {
                     key={sub.id}
                     type="button"
                     onClick={() => handleSelectSubject(sub.id)}
-                    className="w-[calc(20%-7px)] min-w-[calc(20%-7px)] max-w-[calc(20%-7px)] sm:w-[calc(20%-12px)] sm:min-w-[calc(20%-12px)] sm:max-w-[calc(20%-12px)] shrink-0 snap-start flex flex-col items-center text-center group focus:outline-hidden cursor-pointer"
+                    className="w-[calc((100%-32px)/5)] min-w-[calc((100%-32px)/5)] max-w-[calc((100%-32px)/5)] sm:w-[calc((100%-48px)/5)] sm:min-w-[calc((100%-48px)/5)] sm:max-w-[calc((100%-48px)/5)] md:w-[calc((100%-64px)/5)] md:min-w-[calc((100%-64px)/5)] md:max-w-[calc((100%-64px)/5)] shrink-0 snap-start flex flex-col items-center text-center group focus:outline-hidden cursor-pointer"
                   >
                     {/* Circle Container with Floating Top-Right Pill Badge */}
                     <div className="relative">
                       {sub.badge && (
                         <span
-                          className={`absolute -top-1 -right-1 z-10 px-1 sm:px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-xs ${sub.badgeBg}`}
+                          className={`absolute -top-1 -right-0.5 sm:-right-1 z-10 px-1 sm:px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-xs ${sub.badgeBg}`}
                         >
                           {sub.badge}
                         </span>
                       )}
                       <div
-                        className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-200 border-2 ${
+                        className={`w-12 h-12 xs:w-13 xs:h-13 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-200 border-2 ${
                           isSelected
-                            ? `${sub.activeGradient} text-white shadow-md ring-4 ${sub.activeRing} scale-105`
+                            ? `${sub.activeGradient} text-white shadow-md ring-3 sm:ring-4 ${sub.activeRing} scale-105`
                             : `${sub.circleBg} group-hover:scale-105 shadow-2xs`
                         }`}
                       >
@@ -1027,7 +1027,7 @@ export default function MockTestsHubPage() {
 
                     {/* Centered Subject Title */}
                     <span
-                      className={`text-[11px] sm:text-xs md:text-[13px] font-bold text-center mt-2 max-w-full leading-tight transition-colors line-clamp-2 ${
+                      className={`text-[10px] sm:text-xs md:text-[13px] font-bold text-center mt-1.5 sm:mt-2 max-w-full leading-tight transition-colors line-clamp-2 ${
                         isSelected
                           ? 'text-[#12345A] font-black'
                           : 'text-slate-700 group-hover:text-slate-900'
@@ -1036,9 +1036,9 @@ export default function MockTestsHubPage() {
                       {sub.title}
                     </span>
 
-                    {/* Question Count Tag */}
+                    {/* Question Count Tag (Visible on desktop, clean on mobile matching screenshot) */}
                     <span
-                      className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full mt-1 transition-colors ${
+                      className={`hidden sm:inline-block text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full mt-1 transition-colors ${
                         isSelected
                           ? 'bg-[#12345A] text-white'
                           : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
@@ -1052,28 +1052,28 @@ export default function MockTestsHubPage() {
             </div>
 
             {/* Bottom Slider Track with Sliding Blue Pill Indicator (Matching Screenshot) */}
-            <div className="w-28 sm:w-36 h-1.5 bg-slate-200/90 rounded-full mx-auto mt-4 overflow-hidden relative">
+            <div className="w-24 sm:w-32 h-1 bg-slate-200/90 rounded-full mx-auto mt-2.5 sm:mt-4 overflow-hidden relative">
               <div
                 className="h-full rounded-full bg-[#2468B4] transition-all duration-150 ease-out"
                 style={{
-                  width: '32%',
-                  marginLeft: `${subjectsScrollPercentage * 68}%`
+                  width: '28%',
+                  marginLeft: `${subjectsScrollPercentage * 72}%`
                 }}
               />
             </div>
           </div>
 
           {/* Toggle Button for Detailed Cards */}
-          <div className="flex items-center justify-between pt-4 mt-3 border-t border-slate-100">
-            <span className="text-xs text-slate-600 font-medium">
+          <div className="flex items-center justify-between pt-3 sm:pt-4 mt-2 sm:mt-3 border-t border-slate-100">
+            <span className="text-[11px] sm:text-xs text-slate-600 font-medium truncate">
               Currently viewing: <strong className="text-[#12345A] font-bold">{currentSubjectInfo.name || currentSubjectInfo.title}</strong>
             </span>
             <button
               onClick={() => setShowDetailedCards(!showDetailedCards)}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2468B4] hover:text-[#12345A] transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-[#2468B4] hover:text-[#12345A] transition cursor-pointer shrink-0"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{showDetailedCards ? 'Hide Detailed Cards' : 'View Detailed Topic Cards'}</span>
+              <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span>{showDetailedCards ? 'Hide Cards' : 'View Topic Cards'}</span>
             </button>
           </div>
         </div>
