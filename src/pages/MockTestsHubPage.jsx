@@ -309,15 +309,16 @@ export default function MockTestsHubPage() {
     };
   }, [firestoreQuestions]);
 
-  // Circular subjects array matching user screenshot layout with ExamQuestHub website colors
+  // Circular subjects array matching user screenshot layout with total questions number on top badge
   const circularSubjects = useMemo(() => [
     {
       id: 'general-knowledge',
       title: 'General Knowledge',
       shortTitle: 'General Knowledge',
       icon: Landmark,
-      badge: 'FREE',
-      badgeBg: 'bg-emerald-500 text-white',
+      badge: `${(liveSubjectCounts['general-knowledge'] || 4364).toLocaleString()} Qs`,
+      shortBadge: `${((liveSubjectCounts['general-knowledge'] || 4364) / 1000).toFixed(1)}k Qs`,
+      badgeBg: 'bg-amber-600 text-white',
       circleBg: 'bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400 hover:bg-amber-100/70',
       activeGradient: 'bg-gradient-to-br from-amber-500 to-amber-600',
       activeRing: 'ring-amber-400/30 border-amber-500',
@@ -328,8 +329,9 @@ export default function MockTestsHubPage() {
       title: 'Reasoning',
       shortTitle: 'Reasoning',
       icon: BrainCircuit,
-      badge: 'HOT',
-      badgeBg: 'bg-rose-500 text-white',
+      badge: `${(liveSubjectCounts['reasoning'] || 2156).toLocaleString()} Qs`,
+      shortBadge: `${((liveSubjectCounts['reasoning'] || 2156) / 1000).toFixed(1)}k Qs`,
+      badgeBg: 'bg-emerald-600 text-white',
       circleBg: 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-100/70',
       activeGradient: 'bg-gradient-to-br from-emerald-600 to-emerald-700',
       activeRing: 'ring-emerald-400/30 border-emerald-500',
@@ -340,7 +342,8 @@ export default function MockTestsHubPage() {
       title: 'Quant / Maths',
       shortTitle: 'Quant Aptitude',
       icon: Calculator,
-      badge: 'NEW',
+      badge: `${(liveSubjectCounts['quantitative-aptitude'] || 2401).toLocaleString()} Qs`,
+      shortBadge: `${((liveSubjectCounts['quantitative-aptitude'] || 2401) / 1000).toFixed(1)}k Qs`,
       badgeBg: 'bg-[#2468B4] text-white',
       circleBg: 'bg-blue-50 text-[#2468B4] border-blue-200 hover:border-[#2468B4] hover:bg-blue-100/70',
       activeGradient: 'bg-gradient-to-br from-[#12345A] to-[#2468B4]',
@@ -352,7 +355,8 @@ export default function MockTestsHubPage() {
       title: 'General Science',
       shortTitle: 'General Science',
       icon: Atom,
-      badge: '554 Qs',
+      badge: `${(liveSubjectCounts['general-science'] || 554).toLocaleString()} Qs`,
+      shortBadge: `${(liveSubjectCounts['general-science'] || 554)} Qs`,
       badgeBg: 'bg-purple-600 text-white',
       circleBg: 'bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-400 hover:bg-purple-100/70',
       activeGradient: 'bg-gradient-to-br from-purple-600 to-purple-700',
@@ -364,8 +368,9 @@ export default function MockTestsHubPage() {
       title: 'Computer Science',
       shortTitle: 'Computer Science',
       icon: Cpu,
-      badge: 'FREE',
-      badgeBg: 'bg-emerald-500 text-white',
+      badge: `${(liveSubjectCounts['computer-science'] || 278).toLocaleString()} Qs`,
+      shortBadge: `${(liveSubjectCounts['computer-science'] || 278)} Qs`,
+      badgeBg: 'bg-cyan-700 text-white',
       circleBg: 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:border-cyan-400 hover:bg-cyan-100/70',
       activeGradient: 'bg-gradient-to-br from-cyan-600 to-cyan-700',
       activeRing: 'ring-cyan-400/30 border-cyan-500',
@@ -376,8 +381,9 @@ export default function MockTestsHubPage() {
       title: 'English Language',
       shortTitle: 'English Language',
       icon: Languages,
-      badge: 'NEW',
-      badgeBg: 'bg-amber-500 text-white',
+      badge: `${(liveSubjectCounts['english-language'] || 525).toLocaleString()} Qs`,
+      shortBadge: `${(liveSubjectCounts['english-language'] || 525)} Qs`,
+      badgeBg: 'bg-sky-700 text-white',
       circleBg: 'bg-sky-50 text-sky-700 border-sky-200 hover:border-sky-400 hover:bg-sky-100/70',
       activeGradient: 'bg-gradient-to-br from-sky-600 to-sky-700',
       activeRing: 'ring-sky-400/30 border-sky-500',
@@ -388,8 +394,9 @@ export default function MockTestsHubPage() {
       title: 'Full CBT Mocks',
       shortTitle: 'Full CBT Test',
       icon: Layers,
-      badge: '100 CBT',
-      badgeBg: 'bg-[#F2BE4F] text-[#0B1F3A]',
+      badge: `${(liveSubjectCounts['full'] || 10000).toLocaleString()} Qs`,
+      shortBadge: '10k Qs',
+      badgeBg: 'bg-[#12345A] text-[#F2BE4F]',
       circleBg: 'bg-slate-100 text-[#12345A] border-slate-300 hover:border-[#12345A] hover:bg-slate-200',
       activeGradient: 'bg-gradient-to-br from-[#0B1F3A] to-[#12345A]',
       activeRing: 'ring-[#12345A]/30 border-[#12345A]',
@@ -1005,13 +1012,15 @@ export default function MockTestsHubPage() {
                     onClick={() => handleSelectSubject(sub.id)}
                     className="w-[calc((100%-32px)/5)] min-w-[calc((100%-32px)/5)] max-w-[calc((100%-32px)/5)] sm:w-[calc((100%-48px)/5)] sm:min-w-[calc((100%-48px)/5)] sm:max-w-[calc((100%-48px)/5)] md:w-[calc((100%-64px)/5)] md:min-w-[calc((100%-64px)/5)] md:max-w-[calc((100%-64px)/5)] shrink-0 snap-start flex flex-col items-center text-center group focus:outline-hidden cursor-pointer"
                   >
-                    {/* Circle Container with Floating Top-Right Pill Badge */}
+                    {/* Circle Container with Floating Top-Right Pill Badge showing Total Questions Number */}
                     <div className="relative">
                       {sub.badge && (
                         <span
-                          className={`absolute -top-1 -right-0.5 sm:-right-1 z-10 px-1 sm:px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-xs ${sub.badgeBg}`}
+                          className={`absolute -top-1.5 -right-1 sm:-right-1.5 z-10 px-1 sm:px-1.5 py-0.2 rounded-full text-[7.5px] xs:text-[8px] sm:text-[9.5px] font-black tracking-tight shadow-xs whitespace-nowrap ${sub.badgeBg}`}
+                          title={`${sub.count.toLocaleString()} Total Questions`}
                         >
-                          {sub.badge}
+                          <span className="sm:hidden">{sub.shortBadge || `${sub.count} Qs`}</span>
+                          <span className="hidden sm:inline">{sub.badge}</span>
                         </span>
                       )}
                       <div
@@ -1034,17 +1043,6 @@ export default function MockTestsHubPage() {
                       }`}
                     >
                       {sub.title}
-                    </span>
-
-                    {/* Question Count Tag (Visible on desktop, clean on mobile matching screenshot) */}
-                    <span
-                      className={`hidden sm:inline-block text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full mt-1 transition-colors ${
-                        isSelected
-                          ? 'bg-[#12345A] text-white'
-                          : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
-                      }`}
-                    >
-                      {sub.count.toLocaleString()} Qs
                     </span>
                   </button>
                 );
