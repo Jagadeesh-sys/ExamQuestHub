@@ -8,7 +8,8 @@ import {
   Instagram,
   ArrowRight,
   Bell,
-  GraduationCap
+  GraduationCap,
+  ChevronLeft
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import LanguageSelector from './LanguageSelector.jsx';
@@ -131,17 +132,33 @@ export default function Header() {
         <div className="max-w-[1240px] mx-auto px-3 sm:px-6">
           <div className="flex items-center justify-between h-[60px] sm:h-[68px]">
             
-            {/* Left Slot: Mobile Hamburger and Brand Logo with compact spacing and authentic sizing */}
+            {/* Left Slot: Mobile Back button (on /mocks) or Hamburger and Brand Logo */}
             <div className="flex items-center gap-1 sm:gap-1.5">
-              {/* Mobile Hamburger 3-bar button - tightly positioned to logo */}
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden w-8 h-8 -ml-1 flex items-center justify-center text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer active:scale-95"
-                aria-label="Open navigation menu"
-              >
-                <Menu className="w-5 h-5 stroke-[2.2]" />
-              </button>
+              {location.pathname.startsWith('/mocks') ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.history.length > 1) {
+                      navigate(-1);
+                    } else {
+                      navigate('/');
+                    }
+                  }}
+                  className="lg:hidden w-8 h-8 -ml-1 flex items-center justify-center text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer active:scale-95"
+                  aria-label="Go back"
+                >
+                  <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="lg:hidden w-8 h-8 -ml-1 flex items-center justify-center text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer active:scale-95"
+                  aria-label="Open navigation menu"
+                >
+                  <Menu className="w-5 h-5 stroke-[2.2]" />
+                </button>
+              )}
 
               {/* Brand Logo & Title with compact gap and exact image proportions */}
               <Link

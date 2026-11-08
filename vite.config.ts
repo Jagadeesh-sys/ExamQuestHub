@@ -54,15 +54,19 @@ export default defineConfig(() => {
           runtimeCaching: [
             {
               urlPattern: /\/data\/.*\.json$/i,
-              handler: 'CacheFirst',
+              handler: 'NetworkFirst',
               options: {
                 cacheName: 'question-banks-cache',
+                networkTimeoutSeconds: 4,
                 expiration: {
                   maxEntries: 10,
                   maxAgeSeconds: 60 * 60 * 24 * 30
                 },
                 cacheableResponse: {
-                  statuses: [0, 200]
+                  statuses: [200],
+                  headers: {
+                    'content-type': 'application/json'
+                  }
                 }
               }
             },
@@ -125,6 +129,7 @@ export default defineConfig(() => {
     server: {
       host: '0.0.0.0',
       port: 3000,
+      allowedHosts: true,
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',

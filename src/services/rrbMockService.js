@@ -193,14 +193,68 @@ let cachedShifts = null;
  */
 const RRB_DATA_FILES = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json', 'sscCgl2020Full.json'];
 
+function getDataFileUrl(fileName) {
+  if (typeof window === 'undefined') return `/data/${fileName}`;
+  // Handle sandbox/iframe where window.location.origin is "null" or missing
+  const origin = window.location.origin && window.location.origin !== 'null' ? window.location.origin : '';
+  const basePath = import.meta.env.BASE_URL || '/';
+  const cleanBase = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+  return `${origin}${cleanBase}/data/${fileName}`;
+}
+
 async function loadRrbDataFile(fileName) {
   if (typeof window === 'undefined') {
-    return [];
+    return null;
   }
-  const base = window.location.origin || '';
-  const res = await fetch(`${base}/data/${fileName}`);
-  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-  return res.json();
+
+  const primaryUrl = getDataFileUrl(fileName);
+
+  const fetchAndParseJson = async (fetchUrl, cacheMode = 'default') => {
+    const res = await fetch(fetchUrl, {
+      headers: {
+        Accept: 'application/json, text/plain, */*'
+      },
+      cache: cacheMode
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error ${res.status}`);
+    }
+
+    const text = await res.text();
+    const trimmed = text.trim();
+
+    // Check if the response is actually an HTML error or SPA fallback
+    if (!trimmed || trimmed.startsWith('<') || trimmed.toLowerCase().startsWith('<!doctype')) {
+      // Clear poisoned cache from service worker if present
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        try {
+          const cache = await window.caches.open('question-banks-cache');
+          await cache.delete(fetchUrl);
+          await cache.delete(`/data/${fileName}`);
+        } catch {
+          // Ignore cache errors
+        }
+      }
+      throw new Error(`Received HTML instead of JSON for ${fileName}`);
+    }
+
+    return JSON.parse(trimmed);
+  };
+
+  try {
+    return await fetchAndParseJson(primaryUrl, 'no-cache');
+  } catch (err) {
+    // Try fallback path with relative URL and cache-busting timestamp
+    try {
+      const fallbackUrl = `/data/${fileName}?_t=${Date.now()}`;
+      return await fetchAndParseJson(fallbackUrl, 'reload');
+    } catch {
+      // If still unavailable, log a single warning and return null gracefully
+      console.warn(`Static question bank ${fileName} not available via fetch; using live database.`);
+      return null;
+    }
+  }
 }
 
 /**
@@ -216,10 +270,12 @@ export async function loadAllRRBQuestions() {
   for (const fileName of RRB_DATA_FILES) {
     try {
       const data = await loadRrbDataFile(fileName);
-      if (Array.isArray(data?.questions)) merged.push(...data.questions);
-      if (Array.isArray(data?.shifts)) mergedShifts.push(...data.shifts);
+      if (data) {
+        if (Array.isArray(data.questions)) merged.push(...data.questions);
+        if (Array.isArray(data.shifts)) mergedShifts.push(...data.shifts);
+      }
     } catch (err) {
-      console.error(`Failed to load RRB questions from ${fileName}:`, err);
+      console.warn(`Notice while loading ${fileName}:`, err?.message || err);
     }
   }
 
@@ -300,6 +356,12 @@ export function deleteLocalQuestionOverride(questionId) {
     console.error('Failed to delete question override:', err);
     return false;
   }
+}
+
+export async function loadAllShifts() {
+  if (cachedShifts && cachedShifts.length > 0) return getAllShifts();
+  await loadAllRRBQuestions();
+  return getAllShifts();
 }
 
 /**

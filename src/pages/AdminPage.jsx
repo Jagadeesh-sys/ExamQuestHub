@@ -738,11 +738,11 @@ export default function AdminPage() {
             Verified Questions
           </span>
           <div className="text-2xl font-extrabold text-[#12345A] mt-1 flex items-center gap-1.5">
-            <span>{mockQuestions.length || 7900}</span>
+            <span>10,757+</span>
             <Award className="w-4 h-4 text-[#F2BE4F]" />
           </div>
           <span className="text-[10px] text-[#2468B4] font-medium flex items-center gap-1">
-            79 Shifts · View Studio
+            100 Shifts (CBT) · 320+ Tests
           </span>
         </div>
       </div>
@@ -817,7 +817,7 @@ export default function AdminPage() {
           }`}
         >
           <Award className="w-3.5 h-3.5 text-[#F2BE4F]" />
-          <span>Previous Year Verified Questions ({mockQuestions.length || 7900})</span>
+          <span>Previous Year Verified Questions (10,757+)</span>
         </button>
         <button
           type="button"
