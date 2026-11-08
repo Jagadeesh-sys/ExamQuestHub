@@ -43,33 +43,7 @@ export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [isListening, setIsListening] = useState(false);
 
-  // Hero carousel state with swipe and auto-rotation
-  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
-  const [touchStartX, setTouchStartX] = useState(null);
   const caScrollRef = useRef(null);
-
-  // Auto-advance hero carousel every 6 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveHeroSlide((prev) => (prev + 1) % 3);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleHeroTouchStart = (e) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-
-  const handleHeroTouchEnd = (e) => {
-    if (touchStartX === null) return;
-    const diff = touchStartX - e.changedTouches[0].clientX;
-    if (diff > 45) {
-      setActiveHeroSlide((prev) => (prev + 1) % 3);
-    } else if (diff < -45) {
-      setActiveHeroSlide((prev) => (prev - 1 + 3) % 3);
-    }
-    setTouchStartX(null);
-  };
 
   const scrollCaMocks = (direction) => {
     if (caScrollRef.current) {
@@ -261,151 +235,45 @@ export default function HomePage() {
       {/* Container matching max-w of application */}
       <div className="max-w-[1240px] mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 space-y-4 sm:space-y-6">
 
-        {/* 1. HERO BANNER - Horizontal Carousel with 3 Rich Slides */}
+        {/* 1. HERO BANNER - Clean Background with Live HTML/CSS Overlay */}
         <section
-          aria-label="Welcome Hero Slider"
-          className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 group select-none"
-          onTouchStart={handleHeroTouchStart}
-          onTouchEnd={handleHeroTouchEnd}
+          aria-label="Welcome Hero"
+          className="relative w-full min-h-[145px] sm:min-h-[180px] md:min-h-[220px] aspect-[2.5/1] sm:aspect-[2.8/1] md:aspect-[3/1] rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B]"
         >
-          {/* Slides Track */}
-          <div
-            className="flex transition-transform duration-500 ease-out w-full"
-            style={{ transform: `translateX(-${activeHeroSlide * 100}%)` }}
-          >
-            {/* SLIDE 1: Your Next Government Job Starts Here (Exact reference replica) */}
-            <div className="w-full shrink-0 relative aspect-[894/326]">
-              <picture className="block w-full h-full">
-                <source srcSet="/assets/aistudio/hero_banner_clean_2x.png" media="(min-width: 640px)" />
-                <img
-                  src="/assets/aistudio/hero_banner_clean.png"
-                  alt="Your Next Government Job Starts Here — All Govt Exams One Platform"
-                  className="w-full h-full object-cover block"
-                  loading="eager"
-                />
-              </picture>
+          {/* Background Image: Clean Parliament dome, Ashoka emblem & Indian flag */}
+          <img
+            src="/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.png"
+            alt="Your Next Government Exams Starts Here"
+            className="absolute inset-0 w-full h-full object-cover object-right sm:object-center block"
+            loading="eager"
+          />
 
-              <div className="sr-only">
-                <span>All Govt Exams — One Platform</span>
-                <h1>Your Next Government Job Starts Here.</h1>
-                <p>Jobs • Current Affairs • Mock Tests • Papers • Syllabus</p>
-              </div>
+          {/* Real Live Text & Button Overlay */}
+          <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-3 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
+            {/* 1. Eyebrow: Decreased font size for refined look */}
+            <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[#F2BE4F] text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wide uppercase mb-1 sm:mb-1.5">
+              <Award className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-[#F2BE4F] shrink-0" />
+              <span>All Govt Exams — One Platform</span>
+            </div>
 
-              {/* Interactive Button Overlay on "Explore Now →" */}
+            {/* 2. Main Headline */}
+            <h1 className="font-heading font-black text-white text-[16px] sm:text-2xl md:text-3xl lg:text-[36px] leading-[1.15] tracking-tight">
+              <span>Your Next</span> <br />
+              <span className="text-[#F2BE4F]">Government Exams</span> <br />
+              <span>Starts Here.</span>
+            </h1>
+
+            {/* 3. Functional Explore Button */}
+            <div className="pt-2 sm:pt-3 md:pt-4">
               <Link
                 to="/jobs"
-                className="absolute left-[7.5%] bottom-[20%] w-[38%] sm:w-[32%] md:w-[28%] max-w-[210px] h-[19%] rounded-full cursor-pointer z-20 focus:outline-none focus:ring-4 focus:ring-[#F2BE4F]/50 active:scale-95 transition-transform"
-                aria-label="Explore Government Jobs"
-                title="Explore Government Jobs"
-              />
-              <Link to="/jobs" className="absolute inset-0 z-10 cursor-pointer" aria-hidden="true" tabIndex={-1} />
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-2.5 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-[10px] sm:text-xs md:text-sm shadow-md transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#F2BE4F]/50"
+              >
+                <span>Explore Now</span>
+                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+              </Link>
             </div>
-
-            {/* SLIDE 2: Railway Recruitment 2026 (RRB NTPC) */}
-            <div className="w-full shrink-0 relative aspect-[894/326] bg-gradient-to-r from-[#071938] via-[#0E2A5C] to-[#1C3E75] text-white overflow-hidden flex items-center">
-              {/* Right Background Graphic: 3D Computer Exam Desk */}
-              <div className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[50%] h-full pointer-events-none">
-                <img
-                  src="/src/assets/images/computer_exam_desk_3d_1793887297243.jpg"
-                  alt="RRB NTPC Computer Based Test"
-                  className="w-full h-full object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#071938] via-[#0E2A5C]/80 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#071938]/60 via-transparent to-[#071938]/30" />
-              </div>
-
-              {/* Decorative Accent */}
-              <div className="absolute -left-12 -top-12 w-48 h-48 rounded-full bg-[#F2BE4F]/10 blur-2xl pointer-events-none" />
-
-              {/* Slide Content */}
-              <div className="relative z-20 px-5 sm:px-9 md:px-12 py-3 sm:py-6 max-w-[65%] sm:max-w-[60%] flex flex-col justify-center">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-[#F2BE4F] text-[9px] sm:text-xs font-bold border border-white/15 w-fit shadow-2xs backdrop-blur-xs">
-                  <span>🚆 All India Railways • CBT 1 Live</span>
-                </div>
-
-                <h2 className="font-heading font-black text-xs sm:text-xl md:text-2xl lg:text-3xl text-white tracking-tight leading-tight mt-1 sm:mt-1.5">
-                  RRB NTPC 2026 Mega Recruitment.
-                </h2>
-
-                <p className="text-[9.5px] sm:text-xs md:text-sm text-slate-200 font-medium line-clamp-2 mt-0.5 sm:mt-1 leading-tight">
-                  32,438 Vacancies • Graduate & 12th Level • Verified Official CBT Mocks
-                </p>
-
-                <div className="pt-1.5 sm:pt-2.5">
-                  <Link
-                    to="/mocks"
-                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-[10.5px] sm:text-xs shadow-md transition-all active:scale-95 cursor-pointer"
-                  >
-                    <span>Start CBT Mock</span>
-                    <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </Link>
-                </div>
-              </div>
-              <Link to="/mocks" className="absolute inset-0 z-10 cursor-pointer" aria-hidden="true" tabIndex={-1} />
-            </div>
-
-            {/* SLIDE 3: Daily & Monthly Current Affairs 2026 */}
-            <div className="w-full shrink-0 relative aspect-[894/326] bg-gradient-to-r from-[#170E38] via-[#241355] to-[#3B1F7E] text-white overflow-hidden flex items-center">
-              {/* Right Background Graphic: 3D GK Study Globe and Books */}
-              <div className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[50%] h-full pointer-events-none">
-                <img
-                  src="/src/assets/images/gk_study_globe_books_3d_1793887297898.jpg"
-                  alt="Daily GK & Current Affairs"
-                  className="w-full h-full object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#170E38] via-[#241355]/85 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#170E38]/60 via-transparent to-[#170E38]/30" />
-              </div>
-
-              {/* Decorative Accent */}
-              <div className="absolute -left-12 -top-12 w-48 h-48 rounded-full bg-[#F2BE4F]/10 blur-2xl pointer-events-none" />
-
-              {/* Slide Content */}
-              <div className="relative z-20 px-5 sm:px-9 md:px-12 py-3 sm:py-6 max-w-[65%] sm:max-w-[60%] flex flex-col justify-center">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-[#F2BE4F] text-[9px] sm:text-xs font-bold border border-white/15 w-fit shadow-2xs backdrop-blur-xs">
-                  <span>🏆 100% Verified Gazette Questions</span>
-                </div>
-
-                <h2 className="font-heading font-black text-xs sm:text-xl md:text-2xl lg:text-3xl text-white tracking-tight leading-tight mt-1 sm:mt-1.5">
-                  Master Current Affairs & Daily GK.
-                </h2>
-
-                <p className="text-[9.5px] sm:text-xs md:text-sm text-slate-200 font-medium line-clamp-2 mt-0.5 sm:mt-1 leading-tight">
-                  National • Economy • Defence • Science & Tech • Free Monthly PDFs
-                </p>
-
-                <div className="pt-1.5 sm:pt-2.5">
-                  <Link
-                    to="/current-affairs"
-                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-[10.5px] sm:text-xs shadow-md transition-all active:scale-95 cursor-pointer"
-                  >
-                    <span>Practice Daily CA</span>
-                    <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </Link>
-                </div>
-              </div>
-              <Link to="/current-affairs" className="absolute inset-0 z-10 cursor-pointer" aria-hidden="true" tabIndex={-1} />
-            </div>
-
           </div>
-
-          {/* Desktop Left/Right Chevron Arrow Buttons */}
-          <button
-            type="button"
-            onClick={() => setActiveHeroSlide((prev) => (prev - 1 + 3) % 3)}
-            className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white items-center justify-center backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-30 cursor-pointer"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveHeroSlide((prev) => (prev + 1) % 3)}
-            className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white items-center justify-center backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-30 cursor-pointer"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </section>
 
         {/* 2. FLOATING SEARCH BAR - Compact proportions matching mobile reference design */}
@@ -608,43 +476,43 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 6. SECONDARY BANNER: "Current Affairs & Practice" - Subtle rounded corners matching reference */}
+        {/* 6. SECONDARY BANNER: "Current Affairs & Practice" with Live HTML/CSS Overlay */}
         <section
           aria-label="Current Affairs and Practice"
-          className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#1E1B4B]/20 border border-white/10 group transition-all select-none"
+          className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#1E1B4B]/20 border border-white/10 select-none aspect-[2172/724] bg-[#160D35]"
         >
-          {/* Main Visual: Exact authentic banner image from reference screenshot */}
-          <picture className="block w-full">
-            <source srcSet="/assets/aistudio/current_affairs_banner_clean_2x.png" media="(min-width: 640px)" />
-            <img
-              src="/assets/aistudio/current_affairs_banner_clean.png"
-              alt="Current Affairs & Practice — Daily updates, quizzes & full mock tests"
-              className="w-full h-auto object-cover rounded-2xl sm:rounded-[20px] block"
-              loading="lazy"
-            />
-          </picture>
+          {/* Background Image: Clean 3D Globe, books & laptop on purple desk */}
+          <img
+            src="/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.png"
+            alt="Current Affairs & Practice — Daily updates, quizzes & full mock tests"
+            className="w-full h-full object-cover block"
+            loading="lazy"
+          />
 
-          {/* Accessible Semantic Structure for SEO & Screen Readers (Visually Hidden) */}
-          <div className="sr-only">
-            <h2>Current Affairs & Practice</h2>
-            <p>Daily updates, quizzes & full mock tests</p>
+          {/* Real Live Text & Button Overlay */}
+          <div className="absolute inset-0 z-20 flex flex-col justify-center px-4 sm:px-8 md:px-12 lg:px-16 py-2 sm:py-6 max-w-[64%] sm:max-w-[58%] md:max-w-[55%]">
+            {/* Heading */}
+            <h2 className="font-heading font-black text-white text-[15px] sm:text-2xl md:text-3xl lg:text-[34px] leading-tight tracking-tight">
+              <span className="text-[#F2BE4F]">Current Affairs</span>{' '}
+              <span>&amp; Practice</span>
+            </h2>
+
+            {/* Subtitle */}
+            <p className="text-slate-200 text-[8.5px] sm:text-xs md:text-sm font-semibold tracking-wide mt-0.5 sm:mt-1.5 line-clamp-1">
+              Daily updates, quizzes &amp; full mock tests
+            </p>
+
+            {/* Working Practice Now Button */}
+            <div className="pt-1.5 sm:pt-3 md:pt-4">
+              <Link
+                to="/current-affairs"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-1 sm:py-2.5 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-[9.5px] sm:text-xs md:text-sm shadow-md transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#F2BE4F]/50"
+              >
+                <span>Practice Now</span>
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 stroke-[2.5]" />
+              </Link>
+            </div>
           </div>
-
-          {/* Interactive Button Overlay on "Practice Now →" button */}
-          <Link
-            to="/current-affairs"
-            className="absolute left-[5.5%] bottom-[8%] w-[28%] sm:w-[25%] max-w-[220px] h-[28%] sm:h-[30%] rounded-full cursor-pointer z-20 focus:outline-none focus:ring-4 focus:ring-[#F2BE4F]/50 active:scale-95 transition-transform"
-            aria-label="Practice Current Affairs & Mock Tests"
-            title="Practice Current Affairs"
-          />
-
-          {/* Full Card Tap Target to /current-affairs */}
-          <Link
-            to="/current-affairs"
-            className="absolute inset-0 z-10 cursor-pointer"
-            aria-hidden="true"
-            tabIndex={-1}
-          />
         </section>
 
         {/* 7. CURRENT AFFAIRS MOCK TESTS - Compact Horizontal Scrolling Track (Half Height) */}

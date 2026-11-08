@@ -2,19 +2,19 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Home,
-  Target,
+  GraduationCap,
   BookOpen,
   Briefcase,
-  BarChart3
+  Sparkles
 } from 'lucide-react';
 
 export default function MobileBottomNav() {
   const navItems = [
     { to: '/', label: 'Home', icon: Home, end: true },
-    { to: '/mocks', label: 'Mock Tests', icon: Target },
+    { to: '/mocks', label: 'Mock Tests', icon: GraduationCap },
     { to: '/current-affairs', label: 'CA & GK', icon: BookOpen },
     { to: '/jobs', label: 'Latest Jobs', icon: Briefcase },
-    { to: '/gk-practice', label: 'Practice', icon: BarChart3 },
+    { to: '/gk-practice', label: 'Practice', icon: Sparkles },
   ];
 
   return (
@@ -54,6 +54,9 @@ export default function MobileBottomNav() {
                   >
                     {item.label}
                   </span>
+                  {isActive && (
+                    <span className="w-3.5 h-1 bg-[#F2BE4F] rounded-full mt-0.5" />
+                  )}
                 </>
               )}
             </NavLink>
