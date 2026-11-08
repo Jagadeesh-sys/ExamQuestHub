@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StatusBadge from './StatusBadge.jsx';
+import AgencyLogo from './AgencyLogo.jsx';
 
 /**
  * StraightLineNotification:
@@ -211,8 +212,11 @@ export default function StraightLineNotification({
         aria-expanded={isExpanded}
         title="Click to view full details"
       >
-        {/* Left Side: Status + Org + Title on straight line */}
+        {/* Left Side: Logo + Status + Org + Title on straight line */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          {/* Agency Emblem */}
+          <AgencyLogo org={item.organization} size="sm" />
+
           {/* Status badge */}
           <div className="shrink-0 scale-90 sm:scale-100 origin-left">
             <StatusBadge status={item.status} />

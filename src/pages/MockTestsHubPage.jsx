@@ -622,7 +622,6 @@ export default function MockTestsHubPage() {
           : difficulty === 'Hard'
           ? 'bg-purple-100 text-purple-800'
           : 'bg-amber-100 text-amber-800';
-      const attempts = `${(58.2 - (i - 1) * 1.8).toFixed(1)}K Attempts`;
 
       tests.push({
         id: `subject-${sub}-full-${i}`,
@@ -635,9 +634,8 @@ export default function MockTestsHubPage() {
         marks: 200,
         difficulty,
         difficultyBadgeClass,
-        attempts,
+        formatTag: 'Official CBT',
         topicTag: 'Comprehensive',
-        attemptsNum: 58200 - (i - 1) * 1800,
         order: i
       });
     }
@@ -652,7 +650,6 @@ export default function MockTestsHubPage() {
         difficulty === 'Easy'
           ? 'bg-emerald-100 text-emerald-800'
           : 'bg-amber-100 text-amber-800';
-      const attempts = `${(42.9 - (i - 1) * 1.5).toFixed(1)}K Attempts`;
 
       tests.push({
         id: `subject-${sub}-sec-${i}`,
@@ -665,9 +662,8 @@ export default function MockTestsHubPage() {
         marks: 100,
         difficulty,
         difficultyBadgeClass,
-        attempts,
+        formatTag: 'Sectional',
         topicTag: `${t1}, ${t2}`,
-        attemptsNum: 42900 - (i - 1) * 1500,
         order: i + 20
       });
     }
@@ -681,7 +677,6 @@ export default function MockTestsHubPage() {
         difficulty === 'Hard'
           ? 'bg-purple-100 text-purple-800'
           : 'bg-amber-100 text-amber-800';
-      const attempts = `${(32.1 - (i - 1) * 0.9).toFixed(1)}K Attempts`;
 
       tests.push({
         id: `subject-${sub}-quick-${i}`,
@@ -694,9 +689,8 @@ export default function MockTestsHubPage() {
         marks: 50,
         difficulty,
         difficultyBadgeClass,
-        attempts,
+        formatTag: 'Speed Drill',
         topicTag: t,
-        attemptsNum: 32100 - (i - 1) * 900,
         order: i + 35
       });
     }
@@ -711,7 +705,6 @@ export default function MockTestsHubPage() {
           : difficulty === 'Hard'
           ? 'bg-purple-100 text-purple-800'
           : 'bg-amber-100 text-amber-800';
-      const attempts = `${(18.4 + (i - 1) * 0.7).toFixed(1)}K Attempts`;
 
       tests.push({
         id: `subject-${sub}-mixed-${i}`,
@@ -724,9 +717,8 @@ export default function MockTestsHubPage() {
         marks: 50,
         difficulty,
         difficultyBadgeClass,
-        attempts,
+        formatTag: 'High Yield',
         topicTag: 'Mixed Syllabus',
-        attemptsNum: 18400 + (i - 1) * 700,
         order: i + 55
       });
     }
@@ -754,7 +746,6 @@ export default function MockTestsHubPage() {
     }
 
     return [...list].sort((a, b) => {
-      if (testSortBy === 'popular') return b.attemptsNum - a.attemptsNum;
       if (testSortBy === 'questions') return b.questionsCount - a.questionsCount;
       if (testSortBy === 'duration') return b.duration - a.duration;
       return a.order - b.order;
@@ -1335,36 +1326,36 @@ export default function MockTestsHubPage() {
               title: 'RRB NTPC CBT-1 Full Mock – 01',
               q: 100,
               d: 90,
-              attempts: '58.2K Attempts',
               badge: 'RRB',
-              badgeClass: 'bg-red-100 text-red-700'
+              badgeClass: 'bg-red-100 text-red-700',
+              tag: 'Official CBT'
             },
             {
               id: 'rrb-ntpc-ug-2025-shift-2',
               title: 'SSC CGL Tier-I Mock – 01',
               q: 100,
               d: 60,
-              attempts: '42.9K Attempts',
               badge: 'SSC',
-              badgeClass: 'bg-emerald-100 text-emerald-700'
+              badgeClass: 'bg-emerald-100 text-emerald-700',
+              tag: 'Tier-1 CBT'
             },
             {
               id: 'rrb-ntpc-ug-2025-shift-3',
               title: 'SSC JE (CSE) Mock – 01',
               q: 100,
               d: 120,
-              attempts: '18.4K Attempts',
               badge: 'JE',
-              badgeClass: 'bg-amber-100 text-amber-700'
+              badgeClass: 'bg-amber-100 text-amber-700',
+              tag: 'Engineering'
             },
             {
               id: 'rrb-ntpc-ug-2025-shift-4',
               title: 'General Knowledge (Mix) – 01',
               q: 50,
               d: 30,
-              attempts: '32.1K Attempts',
               badge: 'GK',
-              badgeClass: 'bg-blue-100 text-blue-700'
+              badgeClass: 'bg-blue-100 text-blue-700',
+              tag: 'Speed Drill'
             }
           ].map((mock) => (
             <div
@@ -1393,9 +1384,9 @@ export default function MockTestsHubPage() {
                   </span>
                 </div>
 
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 text-[10px] font-bold">
-                  <Flame className="w-3 h-3 text-orange-500 fill-orange-500" />
-                  <span>{mock.attempts}</span>
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <span>{mock.tag}</span>
                 </div>
               </div>
 
@@ -1645,11 +1636,10 @@ export default function MockTestsHubPage() {
                             {mock.difficulty}
                           </span>
 
-                          {/* Attempts Badge */}
-                          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-[11px] font-bold">
-                            <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
-                            <span>{mock.attempts}</span>
-                          </div>
+                          {/* Format Tag */}
+                          <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">
+                            {mock.formatTag || 'Official Key'}
+                          </span>
 
                           {/* Action Button */}
                           <Link

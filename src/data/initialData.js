@@ -398,6 +398,62 @@ export const INITIAL_UPDATES = [
     isDemoRecord: true
   },
   {
+    id: 'dsssb-recruitment-2026',
+    slug: 'dsssb-recruitment-2026',
+    type: 'job',
+    title: {
+      en: 'DSSSB Recruitment 2026 — 4,214 Teaching & Non-Teaching Posts',
+      te: 'డీఎస్‌ఎస్‌ఎస్‌బీ రిక్రూట్‌మెంట్ 2026 — 4,214 టీచింగ్ & నాన్-టీచింగ్ పోస్టులు'
+    },
+    organization: {
+      en: 'Delhi Subordinate Services Selection Board (DSSSB)',
+      te: 'ఢిల్లీ సబార్డినేట్ సర్వీసెస్ సెలక్షన్ బోర్డ్ (DSSSB)'
+    },
+    category: 'Teaching & State Boards',
+    region: 'Delhi / All India',
+    notificationNo: 'DSSSB/Advt/01/2026',
+    publishedAt: '2026-02-10',
+    openingDate: '2026-02-15',
+    deadline: '2026-03-31',
+    examDate: 'Tier-1 CBT Scheduled June 2026',
+    vacancies: '4,214',
+    qualification: {
+      en: 'Graduation / Post Graduation with B.Ed or relevant degree from recognized university.',
+      te: 'గుర్తింపు పొందిన యూనివర్సిటీ నుంచి సంబంధిత డిగ్రీ లేదా పీజీ మరియు బీఈడీ.'
+    },
+    ageLimit: {
+      en: '18 to 30 years (Age relaxations for SC/ST/OBC as per Govt of Delhi rules).',
+      te: '18 నుండి 30 సంవత్సరాలు (ప్రభుత్వ నిబంధనల ప్రకారం వయోపరిమితి సడలింపు).'
+    },
+    applicationFee: {
+      en: '₹100 (Exempted for Women / SC / ST / PwD candidates).',
+      te: '₹100 (మహిళలు, ఎస్సీ, ఎస్టీలకు ఫీజు మినహాయింపు).'
+    },
+    selectionProcess: {
+      en: 'Tier-1 One Tier Examination (Objective CBT) followed by Document Verification.',
+      te: 'ఆన్‌లైన్ కంప్యూటర్ బేస్డ్ టెస్ట్ (CBT) మరియు సర్టిఫికెట్ వెరిఫికేషన్.'
+    },
+    salary: {
+      en: 'Pay Level 6 to Level 8 (Pay Scale ₹35,400 to ₹1,51,100 + allowances).',
+      te: 'పే లెవల్ 6 నుండి 8 మరియు అలవెన్సులు.'
+    },
+    summary: {
+      en: 'Delhi Subordinate Services Selection Board announces online recruitment for TGT, PGT, Assistant Teachers, and Administrative posts under Directorate of Education.',
+      te: 'ఢిల్లీ విద్యా శాఖలో టీజీటీ, పీజీటీ, అసిస్టెంట్ టీచర్ పోస్టుల భర్తీకి డీఎస్‌ఎస్‌ఎస్‌బీ దరఖాస్తులను ఆహ్వానిస్తోంది.'
+    },
+    description: {
+      en: 'Candidate must read the detailed DSSSB advertisement for post-wise qualification and eligibility criteria before applying online through dsssbonline.nic.in.',
+      te: 'పూర్తి వివరాలు మరియు సిలబస్ కోసం అధికారిక నోటిఫికేషన్ చూడండి.'
+    },
+    officialUrl: 'https://dsssb.delhi.gov.in',
+    pdfUrl: 'https://dsssb.delhi.gov.in/current-vacancies',
+    applyUrl: 'https://dsssbonline.nic.in',
+    status: 'Applications Open',
+    verifiedAt: '2026-02-12T10:00:00Z',
+    featured: true,
+    isDemoRecord: true
+  },
+  {
     id: 'defence-cds-examination-i-2025',
     slug: 'defence-cds-examination-i-2025',
     type: 'admit-card',

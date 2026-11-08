@@ -39,14 +39,14 @@ export default function Footer() {
           
           {/* Brand Column */}
           <div className="space-y-4 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2.5">
+            <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src="/assets/aistudio/examquesthub-logo.png"
+                src="/assets/aistudio/examquesthub_cap_logo.png"
                 alt="ExamQuestHub Logo"
-                className="w-10 h-10 rounded-full object-contain bg-white/10 p-0.5 border border-white/20"
+                className="h-9 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
               />
-              <span className="font-heading font-extrabold text-lg text-white">
-                ExamQuest<span className="text-[#F2BE4F]">Hub</span>
+              <span className="font-heading font-black text-lg text-white">
+                Exam<span className="text-[#F2BE4F] font-black">Quest</span>Hub
               </span>
             </Link>
             <p className="text-xs text-slate-400 leading-relaxed">

@@ -26,6 +26,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import NotificationCard from '../components/NotificationCard.jsx';
+import AgencyLogo from '../components/AgencyLogo.jsx';
 
 export default function JobDetailPage() {
   const { slug } = useParams();
@@ -156,10 +157,18 @@ export default function JobDetailPage() {
           <StatusBadge status={job.status} />
         </div>
 
-        {/* Title */}
-        <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-[#182B45] leading-tight">
-          {title}
-        </h1>
+        {/* Title & Agency Lockup */}
+        <div className="flex items-start gap-4">
+          <AgencyLogo org={org} size="xl" />
+          <div className="space-y-1">
+            <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-4xl text-[#182B45] leading-tight">
+              {title}
+            </h1>
+            <p className="text-xs sm:text-sm font-bold text-[#2468B4]">
+              {org} • {job.category} ({job.region})
+            </p>
+          </div>
+        </div>
 
         {/* Key Quick Facts Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#F6F8FC] p-4 rounded-2xl border border-[#E3EAF2]">

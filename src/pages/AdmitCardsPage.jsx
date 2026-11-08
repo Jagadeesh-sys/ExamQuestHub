@@ -14,6 +14,7 @@ import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import AgencyLogo from '../components/AgencyLogo.jsx';
 
 export default function AdmitCardsPage() {
   const { t, getLocalized } = useLanguage();
@@ -120,17 +121,20 @@ export default function AdmitCardsPage() {
                 className="bg-white rounded-2xl border border-[#E3EAF2] hover:border-[#2468B4]/40 hover:shadow-xs transition-all p-5 flex flex-col justify-between"
               >
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-[#2468B4] flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-                      <Building2 className="w-3.5 h-3.5" />
-                      {org}
-                    </span>
-                    <StatusBadge status={item.status || 'Admit Card Released'} />
+                  <div className="flex items-start gap-3">
+                    <AgencyLogo org={item.organization} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-bold text-[#2468B4] uppercase tracking-wider text-[11px] truncate">
+                          {org}
+                        </span>
+                        <StatusBadge status={item.status || 'Admit Card Released'} />
+                      </div>
+                      <h3 className="font-heading font-black text-sm sm:text-base text-[#182B45] leading-snug">
+                        {title}
+                      </h3>
+                    </div>
                   </div>
-
-                  <h3 className="font-heading font-bold text-base text-[#182B45] leading-snug">
-                    {title}
-                  </h3>
 
                   <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-[#F6F8FC] text-xs">
                     <div>
