@@ -2,9 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 
-export default function Breadcrumbs({ items = [] }) {
+export default function Breadcrumbs({ items = [], className = '' }) {
   return (
-    <nav aria-label="Breadcrumb" className="py-3 text-xs text-slate-500">
+    <nav aria-label="Breadcrumb" className={`py-2 text-xs ${className || 'text-slate-500'}`}>
       <ol className="flex items-center flex-wrap gap-1.5">
         <li>
           <Link

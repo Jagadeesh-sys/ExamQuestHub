@@ -31,6 +31,7 @@ import { subscribeToUpdates, subscribeToCurrentAffairs } from '../firebase/fires
 import AgencyLogo from '../components/AgencyLogo.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
+import { INITIAL_UPDATES } from '../data/initialData.js';
 
 export default function HomePage() {
   const { t, getLocalized } = useLanguage();
@@ -55,7 +56,8 @@ export default function HomePage() {
   useEffect(() => {
     setLoading(true);
     const unsubUpdates = subscribeToUpdates((data) => {
-      setUpdates(data);
+      const list = data && data.length > 0 ? data : INITIAL_UPDATES;
+      setUpdates(list);
       setLoading(false);
     }, false);
 
@@ -186,48 +188,9 @@ export default function HomePage() {
     }
   ];
 
-  // Primary 3 Verified Notifications matching the reference screenshot exactly
-  const primaryFeaturedNotifications = [
-    {
-      id: 'rrb-ntpc-2026',
-      organization: 'Railway Recruitment Board (RRB)',
-      title: 'RRB NTPC 2026 – 32,438 Vacancies',
-      scope: 'All India',
-      status: 'Applications Open',
-      statusType: 'success',
-      lastDate: '30 Nov 2026',
-      slug: 'rrb-ntpc-2026-cbt1',
-      link: '/jobs/rrb-ntpc-2026-cbt1',
-      isHot: true
-    },
-    {
-      id: 'crpf-sports-quota-2026',
-      organization: 'CRPF – Sports Quota Recruitment',
-      title: '521 Vacancies for Constable (General Duty)',
-      scope: 'All India',
-      status: 'Applications Open',
-      statusType: 'success',
-      lastDate: '15 Dec 2026',
-      slug: 'crpf-sports-quota-2026',
-      link: '/jobs/crpf-sports-quota-2026'
-    },
-    {
-      id: 'nia-recruitment-2026',
-      organization: 'NIA Recruitment 2026',
-      title: '111 Posts – Inspector, SI, and ASI',
-      scope: 'All India',
-      status: 'Notification Released',
-      statusType: 'info',
-      lastDate: '02 Dec 2026',
-      slug: 'nia-recruitment-2026',
-      link: '/jobs/nia-recruitment-2026'
-    }
-  ];
-
-  // Dynamic notifications from feed (merged without duplicating featured)
-  const additionalNotifications = updates.filter(
-    (u) => !primaryFeaturedNotifications.some((p) => p.id === u.id || p.slug === u.slug)
-  );
+  // Recent admin uploaded notifications from Firestore feed (with fallback to verified initial updates)
+  const displayNotifications = updates && updates.length > 0 ? updates : INITIAL_UPDATES;
+  const latestNotification = displayNotifications[0] || null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1F224D] via-[#2D457B] via-15% via-[#BFD7F8]/40 to-[#F4F7FC] pb-20">
@@ -330,29 +293,31 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 4. LIVE ALERT TICKER BAR - Exact replica of the reference design */}
-        <section aria-label="Live Alert">
-          <Link
-            to="/jobs/rrb-ntpc-2026-cbt1"
-            className="flex items-center justify-between gap-2.5 p-2 sm:p-2.5 rounded-full bg-[#EAF3FF] border border-[#BFDBFE]/60 hover:bg-[#E1EDFE] transition-colors shadow-2xs group"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#12345A] text-[#F2BE4F] text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs">
-                <Bell className="w-3 h-3 fill-[#F2BE4F]" />
-                <span>LIVE ALERT</span>
+        {/* 4. LIVE ALERT TICKER BAR */}
+        {latestNotification && (
+          <section aria-label="Live Alert">
+            <Link
+              to={`/jobs/${latestNotification.slug || latestNotification.id}`}
+              className="flex items-center justify-between gap-2.5 p-2 sm:p-2.5 rounded-full bg-[#EAF3FF] border border-[#BFDBFE]/60 hover:bg-[#E1EDFE] transition-colors shadow-2xs group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#12345A] text-[#F2BE4F] text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs">
+                  <Bell className="w-3 h-3 fill-[#F2BE4F]" />
+                  <span>LIVE ALERT</span>
+                </div>
+                <span className="text-slate-300 font-bold shrink-0">|</span>
+                {/* Alert Content */}
+                <span className="text-xs sm:text-sm font-bold text-[#12345A] truncate">
+                  {getLocalized(latestNotification.title) || latestNotification.title}
+                </span>
               </div>
-              <span className="text-slate-300 font-bold shrink-0">|</span>
-              {/* Alert Content */}
-              <span className="text-xs sm:text-sm font-bold text-[#12345A] truncate">
-                Railway Recruitment 2026 – 32,438 Vacancies Notified...
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-[#12345A] group-hover:translate-x-0.5 transition-transform shrink-0 mr-1" />
-          </Link>
-        </section>
+              <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-[#12345A] group-hover:translate-x-0.5 transition-transform shrink-0 mr-1" />
+            </Link>
+          </section>
+        )}
 
-        {/* 5. LATEST RECRUITMENT NOTIFICATIONS - Exact cards as in reference screenshot */}
+        {/* 5. LATEST RECRUITMENT NOTIFICATIONS - Recent Admin Uploads */}
         <section aria-label="Latest Recruitment Notifications" className="space-y-3">
           {/* Header Row */}
           <div className="flex items-center justify-between">
@@ -373,106 +338,78 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Cards List */}
+          {/* Cards List: Admin recent uploaded notifications */}
           <div className="space-y-2.5">
-            {primaryFeaturedNotifications.map((job) => (
-              <Link
-                key={job.id}
-                to={job.link}
-                className="bg-white rounded-2xl border border-[#E3EAF2] p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:border-[#2468B4] hover:shadow-md transition-all active:scale-[0.99] group cursor-pointer"
-              >
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  {/* Agency Circular Emblem */}
-                  <AgencyLogo org={job.organization} size="lg" />
+            {loading ? (
+              <div className="space-y-2.5">
+                <SkeletonLoader count={4} />
+              </div>
+            ) : displayNotifications.slice(0, 5).map((item) => {
+              const orgName = getLocalized(item.organization) || item.organization || 'Govt Department';
+              const jobTitle = getLocalized(item.title) || item.title || 'Recruitment Notification';
+              const lastDate = item.deadline || item.lastDate || item.closingDate || 'Ongoing';
+              const isSuccessStatus = (item.status || '').toLowerCase().includes('open') || (item.status || '').toLowerCase().includes('verified');
 
-                  {/* Title & Metadata */}
-                  <div className="min-w-0 space-y-1">
-                    <h3 className="font-heading font-black text-xs sm:text-sm text-[#12345A] group-hover:text-[#2468B4] transition-colors truncate">
-                      {job.organization}
-                    </h3>
-                    <p className="text-xs sm:text-[13px] font-bold text-slate-700 truncate">
-                      {job.title}
-                    </p>
-                    
-                    {/* Tags */}
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-[10px] font-bold">
-                        {job.scope}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          job.statusType === 'success'
-                            ? 'bg-[#ECFDF5] text-[#065F46]'
-                            : 'bg-[#EFF6FF] text-[#1E40AF]'
-                        }`}
-                      >
-                        {job.status}
-                      </span>
+              return (
+                <Link
+                  key={item.id}
+                  to={`/jobs/${item.slug || item.id}`}
+                  className="bg-white rounded-2xl border border-[#E3EAF2] p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:border-[#2468B4] hover:shadow-md transition-all active:scale-[0.99] group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    {/* Agency Circular Emblem */}
+                    <AgencyLogo org={orgName} size="lg" />
+
+                    {/* Title & Metadata */}
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="font-heading font-black text-xs sm:text-sm text-[#12345A] group-hover:text-[#2468B4] transition-colors truncate">
+                        {orgName}
+                      </h3>
+                      <p className="text-xs sm:text-[13px] font-bold text-slate-700 truncate">
+                        {jobTitle}
+                      </p>
+
+                      {/* Tags */}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-[10px] font-bold">
+                          {item.region || 'All India'}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                            isSuccessStatus
+                              ? 'bg-[#ECFDF5] text-[#065F46]'
+                              : 'bg-[#EFF6FF] text-[#1E40AF]'
+                          }`}
+                        >
+                          {item.status || 'Active'}
+                        </span>
+                        {item.vacancies && (
+                          <span className="px-2 py-0.5 rounded-md bg-[#FFF7ED] text-[#C2410C] text-[10px] font-bold hidden sm:inline-block">
+                            {item.vacancies}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right: Last Date in Red & Chevron */}
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <div className="flex items-center gap-1.5 text-right">
-                    <Calendar className="w-4 h-4 text-rose-500 shrink-0" />
-                    <div className="flex flex-col text-right">
-                      <span className="text-[9.5px] sm:text-[10px] font-bold text-rose-600 leading-tight uppercase">
-                        Last Date
-                      </span>
-                      <span className="text-xs sm:text-sm font-black text-rose-600 leading-tight whitespace-nowrap">
-                        {job.lastDate}
-                      </span>
+                  {/* Right: Last Date in Red & Chevron */}
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <div className="flex items-center gap-1.5 text-right">
+                      <Calendar className="w-4 h-4 text-rose-500 shrink-0" />
+                      <div className="flex flex-col text-right">
+                        <span className="text-[9.5px] sm:text-[10px] font-bold text-rose-600 leading-tight uppercase">
+                          Last Date
+                        </span>
+                        <span className="text-xs sm:text-sm font-black text-rose-600 leading-tight whitespace-nowrap">
+                          {lastDate}
+                        </span>
+                      </div>
                     </div>
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#12345A] group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#12345A] group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </Link>
-            ))}
-
-            {/* Additional Dynamic Notifications from Firestore if loaded */}
-            {additionalNotifications.slice(0, 3).map((item) => (
-              <Link
-                key={item.id}
-                to={`/jobs/${item.slug || item.id}`}
-                className="bg-white rounded-2xl border border-[#E3EAF2] p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:border-[#2468B4] hover:shadow-md transition-all active:scale-[0.99] group cursor-pointer"
-              >
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <AgencyLogo org={item.organization} size="lg" />
-                  <div className="min-w-0 space-y-1">
-                    <h3 className="font-heading font-black text-xs sm:text-sm text-[#12345A] group-hover:text-[#2468B4] transition-colors truncate">
-                      {getLocalized(item.organization) || item.organization}
-                    </h3>
-                    <p className="text-xs sm:text-[13px] font-bold text-slate-700 truncate">
-                      {getLocalized(item.title) || item.title}
-                    </p>
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-[10px] font-bold">
-                        {item.region || 'All India'}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#065F46] text-[10px] font-bold">
-                        {item.status || 'Verified'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <div className="flex items-center gap-1.5 text-right">
-                    <Calendar className="w-4 h-4 text-rose-500 shrink-0" />
-                    <div className="flex flex-col text-right">
-                      <span className="text-[9.5px] sm:text-[10px] font-bold text-rose-600 leading-tight uppercase">
-                        Last Date
-                      </span>
-                      <span className="text-xs sm:text-sm font-black text-rose-600 leading-tight whitespace-nowrap">
-                        {item.lastDate || 'Check PDF'}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#12345A] group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </section>
 

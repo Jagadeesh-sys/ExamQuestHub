@@ -28,7 +28,10 @@ import {
   Award,
   Sparkles,
   ShieldCheck,
-  Flame
+  Flame,
+  Newspaper,
+  BookMarked,
+  Trophy
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -52,11 +55,11 @@ export default function MockTestsHubPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Active Subject selection: 'all' | 'general-knowledge' | 'reasoning' | 'quantitative-aptitude' | 'general-science' | 'computer-science'
-  const initialSubject = searchParams.get('subject') || 'general-knowledge';
+  // Active Subject selection: 'all' | 'current-affairs' | 'english-language' | 'general-knowledge' | 'reasoning' | 'quantitative-aptitude' | 'general-science' | 'computer-science'
+  const initialSubject = searchParams.get('subject') || 'all';
   const [selectedSubject, setSelectedSubject] = useState(initialSubject);
 
-  // Active Main Tab: 'mocks' (Mock Tests) | 'practice' (Practice Tests) | 'pyqs' (PYQs)
+  // Active Main Tab: 'mocks' (Mock Tests) | 'practice' (Practice Tests) | 'pyqs' (PYQs) | 'topic-wise' (Topic Wise)
   const [activeMainTab, setActiveMainTab] = useState('mocks');
 
   // Bookmarked test IDs (persisted to localStorage)
@@ -252,8 +255,44 @@ export default function MockTestsHubPage() {
     return `${count} Qs`;
   };
 
-  // 5 Subject cards configured with real live server counts
+  // 8 Subject cards configured with real live server counts (All Mock, Current Affairs, English, GK, etc.)
   const subjectCards = [
+    {
+      id: 'all',
+      title: 'All Mock',
+      questionBadge: '10.7k Qs',
+      exactCount: 10757,
+      icon: Trophy,
+      iconColor: 'text-[#12345A]',
+      bgLight: 'bg-[#F0F4FA]',
+      borderNormal: 'border-slate-200/90 hover:border-[#12345A]',
+      borderActive: 'border-2 border-[#12345A]',
+      badgeBg: 'bg-[#E2E8F0] text-[#0F172A]'
+    },
+    {
+      id: 'current-affairs',
+      title: 'Current Affairs',
+      questionBadge: '3.5k Qs',
+      exactCount: 3500,
+      icon: Newspaper,
+      iconColor: 'text-[#DC2626]',
+      bgLight: 'bg-[#FEF2F2]',
+      borderNormal: 'border-red-100 hover:border-red-300',
+      borderActive: 'border-2 border-[#DC2626]',
+      badgeBg: 'bg-[#FEE2E2] text-[#991B1B]'
+    },
+    {
+      id: 'english-language',
+      title: 'English',
+      questionBadge: formatBadgeCount(liveSubjectCounts['english-language'] || 525),
+      exactCount: liveSubjectCounts['english-language'] || 525,
+      icon: BookMarked,
+      iconColor: 'text-[#2563EB]',
+      bgLight: 'bg-[#EFF6FF]',
+      borderNormal: 'border-blue-100 hover:border-blue-300',
+      borderActive: 'border-2 border-[#2563EB]',
+      badgeBg: 'bg-[#DBEAFE] text-[#1E40AF]'
+    },
     {
       id: 'general-knowledge',
       title: 'General Knowledge',
@@ -272,11 +311,11 @@ export default function MockTestsHubPage() {
       questionBadge: formatBadgeCount(liveSubjectCounts['reasoning']),
       exactCount: liveSubjectCounts['reasoning'],
       icon: Brain,
-      iconColor: 'text-[#2563EB]',
-      bgLight: 'bg-[#F0F7FF]',
-      borderNormal: 'border-blue-100 hover:border-blue-300',
-      borderActive: 'border-2 border-[#2563EB]',
-      badgeBg: 'bg-[#DBEAFE] text-[#1E40AF]'
+      iconColor: 'text-[#4F46E5]',
+      bgLight: 'bg-[#F5F3FF]',
+      borderNormal: 'border-indigo-100 hover:border-indigo-300',
+      borderActive: 'border-2 border-[#4F46E5]',
+      badgeBg: 'bg-[#EDE9FE] text-[#4338CA]'
     },
     {
       id: 'quantitative-aptitude',
@@ -334,6 +373,50 @@ export default function MockTestsHubPage() {
       { name: 'Computer Fundamentals & MS Office', count: 280, subject: 'Computer Science', id: 'computer-fundamentals' }
     ];
     return list;
+  }, []);
+
+  // Topic-Wise Tests for the dedicated "Topic Wise" tab
+  const allTopicWiseTests = useMemo(() => {
+    return [
+      // Current Affairs
+      { id: 'ca-summits', name: 'National & Global Summits & MoUs', count: 120, subject: 'Current Affairs', subjectId: 'current-affairs', link: '/mocks/ca-mock-01', difficulty: 'Medium', tagColor: 'bg-red-50 text-red-700' },
+      { id: 'ca-schemes', name: 'Central Govt Welfare Schemes & Portals', count: 140, subject: 'Current Affairs', subjectId: 'current-affairs', link: '/mocks/ca-mock-02', difficulty: 'Easy', tagColor: 'bg-red-50 text-red-700' },
+      { id: 'ca-sports', name: 'Sports, Awards, Honors & Personalities', count: 110, subject: 'Current Affairs', subjectId: 'current-affairs', link: '/mocks/ca-mock-01', difficulty: 'Medium', tagColor: 'bg-red-50 text-red-700' },
+      { id: 'ca-defence', name: 'Defence Exercises, ISRO & Space Science', count: 130, subject: 'Current Affairs', subjectId: 'current-affairs', link: '/mocks/ca-mock-02', difficulty: 'Hard', tagColor: 'bg-red-50 text-red-700' },
+
+      // English Language
+      { id: 'eng-rc', name: 'Reading Comprehension & Cloze Tests', count: 180, subject: 'English', subjectId: 'english-language', link: '/mocks/subject-english-language-sec-1', difficulty: 'Medium', tagColor: 'bg-blue-50 text-blue-700' },
+      { id: 'eng-error', name: 'Spotting Errors & Sentence Correction', count: 210, subject: 'English', subjectId: 'english-language', link: '/mocks/subject-english-language-quick-1', difficulty: 'Hard', tagColor: 'bg-blue-50 text-blue-700' },
+      { id: 'eng-vocab', name: 'Synonyms, Antonyms & One-Word Subs', count: 250, subject: 'English', subjectId: 'english-language', link: '/mocks/subject-english-language-full-1', difficulty: 'Medium', tagColor: 'bg-blue-50 text-blue-700' },
+      { id: 'eng-idioms', name: 'Idioms, Phrases & Sentence Reordering', count: 160, subject: 'English', subjectId: 'english-language', link: '/mocks/subject-english-language-mixed-1', difficulty: 'Easy', tagColor: 'bg-blue-50 text-blue-700' },
+
+      // General Knowledge
+      { id: 'gk-history', name: 'Indian History & Freedom Struggle', count: 480, subject: 'General Knowledge', subjectId: 'general-knowledge', link: '/mocks/topic-general-knowledge-history', difficulty: 'Medium', tagColor: 'bg-amber-50 text-amber-700' },
+      { id: 'gk-polity', name: 'Indian Polity & Articles of Constitution', count: 395, subject: 'General Knowledge', subjectId: 'general-knowledge', link: '/mocks/topic-general-knowledge-polity', difficulty: 'Hard', tagColor: 'bg-amber-50 text-amber-700' },
+      { id: 'gk-geography', name: 'Physical, River Systems & Indian Geography', count: 410, subject: 'General Knowledge', subjectId: 'general-knowledge', link: '/mocks/topic-general-knowledge-geography', difficulty: 'Medium', tagColor: 'bg-amber-50 text-amber-700' },
+      { id: 'gk-economy', name: 'Indian Economy, Budget & Banking Systems', count: 290, subject: 'General Knowledge', subjectId: 'general-knowledge', link: '/mocks/topic-general-knowledge-economy', difficulty: 'Medium', tagColor: 'bg-amber-50 text-amber-700' },
+
+      // Reasoning
+      { id: 'reas-coding', name: 'Coding-Decoding & Letter-Number Series', count: 520, subject: 'Reasoning', subjectId: 'reasoning', link: '/mocks/topic-reasoning-coding-decoding', difficulty: 'Easy', tagColor: 'bg-indigo-50 text-indigo-700' },
+      { id: 'reas-syllogism', name: 'Syllogisms & Logical Venn Diagrams', count: 310, subject: 'Reasoning', subjectId: 'reasoning', link: '/mocks/topic-reasoning-syllogism', difficulty: 'Medium', tagColor: 'bg-indigo-50 text-indigo-700' },
+      { id: 'reas-relations', name: 'Blood Relations & Direction Sense Tests', count: 280, subject: 'Reasoning', subjectId: 'reasoning', link: '/mocks/topic-reasoning-blood-relations', difficulty: 'Medium', tagColor: 'bg-indigo-50 text-indigo-700' },
+      { id: 'reas-analogy', name: 'Verbal Analogies, Puzzles & Seating', count: 340, subject: 'Reasoning', subjectId: 'reasoning', link: '/mocks/subject-reasoning-quick-1', difficulty: 'Hard', tagColor: 'bg-indigo-50 text-indigo-700' },
+
+      // Quant / Maths
+      { id: 'math-arithmetic', name: 'Percentages, Profit, Loss & Discount', count: 460, subject: 'Quant / Maths', subjectId: 'quantitative-aptitude', link: '/mocks/topic-quantitative-aptitude-arithmetic', difficulty: 'Medium', tagColor: 'bg-emerald-50 text-emerald-700' },
+      { id: 'math-time', name: 'Time, Speed, Distance, Trains & Work', count: 380, subject: 'Quant / Maths', subjectId: 'quantitative-aptitude', link: '/mocks/topic-quantitative-aptitude-time-work', difficulty: 'Hard', tagColor: 'bg-emerald-50 text-emerald-700' },
+      { id: 'math-interest', name: 'Simple & Compound Interest, Ratio & Proportion', count: 320, subject: 'Quant / Maths', subjectId: 'quantitative-aptitude', link: '/mocks/subject-quantitative-aptitude-quick-1', difficulty: 'Medium', tagColor: 'bg-emerald-50 text-emerald-700' },
+      { id: 'math-geometry', name: 'Geometry, Mensuration 2D/3D & Trigonometry', count: 290, subject: 'Quant / Maths', subjectId: 'quantitative-aptitude', link: '/mocks/subject-quantitative-aptitude-sec-1', difficulty: 'Hard', tagColor: 'bg-emerald-50 text-emerald-700' },
+
+      // General Science
+      { id: 'sci-physics', name: 'General Physics, Motion, Force & Optics', count: 260, subject: 'General Science', subjectId: 'general-science', link: '/mocks/topic-general-science-physics', difficulty: 'Medium', tagColor: 'bg-purple-50 text-purple-700' },
+      { id: 'sci-biology', name: 'Human Biology, Genetics & Health Sciences', count: 310, subject: 'General Science', subjectId: 'general-science', link: '/mocks/topic-general-science-biology', difficulty: 'Easy', tagColor: 'bg-purple-50 text-purple-700' },
+      { id: 'sci-chemistry', name: 'Chemistry: Elements, Acids, Bases & Metals', count: 240, subject: 'General Science', subjectId: 'general-science', link: '/mocks/subject-general-science-quick-1', difficulty: 'Medium', tagColor: 'bg-purple-50 text-purple-700' },
+
+      // Computer Science
+      { id: 'cs-fundamentals', name: 'Computer Hardware, OS & Key Shortcuts', count: 280, subject: 'Computer Science', subjectId: 'computer-science', link: '/mocks/topic-computer-science-computer-fundamentals', difficulty: 'Easy', tagColor: 'bg-sky-50 text-sky-700' },
+      { id: 'cs-network', name: 'Networking, Internet Protocols & Cyber Safety', count: 220, subject: 'Computer Science', subjectId: 'computer-science', link: '/mocks/subject-computer-science-quick-1', difficulty: 'Medium', tagColor: 'bg-sky-50 text-sky-700' }
+    ];
   }, []);
 
   // Popular Mock Tests with genuine official exam metadata (no random numbers)
@@ -476,6 +559,9 @@ export default function MockTestsHubPage() {
     const subCount = subObj ? subObj.exactCount : 100;
 
     const agencyMap = {
+      'all': { agency: 'MOCK', color: 'bg-[#E2E8F0] text-[#1E293B]' },
+      'current-affairs': { agency: 'CA', color: 'bg-[#FEE2E2] text-[#DC2626]' },
+      'english-language': { agency: 'ENG', color: 'bg-[#EFF6FF] text-[#1D4ED8]' },
       'general-knowledge': { agency: 'GK', color: 'bg-[#FEF08A] text-[#854D0E]' },
       'reasoning': { agency: 'REAS', color: 'bg-[#DBEAFE] text-[#1E40AF]' },
       'quantitative-aptitude': { agency: 'MATH', color: 'bg-[#DCFCE7] text-[#166534]' },
@@ -484,6 +570,19 @@ export default function MockTestsHubPage() {
     };
 
     const cfg = agencyMap[selectedSubject] || { agency: 'CBT', color: 'bg-[#E2E8F0] text-[#1E293B]' };
+
+    const fullTargetId = selectedSubject === 'current-affairs'
+      ? 'ca-mock-01'
+      : `subject-${selectedSubject}-full-1`;
+    const quickTargetId = selectedSubject === 'current-affairs'
+      ? 'ca-mock-02'
+      : `subject-${selectedSubject}-quick-1`;
+    const secTargetId = selectedSubject === 'current-affairs'
+      ? 'ca-mock-01'
+      : `subject-${selectedSubject}-sec-1`;
+    const mixedTargetId = selectedSubject === 'current-affairs'
+      ? 'ca-mock-02'
+      : `subject-${selectedSubject}-mixed-1`;
 
     return [
       {
@@ -498,7 +597,7 @@ export default function MockTestsHubPage() {
         attempts: '38.4K Attempts',
         difficulty: 'Medium',
         difficultyBadge: 'bg-[#FEF3C7] text-[#D97706]',
-        targetTestId: `subject-${selectedSubject}-full-1`
+        targetTestId: fullTargetId
       },
       {
         id: `${selectedSubject}-speed-drill-01`,
@@ -512,7 +611,7 @@ export default function MockTestsHubPage() {
         attempts: '21.7K Attempts',
         difficulty: 'Easy',
         difficultyBadge: 'bg-[#DCFCE7] text-[#166534]',
-        targetTestId: `subject-${selectedSubject}-quick-1`
+        targetTestId: quickTargetId
       },
       {
         id: `${selectedSubject}-sectional-01`,
@@ -526,7 +625,7 @@ export default function MockTestsHubPage() {
         attempts: '16.9K Attempts',
         difficulty: 'Medium',
         difficultyBadge: 'bg-[#FEF3C7] text-[#D97706]',
-        targetTestId: `subject-${selectedSubject}-sec-1`
+        targetTestId: secTargetId
       },
       {
         id: `${selectedSubject}-pyq-master-01`,
@@ -540,7 +639,7 @@ export default function MockTestsHubPage() {
         attempts: '28.2K Attempts',
         difficulty: 'Hard',
         difficultyBadge: 'bg-[#F3E8FF] text-[#6B21A8]',
-        targetTestId: `subject-${selectedSubject}-mixed-1`
+        targetTestId: mixedTargetId
       }
     ];
   }, [selectedSubject, liveSubjectCounts]);
@@ -566,225 +665,246 @@ export default function MockTestsHubPage() {
   }, [shifts, shiftSearch]);
 
   return (
-    <div className="max-w-[1240px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-      {/* Breadcrumb Navigation */}
-      <Breadcrumbs
-        items={[
-          { label: t('navHome') || 'Home', path: '/' },
-          { label: 'Mock Tests' }
-        ]}
-      />
+    <div className="min-h-screen bg-gradient-to-b from-[#1F224D] via-[#2D457B] via-15% via-[#BFD7F8]/40 to-[#F4F7FC] pb-20">
+      <div className="max-w-[1240px] mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 space-y-4 sm:space-y-6">
+        {/* Breadcrumb Navigation */}
+        <div className="text-slate-200 [&_a]:text-slate-200 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-slate-400">
+          <Breadcrumbs
+            items={[
+              { label: t('navHome') || 'Home', path: '/' },
+              { label: 'Mock Tests' }
+            ]}
+          />
+        </div>
 
-      {/* Server Push Status Notification (if active) */}
-      {serverPushStatus && (
-        <div
-          className={`p-3 rounded-2xl text-xs font-semibold flex items-center justify-between gap-2 transition ${
-            serverPushStatus.error
-              ? 'bg-amber-50 text-amber-900 border border-amber-200'
-              : serverPushStatus.success
-              ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
-              : 'bg-blue-50 text-blue-900 border border-blue-200'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {serverPushStatus.inProgress && <RefreshCw className="w-4 h-4 animate-spin text-[#2468B4]" />}
-            {serverPushStatus.success && <Check className="w-4 h-4 text-emerald-600" />}
-            <span>{serverPushStatus.text}</span>
-          </div>
-          <button
-            onClick={() => setServerPushStatus(null)}
-            className="text-xs font-bold hover:opacity-75 cursor-pointer"
+        {/* Server Push Status Notification (if active) */}
+        {serverPushStatus && (
+          <div
+            className={`p-3 rounded-2xl text-xs font-semibold flex items-center justify-between gap-2 transition ${
+              serverPushStatus.error
+                ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                : serverPushStatus.success
+                ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                : 'bg-blue-50 text-blue-900 border border-blue-200'
+            }`}
           >
-            Dismiss
-          </button>
-        </div>
-      )}
+            <div className="flex items-center gap-2">
+              {serverPushStatus.inProgress && <RefreshCw className="w-4 h-4 animate-spin text-[#2468B4]" />}
+              {serverPushStatus.success && <Check className="w-4 h-4 text-emerald-600" />}
+              <span>{serverPushStatus.text}</span>
+            </div>
+            <button
+              onClick={() => setServerPushStatus(null)}
+              className="text-xs font-bold hover:opacity-75 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
-      {/* =========================================================================
-          HERO BANNER - Matching image_3a489c44.png 100% Exactly
-          ========================================================================= */}
-      <section className="w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-md border border-[#162744]/20 bg-[#0B1F3A]">
-        <img
-          src="/assets/aistudio/mock_hero_banner_exact.png"
-          alt="Ace Your Government Exams - Real exam pattern tests, topic-wise practice, and previous year papers with detailed analysis."
-          className="w-full h-auto object-cover block select-none pointer-events-none"
-        />
-      </section>
+        {/* =========================================================================
+            HERO BANNER - Shaded to merge seamlessly with page background gradient
+            ========================================================================= */}
+        <section
+          aria-label="Ace Your Government Exams"
+          className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B]"
+        >
+          <img
+            src="/assets/aistudio/mock_hero_banner_exact.png"
+            alt="Ace Your Government Exams - Real exam pattern tests, topic-wise practice, and previous year papers with detailed analysis."
+            className="w-full h-auto object-cover block select-none pointer-events-none"
+          />
+          {/* Shading gradient overlays to blend seamlessly with the header background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/50 via-transparent to-[#07183B]/50 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07183B]/60 via-transparent to-transparent pointer-events-none" />
+        </section>
 
-      {/* =========================================================================
-          4-METRIC WHITE FLOATING STATS CARD - DERIVED DYNAMICALLY FROM SERVER DATA
-          ========================================================================= */}
-      <section className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-xs border border-slate-100 grid grid-cols-4 divide-x divide-slate-100 text-center">
-        {/* Metric 1: Total Real Questions */}
-        <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-          <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
-          <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-            10,757+
+        {/* =========================================================================
+            4-METRIC WHITE FLOATING STATS CARD - DERIVED DYNAMICALLY FROM SERVER DATA
+            ========================================================================= */}
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-xs border border-slate-100 grid grid-cols-4 divide-x divide-slate-100 text-center">
+          {/* Metric 1: Total Real Questions */}
+          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
+            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
+              10,757+
+            </div>
+            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
+              Questions
+            </div>
           </div>
-          <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
-            Questions
-          </div>
-        </div>
 
-        {/* Metric 2: Total Real Mock Tests */}
-        <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-          <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
-          <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-            320+
+          {/* Metric 2: Total Real Mock Tests */}
+          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
+            <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
+            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
+              320+
+            </div>
+            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
+              Mock Tests
+            </div>
           </div>
-          <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
-            Mock Tests
-          </div>
-        </div>
 
-        {/* Metric 3: Real Exam Shifts (CBT) */}
-        <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-          <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
-          <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-            100
+          {/* Metric 3: Real Exam Shifts (CBT) */}
+          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
+            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
+              100
+            </div>
+            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1 leading-tight text-center">
+              Exam Shifts (CBT)
+            </div>
           </div>
-          <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1 leading-tight text-center">
-            Exam Shifts (CBT)
-          </div>
-        </div>
 
-        {/* Metric 4: Real Sub Topics Count */}
-        <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-          <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
-          <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-            10
+          {/* Metric 4: Real Sub Topics Count */}
+          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
+            <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
+            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
+              10
+            </div>
+            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
+              Sub Topics
+            </div>
           </div>
-          <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
-            Sub Topics
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Verified Server Connection Status */}
-      <div className="flex items-center justify-between px-2 pt-0.5 text-[11px] text-slate-500">
-        <div className="flex items-center gap-1.5 font-medium text-slate-600">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-          <span>
-            Server Bank: <strong className="text-[#12345A] font-bold">10,757+</strong> Official Questions Across <strong className="text-[#12345A] font-bold">100</strong> Shifts (CBT)
+        {/* Verified Server Connection Status */}
+        <div className="flex items-center justify-between px-2 pt-0.5 text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5 font-medium text-slate-600">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span>
+              Server Bank: <strong className="text-[#12345A] font-bold">10,757+</strong> Official Questions Across <strong className="text-[#12345A] font-bold">100</strong> Shifts (CBT)
+            </span>
+          </div>
+          <span className="hidden sm:inline-block text-[10.5px] text-slate-400 font-medium">
+            Verified Official Gazette &amp; CBT Answer Keys
           </span>
         </div>
-        <span className="hidden sm:inline-block text-[10.5px] text-slate-400 font-medium">
-          Verified Official Gazette &amp; CBT Answer Keys
-        </span>
-      </div>
 
-      {/* =========================================================================
-          HORIZONTAL SEGMENTED TABS - Matching image_3a489c44.png
-          ========================================================================= */}
-      <section className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-0.5 select-none">
-        {/* Tab 1: Mock Tests (75) */}
-        <button
-          type="button"
-          onClick={() => setActiveMainTab('mocks')}
-          className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer select-none shrink-0 ${
-            activeMainTab === 'mocks'
-              ? 'bg-[#12345A] text-white shadow-xs'
-              : 'text-slate-700 hover:text-[#12345A] hover:bg-white/80'
-          }`}
-        >
-          <Play className={`w-3.5 h-3.5 ${activeMainTab === 'mocks' ? 'fill-white text-white' : 'text-slate-600'}`} />
-          <span>Mock Tests (75)</span>
-        </button>
-
-        {/* Tab 2: Practice Tests (Derived from Topic Drills) */}
-        <button
-          type="button"
-          onClick={() => setActiveMainTab('practice')}
-          className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer select-none shrink-0 ${
-            activeMainTab === 'practice'
-              ? 'bg-[#12345A] text-white shadow-xs'
-              : 'text-slate-700 hover:text-[#12345A] hover:bg-white/80'
-          }`}
-        >
-          <Layers className={`w-4 h-4 ${activeMainTab === 'practice' ? 'text-white' : 'text-slate-600'}`} />
-          <span>Practice Tests (320)</span>
-        </button>
-
-        {/* Tab 3: PYQs (100 Shifts) */}
-        <button
-          type="button"
-          onClick={() => setActiveMainTab('pyqs')}
-          className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer select-none shrink-0 ${
-            activeMainTab === 'pyqs'
-              ? 'bg-[#12345A] text-white shadow-xs'
-              : 'text-slate-700 hover:text-[#12345A] hover:bg-white/80'
-          }`}
-        >
-          <BookOpen className={`w-4 h-4 ${activeMainTab === 'pyqs' ? 'text-white' : 'text-slate-600'}`} />
-          <span>PYQs (100)</span>
-        </button>
-      </section>
-
-      {/* =========================================================================
-          SECTION: SELECT SUBJECT FOR MOCK TESTS - REAL SERVER COUNTS
-          ========================================================================= */}
-      <section className="space-y-3">
-        {/* Section Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block shrink-0" />
-            <h2 className="text-base sm:text-lg font-bold text-[#12345A] font-heading">
-              Select Subject for Mock Tests
-            </h2>
-          </div>
+        {/* =========================================================================
+            HORIZONTAL SEGMENTED TABS - Mock Tests, Practice Tests, PYQs, Topic Wise
+            ========================================================================= */}
+        <section className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-0.5 select-none">
+          {/* Tab 1: Mock Tests (75) */}
           <button
             type="button"
-            onClick={() => handleSelectSubject('all')}
-            className="text-xs sm:text-sm font-bold text-[#12345A] hover:text-[#2468B4] flex items-center gap-1 cursor-pointer"
+            onClick={() => setActiveMainTab('mocks')}
+            className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer select-none shrink-0 ${
+              activeMainTab === 'mocks'
+                ? 'bg-[#12345A] text-white shadow-md'
+                : 'bg-white/80 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+            }`}
           >
-            <span>All Subjects</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <Play className={`w-3.5 h-3.5 ${activeMainTab === 'mocks' ? 'fill-white text-white' : 'text-slate-600'}`} />
+            <span>Mock Tests (75)</span>
           </button>
-        </div>
-        <p className="text-xs text-slate-500 pl-3.5 -mt-1.5">
-          Click a subject to attempt full-length and topic-wise tests with live question pools.
-        </p>
 
-        {/* 5 Subject Cards Horizontal Scroll / Grid with Live Dynamic Badges */}
-        <div className="grid grid-cols-5 gap-2 sm:gap-3.5 pt-1 overflow-x-auto no-scrollbar">
-          {subjectCards.map((sub) => {
-            const isSelected = selectedSubject === sub.id;
-            const Icon = sub.icon;
-            return (
-              <button
-                key={sub.id}
-                type="button"
-                onClick={() => handleSelectSubject(sub.id)}
-                title={`${sub.exactCount.toLocaleString()} Verified Questions from server`}
-                className={`rounded-2xl p-2 sm:p-4 flex flex-col items-center justify-between text-center transition cursor-pointer select-none min-w-[70px] sm:min-w-0 ${
-                  sub.bgLight
-                } ${
-                  isSelected
-                    ? `${sub.borderActive} shadow-xs scale-[1.02]`
-                    : `${sub.borderNormal} hover:shadow-xs`
-                }`}
-              >
-                {/* Subject Icon */}
-                <div className="pt-1 flex items-center justify-center">
-                  <Icon className={`w-6 h-6 sm:w-8 sm:h-8 stroke-[2] ${sub.iconColor}`} />
-                </div>
+          {/* Tab 2: Practice Tests (320) */}
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('practice')}
+            className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer select-none shrink-0 ${
+              activeMainTab === 'practice'
+                ? 'bg-[#12345A] text-white shadow-md'
+                : 'bg-white/80 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+            }`}
+          >
+            <Layers className={`w-4 h-4 ${activeMainTab === 'practice' ? 'text-white' : 'text-slate-600'}`} />
+            <span>Practice Tests (320)</span>
+          </button>
 
-                {/* Subject Name */}
-                <span className="font-bold text-[10.5px] sm:text-xs text-[#182B45] leading-tight mt-1.5 sm:mt-2 mb-1.5 sm:mb-2 line-clamp-2 h-7 sm:h-8 flex items-center justify-center text-center">
-                  {sub.title}
-                </span>
+          {/* Tab 3: PYQs (100) */}
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('pyqs')}
+            className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer select-none shrink-0 ${
+              activeMainTab === 'pyqs'
+                ? 'bg-[#12345A] text-white shadow-md'
+                : 'bg-white/80 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+            }`}
+          >
+            <BookOpen className={`w-4 h-4 ${activeMainTab === 'pyqs' ? 'text-white' : 'text-slate-600'}`} />
+            <span>PYQs (100)</span>
+          </button>
 
-                {/* Bottom Pill Badge with Live Question Count from Server */}
-                <span
-                  className={`text-[9.5px] sm:text-[11px] font-bold px-2 sm:px-3 py-0.5 rounded-full whitespace-nowrap ${sub.badgeBg}`}
+          {/* Tab 4: Topic Wise (80+) */}
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('topic-wise')}
+            className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer select-none shrink-0 ${
+              activeMainTab === 'topic-wise'
+                ? 'bg-[#12345A] text-white shadow-md'
+                : 'bg-white/80 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+            }`}
+          >
+            <LayoutGrid className={`w-4 h-4 ${activeMainTab === 'topic-wise' ? 'text-white' : 'text-slate-600'}`} />
+            <span>Topic Wise (80+)</span>
+          </button>
+        </section>
+
+        {/* =========================================================================
+            SECTION: SELECT SUBJECT FOR MOCK TESTS - SQUARE CARDS WITH INCREASED WIDTH
+            ========================================================================= */}
+        <section className="space-y-3">
+          {/* Section Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block shrink-0" />
+              <h2 className="text-base sm:text-lg font-bold text-[#12345A] font-heading">
+                Select Subject for Mock Tests
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSelectSubject('all')}
+              className="text-xs sm:text-sm font-bold text-[#12345A] hover:text-[#2468B4] flex items-center gap-1 cursor-pointer"
+            >
+              <span>All Subjects</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p className="text-xs text-slate-500 pl-3.5 -mt-1.5">
+            Select a subject to attempt targeted mock tests, speed drills, and official CBT papers.
+          </p>
+
+          {/* 8 Subject Cards with Increased Width & Square Proportions */}
+          <div className="flex gap-2.5 sm:gap-3.5 overflow-x-auto no-scrollbar py-2 px-0.5 md:grid md:grid-cols-4 lg:grid-cols-8">
+            {subjectCards.map((sub) => {
+              const isSelected = selectedSubject === sub.id;
+              const Icon = sub.icon;
+              return (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => handleSelectSubject(sub.id)}
+                  title={`${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions`}
+                  className={`w-[115px] sm:w-[130px] md:w-auto aspect-square shrink-0 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-between text-center transition-all cursor-pointer select-none bg-white border ${
+                    isSelected
+                      ? 'border-2 border-[#12345A] shadow-md ring-2 ring-[#12345A]/15 scale-[1.02]'
+                      : 'border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+                  }`}
                 >
-                  {sub.questionBadge}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+                  {/* Top: Icon in colored circular container */}
+                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${sub.bgLight} flex items-center justify-center shrink-0`}>
+                    <Icon className={`w-5 h-5 sm:w-6 sm:h-6 stroke-[2] ${sub.iconColor}`} />
+                  </div>
+
+                  {/* Center: Subject Name */}
+                  <span className="font-heading font-bold text-[11px] sm:text-xs text-[#12345A] leading-tight line-clamp-2 px-1">
+                    {sub.title}
+                  </span>
+
+                  {/* Bottom: Pill Badge with Question Count */}
+                  <span
+                    className={`text-[9.5px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${sub.badgeBg}`}
+                  >
+                    {sub.questionBadge}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
       {/* =========================================================================
           SECTION: POPULAR MOCK TESTS - VERIFIED EXAM METADATA
@@ -1057,6 +1177,83 @@ export default function MockTestsHubPage() {
           </div>
         </section>
       )}
+
+      {/* =========================================================================
+          TOPIC-WISE TESTS TAB VIEW (When "Topic Wise" is active)
+          ========================================================================= */}
+      {activeMainTab === 'topic-wise' && (
+        <section className="space-y-4 pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block shrink-0" />
+                <h2 className="text-base sm:text-lg font-bold text-[#12345A] font-heading">
+                  Topic-Wise Practice Tests (80+ High-Yield Units)
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 pl-3.5 mt-0.5">
+                Target focused syllabus units, chapters, and high-weightage topics with instant evaluation.
+              </p>
+            </div>
+            {selectedSubject !== 'all' && (
+              <button
+                type="button"
+                onClick={() => handleSelectSubject('all')}
+                className="text-xs font-bold text-[#2468B4] hover:underline self-start sm:self-auto pl-3.5 sm:pl-0 cursor-pointer"
+              >
+                Clear Filter (Show All Topics)
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {allTopicWiseTests
+              .filter(
+                (item) =>
+                  selectedSubject === 'all' ||
+                  item.subjectId === selectedSubject ||
+                  (selectedSubject === 'general-knowledge' && item.subjectId === 'general-knowledge')
+              )
+              .map((topic) => (
+                <div
+                  key={topic.id}
+                  className="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs flex flex-col justify-between space-y-3 hover:shadow-md transition"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${topic.tagColor}`}>
+                        {topic.subject}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-semibold">
+                        {topic.difficulty}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-sm text-[#12345A] mt-2">
+                      {topic.name}
+                    </h3>
+                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                      <span>{topic.count} Questions</span>
+                      <span>•</span>
+                      <span>25 Mins</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span className="text-[11px] text-slate-400 font-medium">Instant Analysis</span>
+                    <Link
+                      to={topic.link}
+                      className="bg-[#12345A] hover:bg-[#2468B4] text-white px-3.5 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs active:scale-95"
+                    >
+                      <Play className="w-3 h-3 fill-white text-white" />
+                      <span>Start Test</span>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </section>
+      )}
+      </div>
     </div>
   );
 }
