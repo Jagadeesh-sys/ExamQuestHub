@@ -34,11 +34,11 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Footer Navigation Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-800">
+        {/* Footer Navigation Columns: 2-columns on mobile (Quick Links & Official Boards side-by-side), 4-cols on desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 pb-10 border-b border-slate-800">
           
           {/* Brand Column */}
-          <div className="space-y-4 md:col-span-1">
+          <div className="space-y-4 col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
                 src="/assets/aistudio/examquesthub_cap_logo.png"
@@ -72,8 +72,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-3">
+          {/* Quick Links (Col 1 on mobile) */}
+          <div className="space-y-3 col-span-1">
             <h4 className="font-heading text-sm font-semibold text-white uppercase tracking-wider text-xs">
               {t('quickLinks')}
             </h4>
@@ -111,8 +111,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Popular Examination Boards */}
-          <div className="space-y-3">
+          {/* Popular Examination Boards (Col 2 on mobile - side-by-side with Quick Links) */}
+          <div className="space-y-3 col-span-1">
             <h4 className="font-heading text-sm font-semibold text-white uppercase tracking-wider text-xs">
               Official Boards
             </h4>
@@ -186,8 +186,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legal & Editorial Policy */}
-          <div className="space-y-3">
+          {/* Legal & Editorial Policy (Spans 2 cols on mobile) */}
+          <div className="space-y-3 col-span-2 md:col-span-1 pt-2 md:pt-0">
             <h4 className="font-heading text-sm font-semibold text-white uppercase tracking-wider text-xs">
               {t('legalLinks')}
             </h4>

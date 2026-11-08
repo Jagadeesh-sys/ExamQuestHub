@@ -665,8 +665,14 @@ export default function MockTestsHubPage() {
   }, [shifts, shiftSearch]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1F224D] via-[#2D457B] via-15% via-[#BFD7F8]/40 to-[#F4F7FC] pb-20">
-      <div className="max-w-[1240px] mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-[#F4F7FC] relative pb-20 overflow-x-hidden">
+      {/* Fixed-height background gradient backdrop matching Home Page top shading merge exactly regardless of tab content height */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[480px] sm:h-[540px] bg-gradient-to-b from-[#1F224D] via-[#2D457B] via-60% via-[#BFD7F8]/40 to-[#F4F7FC] pointer-events-none"
+        aria-hidden="true"
+      />
+
+      <div className="relative z-10 max-w-[1240px] mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 space-y-4 sm:space-y-6">
         {/* Breadcrumb Navigation */}
         <div className="text-slate-200 [&_a]:text-slate-200 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-slate-400">
           <Breadcrumbs
@@ -867,8 +873,8 @@ export default function MockTestsHubPage() {
             Select a subject to attempt targeted mock tests, speed drills, and official CBT papers.
           </p>
 
-          {/* 8 Subject Cards with Increased Width & Square Proportions */}
-          <div className="flex gap-2.5 sm:gap-3.5 overflow-x-auto no-scrollbar py-2 px-0.5 md:grid md:grid-cols-4 lg:grid-cols-8">
+          {/* 8 Subject Cards - Compact Square Proportions */}
+          <div className="flex gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1.5 px-0.5 md:grid md:grid-cols-4 lg:grid-cols-8">
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
               const Icon = sub.icon;
@@ -878,25 +884,25 @@ export default function MockTestsHubPage() {
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
                   title={`${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions`}
-                  className={`w-[115px] sm:w-[130px] md:w-auto aspect-square shrink-0 rounded-2xl p-2.5 sm:p-3 flex flex-col items-center justify-between text-center transition-all cursor-pointer select-none bg-white border ${
+                  className={`w-[84px] sm:w-[94px] md:w-auto aspect-square shrink-0 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 flex flex-col items-center justify-between text-center transition-all cursor-pointer select-none bg-white border ${
                     isSelected
                       ? 'border-2 border-[#12345A] shadow-md ring-2 ring-[#12345A]/15 scale-[1.02]'
                       : 'border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
                   }`}
                 >
                   {/* Top: Icon in colored circular container */}
-                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${sub.bgLight} flex items-center justify-center shrink-0`}>
-                    <Icon className={`w-5 h-5 sm:w-6 sm:h-6 stroke-[2] ${sub.iconColor}`} />
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${sub.bgLight} flex items-center justify-center shrink-0 mt-0.5`}>
+                    <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2] ${sub.iconColor}`} />
                   </div>
 
                   {/* Center: Subject Name */}
-                  <span className="font-heading font-bold text-[11px] sm:text-xs text-[#12345A] leading-tight line-clamp-2 px-1">
+                  <span className="font-heading font-bold text-[9.5px] sm:text-[10.5px] text-[#12345A] leading-tight line-clamp-2 px-0.5">
                     {sub.title}
                   </span>
 
                   {/* Bottom: Pill Badge with Question Count */}
                   <span
-                    className={`text-[9.5px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${sub.badgeBg}`}
+                    className={`text-[8px] sm:text-[8.5px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap mb-0.5 ${sub.badgeBg}`}
                   >
                     {sub.questionBadge}
                   </span>
