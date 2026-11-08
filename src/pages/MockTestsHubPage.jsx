@@ -716,13 +716,14 @@ export default function MockTestsHubPage() {
           className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B]"
         >
           <img
-            src="/assets/aistudio/mock_hero_banner_exact.png"
+            src="/assets/aistudio/image_ef986abf.png"
             alt="Ace Your Government Exams - Real exam pattern tests, topic-wise practice, and previous year papers with detailed analysis."
             className="w-full h-auto object-cover block select-none pointer-events-none"
+            loading="eager"
           />
-          {/* Shading gradient overlays to blend seamlessly with the header background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/50 via-transparent to-[#07183B]/50 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#07183B]/60 via-transparent to-transparent pointer-events-none" />
+          {/* Subtle shading overlays for seamless merging with the page header */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/30 via-transparent to-[#07183B]/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07183B]/40 via-transparent to-transparent pointer-events-none" />
         </section>
 
         {/* =========================================================================

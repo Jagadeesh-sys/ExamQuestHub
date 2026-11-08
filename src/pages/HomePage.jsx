@@ -24,7 +24,8 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  Clock
+  Clock,
+  Play
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { subscribeToUpdates, subscribeToCurrentAffairs } from '../firebase/firestoreService.js';
@@ -52,6 +53,85 @@ export default function HomePage() {
       caScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
+
+  // 3 Featured Banners for Horizontal Scroll Carousel
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+  const bannerScrollRef = useRef(null);
+  const isHoveredRef = useRef(false);
+
+  const homeBanners = [
+    {
+      id: 'banner-govt-exams',
+      image: '/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.png',
+      alt: 'Your Next Government Exams Starts Here',
+      eyebrow: 'All Govt Exams — One Platform',
+      titleLine1: 'Your Next',
+      titleLine2: 'Government Exams',
+      titleLine3: 'Starts Here.',
+      ctaText: 'Explore Now',
+      ctaLink: '/jobs'
+    },
+    {
+      id: 'banner-mock-tests',
+      image: '/assets/aistudio/image_ef986abf.png',
+      alt: 'Ace Your Government Exams - Mock Tests & Practice Tests with Real Exam Pattern',
+      eyebrow: '10,757+ Questions • CBT Engine',
+      ctaText: 'Start Tests',
+      ctaLink: '/mocks'
+    },
+    {
+      id: 'banner-current-affairs',
+      image: '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.png',
+      alt: 'Daily Current Affairs & Monthly Editorial GK Practice',
+      eyebrow: 'Daily GK • Monthly PDF Capsules',
+      titleLine1: 'Master Daily',
+      titleLine2: 'Current Affairs',
+      titleLine3: '& GK Practice.',
+      ctaText: 'Practice GK',
+      ctaLink: '/current-affairs'
+    }
+  ];
+
+  const scrollToBanner = (index) => {
+    if (!bannerScrollRef.current) return;
+    const container = bannerScrollRef.current;
+    const bannerWidth = container.offsetWidth;
+    container.scrollTo({
+      left: index * bannerWidth,
+      behavior: 'smooth'
+    });
+    setActiveBannerIndex(index);
+  };
+
+  const handleBannerScroll = () => {
+    if (!bannerScrollRef.current) return;
+    const container = bannerScrollRef.current;
+    const bannerWidth = container.offsetWidth || 1;
+    const newIndex = Math.round(container.scrollLeft / bannerWidth);
+    if (newIndex >= 0 && newIndex < homeBanners.length && newIndex !== activeBannerIndex) {
+      setActiveBannerIndex(newIndex);
+    }
+  };
+
+  // Auto-advance banner every 5.5s unless user hovers
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (isHoveredRef.current) return;
+      setActiveBannerIndex((prev) => {
+        const next = (prev + 1) % homeBanners.length;
+        if (bannerScrollRef.current) {
+          const bannerWidth = bannerScrollRef.current.offsetWidth;
+          bannerScrollRef.current.scrollTo({
+            left: next * bannerWidth,
+            behavior: 'smooth'
+          });
+        }
+        return next;
+      });
+    }, 5500);
+
+    return () => clearInterval(timer);
+  }, [homeBanners.length]);
 
   useEffect(() => {
     setLoading(true);
@@ -198,44 +278,132 @@ export default function HomePage() {
       {/* Container matching max-w of application */}
       <div className="max-w-[1240px] mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 space-y-4 sm:space-y-6">
 
-        {/* 1. HERO BANNER - Clean Background with Live HTML/CSS Overlay */}
+        {/* 1. HERO BANNER - Horizontal Scroll Carousel with 3 Banners */}
         <section
-          aria-label="Welcome Hero"
-          className="relative w-full min-h-[145px] sm:min-h-[180px] md:min-h-[220px] aspect-[2.5/1] sm:aspect-[2.8/1] md:aspect-[3/1] rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B]"
+          aria-label="Featured Announcements and Exam Prep"
+          className="relative w-full min-h-[145px] sm:min-h-[180px] md:min-h-[220px] aspect-[2.5/1] sm:aspect-[2.8/1] md:aspect-[3/1] rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B] group"
+          onMouseEnter={() => { isHoveredRef.current = true; }}
+          onMouseLeave={() => { isHoveredRef.current = false; }}
         >
-          {/* Background Image: Clean Parliament dome, Ashoka emblem & Indian flag */}
-          <img
-            src="/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.png"
-            alt="Your Next Government Exams Starts Here"
-            className="absolute inset-0 w-full h-full object-cover object-right sm:object-center block"
-            loading="eager"
-          />
-
-          {/* Real Live Text & Button Overlay */}
-          <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-3 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
-            {/* 1. Eyebrow: Decreased font size for refined look */}
-            <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[#F2BE4F] text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wide uppercase mb-1 sm:mb-1.5">
-              <Award className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-[#F2BE4F] shrink-0" />
-              <span>All Govt Exams — One Platform</span>
+          {/* Horizontal Snap Scroll Container */}
+          <div
+            ref={bannerScrollRef}
+            onScroll={handleBannerScroll}
+            className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full h-full select-none scroll-smooth"
+          >
+            {/* Banner 1: Your Next Government Exams Starts Here */}
+            <div className="min-w-full w-full shrink-0 snap-center relative h-full">
+              <img
+                src={homeBanners[0].image}
+                alt={homeBanners[0].alt}
+                className="absolute inset-0 w-full h-full object-cover object-right sm:object-center block pointer-events-none"
+                loading="eager"
+              />
+              <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-3 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
+                <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[#F2BE4F] text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wide uppercase mb-1 sm:mb-1.5">
+                  <Award className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-[#F2BE4F] shrink-0" />
+                  <span>{homeBanners[0].eyebrow}</span>
+                </div>
+                <h2 className="font-heading font-black text-white text-[16px] sm:text-2xl md:text-3xl lg:text-[36px] leading-[1.15] tracking-tight">
+                  <span>{homeBanners[0].titleLine1}</span> <br />
+                  <span className="text-[#F2BE4F]">{homeBanners[0].titleLine2}</span> <br />
+                  <span>{homeBanners[0].titleLine3}</span>
+                </h2>
+                <div className="pt-2 sm:pt-3 md:pt-4">
+                  <Link
+                    to={homeBanners[0].ctaLink}
+                    className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-2.5 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-[10px] sm:text-xs md:text-sm shadow-md transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#F2BE4F]/50"
+                  >
+                    <span>{homeBanners[0].ctaText}</span>
+                    <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </Link>
+                </div>
+              </div>
             </div>
 
-            {/* 2. Main Headline */}
-            <h1 className="font-heading font-black text-white text-[16px] sm:text-2xl md:text-3xl lg:text-[36px] leading-[1.15] tracking-tight">
-              <span>Your Next</span> <br />
-              <span className="text-[#F2BE4F]">Government Exams</span> <br />
-              <span>Starts Here.</span>
-            </h1>
-
-            {/* 3. Functional Explore Button */}
-            <div className="pt-2 sm:pt-3 md:pt-4">
-              <Link
-                to="/jobs"
-                className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-2.5 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-[10px] sm:text-xs md:text-sm shadow-md transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#F2BE4F]/50"
-              >
-                <span>Explore Now</span>
-                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+            {/* Banner 2: Ace Your Government Exams (Mock Tests & Practice Tests) */}
+            <div className="min-w-full w-full shrink-0 snap-center relative h-full">
+              <Link to="/mocks" className="block w-full h-full relative group/b2 cursor-pointer">
+                <img
+                  src={homeBanners[1].image}
+                  alt={homeBanners[1].alt}
+                  className="w-full h-full object-cover select-none pointer-events-none"
+                  loading="lazy"
+                />
+                {/* Desktop Action Affordance */}
+                <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-6 hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-xs sm:text-sm shadow-xl transition-transform group-hover/b2:scale-105">
+                  <Play className="w-3.5 h-3.5 fill-[#0B1F3A]" />
+                  <span>Attempt Mocks</span>
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                </div>
               </Link>
             </div>
+
+            {/* Banner 3: Master Daily Current Affairs & GK */}
+            <div className="min-w-full w-full shrink-0 snap-center relative h-full">
+              <img
+                src={homeBanners[2].image}
+                alt={homeBanners[2].alt}
+                className="absolute inset-0 w-full h-full object-cover object-right sm:object-center block pointer-events-none"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/75 via-[#07183B]/30 to-transparent pointer-events-none" />
+              <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-3 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
+                <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[#F2BE4F] text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wide uppercase mb-1 sm:mb-1.5">
+                  <Newspaper className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-[#F2BE4F] shrink-0" />
+                  <span>{homeBanners[2].eyebrow}</span>
+                </div>
+                <h2 className="font-heading font-black text-white text-[16px] sm:text-2xl md:text-3xl lg:text-[36px] leading-[1.15] tracking-tight">
+                  <span>{homeBanners[2].titleLine1}</span> <br />
+                  <span className="text-[#F2BE4F]">{homeBanners[2].titleLine2}</span> <br />
+                  <span>{homeBanners[2].titleLine3}</span>
+                </h2>
+                <div className="pt-2 sm:pt-3 md:pt-4">
+                  <Link
+                    to={homeBanners[2].ctaLink}
+                    className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-2.5 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-[10px] sm:text-xs md:text-sm shadow-md transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#F2BE4F]/50"
+                  >
+                    <span>{homeBanners[2].ctaText}</span>
+                    <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Previous / Next Arrow Controls for Desktop */}
+          <button
+            type="button"
+            onClick={() => scrollToBanner((activeBannerIndex - 1 + homeBanners.length) % homeBanners.length)}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white hidden sm:flex items-center justify-center transition backdrop-blur-xs border border-white/20 cursor-pointer shadow-md"
+            aria-label="Previous banner"
+          >
+            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToBanner((activeBannerIndex + 1) % homeBanners.length)}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white hidden sm:flex items-center justify-center transition backdrop-blur-xs border border-white/20 cursor-pointer shadow-md"
+            aria-label="Next banner"
+          >
+            <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+          </button>
+
+          {/* Carousel Indicator Dots */}
+          <div className="absolute bottom-2 sm:bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full border border-white/10">
+            {homeBanners.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => scrollToBanner(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                  activeBannerIndex === idx
+                    ? 'w-5 sm:w-6 bg-[#F2BE4F]'
+                    : 'w-1.5 bg-white/50 hover:bg-white/80'
+                }`}
+              />
+            ))}
           </div>
         </section>
 
