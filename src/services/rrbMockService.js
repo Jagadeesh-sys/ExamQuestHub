@@ -189,9 +189,15 @@ let cachedShifts = null;
  * - RRB NTPC Under-Graduate 2025 papers (32 shifts, 3,200 Qs)
  * - RRB NTPC Graduate 2025 papers (47 shifts, 4,700 Qs)
  * - SSC CGL 2020 Tier-I papers (21 sets, 2,100 Qs)
- * Total: 10,000 official examination questions across 100 shifts!
+ * - SSC CGL 2026 Tier-I papers (14 shifts, 1,400 Qs)
+ * Total: 11,400 official examination questions across 114 shifts!
  */
-const RRB_DATA_FILES = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json', 'sscCgl2020Full.json'];
+const RRB_DATA_FILES = [
+  'rrbNtpc2025Full.json',
+  'rrbNtpcGraduate2025Full.json',
+  'sscCgl2020Full.json',
+  'sscCgl2026Full.json'
+];
 
 function getDataFileUrl(fileName) {
   if (typeof window === 'undefined') return `/data/${fileName}`;
@@ -412,23 +418,25 @@ export async function getQuestionsForSubject(subjectIdOrName) {
   return all.filter((q) => {
     const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
     const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
+    const qCat = (q.categoryId || '').toLowerCase();
+
+    if (cleanTarget.includes('computer') || cleanTarget.includes('cse')) {
+      return qSub.includes('computer') || qSubId.includes('computer') || qCat === 'cse';
+    }
     if (cleanTarget.includes('english')) {
-      return qSub.includes('english') || qSubId.includes('english') || (q.categoryId || '').toLowerCase() === 'english';
-    }
-    if (cleanTarget.includes('computer')) {
-      return qSub.includes('generalknowledge') && classifyGkTopic(q) === 'Computer Science';
-    }
-    if (cleanTarget.includes('gk') || cleanTarget.includes('generalknowledge') || cleanTarget.includes('generalawareness')) {
-      return qSub.includes('generalknowledge') || qSubId.includes('generalknowledge') || qSubId.includes('gk');
+      return qSub.includes('english') || qSubId.includes('english') || qCat === 'english';
     }
     if (cleanTarget.includes('science') || cleanTarget.includes('generalscience')) {
-      return qSub.includes('generalscience') || qSubId.includes('generalscience') || qSub.includes('science');
+      return qSub.includes('generalscience') || (qSub.includes('science') && !qSub.includes('computer')) || qSubId.includes('science') || qCat === 'general-science';
     }
-    if (cleanTarget.includes('quant') || cleanTarget.includes('quantitative') || cleanTarget.includes('aptitude') || cleanTarget.includes('math')) {
-      return qSub.includes('quantitative') || qSubId.includes('quantitative') || qSub.includes('quant');
+    if (cleanTarget.includes('quant') || cleanTarget.includes('math')) {
+      return qSub.includes('quant') || qSubId.includes('quant') || qCat === 'quant';
     }
-    if (cleanTarget.includes('reason') || cleanTarget.includes('reasoning') || cleanTarget.includes('intelligence')) {
-      return qSub.includes('reasoning') || qSubId.includes('reasoning');
+    if (cleanTarget.includes('reason')) {
+      return qSub.includes('reason') || qSubId.includes('reason') || qCat === 'reasoning';
+    }
+    if (cleanTarget.includes('gk') || cleanTarget.includes('generalknowledge') || cleanTarget.includes('generalawareness')) {
+      return (qSub.includes('generalknowledge') || qSubId.includes('generalknowledge') || qSubId.includes('gk') || qCat === 'gk') && !qSub.includes('computer');
     }
     return qSub.includes(cleanTarget) || cleanTarget.includes(qSub);
   });

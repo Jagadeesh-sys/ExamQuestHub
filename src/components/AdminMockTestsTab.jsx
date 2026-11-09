@@ -506,7 +506,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             Previous Year Verified Questions Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'} previous year verified questions segregated across core examination topics and 100 official examination shifts.
+            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '11,400+'} previous year verified questions segregated across core examination topics and 114 official examination shifts.
           </p>
         </div>
 
@@ -521,7 +521,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'})</span>
+            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '11,400+'})</span>
           </button>
 
           <button
@@ -533,7 +533,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Columns3 className="w-3.5 h-3.5" />
-            <span>Shifts Manager ({shifts.length >= 100 ? shifts.length : 100})</span>
+            <span>Shifts Manager ({shifts.length >= 114 ? shifts.length : 114})</span>
           </button>
 
           <button
@@ -618,12 +618,12 @@ export default function AdminMockTestsTab({ onNotify }) {
               {/* Live Statistics Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 pt-2">
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '11,400+'}</div>
                   <div className="text-[11px] text-slate-300">Total Verified Qs</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl || '2,100'}</div>
-                  <div className="text-[11px] text-slate-300">SSC CGL (21 Sets)</div>
+                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl || '3,500'}</div>
+                  <div className="text-[11px] text-slate-300">SSC CGL (35 Shifts)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
                   <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate || '4,700'}</div>
@@ -634,11 +634,11 @@ export default function AdminMockTestsTab({ onNotify }) {
                   <div className="text-[11px] text-slate-300">UG (32 Shifts)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">100</div>
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length >= 114 ? shifts.length : 114}</div>
                   <div className="text-[11px] text-slate-300">Official Shifts (CBT)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '10,757+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '11,400+'}</div>
                   <div className="text-[11px] text-slate-300">Verified &amp; Active</div>
                 </div>
               </div>

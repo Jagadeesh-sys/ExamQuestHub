@@ -6,4 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+dev-dist/
 .aistudio/
+# Large uploaded raw exam PDFs (>50MB) that exceed GitHub file limits
+public/assets/aistudio/SSC_CGL_2026_All_Shift_Papers_3eaf7686.pdf

@@ -747,16 +747,14 @@ export const RRB_CORE_SUBJECTS = [
     color: 'from-amber-600 to-amber-700',
     badge: 'GK & GA',
     topics: [
+      'Indian Polity & Constitution',
       'Indian History',
       'Geography',
-      'Indian Polity & Constitution',
       'Indian Economy',
-      'General Science',
+      'Static GK & Culture',
       'Current Affairs',
-      'Static GK',
-      'Government Schemes',
       'Environment & Ecology',
-      'Culture, Awards & Sports'
+      'Government Schemes'
     ]
   },
   {
@@ -766,7 +764,14 @@ export const RRB_CORE_SUBJECTS = [
     description: 'Analogy, Coding-Decoding, Series, Blood Relations, Direction Sense, Syllogisms & Puzzles',
     color: 'from-emerald-600 to-emerald-700',
     badge: 'Reasoning',
-    topics: ['Analogy', 'Coding-Decoding', 'Series', 'Blood Relations', 'Direction Sense', 'Syllogism', 'Venn Diagrams']
+    topics: [
+      'Series & Coding-Decoding',
+      'Blood Relations & Direction Sense',
+      'Syllogisms & Statements',
+      'Puzzles & Seating Arrangement',
+      'Analogy & Classification',
+      'Non-Verbal Reasoning'
+    ]
   },
   {
     id: 'quantitative-aptitude',
@@ -775,15 +780,23 @@ export const RRB_CORE_SUBJECTS = [
     description: 'Arithmetic, Percentage, Profit & Loss, SI/CI, Time & Work, Algebra, Geometry & Mensuration',
     color: 'from-blue-600 to-blue-700',
     badge: 'Quant',
-    topics: ['Percentage', 'Profit & Loss', 'SI & CI', 'Ratio & Proportion', 'Time & Work', 'Algebra', 'Mensuration']
+    topics: [
+      'Number System & Simplification',
+      'Percentage, Profit & Loss',
+      'Ratio, Proportion & Mixtures',
+      'Time, Speed, Distance & Work',
+      'Mensuration & Geometry',
+      'Algebra & Trigonometry',
+      'Data Interpretation'
+    ]
   },
   {
     id: 'general-science',
     title: 'General Science',
     name: 'General Science (Physics, Chemistry, Biology)',
-    description: 'Physics, Chemistry, Biology, Human Body, Scientific Principles & Tech extracted from GA',
+    description: 'Physics, Chemistry, Biology, Scientific Principles & Tech',
     color: 'from-purple-600 to-purple-700',
     badge: 'Science',
-    topics: ['Physics', 'Chemistry', 'Biology', 'Human Body', 'Scientific Principles', 'Applied Science']
+    topics: ['Physics', 'Chemistry', 'Biology']
   }
 ];

@@ -121,35 +121,35 @@ export default function MockTestsHubPage() {
     try {
       const cached = localStorage.getItem('eqh_db_mock_stats_v1');
       return cached ? JSON.parse(cached) : {
-        totalQuestions: 10757,
-        totalShifts: 100,
-        totalSubtopics: 10,
-        totalMockTests: 320,
+        totalQuestions: 11400,
+        totalShifts: 114,
+        totalSubtopics: 35,
+        totalMockTests: 350,
         subjectCounts: {
-          'general-knowledge': 4911,
-          'quantitative-aptitude': 2401,
-          'reasoning': 2156,
-          'general-science': 738,
-          'computer-science': 568,
-          'english-language': 525
+          'general-knowledge': 3875,
+          'quantitative-aptitude': 2747,
+          'reasoning': 2498,
+          'general-science': 838,
+          'computer-science': 567,
+          'english-language': 875
         },
-        source: 'Official Question Bank (10,757+ Qs • 100 Shifts)'
+        source: 'Official Question Bank (11,400+ Qs • 114 Shifts)'
       };
     } catch {
       return {
-        totalQuestions: 10757,
-        totalShifts: 100,
-        totalSubtopics: 10,
-        totalMockTests: 320,
+        totalQuestions: 11400,
+        totalShifts: 114,
+        totalSubtopics: 35,
+        totalMockTests: 350,
         subjectCounts: {
-          'general-knowledge': 4911,
-          'quantitative-aptitude': 2401,
-          'reasoning': 2156,
-          'general-science': 738,
-          'computer-science': 568,
-          'english-language': 525
+          'general-knowledge': 3875,
+          'quantitative-aptitude': 2747,
+          'reasoning': 2498,
+          'general-science': 838,
+          'computer-science': 567,
+          'english-language': 875
         },
-        source: 'Official Question Bank (10,757+ Qs • 100 Shifts)'
+        source: 'Official Question Bank (11,400+ Qs • 114 Shifts)'
       };
     }
   });
@@ -247,29 +247,29 @@ export default function MockTestsHubPage() {
 
   // 1. Total questions count derived strictly from the full question bank (Matching Admin)
   const totalQuestionsCount = useMemo(() => {
-    return '10,757+';
+    return '11,400+';
   }, []);
 
-  // 2. Unique shifts count (100 Official Shifts: 32 UG + 47 Grad + 21 SSC CGL)
+  // 2. Unique shifts count (114 Official Shifts: 32 RRB UG + 47 RRB Grad + 21 SSC CGL 2020 + 14 SSC CGL 2026)
   const uniqueShiftsCount = useMemo(() => {
-    return 100;
+    return 114;
   }, []);
 
   // 3. Unique subtopics count (Matching official syllabus units)
   const uniqueSubtopicsCount = useMemo(() => {
-    return 10;
+    return 35;
   }, []);
 
   // 4. Live subject-wise question counts calculated from official question bank
   const liveSubjectCounts = useMemo(() => {
     const sc = firestoreStats?.subjectCounts || {};
     return {
-      'general-knowledge': sc['general-knowledge'] || 4911,
-      'quantitative-aptitude': sc['quantitative-aptitude'] || 2401,
-      'reasoning': sc['reasoning'] || 2156,
-      'general-science': sc['general-science'] || 738,
-      'computer-science': sc['computer-science'] || 568,
-      'english-language': sc['english-language'] || 525
+      'general-knowledge': sc['general-knowledge'] || 3875,
+      'quantitative-aptitude': sc['quantitative-aptitude'] || 2747,
+      'reasoning': sc['reasoning'] || 2498,
+      'general-science': sc['general-science'] || 838,
+      'computer-science': sc['computer-science'] || 567,
+      'english-language': sc['english-language'] || 875
     };
   }, [firestoreStats]);
 
@@ -293,8 +293,8 @@ export default function MockTestsHubPage() {
       id: 'all',
       title: 'All Mock',
       shortTitle: 'All Mock',
-      questionBadge: formatQuestionsBadge(10757, '10.7k Qs'),
-      exactCount: 10757,
+      questionBadge: formatQuestionsBadge(11400, '11.4k Qs'),
+      exactCount: 11400,
       image3d: iconAllMock,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_all_mock.png`,
       concept: 'Golden Trophy',
@@ -323,8 +323,8 @@ export default function MockTestsHubPage() {
       id: 'english-language',
       title: 'English',
       shortTitle: 'English',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 525, '525 Qs'),
-      exactCount: liveSubjectCounts['english-language'] || 525,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 875, '875 Qs'),
+      exactCount: liveSubjectCounts['english-language'] || 875,
       image3d: iconEnglish,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_english.png`,
       concept: 'Open Book',
@@ -338,8 +338,8 @@ export default function MockTestsHubPage() {
       id: 'general-knowledge',
       title: 'General Knowledge',
       shortTitle: 'GK',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4911, '4.9k Qs'),
-      exactCount: liveSubjectCounts['general-knowledge'] || 4911,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 3875, '3.9k Qs'),
+      exactCount: liveSubjectCounts['general-knowledge'] || 3875,
       image3d: iconGeneralKnowledge,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_general_knowledge.png`,
       concept: 'Graduation Cap',
@@ -353,8 +353,8 @@ export default function MockTestsHubPage() {
       id: 'reasoning',
       title: 'Reasoning',
       shortTitle: 'Reasoning',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2156, '2.1k Qs'),
-      exactCount: liveSubjectCounts['reasoning'] || 2156,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2498, '2.5k Qs'),
+      exactCount: liveSubjectCounts['reasoning'] || 2498,
       image3d: iconReasoning,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_reasoning.png`,
       concept: 'Brain with Gears',
@@ -368,8 +368,8 @@ export default function MockTestsHubPage() {
       id: 'quantitative-aptitude',
       title: 'Quant / Maths',
       shortTitle: 'Quant',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2401, '2.4k Qs'),
-      exactCount: liveSubjectCounts['quantitative-aptitude'] || 2401,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2747, '2.7k Qs'),
+      exactCount: liveSubjectCounts['quantitative-aptitude'] || 2747,
       image3d: iconQuant,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_quant.png`,
       concept: 'Calculator',
@@ -383,8 +383,8 @@ export default function MockTestsHubPage() {
       id: 'general-science',
       title: 'General Science',
       shortTitle: 'Science',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 738, '738 Qs'),
-      exactCount: liveSubjectCounts['general-science'] || 738,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 838, '838 Qs'),
+      exactCount: liveSubjectCounts['general-science'] || 838,
       image3d: iconScience,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_science.png`,
       concept: 'Flask and Microscope',
@@ -398,8 +398,8 @@ export default function MockTestsHubPage() {
       id: 'computer-science',
       title: 'Computer Science',
       shortTitle: 'Computer',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 568, '568 Qs'),
-      exactCount: liveSubjectCounts['computer-science'] || 568,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 567, '567 Qs'),
+      exactCount: liveSubjectCounts['computer-science'] || 567,
       image3d: iconComputer,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_computer.png`,
       concept: 'Coding Laptop',
@@ -790,7 +790,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              10,757+
+              11,400+
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
               Questions
@@ -801,7 +801,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              320+
+              350+
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
               Mock Tests
@@ -812,7 +812,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              100
+              114
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1 leading-tight text-center">
               Exam Shifts (CBT)
@@ -823,7 +823,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              10
+              35
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
               Sub Topics
@@ -831,17 +831,28 @@ export default function MockTestsHubPage() {
           </div>
         </section>
 
-        {/* Verified Server Connection Status */}
-        <div className="flex items-center justify-between px-2 pt-0.5 text-[11px] text-slate-500">
+        {/* Verified Server Connection Status & Push Action */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 pt-0.5 text-[11px] text-slate-500 gap-2">
           <div className="flex items-center gap-1.5 font-medium text-slate-600">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>
-              Server Bank: <strong className="text-[#12345A] font-bold">10,757+</strong> Official Questions Across <strong className="text-[#12345A] font-bold">100</strong> Shifts (CBT)
+              Server Bank: <strong className="text-[#12345A] font-bold">11,400+</strong> Official Questions Across <strong className="text-[#12345A] font-bold">114</strong> Shifts (CBT)
             </span>
           </div>
-          <span className="hidden sm:inline-block text-[10.5px] text-slate-400 font-medium">
-            Verified Official Gazette &amp; CBT Answer Keys
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline-block text-[10.5px] text-slate-400 font-medium">
+              Verified Official Gazette &amp; CBT Answer Keys
+            </span>
+            <button
+              type="button"
+              onClick={handlePushAllToServer}
+              disabled={isPushingServer}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#12345A] hover:bg-[#0B1F3A] text-white text-[10.5px] font-bold transition shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              <CloudUpload className="w-3 h-3 text-[#F2BE4F]" />
+              <span>{isPushingServer ? 'Syncing Server...' : 'Push to Server'}</span>
+            </button>
+          </div>
         </div>
 
         {/* =========================================================================
