@@ -971,13 +971,13 @@ export default function MockTestsHubPage() {
             </div>
           </div>
 
-          {/* Cards Container:
-              - Mobile (< md): Horizontal scroll row with 4 cards visible per screen width (gap-1.5, each card (100% - 18px) / 4)
-              - Laptop (>= md): Grid showing all 8 cards at once (4 columns x 2 rows)
+          {/* Circular Subject Bubbles Container:
+              - Mobile (< md): Horizontal scroll row with exactly 4 circular subjects visible per screen width
+              - Laptop (>= md): Single clean row of 8 circular subjects (all at once)
           */}
           <div
             ref={subjectScrollRef}
-            className="flex md:grid md:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 lg:gap-3.5 overflow-x-auto md:overflow-visible no-scrollbar py-1.5 px-0.5 select-none scroll-smooth snap-x snap-mandatory"
+            className="flex md:grid md:grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 lg:gap-4 overflow-x-auto md:overflow-visible no-scrollbar py-2 px-0.5 select-none scroll-smooth snap-x snap-mandatory bg-white/60 sm:bg-white/80 p-2.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-2xs"
           >
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
@@ -987,73 +987,53 @@ export default function MockTestsHubPage() {
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
                   title={`${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions`}
-                  className={`group relative rounded-[15px] sm:rounded-[18px] md:rounded-[22px] p-1.5 sm:p-2.5 md:p-3 flex flex-col justify-between transition-all duration-200 cursor-pointer select-none text-left min-h-[102px] sm:min-h-[114px] md:min-h-[124px] shrink-0 basis-[calc((100%-18px)/4)] min-w-[calc((100%-18px)/4)] max-w-[calc((100%-18px)/4)] md:basis-auto md:min-w-0 md:max-w-none md:shrink snap-start ${
-                    isSelected
-                      ? 'bg-gradient-to-br from-[#0B2147] via-[#0D2754] to-[#081836] border-2 border-[#1E3A6D] shadow-md ring-2 ring-blue-500/25 scale-[1.01]'
-                      : `${sub.cardBg} ${sub.cardBorder} shadow-2xs hover:shadow-md hover:-translate-y-0.5`
-                  }`}
+                  className="group flex flex-col items-center shrink-0 basis-[calc((100%-18px)/4)] min-w-[calc((100%-18px)/4)] max-w-[calc((100%-18px)/4)] md:basis-auto md:min-w-0 md:max-w-none md:shrink cursor-pointer select-none snap-start p-1 sm:p-1.5 rounded-2xl transition-all duration-200"
                 >
-                  {/* Golden Corner Clip for Active Card */}
-                  {isSelected && (
-                    <div className="absolute top-0 right-0 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 overflow-hidden rounded-tr-[15px] sm:rounded-tr-[18px] md:rounded-tr-[22px] pointer-events-none">
-                      <div className="w-6 h-6 md:w-8 md:h-8 bg-gradient-to-br from-[#F2BE4F] to-[#E0AC3C] -rotate-45 -translate-y-3.5 md:-translate-y-4 translate-x-1.5 md:translate-x-2 shadow-xs" />
-                    </div>
-                  )}
-
-                  {/* Top Row: Left 3D Subject Icon + Right Watermark */}
-                  <div className="flex items-start justify-between w-full">
-                    {/* Consistent 3D Educational Icon */}
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-11 md:h-11 flex items-center justify-center shrink-0">
+                  {/* Circular 3D Icon Bubble */}
+                  <div className="relative">
+                    <div
+                      className={`w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-full flex items-center justify-center p-2.5 sm:p-3 transition-all duration-200 ${
+                        isSelected
+                          ? 'ring-3 ring-[#12345A] ring-offset-2 scale-105 shadow-md bg-gradient-to-br from-[#0B2147] via-[#0D2754] to-[#081836] border-2 border-[#F2BE4F]'
+                          : `${sub.cardBg} ${sub.cardBorder} shadow-2xs group-hover:scale-105 group-hover:shadow-md`
+                      }`}
+                    >
                       <img
                         src={sub.icon3d}
                         alt={sub.title}
-                        className="w-full h-full object-contain filter drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
+                        className="w-full h-full object-contain filter drop-shadow-xs transition-transform duration-200 group-hover:scale-110"
                         loading="lazy"
                       />
                     </div>
 
-                    {/* Decorative Watermark */}
-                    <div className="shrink-0 overflow-hidden -mr-0.5 -mt-0.5 opacity-60 sm:opacity-80 md:opacity-100">
-                      {renderWatermark(sub.watermarkType, isSelected)}
-                    </div>
+                    {/* Active Golden Checkmark Badge */}
+                    {isSelected && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#F2BE4F] text-[#0B2147] border-2 border-white flex items-center justify-center shadow-xs">
+                        <Check className="w-3 h-3 stroke-[3]" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Middle: Subject Title */}
-                  <div className="my-0.5 sm:my-1 md:my-1.5">
-                    <h3
-                      className={`font-heading font-black text-[9.5px] sm:text-[11px] md:text-sm tracking-tight leading-tight line-clamp-1 ${
-                        isSelected ? 'text-white' : 'text-[#0F172A]'
-                      }`}
-                    >
-                      {sub.title}
-                    </h3>
-                  </div>
+                  {/* Subject Title */}
+                  <span
+                    className={`font-heading font-black text-[10px] sm:text-xs md:text-[13px] tracking-tight leading-tight text-center mt-1.5 sm:mt-2 line-clamp-1 max-w-full px-0.5 transition-colors ${
+                      isSelected ? 'text-[#12345A] font-black' : 'text-[#0F172A] group-hover:text-[#12345A]'
+                    }`}
+                  >
+                    {sub.title}
+                  </span>
 
-                  {/* Bottom Row: Questions Pill + Arrow Button */}
-                  <div className="flex items-center justify-between w-full pt-0.5 gap-0.5">
-                    {/* Questions Pill with Layers Icon */}
-                    <div
-                      className={`inline-flex items-center gap-0.5 px-1 sm:px-1.5 md:px-2 py-0.5 rounded-full text-[7.5px] sm:text-[9px] md:text-[10.5px] font-bold shadow-2xs backdrop-blur-xs transition-colors truncate max-w-[calc(100%-1.1rem)] md:max-w-[76%] ${
-                        isSelected
-                          ? 'bg-white/10 text-white border border-white/10'
-                          : sub.badgeStyle
-                      }`}
-                    >
-                      <Layers className={`w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 shrink-0 ${isSelected ? 'text-white/80' : 'text-slate-600'}`} />
-                      <span className="truncate">{sub.questionBadge}</span>
-                    </div>
-
-                    {/* Circular Arrow Button */}
-                    <div
-                      className={`w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 md:w-6 md:h-6 rounded-full flex items-center justify-center font-black transition-all group-hover:scale-110 shadow-2xs shrink-0 ${
-                        isSelected
-                          ? 'bg-[#F2BE4F] text-[#0B2147] shadow-xs'
-                          : sub.arrowBg
-                      }`}
-                    >
-                      <ArrowRight className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 stroke-[2.8]" />
-                    </div>
-                  </div>
+                  {/* Questions Count Pill */}
+                  <span
+                    className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] md:text-[10px] font-bold mt-1 shadow-2xs transition-colors max-w-full truncate ${
+                      isSelected
+                        ? 'bg-[#12345A] text-white'
+                        : 'bg-white text-slate-600 border border-slate-200/80 group-hover:bg-slate-100'
+                    }`}
+                  >
+                    <Layers className="w-2.5 h-2.5 shrink-0" />
+                    <span className="truncate">{sub.questionBadge}</span>
+                  </span>
                 </button>
               );
             })}
