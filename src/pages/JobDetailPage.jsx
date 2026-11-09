@@ -84,7 +84,11 @@ export default function JobDetailPage() {
     const text = encodeURIComponent(
       `*${getLocalized(job?.title)}*\nOrganization: ${getLocalized(job?.organization)}\nLast Date: ${job?.deadline || 'Refer Official Notice'}\nVerified Details: ${window.location.href}`
     );
-    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    const link = document.createElement('a');
+    link.href = `https://api.whatsapp.com/send?text=${text}`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.click();
   };
 
   if (loading) {

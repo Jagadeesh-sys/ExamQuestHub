@@ -19,13 +19,6 @@ export default function MockTestCard({ mock }) {
     navigate(`/mocks/${mock.id}?mode=solutions`);
   };
 
-  const handleOpenPdf = (e) => {
-    e.stopPropagation();
-    if (mock.pdfUrl) {
-      window.open(mock.pdfUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
-
   return (
     <div
       className={`rounded-[28px] border ${mock.cardBorder || 'border-[#E3EAF2]'} ${
@@ -43,14 +36,16 @@ export default function MockTestCard({ mock }) {
         </span>
 
         {mock.pdfUrl && (
-          <button
-            onClick={handleOpenPdf}
-            title={`View / Download ${mock.pdfFileName || 'PDF'}`}
+          <a
+            href={mock.pdfUrl}
+            download={mock.pdfFileName || `${mock.title}.pdf`}
+            onClick={(e) => e.stopPropagation()}
+            title={`Download ${mock.pdfFileName || 'PDF'}`}
             className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-slate-700 shadow-2xs hover:bg-slate-100 hover:text-black transition-all border border-black/5 cursor-pointer"
-            aria-label="View authentic PDF"
+            aria-label="Download authentic PDF"
           >
             <FileText className="w-4 h-4" />
-          </button>
+          </a>
         )}
       </div>
 
