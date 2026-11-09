@@ -1008,7 +1008,7 @@ export default function MockTestsHubPage() {
             </div>
           </div>
 
-          {/* Laptop & Desktop Display: All 8 subjects displayed in a single row */}
+          {/* Laptop & Desktop Display: All 8 subjects displayed in a single row with square shape */}
           <div className="hidden sm:grid sm:grid-cols-8 gap-1.5 md:gap-2 lg:gap-3 select-none">
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
@@ -1018,15 +1018,15 @@ export default function MockTestsHubPage() {
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
                   title={`${sub.title} (${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions)`}
-                  className={`group relative flex flex-col items-center justify-between p-2.5 sm:p-2.5 md:p-3 lg:p-3.5 rounded-2xl lg:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center min-h-[148px] sm:min-h-[155px] lg:min-h-[175px] ${
+                  className={`group relative flex flex-col items-center justify-between p-2 sm:p-2 md:p-2.5 lg:p-3 rounded-2xl lg:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center aspect-square ${
                     isSelected
                       ? sub.selectedCardClass
                       : `${sub.cardBorder} hover:shadow-lg hover:-translate-y-1 shadow-2xs`
                   }`}
                 >
-                  {/* PROMINENT CIRCULAR 3D ICON CONTAINER */}
+                  {/* PROMINENT SQUARE 3D ICON CONTAINER */}
                   <div
-                    className={`w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full p-1 sm:p-1.5 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 shrink-0 ${
+                    className={`w-11 h-11 sm:w-11 sm:h-11 md:w-13 md:h-13 lg:w-15 lg:h-15 rounded-xl sm:rounded-2xl p-1 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 shrink-0 aspect-square ${
                       isSelected
                         ? 'border-[#12345A] ring-3 ring-[#12345A]/15 shadow-md shadow-blue-900/10 scale-105'
                         : 'border-slate-200/90 group-hover:border-[#12345A]/40 group-hover:scale-105 shadow-2xs'
@@ -1035,7 +1035,7 @@ export default function MockTestsHubPage() {
                     <img
                       src={sub.image3d}
                       alt={sub.title}
-                      className="w-full h-full object-contain rounded-full transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                      className="w-full h-full object-contain rounded-lg sm:rounded-xl transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
                       loading="lazy"
                       onError={(e) => {
                         if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
@@ -1045,10 +1045,10 @@ export default function MockTestsHubPage() {
                     />
                   </div>
 
-                  {/* SUBJECT TEXT DIRECTLY BELOW CIRCULAR ICON */}
-                  <div className="w-full flex-1 flex flex-col items-center justify-center mt-2 mb-1">
+                  {/* SUBJECT TEXT DIRECTLY BELOW SQUARE ICON */}
+                  <div className="w-full flex-1 flex flex-col items-center justify-center my-1 min-w-0">
                     <h3
-                      className={`font-heading font-black text-[11px] sm:text-xs md:text-[13px] lg:text-[14px] tracking-tight leading-tight text-center transition-colors line-clamp-1 max-w-full px-0.5 ${
+                      className={`font-heading font-black text-[10.5px] sm:text-[11px] md:text-xs lg:text-[13px] tracking-tight leading-tight text-center transition-colors line-clamp-1 max-w-full px-0.5 truncate ${
                         isSelected ? 'text-[#12345A]' : 'text-[#0F172A] group-hover:text-[#12345A]'
                       }`}
                     >
@@ -1058,20 +1058,20 @@ export default function MockTestsHubPage() {
 
                   {/* QUESTION COUNT BADGE DIRECTLY BELOW TEXT */}
                   <span
-                    className={`inline-flex items-center justify-center gap-1 px-1.5 sm:px-2 py-0.5 lg:py-1 rounded-full text-[9px] md:text-[10px] lg:text-[11px] font-bold transition-all max-w-full truncate ${
+                    className={`inline-flex items-center justify-center gap-1 px-1.5 md:px-2 py-0.5 rounded-full text-[8.5px] md:text-[9.5px] lg:text-[10px] font-bold transition-all max-w-full truncate leading-none ${
                       isSelected
                         ? sub.selectedBadgeClass
                         : `${sub.badgeClass} group-hover:shadow-2xs`
                     }`}
                   >
-                    <Layers className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0" />
+                    <Layers className="w-2.5 h-2.5 shrink-0" />
                     <span className="truncate">{sub.questionBadge.replace(' Questions', ' Qs')}</span>
                   </span>
 
                   {/* ACTIVE CORNER BADGE */}
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
-                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[3]" />
+                    <div className="absolute top-1.5 right-1.5 w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                      <Check className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />
                     </div>
                   )}
                 </button>
