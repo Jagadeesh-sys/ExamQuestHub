@@ -31,7 +31,9 @@ import {
   Flame,
   Newspaper,
   BookMarked,
-  Trophy
+  Trophy,
+  Atom,
+  Cpu
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -255,7 +257,7 @@ export default function MockTestsHubPage() {
     return `${count} Qs`;
   };
 
-  // 8 Subject cards configured with real live server counts (All Mock, Current Affairs, English, GK, etc.)
+  // 8 Subject cards configured with real live server counts and professional app-grade styling
   const subjectCards = [
     {
       id: 'all',
@@ -263,10 +265,7 @@ export default function MockTestsHubPage() {
       questionBadge: '10.7k Qs',
       exactCount: 10757,
       icon: Trophy,
-      iconColor: 'text-[#12345A]',
-      bgLight: 'bg-[#F0F4FA]',
-      borderNormal: 'border-slate-200/90 hover:border-[#12345A]',
-      borderActive: 'border-2 border-[#12345A]',
+      iconBg: 'bg-gradient-to-br from-[#12345A] to-[#2468B4]',
       badgeBg: 'bg-[#E2E8F0] text-[#0F172A]'
     },
     {
@@ -274,11 +273,8 @@ export default function MockTestsHubPage() {
       title: 'Current Affairs',
       questionBadge: '3.5k Qs',
       exactCount: 3500,
-      icon: Newspaper,
-      iconColor: 'text-[#DC2626]',
-      bgLight: 'bg-[#FEF2F2]',
-      borderNormal: 'border-red-100 hover:border-red-300',
-      borderActive: 'border-2 border-[#DC2626]',
+      icon: Flame,
+      iconBg: 'bg-gradient-to-br from-rose-500 to-red-600',
       badgeBg: 'bg-[#FEE2E2] text-[#991B1B]'
     },
     {
@@ -287,10 +283,7 @@ export default function MockTestsHubPage() {
       questionBadge: formatBadgeCount(liveSubjectCounts['english-language'] || 525),
       exactCount: liveSubjectCounts['english-language'] || 525,
       icon: BookMarked,
-      iconColor: 'text-[#2563EB]',
-      bgLight: 'bg-[#EFF6FF]',
-      borderNormal: 'border-blue-100 hover:border-blue-300',
-      borderActive: 'border-2 border-[#2563EB]',
+      iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
       badgeBg: 'bg-[#DBEAFE] text-[#1E40AF]'
     },
     {
@@ -299,10 +292,7 @@ export default function MockTestsHubPage() {
       questionBadge: formatBadgeCount(liveSubjectCounts['general-knowledge']),
       exactCount: liveSubjectCounts['general-knowledge'],
       icon: Landmark,
-      iconColor: 'text-[#D97706]',
-      bgLight: 'bg-[#FFF9EC]',
-      borderNormal: 'border-amber-200/80 hover:border-[#F2BE4F]',
-      borderActive: 'border-2 border-[#F2BE4F]',
+      iconBg: 'bg-gradient-to-br from-amber-500 to-amber-600',
       badgeBg: 'bg-[#FEF08A] text-[#854D0E]'
     },
     {
@@ -311,10 +301,7 @@ export default function MockTestsHubPage() {
       questionBadge: formatBadgeCount(liveSubjectCounts['reasoning']),
       exactCount: liveSubjectCounts['reasoning'],
       icon: Brain,
-      iconColor: 'text-[#4F46E5]',
-      bgLight: 'bg-[#F5F3FF]',
-      borderNormal: 'border-indigo-100 hover:border-indigo-300',
-      borderActive: 'border-2 border-[#4F46E5]',
+      iconBg: 'bg-gradient-to-br from-indigo-500 to-purple-600',
       badgeBg: 'bg-[#EDE9FE] text-[#4338CA]'
     },
     {
@@ -323,10 +310,7 @@ export default function MockTestsHubPage() {
       questionBadge: formatBadgeCount(liveSubjectCounts['quantitative-aptitude']),
       exactCount: liveSubjectCounts['quantitative-aptitude'],
       icon: Calculator,
-      iconColor: 'text-[#059669]',
-      bgLight: 'bg-[#F0FDF4]',
-      borderNormal: 'border-emerald-100 hover:border-emerald-300',
-      borderActive: 'border-2 border-[#059669]',
+      iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
       badgeBg: 'bg-[#DCFCE7] text-[#166534]'
     },
     {
@@ -334,11 +318,8 @@ export default function MockTestsHubPage() {
       title: 'General Science',
       questionBadge: formatBadgeCount(liveSubjectCounts['general-science']),
       exactCount: liveSubjectCounts['general-science'],
-      icon: FlaskConical,
-      iconColor: 'text-[#9333EA]',
-      bgLight: 'bg-[#FAF5FF]',
-      borderNormal: 'border-purple-100 hover:border-purple-300',
-      borderActive: 'border-2 border-[#9333EA]',
+      icon: Atom,
+      iconBg: 'bg-gradient-to-br from-purple-500 to-violet-600',
       badgeBg: 'bg-[#F3E8FF] text-[#6B21A8]'
     },
     {
@@ -346,11 +327,8 @@ export default function MockTestsHubPage() {
       title: 'Computer Science',
       questionBadge: formatBadgeCount(liveSubjectCounts['computer-science']),
       exactCount: liveSubjectCounts['computer-science'],
-      icon: Code,
-      iconColor: 'text-[#0284C7]',
-      bgLight: 'bg-[#F0F9FF]',
-      borderNormal: 'border-sky-100 hover:border-sky-300',
-      borderActive: 'border-2 border-[#0284C7]',
+      icon: Cpu,
+      iconBg: 'bg-gradient-to-br from-sky-500 to-cyan-600',
       badgeBg: 'bg-[#E0F2FE] text-[#075985]'
     }
   ];
@@ -874,8 +852,8 @@ export default function MockTestsHubPage() {
             Select a subject to attempt targeted mock tests, speed drills, and official CBT papers.
           </p>
 
-          {/* 8 Subject Cards - Compact Square Proportions */}
-          <div className="flex gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1.5 px-0.5 md:grid md:grid-cols-4 lg:grid-cols-8">
+          {/* 8 Subject Cards - Professional Native Mobile & Mobile App Styling */}
+          <div className="flex gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-2 px-0.5 md:grid md:grid-cols-4 lg:grid-cols-8 select-none">
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
               const Icon = sub.icon;
@@ -885,25 +863,25 @@ export default function MockTestsHubPage() {
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
                   title={`${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions`}
-                  className={`w-[84px] sm:w-[94px] md:w-auto aspect-square shrink-0 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 flex flex-col items-center justify-between text-center transition-all cursor-pointer select-none bg-white border ${
+                  className={`w-[86px] sm:w-[96px] md:w-auto aspect-square shrink-0 rounded-2xl p-2 flex flex-col items-center justify-between text-center transition-all duration-150 cursor-pointer select-none bg-white border ${
                     isSelected
-                      ? 'border-2 border-[#12345A] shadow-md ring-2 ring-[#12345A]/15 scale-[1.02]'
-                      : 'border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+                      ? 'border-2 border-[#12345A] shadow-md ring-3 ring-[#12345A]/15 scale-[1.03] bg-gradient-to-b from-white to-[#F0F4FA]'
+                      : 'border-slate-200/80 hover:border-slate-300 hover:shadow-xs hover:scale-[1.01]'
                   }`}
                 >
-                  {/* Top: Icon in colored circular container */}
-                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${sub.bgLight} flex items-center justify-center shrink-0 mt-0.5`}>
-                    <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2] ${sub.iconColor}`} />
+                  {/* Top: Icon in colored container with soft gradient and shadow */}
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl ${sub.iconBg} flex items-center justify-center shrink-0 mt-0.5 shadow-2xs`}>
+                    <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2] text-white" />
                   </div>
 
                   {/* Center: Subject Name */}
-                  <span className="font-heading font-bold text-[9.5px] sm:text-[10.5px] text-[#12345A] leading-tight line-clamp-2 px-0.5">
+                  <span className="font-heading font-extrabold text-[10px] sm:text-[11px] text-[#12345A] leading-tight line-clamp-2 px-0.5">
                     {sub.title}
                   </span>
 
                   {/* Bottom: Pill Badge with Question Count */}
                   <span
-                    className={`text-[8px] sm:text-[8.5px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap mb-0.5 ${sub.badgeBg}`}
+                    className={`text-[8px] sm:text-[8.5px] font-black px-2 py-0.5 rounded-full whitespace-nowrap mb-0.5 shadow-2xs ${sub.badgeBg}`}
                   >
                     {sub.questionBadge}
                   </span>
