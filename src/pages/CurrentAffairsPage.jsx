@@ -72,8 +72,8 @@ export default function CurrentAffairsPage() {
   }, []);
 
   return (
-    <div className="max-w-[1240px] mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-8">
-      {/* 1. BREADCRUMBS (Hidden on mobile when Reels is active) */}
+    <div className="max-w-[1240px] mx-auto px-3 sm:px-6 py-3 sm:py-8 pb-24 sm:pb-8 space-y-4 sm:space-y-8">
+      {/* 1. BREADCRUMBS (Hidden on mobile) */}
       <div className="hidden sm:flex items-center justify-between">
         <Breadcrumbs
           items={[
@@ -81,6 +81,19 @@ export default function CurrentAffairsPage() {
             { label: t('navCurrentAffairs') || 'Current Affairs' }
           ]}
         />
+      </div>
+
+      {/* Mobile Page Header Bar */}
+      <div className="sm:hidden flex items-center justify-between pt-1 pb-0.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#12345A] flex items-center justify-center border border-blue-100/80 shadow-2xs">
+            <Newspaper className="w-4.5 h-4.5 text-[#2468B4]" />
+          </div>
+          <div>
+            <h1 className="font-heading font-black text-base text-[#12345A] leading-tight">Current Affairs &amp; GK</h1>
+            <p className="text-[10.5px] text-slate-500 font-semibold">Daily Verified Exam News &amp; MCQs</p>
+          </div>
+        </div>
       </div>
 
       {/* 2. DEDICATED CURRENT AFFAIRS HERO BANNER (Desktop & Classic View) */}

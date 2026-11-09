@@ -315,111 +315,119 @@ export default function MockTestsHubPage() {
     }
   };
 
-  // 8 Subject cards configured with rich design and consistent 3D educational icon family
+  // 8 Subject cards with professional domain-related icons, vibrant styling, and live question counts
   const subjectCards = [
     {
       id: 'all',
       title: 'All Mock',
-      questionBadge: formatQuestionsBadge(10757, '10.2K Qs'),
+      questionBadge: formatQuestionsBadge(10757, '10.7k Qs'),
       exactCount: 10757,
-      icon3d: '/assets/aistudio/subject_icons/icon_all_mock.png',
-      cardBg: 'bg-gradient-to-br from-[#0B2147] via-[#0D2754] to-[#081836]',
-      cardBorder: 'border-2 border-[#1E3A6D] shadow-md ring-1 ring-blue-500/20',
-      badgeStyle: 'bg-white/10 text-white border border-white/10',
-      arrowBg: 'bg-[#F2BE4F] text-[#0B2147]',
-      watermarkType: 'laurel',
-      hasGoldCorner: true
+      icon: Trophy,
+      themeColor: '#12345A',
+      iconContainerClass: 'bg-blue-50/90 text-[#12345A] border border-blue-200/90 group-hover:bg-[#12345A] group-hover:text-[#F2BE4F] group-hover:border-[#12345A]',
+      selectedIconClass: 'bg-[#12345A] text-[#F2BE4F] border border-[#F2BE4F]/40 shadow-md shadow-blue-900/20',
+      badgeClass: 'bg-blue-50 text-blue-900 border border-blue-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-blue-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-blue-50/40 via-white to-white'
     },
     {
       id: 'current-affairs',
       title: 'Current Affairs',
-      questionBadge: formatQuestionsBadge(3500, '2.3K Qs'),
+      questionBadge: formatQuestionsBadge(3500, '3.5k Qs'),
       exactCount: 3500,
-      icon3d: '/assets/aistudio/subject_icons/icon_current_affairs.png',
-      cardBg: 'bg-gradient-to-br from-[#FFF5F5] via-[#FFF1F2] to-[#FFE8E8]',
-      cardBorder: 'border border-rose-200/80 hover:border-rose-300',
-      badgeStyle: 'bg-rose-100/90 text-rose-950 border border-rose-200/60',
-      arrowBg: 'bg-rose-100 text-rose-600 hover:bg-rose-500 hover:text-white',
-      watermarkType: 'globe',
-      hasGoldCorner: false
+      icon: Newspaper,
+      themeColor: '#E11D48',
+      iconContainerClass: 'bg-rose-50/90 text-rose-600 border border-rose-200/90 group-hover:bg-rose-600 group-hover:text-white group-hover:border-rose-600',
+      selectedIconClass: 'bg-rose-600 text-white border border-rose-400 shadow-md shadow-rose-900/20',
+      badgeClass: 'bg-rose-50 text-rose-900 border border-rose-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-rose-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-rose-50/30 via-white to-white'
     },
     {
       id: 'english-language',
       title: 'English',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 1800, '1.8K Qs'),
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 525, '525 Qs'),
       exactCount: liveSubjectCounts['english-language'] || 525,
-      icon3d: '/assets/aistudio/subject_icons/icon_english.png',
-      cardBg: 'bg-gradient-to-br from-[#F5F8FF] via-[#EFF5FF] to-[#E5EFFF]',
-      cardBorder: 'border border-blue-200/80 hover:border-blue-300',
-      badgeStyle: 'bg-blue-100/90 text-blue-950 border border-blue-200/60',
-      arrowBg: 'bg-blue-100 text-blue-600 hover:bg-blue-500 hover:text-white',
-      watermarkType: 'typography',
-      hasGoldCorner: false
+      icon: BookOpen,
+      themeColor: '#2563EB',
+      iconContainerClass: 'bg-blue-50/90 text-blue-600 border border-blue-200/90 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600',
+      selectedIconClass: 'bg-blue-600 text-white border border-blue-400 shadow-md shadow-blue-900/20',
+      badgeClass: 'bg-blue-50 text-blue-900 border border-blue-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-blue-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-blue-50/30 via-white to-white'
     },
     {
       id: 'general-knowledge',
       title: 'General Knowledge',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4500, '4.5K Qs'),
-      exactCount: liveSubjectCounts['general-knowledge'],
-      icon3d: '/assets/aistudio/subject_icons/icon_general_knowledge.png',
-      cardBg: 'bg-gradient-to-br from-[#FFFDF5] via-[#FFFBEB] to-[#FEF3C7]/60',
-      cardBorder: 'border border-amber-200/80 hover:border-amber-300',
-      badgeStyle: 'bg-amber-100/90 text-amber-950 border border-amber-200/60',
-      arrowBg: 'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white',
-      watermarkType: 'bulb',
-      hasGoldCorner: false
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4911, '4.9k Qs'),
+      exactCount: liveSubjectCounts['general-knowledge'] || 4911,
+      icon: Landmark,
+      themeColor: '#D97706',
+      iconContainerClass: 'bg-amber-50/90 text-amber-700 border border-amber-200/90 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500',
+      selectedIconClass: 'bg-amber-500 text-white border border-amber-400 shadow-md shadow-amber-900/20',
+      badgeClass: 'bg-amber-50 text-amber-900 border border-amber-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-amber-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-amber-50/30 via-white to-white'
     },
     {
       id: 'reasoning',
       title: 'Reasoning',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 1400, '1.4K Qs'),
-      exactCount: liveSubjectCounts['reasoning'],
-      icon3d: '/assets/aistudio/subject_icons/icon_reasoning.png',
-      cardBg: 'bg-gradient-to-br from-[#FAF7FF] via-[#F5EEFF] to-[#EDE4FF]',
-      cardBorder: 'border border-purple-200/80 hover:border-purple-300',
-      badgeStyle: 'bg-purple-100/90 text-purple-950 border border-purple-200/60',
-      arrowBg: 'bg-purple-100 text-purple-600 hover:bg-purple-600 hover:text-white',
-      watermarkType: 'puzzle',
-      hasGoldCorner: false
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2156, '2.1k Qs'),
+      exactCount: liveSubjectCounts['reasoning'] || 2156,
+      icon: Brain,
+      themeColor: '#9333EA',
+      iconContainerClass: 'bg-purple-50/90 text-purple-600 border border-purple-200/90 group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-600',
+      selectedIconClass: 'bg-purple-600 text-white border border-purple-400 shadow-md shadow-purple-900/20',
+      badgeClass: 'bg-purple-50 text-purple-900 border border-purple-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-purple-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-purple-50/30 via-white to-white'
     },
     {
       id: 'quantitative-aptitude',
       title: 'Quant / Maths',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 1900, '1.9K Qs'),
-      exactCount: liveSubjectCounts['quantitative-aptitude'],
-      icon3d: '/assets/aistudio/subject_icons/icon_quant.png',
-      cardBg: 'bg-gradient-to-br from-[#F2FBF6] via-[#ECFDF5] to-[#D1FAE5]/60',
-      cardBorder: 'border border-emerald-200/80 hover:border-emerald-300',
-      badgeStyle: 'bg-emerald-100/90 text-emerald-950 border border-emerald-200/60',
-      arrowBg: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white',
-      watermarkType: 'math',
-      hasGoldCorner: false
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2401, '2.4k Qs'),
+      exactCount: liveSubjectCounts['quantitative-aptitude'] || 2401,
+      icon: Calculator,
+      themeColor: '#059669',
+      iconContainerClass: 'bg-emerald-50/90 text-emerald-600 border border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600',
+      selectedIconClass: 'bg-emerald-600 text-white border border-emerald-400 shadow-md shadow-emerald-900/20',
+      badgeClass: 'bg-emerald-50 text-emerald-900 border border-emerald-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-emerald-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-emerald-50/30 via-white to-white'
     },
     {
       id: 'general-science',
       title: 'General Science',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 689, '689 Qs'),
-      exactCount: liveSubjectCounts['general-science'],
-      icon3d: '/assets/aistudio/subject_icons/icon_science.png',
-      cardBg: 'bg-gradient-to-br from-[#F8F5FF] via-[#F2ECFF] to-[#E8DCFF]',
-      cardBorder: 'border border-indigo-200/80 hover:border-indigo-300',
-      badgeStyle: 'bg-indigo-100/90 text-indigo-950 border border-indigo-200/60',
-      arrowBg: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white',
-      watermarkType: 'atom',
-      hasGoldCorner: false
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 738, '738 Qs'),
+      exactCount: liveSubjectCounts['general-science'] || 738,
+      icon: Atom,
+      themeColor: '#7C3AED',
+      iconContainerClass: 'bg-indigo-50/90 text-indigo-600 border border-indigo-200/90 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600',
+      selectedIconClass: 'bg-indigo-600 text-white border border-indigo-400 shadow-md shadow-indigo-900/20',
+      badgeClass: 'bg-indigo-50 text-indigo-900 border border-indigo-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-indigo-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-indigo-50/30 via-white to-white'
     },
     {
       id: 'computer-science',
       title: 'Computer Science',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 435, '435 Qs'),
-      exactCount: liveSubjectCounts['computer-science'],
-      icon3d: '/assets/aistudio/subject_icons/icon_computer.png',
-      cardBg: 'bg-gradient-to-br from-[#F2F9FD] via-[#EBF6FC] to-[#DDF0FB]',
-      cardBorder: 'border border-sky-200/80 hover:border-sky-300',
-      badgeStyle: 'bg-sky-100/90 text-sky-950 border border-sky-200/60',
-      arrowBg: 'bg-sky-100 text-sky-700 hover:bg-sky-500 hover:text-white',
-      watermarkType: 'laptop',
-      hasGoldCorner: false
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 568, '568 Qs'),
+      exactCount: liveSubjectCounts['computer-science'] || 568,
+      icon: Cpu,
+      themeColor: '#0284C7',
+      iconContainerClass: 'bg-sky-50/90 text-sky-600 border border-sky-200/90 group-hover:bg-sky-600 group-hover:text-white group-hover:border-sky-600',
+      selectedIconClass: 'bg-sky-600 text-white border border-sky-400 shadow-md shadow-sky-900/20',
+      badgeClass: 'bg-sky-50 text-sky-900 border border-sky-200/60',
+      selectedBadgeClass: 'bg-[#12345A] text-white',
+      cardBorder: 'border-slate-200/90 hover:border-sky-400',
+      selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-sky-50/30 via-white to-white'
     }
   ];
 
@@ -940,100 +948,73 @@ export default function MockTestsHubPage() {
               <div className="w-12 h-1 bg-[#F2BE4F] rounded-full mt-2" />
             </div>
 
-            {/* Quick Summary Pill & Mobile Scroll Hint */}
+            {/* Quick Summary Pill */}
             <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto">
-              <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white border border-slate-200/80 shadow-2xs text-[10.5px] sm:text-[11px] font-bold text-slate-700">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs text-[11px] font-bold text-slate-700">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>8 Subjects Available</span>
-              </div>
-              {/* Mobile Scroll Controls: Next/Prev 4 Cards */}
-              <div className="flex md:hidden items-center gap-1 bg-white p-0.5 rounded-full border border-slate-200/80 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => scrollSubjects('left')}
-                  className="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition"
-                  aria-label="Previous 4 subjects"
-                  title="Previous 4 subjects"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
-                </button>
-                <span className="text-[9.5px] font-extrabold text-slate-400 px-0.5">Swipe</span>
-                <button
-                  type="button"
-                  onClick={() => scrollSubjects('right')}
-                  className="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition"
-                  aria-label="Next 4 subjects"
-                  title="Next 4 subjects"
-                >
-                  <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                </button>
               </div>
             </div>
           </div>
 
-          {/* Circular Subject Bubbles Container:
-              - Mobile (< md): Horizontal scroll row with exactly 4 circular subjects visible per screen width
-              - Laptop (>= md): Single clean row of 8 circular subjects (all at once)
+          {/* Subject Cards Grid:
+              - Laptop & Desktop (sm/md/lg): 4 columns x 2 rows = 8 cards (Matching user attachment image_f0431591.png with big centered icons and text below)
+              - Mobile (< sm): 2 columns grid with big centered icons, perfect touch targets
           */}
-          <div
-            ref={subjectScrollRef}
-            className="flex md:grid md:grid-cols-8 gap-2 sm:gap-2.5 md:gap-3 lg:gap-4 overflow-x-auto md:overflow-visible no-scrollbar py-2 px-0.5 select-none scroll-smooth snap-x snap-mandatory bg-white/60 sm:bg-white/80 p-2.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-2xs"
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-4.5 select-none">
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
+              const IconComponent = sub.icon;
               return (
                 <button
                   key={sub.id}
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
                   title={`${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions`}
-                  className="group flex flex-col items-center shrink-0 basis-[calc((100%-18px)/4)] min-w-[calc((100%-18px)/4)] max-w-[calc((100%-18px)/4)] md:basis-auto md:min-w-0 md:max-w-none md:shrink cursor-pointer select-none snap-start p-1 sm:p-1.5 rounded-2xl transition-all duration-200"
+                  className={`group relative flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center min-h-[160px] sm:min-h-[185px] ${
+                    isSelected
+                      ? sub.selectedCardClass
+                      : `${sub.cardBorder} hover:shadow-lg hover:-translate-y-1 shadow-2xs`
+                  }`}
                 >
-                  {/* Circular 3D Icon Bubble */}
-                  <div className="relative">
-                    <div
-                      className={`w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-full flex items-center justify-center p-2.5 sm:p-3 transition-all duration-200 ${
-                        isSelected
-                          ? 'ring-3 ring-[#12345A] ring-offset-2 scale-105 shadow-md bg-gradient-to-br from-[#0B2147] via-[#0D2754] to-[#081836] border-2 border-[#F2BE4F]'
-                          : `${sub.cardBg} ${sub.cardBorder} shadow-2xs group-hover:scale-105 group-hover:shadow-md`
-                      }`}
-                    >
-                      <img
-                        src={sub.icon3d}
-                        alt={sub.title}
-                        className="w-full h-full object-contain filter drop-shadow-xs transition-transform duration-200 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    {/* Active Golden Checkmark Badge */}
-                    {isSelected && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#F2BE4F] text-[#0B2147] border-2 border-white flex items-center justify-center shadow-xs">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
-                    )}
+                  {/* BIG PROMINENT CENTERED ICON */}
+                  <div
+                    className={`w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-2xl sm:rounded-3xl flex items-center justify-center transition-all duration-300 ${
+                      isSelected
+                        ? sub.selectedIconClass
+                        : sub.iconContainerClass
+                    }`}
+                  >
+                    <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2] transition-transform duration-200 group-hover:scale-110" />
                   </div>
 
-                  {/* Subject Title */}
-                  <span
-                    className={`font-heading font-black text-[10px] sm:text-xs md:text-[13px] tracking-tight leading-tight text-center mt-1.5 sm:mt-2 line-clamp-1 max-w-full px-0.5 transition-colors ${
-                      isSelected ? 'text-[#12345A] font-black' : 'text-[#0F172A] group-hover:text-[#12345A]'
+                  {/* SUBJECT TEXT DIRECTLY BELOW ICON */}
+                  <h3
+                    className={`font-heading font-black text-sm sm:text-[15px] md:text-base tracking-tight leading-snug mt-3 sm:mt-3.5 mb-1 text-center transition-colors line-clamp-1 max-w-full px-1 ${
+                      isSelected ? 'text-[#12345A]' : 'text-[#0F172A] group-hover:text-[#12345A]'
                     }`}
                   >
                     {sub.title}
-                  </span>
+                  </h3>
 
-                  {/* Questions Count Pill */}
+                  {/* QUESTION COUNT BADGE DIRECTLY BELOW TEXT */}
                   <span
-                    className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] md:text-[10px] font-bold mt-1 shadow-2xs transition-colors max-w-full truncate ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] md:text-xs font-bold transition-all max-w-full truncate ${
                       isSelected
-                        ? 'bg-[#12345A] text-white'
-                        : 'bg-white text-slate-600 border border-slate-200/80 group-hover:bg-slate-100'
+                        ? sub.selectedBadgeClass
+                        : `${sub.badgeClass} group-hover:shadow-2xs`
                     }`}
                   >
-                    <Layers className="w-2.5 h-2.5 shrink-0" />
+                    <Layers className="w-3 h-3 shrink-0" />
                     <span className="truncate">{sub.questionBadge}</span>
                   </span>
+
+                  {/* ACTIVE CORNER BADGE */}
+                  {isSelected && (
+                    <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                      <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[3]" />
+                    </div>
+                  )}
                 </button>
               );
             })}

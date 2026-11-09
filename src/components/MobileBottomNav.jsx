@@ -13,14 +13,14 @@ export default function MobileBottomNav() {
     { to: '/', label: 'Home', icon: Home, end: true },
     { to: '/mocks', label: 'Mock Tests', icon: GraduationCap },
     { to: '/current-affairs', label: 'CA & GK', icon: BookOpen },
-    { to: '/jobs', label: 'Latest Jobs', icon: Briefcase },
+    { to: '/jobs', label: 'Jobs', icon: Briefcase },
     { to: '/gk-practice', label: 'Practice', icon: Sparkles },
   ];
 
   return (
     <nav
       aria-label="Mobile Bottom App Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E3EAF2] px-2 pt-1 pb-[max(8px,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white border-t border-[#E3EAF2] px-2 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {

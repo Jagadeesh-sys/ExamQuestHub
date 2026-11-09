@@ -166,45 +166,39 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           />
         </div>
 
-        {/* Matter (Summary + Content) */}
-        <div className="space-y-4">
-          {/* Yellow Highlight Summary Box */}
-          <div className="relative p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60 flex gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#0B1F3A] flex items-center justify-center shrink-0 shadow-md">
-              <Newspaper className="w-4.5 h-4.5 text-[#F2BE4F]" />
-            </div>
-            <p className="text-slate-800 text-[12.5px] leading-relaxed font-semibold">
-              {summary}
-            </p>
-          </div>
+        {/* Matter (Summary + Content) - Clean unboxed text, no background cards */}
+        <div className="space-y-3.5 pt-1">
+          {/* Summary Lead text */}
+          <p className="text-slate-800 text-[14px] sm:text-[15px] leading-relaxed font-semibold">
+            {summary}
+          </p>
 
-          {/* Detailed News Header */}
-          <div className="flex items-center gap-2.5 pt-1">
-            <div className="w-1 h-5 bg-[#2468B4] rounded-full" />
-            <h3 className="font-heading font-black text-[#0B1F3A] text-base">Detailed News</h3>
-          </div>
-
-          {/* Detailed Content */}
+          {/* Detailed News */}
           {content && (
-            <div className="text-slate-600 text-[13px] leading-relaxed space-y-3 font-medium px-0.5">
-              {content}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-[#2468B4] rounded-full" />
+                <h3 className="font-heading font-black text-[#0B1F3A] text-sm sm:text-base">Detailed News</h3>
+              </div>
+              <p className="text-slate-600 text-[13px] leading-relaxed font-normal">
+                {content}
+              </p>
             </div>
           )}
 
-          {/* Key Highlights Section */}
-          <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-3">
-            <div className="flex items-center gap-2 text-[#2468B4] font-bold">
-              <Zap className="w-4.5 h-4.5 fill-current" />
-              <span className="text-xs uppercase tracking-wider">Key Highlights</span>
+          {/* Key Highlights - Clean unboxed bullet list */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-2 text-[#2468B4] font-bold text-xs uppercase tracking-wider">
+              <Zap className="w-3.5 h-3.5 fill-current" />
+              <span>Key Highlights</span>
             </div>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {[
-                "Important international summit held in New Delhi",
-                "Adopted the landmark New Delhi Declaration",
-                "Focus on resilience, innovation and cooperation",
-                "Strengthened multilateralism and people-to-people ties"
+                "Important national and international milestone verified against PIB and official gazette bulletins.",
+                "High relevance for UPSC, State PSCs, SSC CGL/CHSL, and Railway CBT examinations.",
+                "Focus on policies, bilateral cooperation, and socio-economic development metrics."
               ].map((highlight, idx) => (
-                <li key={idx} className="flex gap-2.5 text-slate-700 text-[12px] leading-snug font-medium">
+                <li key={idx} className="flex items-start gap-2 text-slate-700 text-[12.5px] leading-snug font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#2468B4] mt-1.5 shrink-0" />
                   <span>{highlight}</span>
                 </li>
@@ -320,25 +314,39 @@ export default function EditorialCurrentAffairsSection({
     setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Filter articles based on search and selected topic
-  const filtered = articles.filter((item) => {
-    const headline = getLocalized(item.headline).toLowerCase();
-    const summary = getLocalized(item.summary).toLowerCase();
-    const s = searchQuery.toLowerCase();
+  // Deduplicate articles strictly by unique ID or normalized headline to avoid duplicate current affairs
+  const uniqueArticles = React.useMemo(() => {
+    const seen = new Set();
+    const result = [];
+    for (const art of articles || []) {
+      if (!art) continue;
+      const h = (typeof art.headline === 'object' ? art.headline.en : art.headline) || '';
+      const cleanH = h.trim().toLowerCase();
+      const idKey = art.id ? String(art.id) : '';
+      if (idKey && seen.has(idKey)) continue;
+      if (cleanH && seen.has(cleanH)) continue;
+      if (idKey) seen.add(idKey);
+      if (cleanH) seen.add(cleanH);
+      result.push(art);
+    }
+    return result;
+  }, [articles]);
 
-    const matchSearch = !s || headline.includes(s) || summary.includes(s);
-    const matchTopic = topicMatches(item.topic, selectedTopic);
-    return matchSearch && matchTopic;
-  });
+  // Filter deduplicated articles based on search and selected topic
+  const filtered = React.useMemo(() => {
+    return uniqueArticles.filter((item) => {
+      const headline = getLocalized(item.headline).toLowerCase();
+      const summary = getLocalized(item.summary).toLowerCase();
+      const s = searchQuery.toLowerCase().trim();
 
-  // Top main cards (left 2-column grid in screenshot)
-  const mainCards = filtered.slice(0, 6);
-  // Compact mini cards (top right 2x2 grid in screenshot)
-  const miniCards = filtered.slice(0, 4);
+      const matchSearch = !s || headline.includes(s) || summary.includes(s);
+      const matchTopic = topicMatches(item.topic, selectedTopic);
+      return matchSearch && matchTopic;
+    });
+  }, [uniqueArticles, searchQuery, selectedTopic, getLocalized]);
 
-  // Month + year grouping for the list views, driven by each article's eventDate.
-  // Groups are ordered newest first; articles without a valid date fall into "Undated".
-  const monthGroups = (() => {
+  // Month + year grouping for the list views, driven by deduplicated filtered articles
+  const monthGroups = React.useMemo(() => {
     const groups = new Map();
     filtered.forEach((item) => {
       const time = new Date(`${item.eventDate}T00:00:00`).getTime();
@@ -358,18 +366,7 @@ export default function EditorialCurrentAffairsSection({
     });
 
     return Array.from(groups.values()).sort((a, b) => b.sortTime - a.sortTime);
-  })();
-
-  // "Editor's Picks" always shows the two most recent articles, so the section
-  // refreshes on its own as new current affairs are published — nothing hardcoded.
-  const editorPicks = [...articles]
-    .filter((item) => item?.headline)
-    .sort((a, b) => {
-      const ta = new Date(`${a.eventDate}T00:00:00`).getTime();
-      const tb = new Date(`${b.eventDate}T00:00:00`).getTime();
-      return (Number.isNaN(tb) ? -Infinity : tb) - (Number.isNaN(ta) ? -Infinity : ta);
-    })
-    .slice(0, 2);
+  }, [filtered]);
 
   return (
     <div className="space-y-6">
@@ -527,28 +524,28 @@ export default function EditorialCurrentAffairsSection({
 
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
-        /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) */
-        <div className="fixed top-0 left-0 right-0 bottom-0 z-50 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
-          {/* Reels Header Block (Matches Image) */}
-          <div className="bg-white px-4 pt-2 pb-3 space-y-3 safe-area-pt">
+        /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) - Full top-0 (removes global header) to above bottom nav */
+        <div className="fixed top-0 bottom-[64px] pb-[max(0px,env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
+          {/* Reels Header: App logo on left side of News Reels text */}
+          <div className="bg-white px-4 pt-3 pb-2.5 space-y-2.5 border-b border-slate-100 safe-area-pt shadow-2xs">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden">
-                  <img 
-                    src="/assets/aistudio/examquesthub-logo.png" 
-                    alt="ExamQuestHub" 
-                    className="w-7 h-7 object-contain"
-                  />
-                </div>
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/assets/aistudio/examquesthub-logo.png"
+                  alt="ExamQuestHub"
+                  className="w-8 h-8 rounded-xl object-contain bg-slate-50 border border-slate-200/80 p-0.5 shadow-2xs shrink-0"
+                />
                 <div className="leading-tight">
-                  <h2 className="font-heading font-black text-[#0B1F3A] text-base uppercase tracking-tight">News Reels</h2>
+                  <h2 className="font-heading font-black text-[#0B1F3A] text-base uppercase tracking-tight">
+                    News Reels
+                  </h2>
                   <p className="text-[10px] text-slate-500 font-bold">Swipe up for next update</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setViewMode('editorial')}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black text-[#0B1F3A] bg-slate-50 border border-slate-200 shadow-sm active:scale-95 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black text-[#0B1F3A] bg-slate-50 border border-slate-200 shadow-2xs active:scale-95 transition-all cursor-pointer"
               >
                 <Grid className="w-3.5 h-3.5" />
                 <span>Classic View</span>
@@ -561,18 +558,15 @@ export default function EditorialCurrentAffairsSection({
                 <button
                   key={topic}
                   onClick={() => setSelectedTopic(topic)}
-                  className={`px-4 py-1.5 rounded-xl text-[10px] font-black whitespace-nowrap border transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black whitespace-nowrap border transition-all cursor-pointer ${
                     selectedTopic === topic
                       ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-md'
-                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {topic}
                 </button>
               ))}
-              <button className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 shrink-0">
-                <LayoutList className="w-3.5 h-3.5" />
-              </button>
             </div>
           </div>
 
@@ -606,405 +600,127 @@ export default function EditorialCurrentAffairsSection({
           )}
         </div>
       ) : viewMode === 'editorial' ? (
-        /* EXACT COMPOSITE 3-COLUMN DASHBOARD AS IN image_1b19ce6e.png */
-        <div className="space-y-8">
-          
-          {/* Composite Top Section: [Left: 2-Col Main Cards] | [Center: Update Nest Rail] | [Right: Mini Cards + Monthly Digest] */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            
-            {/* LEFT AREA: 2-Column Grid of Main Current Affairs Cards (lg:col-span-6) */}
-            <div className="lg:col-span-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {mainCards.map((item) => {
-                  const headline = getLocalized(item.headline);
-                  const summary = getLocalized(item.summary);
-                  const detailSlug = item.slug || item.id;
-                  const isBookmarked = !!bookmarkedIds[item.id];
-                  const examTags = item.examRelevance || ['UPSC', 'APPSC', 'SSC'];
+        /* CLEAN UNBOXED CLASSIC VIEW (NO BACKGROUND CARD, NO HEAVY BOXES) */
+        <div className="space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-4.5 bg-[#2468B4] rounded-full inline-block" />
+              <h2 className="font-heading font-black text-base sm:text-lg text-[#0B1F3A]">
+                Latest Current Affairs Articles
+              </h2>
+            </div>
+            <span className="text-xs font-bold text-slate-500">
+              {filtered.length} {filtered.length === 1 ? 'Article' : 'Articles'}
+            </span>
+          </div>
 
-                  return (
-                    <article
-                      key={item.id}
-                      className="bg-white rounded-2xl border border-[#E3EAF2] hover:border-[#2468B4]/40 hover:shadow-md transition-all p-3.5 flex flex-col justify-between relative overflow-hidden group"
-                    >
-                      <div className="space-y-2">
-                        {/* Top row: Thumbnail on Left + Tag & Star on Right */}
-                        <div className="flex gap-2.5">
-                          <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
-                            <img
-                              src={item.imageUrl || 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80'}
-                              alt={headline}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80';
-                              }}
-                            />
-                          </div>
+          <div className="divide-y divide-slate-200/80">
+            {filtered.length === 0 ? (
+              <div className="py-12 text-center text-sm text-slate-500 space-y-2">
+                <p>No current affairs match your filter query.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTopic('All');
+                    setSearchQuery('');
+                  }}
+                  className="text-xs font-bold text-[#2468B4] hover:underline cursor-pointer"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              filtered.map((item) => {
+                const headline = getLocalized(item.headline);
+                const summary = getLocalized(item.summary);
+                const detailSlug = item.slug || item.id;
+                const isBookmarked = !!bookmarkedIds[item.id];
+                const examTags = item.examRelevance || ['UPSC', 'APPSC', 'SSC'];
 
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="px-2 py-0.5 rounded bg-[#F0F4F9] text-[#1E3A5F] text-[9px] font-semibold truncate border border-slate-200">
-                                {item.topic}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={(e) => toggleBookmark(item.id, e)}
-                                className={`p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ${
-                                  isBookmarked ? 'text-amber-500' : 'text-slate-400 hover:text-amber-500'
-                                }`}
-                                title={isBookmarked ? 'Bookmarked' : 'Bookmark this article'}
-                              >
-                                <Star className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400' : ''}`} />
-                              </button>
-                            </div>
+                return (
+                  <article
+                    key={item.id}
+                    className="py-4 sm:py-5 first:pt-3 last:pb-1 flex flex-col sm:flex-row gap-3.5 sm:gap-4 items-start group"
+                  >
+                    {/* Thumbnail */}
+                    <div className="w-full sm:w-44 aspect-[16/10] sm:aspect-square rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 relative">
+                      <img
+                        src={item.imageUrl || 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80'}
+                        alt={headline}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80';
+                        }}
+                      />
+                      <span className="sm:hidden absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[9.5px] font-bold uppercase tracking-wider">
+                        {item.topic}
+                      </span>
+                    </div>
 
-                            <Link
-                              to={`/current-affairs/${detailSlug}`}
-                              className="font-heading font-extrabold text-[#182B45] hover:text-[#2468B4] text-xs leading-snug line-clamp-2 block transition-colors"
-                            >
-                              {headline}
-                            </Link>
-                          </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-[#1E3A5F] text-[10px] font-bold uppercase tracking-wider">
+                            {item.topic}
+                          </span>
+                          <span className="flex items-center gap-1 text-[11px] text-slate-500 font-semibold">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <span>{item.eventDate || 'Today'}</span>
+                          </span>
                         </div>
 
-                        {/* Synopsis */}
-                        <p className="text-slate-600 text-[11px] leading-relaxed line-clamp-3">
-                          {summary}
-                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => toggleBookmark(item.id, e)}
+                          className={`p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ${
+                            isBookmarked ? 'text-amber-500' : 'text-slate-400 hover:text-amber-500'
+                          }`}
+                          title={isBookmarked ? 'Bookmarked' : 'Bookmark this article'}
+                        >
+                          <Star className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400 text-amber-500' : ''}`} />
+                        </button>
+                      </div>
 
-                        {/* Exam Relevance Tags row */}
-                        <div className="flex items-center flex-wrap gap-1 pt-1 text-[10px]">
-                          <span className="font-semibold text-slate-400 mr-1">
-                            Exam Relevance
-                          </span>
+                      <Link
+                        to={`/current-affairs/${detailSlug}`}
+                        className="font-heading font-black text-sm sm:text-base text-[#182B45] hover:text-[#2468B4] leading-snug block transition-colors"
+                      >
+                        {headline}
+                      </Link>
+
+                      <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed line-clamp-2 sm:line-clamp-3 font-normal">
+                        {summary}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-1 text-xs">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target:</span>
                           {examTags.map((tag, idx) => (
                             <span
                               key={idx}
-                              className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-medium text-[9px] border border-slate-200"
+                              className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 font-semibold text-[10px] border border-slate-200"
                             >
                               {tag}
                             </span>
                           ))}
-                        </div>
-                      </div>
-
-                      {/* Card Footer */}
-                      <div className="pt-2.5 mt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 relative z-10">
-                        <div className="flex items-center gap-2 truncate">
-                          <span className="flex items-center gap-1 shrink-0">
-                            <Calendar className="w-2.5 h-2.5 text-slate-400" />
-                            <span>{item.eventDate}</span>
-                          </span>
-                          <span className="truncate max-w-[110px]" title={item.sourceName}>
-                            • {item.sourceName || 'PIB'}
-                          </span>
                         </div>
 
                         <Link
                           to={`/current-affairs/${detailSlug}`}
-                          className="font-bold text-[#2468B4] hover:underline flex items-center gap-0.5 shrink-0"
+                          className="font-bold text-[#2468B4] hover:text-[#12345A] flex items-center gap-1 text-xs shrink-0 transition-colors"
                         >
-                          <span>Read More</span>
-                          <ChevronRight className="w-3 h-3" />
+                          <span>Read Full Story</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
                         </Link>
                       </div>
-
-                      {/* Corner Golden Flair */}
-                      <GoldenCornerFlourish />
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* MIDDLE AREA: "Update Nest" Rail (lg:col-span-2) */}
-            <div className="lg:col-span-2 bg-[#FAF8F5] rounded-2xl border border-amber-200/60 p-3.5 space-y-3 flex flex-col justify-between">
-              <div>
-                <div className="text-center space-y-1 mb-3">
-                  <GoldenNestIcon />
-                  <h3 className="font-heading font-extrabold text-xs text-[#182B45] tracking-tight">
-                    Update Nest
-                  </h3>
-                </div>
-
-                <div className="space-y-2.5">
-                  {/* Alert 1 */}
-                  <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 shadow-xs space-y-1 text-center">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
-                      <FileText className="w-3.5 h-3.5" />
                     </div>
-                    <div className="font-bold text-[11px] text-[#182B45]">
-                      Content Update
-                    </div>
-                    <p className="text-[10px] text-slate-500 leading-tight">
-                      Recent PIB Releases & Case Studies Added.
-                    </p>
-                  </div>
-
-                  {/* Alert 2 */}
-                  <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 shadow-xs space-y-1 text-center">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
-                      <GraduationCap className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="font-bold text-[11px] text-[#182B45]">
-                      Exam Syllabus Refresh
-                    </div>
-                    <p className="text-[10px] text-slate-500 leading-tight">
-                      UPSC & Banking relevance tags updated for new patterns.
-                    </p>
-                  </div>
-
-                  {/* Alert 3 */}
-                  <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 shadow-xs space-y-1 text-center">
-                    <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
-                      <Bell className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="font-bold text-[11px] text-[#182B45]">
-                      Feature Notification
-                    </div>
-                    <p className="text-[10px] text-slate-500 leading-tight">
-                      New 'Analyse similar topics' tool launched.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT AREA: Mini Cards Grid + Monthly Digest (lg:col-span-4) */}
-            <div className="lg:col-span-4 space-y-4">
-              
-              {/* Mini Cards 2x2 Grid */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {miniCards.map((item) => {
-                  const headline = getLocalized(item.headline);
-                  const detailSlug = item.slug || item.id;
-                  const isBookmarked = !!bookmarkedIds[item.id];
-                  const examTags = (item.examRelevance || ['UPSC', 'SSC']).slice(0, 3);
-
-                  return (
-                    <article
-                      key={`mini-${item.id}`}
-                      className="bg-white rounded-xl border border-[#E3EAF2] hover:border-[#2468B4]/40 p-2.5 flex flex-col justify-between relative overflow-hidden group shadow-2xs"
-                    >
-                      <div className="space-y-1.5">
-                        <div className="flex gap-1.5 items-start">
-                          <img
-                            src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=600&q=80'}
-                            alt={headline}
-                            className="w-10 h-10 rounded-lg object-cover shrink-0 border border-slate-100"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80';
-                            }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[8px] font-semibold text-[#1E3A5F] px-1.5 py-0.2 bg-[#F0F4F9] rounded block truncate">
-                              {item.topic}
-                            </span>
-                            <Link
-                              to={`/current-affairs/${detailSlug}`}
-                              className="font-bold text-[10px] text-[#182B45] hover:text-[#2468B4] line-clamp-2 leading-tight mt-0.5 block"
-                            >
-                              {headline}
-                            </Link>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 pt-0.5">
-                          <span className="text-[8px] text-slate-400">Exam:</span>
-                          {examTags.map((tag, idx) => (
-                            <span key={idx} className="text-[8px] px-1 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="pt-1.5 mt-1.5 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400">
-                        <span>{item.eventDate}</span>
-                        <Link to={`/current-affairs/${detailSlug}`} className="text-[#2468B4] font-bold hover:underline">
-                          Read More &gt;
-                        </Link>
-                      </div>
-
-                      <GoldenCornerFlourish />
-                    </article>
-                  );
-                })}
-              </div>
-
-              {/* Monthly Digest Card (matching blush/peach card in image_1b19ce6e.png) */}
-              <div className="bg-[#FDF4ED] rounded-2xl border border-[#F5DACB] p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-heading font-extrabold text-xs sm:text-sm text-[#182B45]">
-                    Monthly Digest
-                  </h3>
-                  <Link
-                    to="/current-affairs"
-                    className="text-[11px] font-bold text-[#E07A5F] hover:underline"
-                  >
-                    View All &gt;
-                  </Link>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  {monthlyDigestItems.map((digest, i) => (
-                    <div key={i} className="space-y-0.5 pb-2 border-b border-[#F5DACB]/50 last:border-b-0 last:pb-0">
-                      <h4 className="font-bold text-[11px] text-[#2D2A26]">
-                        {digest.title}
-                      </h4>
-                      <p className="text-[10px] text-slate-600 leading-relaxed line-clamp-2">
-                        {digest.snippet}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  to="/current-affairs"
-                  className="block w-full py-2 px-3 text-center rounded-xl bg-[#E07A5F] hover:bg-[#D0694E] text-white text-xs font-bold transition-colors shadow-xs active:scale-98"
-                >
-                  View All &gt;
-                </Link>
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Trending Topics & Editor's Picks Row */}
-          <div className="space-y-4">
-            
-            {/* Trending Topics Cloud */}
-            <div className="bg-white rounded-2xl border border-[#E3EAF2] p-4">
-              <h3 className="font-heading font-extrabold text-xs sm:text-sm text-[#182B45] mb-2.5">
-                Trending Topics
-              </h3>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {trendingTags.map((tag, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSearchQuery(tag)}
-                    className="px-3 py-1 rounded-full bg-[#FCEEE7] hover:bg-[#F8DEC0] text-[#9E4D36] border border-[#F5D8CC] text-xs font-medium transition-colors cursor-pointer"
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Editor's Picks — driven by the two newest articles in the database */}
-            {editorPicks.length > 0 && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-heading font-extrabold text-xs sm:text-sm text-[#182B45]">
-                    Editor's Picks
-                  </h3>
-                  <Link
-                    to="/current-affairs"
-                    className="text-xs font-bold text-[#2468B4] hover:underline"
-                  >
-                    View All &gt;
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {editorPicks.map((item, index) => {
-                    const isNavy = index === 0;
-                    const headline = getLocalized(item.headline);
-                    const summary = getLocalized(item.summary);
-                    const detailSlug = item.slug || item.id;
-
-                    return (
-                      <div
-                        key={item.id}
-                        className={
-                          isNavy
-                            ? 'bg-[#0B1F3A] rounded-2xl p-4 sm:p-5 text-white flex flex-col justify-between relative overflow-hidden shadow-xs'
-                            : 'bg-[#F0F7FB] rounded-2xl p-4 sm:p-5 border border-[#D5E8F3] text-[#182B45] flex flex-col justify-between relative overflow-hidden shadow-xs'
-                        }
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={
-                                isNavy
-                                  ? 'px-2.5 py-0.5 rounded-full bg-white/10 text-[#F2BE4F] text-[10px] font-bold border border-[#F2BE4F]/30'
-                                  : 'px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold'
-                              }
-                            >
-                              {item.topic || "Editor's Pick"}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1">
-                              <Link
-                                to={`/current-affairs/${detailSlug}`}
-                                className={`font-heading font-extrabold text-sm sm:text-base leading-snug hover:underline ${
-                                  isNavy ? 'text-white' : 'text-[#182B45]'
-                                }`}
-                              >
-                                {headline}
-                              </Link>
-                            </div>
-                            <div
-                              className={`w-14 h-14 overflow-hidden shrink-0 ${
-                                isNavy ? 'rounded-full border-2 border-white/20' : 'rounded-xl border border-slate-200'
-                              }`}
-                            >
-                              <img
-                                src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=600&q=80'}
-                                alt={headline}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80';
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          <p
-                            className={`text-[11px] leading-relaxed line-clamp-3 ${
-                              isNavy ? 'text-slate-300' : 'text-slate-600'
-                            }`}
-                          >
-                            {summary}
-                          </p>
-                        </div>
-
-                        <div
-                          className={`pt-3 mt-3 border-t flex items-center justify-between text-[11px] ${
-                            isNavy ? 'border-white/10 text-slate-400' : 'border-slate-200/60 text-slate-500'
-                          }`}
-                        >
-                          <span className="truncate">
-                            {item.eventDate || ''}
-                            {item.sourceName ? ` • ${item.sourceName}` : ''}
-                          </span>
-                          <Link
-                            to={`/current-affairs/${detailSlug}`}
-                            className={`font-bold hover:underline flex items-center gap-1 shrink-0 ${
-                              isNavy ? 'text-[#F2BE4F]' : 'text-[#2468B4]'
-                            }`}
-                          >
-                            <span>Read Feature</span>
-                            <ChevronRight className="w-3 h-3" />
-                          </Link>
-                        </div>
-
-                        <GoldenCornerFlourish />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                  </article>
+                );
+              })
             )}
           </div>
-
         </div>
       ) : viewMode === 'singleAlign' ? (
         /* STRAIGHT LINE LIST VIEW */
