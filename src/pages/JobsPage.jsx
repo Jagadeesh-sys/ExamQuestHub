@@ -38,6 +38,7 @@ import NotificationCard from '../components/NotificationCard.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import jobBannerImg from '../assets/images/job_banner_8d9279ad.png';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -261,12 +262,16 @@ export default function JobsPage() {
           aria-label="Government Job Alerts - Latest Job Notifications"
           className="relative w-full aspect-[2.4/1] sm:aspect-[2.8/1] md:aspect-[3.2/1] min-h-[155px] sm:min-h-[185px] md:min-h-[220px] rounded-2xl sm:rounded-[24px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#092B7A]"
         >
-          {/* Background 3D Graphic Image */}
+          {/* Background 3D Graphic Image - Uses bundled import with base fallback for GitHub Pages & mobile app */}
           <img
-            src="/assets/aistudio/image_8d9279ad.png"
+            src={jobBannerImg}
             alt="Latest Government Job Notifications with verified commission announcements"
             className="absolute inset-0 w-full h-full object-cover object-right sm:object-right-center block pointer-events-none select-none"
             loading="eager"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = `${import.meta.env.BASE_URL}assets/aistudio/image_8d9279ad.png`;
+            }}
           />
 
           {/* Seamless shading merge overlay on the left to guarantee high text contrast */}
@@ -368,34 +373,34 @@ export default function JobsPage() {
         </section>
 
         {/* =========================================================================
-            4. LATEST JOBS DIRECTORY CONTAINER (White Box with Filters & Sort)
+            4. LATEST JOBS DIRECTORY (Unboxed / No Card Container for Mobile & Web)
             ========================================================================= */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-slate-100 shadow-xs space-y-4 sm:space-y-5">
+        <section className="space-y-3 sm:space-y-4">
           
           {/* Header */}
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center shrink-0 mt-0.5">
-              <Filter className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+          <div className="flex items-start gap-2.5 sm:gap-3 px-0.5 sm:px-1">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+              <Filter className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </div>
             <div className="flex-1">
-              <h2 className="font-heading font-black text-lg sm:text-2xl text-[#12345A]">
+              <h2 className="font-heading font-black text-base sm:text-xl text-[#12345A]">
                 Latest Jobs Directory
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 leading-relaxed">
+              <p className="text-[11.5px] sm:text-xs text-slate-500 mt-0.5 leading-relaxed">
                 Authentic recruitment notifications verified against official commission gazettes. Filter by exam board, region, and application status.
               </p>
             </div>
           </div>
 
-          {/* Search Bar with Mic Icon */}
-          <div className="relative">
+          {/* Search Bar with Mic Icon - Standalone Floating Input */}
+          <div className="relative shadow-xs rounded-xl sm:rounded-2xl">
             <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchFilter}
               onChange={(e) => updateParam('search', e.target.value)}
               placeholder="Search by job title, organization or keyword..."
-              className="w-full pl-10 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#F6F8FC] border border-[#E3EAF2] rounded-xl sm:rounded-2xl focus:bg-white focus:outline-hidden focus:border-[#2468B4] text-slate-800 placeholder:text-slate-400"
+              className="w-full pl-10 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl focus:outline-hidden focus:border-[#2468B4] focus:ring-2 focus:ring-[#2468B4]/10 text-slate-800 placeholder:text-slate-400 shadow-2xs transition-all"
             />
             <button
               type="button"
@@ -408,17 +413,17 @@ export default function JobsPage() {
           </div>
 
           {/* 4 Dropdown Selectors (2x2 grid on mobile, 4 cols on desktop) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             
             {/* 1. All Categories */}
-            <div className="relative">
+            <div className="relative shadow-2xs rounded-xl">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                 <LayoutGrid className="w-4 h-4" />
               </div>
               <select
                 value={categoryFilter}
                 onChange={(e) => updateParam('category', e.target.value)}
-                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-[#F6F8FC] border border-[#E3EAF2] rounded-xl focus:bg-white focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
+                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-white border border-slate-200/90 rounded-xl focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
               >
                 <option value="All">All Categories</option>
                 {categories.filter(c => c !== 'All').map(c => (
@@ -429,14 +434,14 @@ export default function JobsPage() {
             </div>
 
             {/* 2. All Regions */}
-            <div className="relative">
+            <div className="relative shadow-2xs rounded-xl">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                 <MapPin className="w-4 h-4" />
               </div>
               <select
                 value={regionFilter}
                 onChange={(e) => updateParam('region', e.target.value)}
-                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-[#F6F8FC] border border-[#E3EAF2] rounded-xl focus:bg-white focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
+                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-white border border-slate-200/90 rounded-xl focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
               >
                 <option value="All">All Regions</option>
                 {regions.filter(r => r !== 'All').map(r => (
@@ -447,14 +452,14 @@ export default function JobsPage() {
             </div>
 
             {/* 3. All Exam Boards */}
-            <div className="relative">
+            <div className="relative shadow-2xs rounded-xl">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                 <GraduationCap className="w-4 h-4" />
               </div>
               <select
                 value={boardFilter}
                 onChange={(e) => updateParam('board', e.target.value)}
-                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-[#F6F8FC] border border-[#E3EAF2] rounded-xl focus:bg-white focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
+                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-white border border-slate-200/90 rounded-xl focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
               >
                 <option value="All">All Exam Boards</option>
                 {examBoards.filter(b => b !== 'All').map(b => (
@@ -465,14 +470,14 @@ export default function JobsPage() {
             </div>
 
             {/* 4. All Statuses */}
-            <div className="relative">
+            <div className="relative shadow-2xs rounded-xl">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                 <SlidersHorizontal className="w-4 h-4" />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => updateParam('status', e.target.value)}
-                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-[#F6F8FC] border border-[#E3EAF2] rounded-xl focus:bg-white focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
+                className="w-full pl-9 pr-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold bg-white border border-slate-200/90 rounded-xl focus:outline-hidden focus:border-[#2468B4] text-slate-700 appearance-none cursor-pointer truncate"
               >
                 <option value="All">All Statuses</option>
                 {statuses.filter(s => s !== 'All').map(s => (
@@ -484,8 +489,8 @@ export default function JobsPage() {
           </div>
 
           {/* Sort Buttons & View Mode Switcher */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100">
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-0.5">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
               <span className="font-bold text-slate-600">Sort:</span>
               
               {/* Newest First */}
@@ -495,7 +500,7 @@ export default function JobsPage() {
                 className={`px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 transition cursor-pointer ${
                   sortBy === 'newest'
                     ? 'bg-[#12345A] text-[#F2BE4F] shadow-xs'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/90 shadow-2xs'
                 }`}
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
@@ -509,7 +514,7 @@ export default function JobsPage() {
                 className={`px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 transition cursor-pointer ${
                   sortBy === 'deadline'
                     ? 'bg-[#12345A] text-[#F2BE4F] shadow-xs'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/90 shadow-2xs'
                 }`}
               >
                 <Calendar className="w-3.5 h-3.5" />
@@ -523,7 +528,7 @@ export default function JobsPage() {
                 className={`px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 transition cursor-pointer ${
                   sortBy === 'vacancies'
                     ? 'bg-[#12345A] text-[#F2BE4F] shadow-xs'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/90 shadow-2xs'
                 }`}
               >
                 <BarChart3 className="w-3.5 h-3.5" />
@@ -550,7 +555,7 @@ export default function JobsPage() {
                 className={`px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
                   viewMode === 'straightLine'
                     ? 'bg-[#FEF08A] text-[#12345A] border border-[#F2BE4F] shadow-xs font-black'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/90 shadow-2xs'
                 }`}
               >
                 <List className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -563,7 +568,7 @@ export default function JobsPage() {
                 className={`px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
                   viewMode === 'grid'
                     ? 'bg-[#12345A] text-white shadow-xs font-black'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/90 shadow-2xs'
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
@@ -571,7 +576,7 @@ export default function JobsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* =========================================================================
             5. INFORMATIONAL STRIP + EXPAND ALL / COLLAPSE ALL
