@@ -24,6 +24,7 @@ import {
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getQuestions } from '../firebase/firestoreService.js';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
+import practiceBannerImg from '../assets/images/practice_banner_3d_exact.png';
 
 export default function GKPracticePage() {
   const { t, getLocalized, language, setLanguage } = useLanguage();
@@ -130,81 +131,83 @@ export default function GKPracticePage() {
           <span className="text-white font-bold">Daily General Knowledge Practice</span>
         </nav>
 
-        {/* 2. HERO BANNER CARD (Exact match from reference image_00b68d66.png) */}
-        <div className="bg-gradient-to-r from-[#F0F6FD] via-[#E8F3FD] to-[#DCECFB] rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-[#D5E5F7] shadow-sm relative overflow-hidden">
-          {/* Subtle light effect on the right behind illustration */}
-          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-radial from-white/60 to-transparent pointer-events-none" />
+        {/* 2. HERO BANNER CARD - Uploaded 3D banner with text displayed directly on the image */}
+        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-md shadow-[#081F44]/20 border border-blue-300/30 select-none bg-[#093A96]">
+          {/* Panoramic 3D Banner Asset */}
+          <img
+            src={practiceBannerImg}
+            alt="Daily General Knowledge Practice"
+            className="w-full h-auto object-cover block select-none pointer-events-none"
+            loading="eager"
+            onError={(e) => {
+              if (e.currentTarget.src !== '/assets/aistudio/image_64ced5a3.png') {
+                e.currentTarget.src = '/assets/aistudio/image_64ced5a3.png';
+              }
+            }}
+          />
 
-          <div className="flex items-center justify-between gap-3 sm:gap-6 relative z-10">
-            <div className="space-y-2 sm:space-y-3 max-w-[64%] sm:max-w-xl">
+          {/* Text Overlay directly on the left side of the banner image */}
+          <div className="absolute inset-0 flex flex-col justify-between p-3 sm:p-5 md:p-6 lg:p-7 max-w-[62%] sm:max-w-[58%] md:max-w-[55%] z-10 pointer-events-auto">
+            <div className="space-y-1 sm:space-y-2 md:space-y-2.5">
               {/* Top pill badge */}
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-white/80 backdrop-blur-xs border border-amber-200/80 shadow-2xs">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-100/90 text-amber-500 flex items-center justify-center shrink-0">
-                  <Lightbulb className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-500" />
+              <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/30 shadow-2xs">
+                <div className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 rounded-full bg-amber-400 text-[#093A96] flex items-center justify-center shrink-0">
+                  <Lightbulb className="w-2 h-2 sm:w-2.5 sm:h-2.5 fill-amber-500 text-amber-500" />
                 </div>
-                <span className="text-[9px] sm:text-[11px] font-black text-[#1864AB] tracking-wider sm:tracking-widest uppercase truncate">
+                <span className="text-[7.5px] sm:text-[10px] md:text-[11px] font-black text-white tracking-wider sm:tracking-widest uppercase truncate drop-shadow-xs">
                   INTERACTIVE ASSESSMENT MODULE
                 </span>
               </div>
 
               {/* Title */}
-              <h1 className="font-heading font-black text-lg sm:text-3xl lg:text-[32px] text-[#0B1F3A] leading-tight tracking-tight">
+              <h1 className="font-heading font-black text-xs sm:text-xl md:text-2xl lg:text-[28px] text-white leading-tight tracking-tight drop-shadow-md">
                 Daily General Knowledge Practice
               </h1>
 
               {/* Subtitle */}
-              <p className={`text-slate-600 text-xs sm:text-[13px] leading-relaxed max-w-md font-medium line-clamp-2 sm:line-clamp-none ${language === 'te' ? 'telugu-text font-telugu' : ''}`}>
+              <p className={`text-blue-100 text-[8.5px] sm:text-xs md:text-[13px] leading-tight sm:leading-relaxed font-medium line-clamp-2 drop-shadow-xs ${language === 'te' ? 'telugu-text font-telugu' : ''}`}>
                 {language === 'te'
                   ? 'ధృవీకరించబడిన వివరణలతో టాపిక్ వారీ బహుళైచ్ఛిక ప్రశ్నలు.'
                   : 'Topic-wise multiple-choice questions with verified explanations in English and Telugu.'}
               </p>
+            </div>
 
-              {/* Desktop/Tablet Score Card - Sits inside banner on left bottom (matching image_00b68d66.png) */}
-              <div className="hidden sm:block pt-1">
-                <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs inline-flex items-center gap-3 sm:gap-4">
-                  {/* Score */}
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-[#0B4F9C] flex items-center justify-center text-amber-300 shadow-2xs shrink-0">
-                      <Trophy className="w-5 h-5 fill-amber-300 text-amber-400" />
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider block">
-                        YOUR SCORE
-                      </span>
-                      <span className="font-black text-base text-[#0B1F3A]">
-                        {score} / {answeredCount}
-                      </span>
-                    </div>
+            {/* Desktop/Tablet Score Card - Sits inside banner on left bottom overlay */}
+            <div className="hidden sm:block pt-1">
+              <div className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-2.5 md:p-3 border border-white/60 shadow-md inline-flex items-center gap-3 sm:gap-4">
+                {/* Score */}
+                <div className="flex items-center gap-2 sm:gap-2.5">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-xl bg-[#0B4F9C] flex items-center justify-center text-amber-300 shadow-2xs shrink-0">
+                    <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 fill-amber-300 text-amber-400" />
                   </div>
+                  <div>
+                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-slate-500 tracking-wider block">
+                      YOUR SCORE
+                    </span>
+                    <span className="font-black text-xs sm:text-sm md:text-base text-[#0B1F3A]">
+                      {score} / {answeredCount}
+                    </span>
+                  </div>
+                </div>
 
-                  {/* Vertical Divider */}
-                  <div className="w-px h-8 bg-slate-200" />
+                {/* Vertical Divider */}
+                <div className="w-px h-6 sm:h-7 md:h-8 bg-slate-200" />
 
-                  {/* Accuracy */}
-                  <div className="flex items-center gap-2.5 pr-2">
-                    <div className="w-7 h-7 flex items-center justify-center text-[#0B4F9C] shrink-0">
-                      <Target className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-bold block">
-                        Accuracy
-                      </span>
-                      <span className="font-black text-base text-[#0B4F9C]">
-                        {accuracy}%
-                      </span>
-                    </div>
+                {/* Accuracy */}
+                <div className="flex items-center gap-2 sm:gap-2.5 pr-1 sm:pr-2">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-[#0B4F9C] shrink-0">
+                    <Target className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold block">
+                      Accuracy
+                    </span>
+                    <span className="font-black text-xs sm:text-sm md:text-base text-[#0B4F9C]">
+                      {accuracy}%
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Right 3D Illustration: Sits nicely on the right side like a true banner */}
-            <div className="shrink-0 flex items-center justify-end">
-              <img
-                src="/assets/aistudio/practice_illustration.png"
-                alt="Learn Practice Improve"
-                className="w-28 sm:w-60 md:w-72 object-contain drop-shadow-xs"
-              />
             </div>
           </div>
         </div>
