@@ -161,7 +161,9 @@ export default function GKPracticePage() {
 
               {/* Title */}
               <h1 className="font-heading font-black text-xs sm:text-xl md:text-2xl lg:text-[28px] text-white leading-tight tracking-tight drop-shadow-md">
-                Daily General Knowledge Practice
+                <span>Daily General Knowledge</span>
+                <br className="sm:hidden" />
+                <span className="sm:ml-1.5">Practice</span>
               </h1>
 
               {/* Subtitle */}
