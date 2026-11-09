@@ -58,6 +58,16 @@ import {
   getDirectFirestoreMockStats
 } from '../firebase/firestoreService.js';
 
+// Import 3D Subject Icons directly via ESM so Vite bundles and resolves them across all deployment environments (GitHub Pages, Vercel, sub-paths)
+import iconAllMock from '../assets/images/icon_all_mock.jpg';
+import iconCurrentAffairs from '../assets/images/icon_current_affairs.jpg';
+import iconEnglish from '../assets/images/icon_english.jpg';
+import iconGeneralKnowledge from '../assets/images/icon_general_knowledge.jpg';
+import iconReasoning from '../assets/images/icon_reasoning.jpg';
+import iconQuant from '../assets/images/icon_quant.jpg';
+import iconScience from '../assets/images/icon_science.jpg';
+import iconComputer from '../assets/images/icon_computer.jpg';
+
 export default function MockTestsHubPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -274,6 +284,9 @@ export default function MockTestsHubPage() {
 
 
 
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
   // 8 Subject cards with consistent premium 3D icon family and live question counts
   const subjectCards = [
     {
@@ -282,7 +295,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'All Mock',
       questionBadge: formatQuestionsBadge(10757, '10.7k Qs'),
       exactCount: 10757,
-      image3d: '/assets/aistudio/subject_icons/icon_all_mock.jpg',
+      image3d: iconAllMock,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_all_mock.png`,
       concept: 'Golden Trophy',
       themeColor: '#12345A',
       cardBorder: 'border-slate-200/90 hover:border-[#12345A]/60',
@@ -296,7 +310,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'Current Affairs',
       questionBadge: formatQuestionsBadge(3500, '3.5k Qs'),
       exactCount: 3500,
-      image3d: '/assets/aistudio/subject_icons/icon_current_affairs.jpg',
+      image3d: iconCurrentAffairs,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_current_affairs.png`,
       concept: 'Newspaper',
       themeColor: '#E11D48',
       cardBorder: 'border-slate-200/90 hover:border-rose-400',
@@ -310,7 +325,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'English',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 525, '525 Qs'),
       exactCount: liveSubjectCounts['english-language'] || 525,
-      image3d: '/assets/aistudio/subject_icons/icon_english.jpg',
+      image3d: iconEnglish,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_english.png`,
       concept: 'Open Book',
       themeColor: '#2563EB',
       cardBorder: 'border-slate-200/90 hover:border-blue-400',
@@ -324,7 +340,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'GK',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4911, '4.9k Qs'),
       exactCount: liveSubjectCounts['general-knowledge'] || 4911,
-      image3d: '/assets/aistudio/subject_icons/icon_general_knowledge.jpg',
+      image3d: iconGeneralKnowledge,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_general_knowledge.png`,
       concept: 'Graduation Cap',
       themeColor: '#D97706',
       cardBorder: 'border-slate-200/90 hover:border-amber-400',
@@ -338,7 +355,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'Reasoning',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2156, '2.1k Qs'),
       exactCount: liveSubjectCounts['reasoning'] || 2156,
-      image3d: '/assets/aistudio/subject_icons/icon_reasoning.jpg',
+      image3d: iconReasoning,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_reasoning.png`,
       concept: 'Brain with Gears',
       themeColor: '#9333EA',
       cardBorder: 'border-slate-200/90 hover:border-purple-400',
@@ -352,7 +370,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'Quant',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2401, '2.4k Qs'),
       exactCount: liveSubjectCounts['quantitative-aptitude'] || 2401,
-      image3d: '/assets/aistudio/subject_icons/icon_quant.jpg',
+      image3d: iconQuant,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_quant.png`,
       concept: 'Calculator',
       themeColor: '#059669',
       cardBorder: 'border-slate-200/90 hover:border-emerald-400',
@@ -366,7 +385,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'Science',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 738, '738 Qs'),
       exactCount: liveSubjectCounts['general-science'] || 738,
-      image3d: '/assets/aistudio/subject_icons/icon_science.jpg',
+      image3d: iconScience,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_science.png`,
       concept: 'Flask and Microscope',
       themeColor: '#7C3AED',
       cardBorder: 'border-slate-200/90 hover:border-indigo-400',
@@ -380,7 +400,8 @@ export default function MockTestsHubPage() {
       shortTitle: 'Computer',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 568, '568 Qs'),
       exactCount: liveSubjectCounts['computer-science'] || 568,
-      image3d: '/assets/aistudio/subject_icons/icon_computer.jpg',
+      image3d: iconComputer,
+      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_computer.png`,
       concept: 'Coding Laptop',
       themeColor: '#0284C7',
       cardBorder: 'border-slate-200/90 hover:border-sky-400',
@@ -943,6 +964,11 @@ export default function MockTestsHubPage() {
                           alt={sub.title}
                           className="w-full h-full object-contain rounded-full drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
                           loading="lazy"
+                          onError={(e) => {
+                            if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
+                              e.currentTarget.src = sub.fallbackUrl;
+                            }
+                          }}
                         />
                       </div>
                       {isSelected && (
@@ -982,8 +1008,8 @@ export default function MockTestsHubPage() {
             </div>
           </div>
 
-          {/* Laptop & Desktop Display: 4 columns x 2 rows = 8 cards with prominent circular 3D icons */}
-          <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-4 gap-3.5 sm:gap-4 md:gap-4.5 select-none">
+          {/* Laptop & Desktop Display: All 8 subjects displayed in a single row */}
+          <div className="hidden sm:grid sm:grid-cols-8 gap-1.5 md:gap-2 lg:gap-3 select-none">
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
               return (
@@ -991,8 +1017,8 @@ export default function MockTestsHubPage() {
                   key={sub.id}
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
-                  title={`${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions`}
-                  className={`group relative flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center min-h-[168px] sm:min-h-[190px] ${
+                  title={`${sub.title} (${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions)`}
+                  className={`group relative flex flex-col items-center justify-between p-2.5 sm:p-2.5 md:p-3 lg:p-3.5 rounded-2xl lg:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center min-h-[148px] sm:min-h-[155px] lg:min-h-[175px] ${
                     isSelected
                       ? sub.selectedCardClass
                       : `${sub.cardBorder} hover:shadow-lg hover:-translate-y-1 shadow-2xs`
@@ -1000,9 +1026,9 @@ export default function MockTestsHubPage() {
                 >
                   {/* PROMINENT CIRCULAR 3D ICON CONTAINER */}
                   <div
-                    className={`w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-full p-1.5 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 ${
+                    className={`w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full p-1 sm:p-1.5 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 shrink-0 ${
                       isSelected
-                        ? 'border-[#12345A] ring-4 ring-[#12345A]/15 shadow-md shadow-blue-900/10 scale-105'
+                        ? 'border-[#12345A] ring-3 ring-[#12345A]/15 shadow-md shadow-blue-900/10 scale-105'
                         : 'border-slate-200/90 group-hover:border-[#12345A]/40 group-hover:scale-105 shadow-2xs'
                     }`}
                   >
@@ -1011,34 +1037,41 @@ export default function MockTestsHubPage() {
                       alt={sub.title}
                       className="w-full h-full object-contain rounded-full transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
                       loading="lazy"
+                      onError={(e) => {
+                        if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
+                          e.currentTarget.src = sub.fallbackUrl;
+                        }
+                      }}
                     />
                   </div>
 
                   {/* SUBJECT TEXT DIRECTLY BELOW CIRCULAR ICON */}
-                  <h3
-                    className={`font-heading font-black text-sm sm:text-[15px] md:text-base tracking-tight leading-snug mt-3 sm:mt-3.5 mb-1 text-center transition-colors line-clamp-1 max-w-full px-1 ${
-                      isSelected ? 'text-[#12345A]' : 'text-[#0F172A] group-hover:text-[#12345A]'
-                    }`}
-                  >
-                    {sub.title}
-                  </h3>
+                  <div className="w-full flex-1 flex flex-col items-center justify-center mt-2 mb-1">
+                    <h3
+                      className={`font-heading font-black text-[11px] sm:text-xs md:text-[13px] lg:text-[14px] tracking-tight leading-tight text-center transition-colors line-clamp-1 max-w-full px-0.5 ${
+                        isSelected ? 'text-[#12345A]' : 'text-[#0F172A] group-hover:text-[#12345A]'
+                      }`}
+                    >
+                      {sub.title}
+                    </h3>
+                  </div>
 
                   {/* QUESTION COUNT BADGE DIRECTLY BELOW TEXT */}
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] md:text-xs font-bold transition-all max-w-full truncate ${
+                    className={`inline-flex items-center justify-center gap-1 px-1.5 sm:px-2 py-0.5 lg:py-1 rounded-full text-[9px] md:text-[10px] lg:text-[11px] font-bold transition-all max-w-full truncate ${
                       isSelected
                         ? sub.selectedBadgeClass
                         : `${sub.badgeClass} group-hover:shadow-2xs`
                     }`}
                   >
-                    <Layers className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{sub.questionBadge}</span>
+                    <Layers className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0" />
+                    <span className="truncate">{sub.questionBadge.replace(' Questions', ' Qs')}</span>
                   </span>
 
                   {/* ACTIVE CORNER BADGE */}
                   {isSelected && (
-                    <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
-                      <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[3]" />
+                    <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[3]" />
                     </div>
                   )}
                 </button>
