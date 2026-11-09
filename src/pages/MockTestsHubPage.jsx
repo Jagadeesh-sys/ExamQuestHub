@@ -272,161 +272,120 @@ export default function MockTestsHubPage() {
     return `${count} Questions`;
   };
 
-  // Watermark helper matching the visual elements in image_9f2f7c39.png and image_2182d115.png
-  const renderWatermark = (type, isSelected) => {
-    const opacity = isSelected ? 'opacity-15 text-white' : 'opacity-20';
-    switch (type) {
-      case 'laurel':
-        return (
-          <svg
-            className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 ${isSelected ? 'text-white/20' : 'text-blue-900/15'} pointer-events-none select-none`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.2"
-          >
-            <path
-              d="M7 21c-2-3-2-7 0-10 1-1.5 2-2.5 3-3M17 21c2-3 2-7 0-10-1-1.5-2-2.5-3-3M6 14c2-.5 4-2 5-4M18 14c-2-.5-4-2-5-4M7 8c2 0 3-1.5 4-3M17 8c-2 0-3-1.5-4-3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        );
-      case 'globe':
-        return <Globe className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 text-rose-400 ${opacity} pointer-events-none select-none stroke-[1.4]`} />;
-      case 'typography':
-        return <span className={`font-serif font-black text-xl sm:text-2xl text-blue-400 ${opacity} pointer-events-none select-none leading-none`}>Aa</span>;
-      case 'bulb':
-        return <Lightbulb className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 text-amber-500 ${opacity} pointer-events-none select-none stroke-[1.4]`} />;
-      case 'puzzle':
-        return <Puzzle className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 text-purple-400 ${opacity} pointer-events-none select-none stroke-[1.4]`} />;
-      case 'math':
-        return (
-          <span className={`font-mono font-black text-xs sm:text-sm text-emerald-500 ${opacity} pointer-events-none select-none leading-none text-right`}>
-            + ×<br />÷ =
-          </span>
-        );
-      case 'atom':
-        return <Atom className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 text-indigo-400 ${opacity} pointer-events-none select-none stroke-[1.4]`} />;
-      case 'laptop':
-        return <Monitor className={`w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 text-sky-400 ${opacity} pointer-events-none select-none stroke-[1.4]`} />;
-      default:
-        return null;
-    }
-  };
 
-  // 8 Subject cards with professional domain-related icons, vibrant styling, and live question counts
+
+  // 8 Subject cards with consistent premium 3D icon family and live question counts
   const subjectCards = [
     {
       id: 'all',
       title: 'All Mock',
+      shortTitle: 'All Mock',
       questionBadge: formatQuestionsBadge(10757, '10.7k Qs'),
       exactCount: 10757,
-      icon: Trophy,
+      image3d: '/assets/aistudio/subject_icons/icon_all_mock.jpg',
+      concept: 'Golden Trophy',
       themeColor: '#12345A',
-      iconContainerClass: 'bg-blue-50/90 text-[#12345A] border border-blue-200/90 group-hover:bg-[#12345A] group-hover:text-[#F2BE4F] group-hover:border-[#12345A]',
-      selectedIconClass: 'bg-[#12345A] text-[#F2BE4F] border border-[#F2BE4F]/40 shadow-md shadow-blue-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-[#12345A]/60',
       badgeClass: 'bg-blue-50 text-blue-900 border border-blue-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-blue-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-blue-50/40 via-white to-white'
     },
     {
       id: 'current-affairs',
       title: 'Current Affairs',
+      shortTitle: 'Current Affairs',
       questionBadge: formatQuestionsBadge(3500, '3.5k Qs'),
       exactCount: 3500,
-      icon: Newspaper,
+      image3d: '/assets/aistudio/subject_icons/icon_current_affairs.jpg',
+      concept: 'Newspaper',
       themeColor: '#E11D48',
-      iconContainerClass: 'bg-rose-50/90 text-rose-600 border border-rose-200/90 group-hover:bg-rose-600 group-hover:text-white group-hover:border-rose-600',
-      selectedIconClass: 'bg-rose-600 text-white border border-rose-400 shadow-md shadow-rose-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-rose-400',
       badgeClass: 'bg-rose-50 text-rose-900 border border-rose-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-rose-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-rose-50/30 via-white to-white'
     },
     {
       id: 'english-language',
       title: 'English',
+      shortTitle: 'English',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 525, '525 Qs'),
       exactCount: liveSubjectCounts['english-language'] || 525,
-      icon: BookOpen,
+      image3d: '/assets/aistudio/subject_icons/icon_english.jpg',
+      concept: 'Open Book',
       themeColor: '#2563EB',
-      iconContainerClass: 'bg-blue-50/90 text-blue-600 border border-blue-200/90 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600',
-      selectedIconClass: 'bg-blue-600 text-white border border-blue-400 shadow-md shadow-blue-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-blue-400',
       badgeClass: 'bg-blue-50 text-blue-900 border border-blue-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-blue-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-blue-50/30 via-white to-white'
     },
     {
       id: 'general-knowledge',
       title: 'General Knowledge',
+      shortTitle: 'GK',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4911, '4.9k Qs'),
       exactCount: liveSubjectCounts['general-knowledge'] || 4911,
-      icon: Landmark,
+      image3d: '/assets/aistudio/subject_icons/icon_general_knowledge.jpg',
+      concept: 'Graduation Cap',
       themeColor: '#D97706',
-      iconContainerClass: 'bg-amber-50/90 text-amber-700 border border-amber-200/90 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500',
-      selectedIconClass: 'bg-amber-500 text-white border border-amber-400 shadow-md shadow-amber-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-amber-400',
       badgeClass: 'bg-amber-50 text-amber-900 border border-amber-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-amber-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-amber-50/30 via-white to-white'
     },
     {
       id: 'reasoning',
       title: 'Reasoning',
+      shortTitle: 'Reasoning',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2156, '2.1k Qs'),
       exactCount: liveSubjectCounts['reasoning'] || 2156,
-      icon: Brain,
+      image3d: '/assets/aistudio/subject_icons/icon_reasoning.jpg',
+      concept: 'Brain with Gears',
       themeColor: '#9333EA',
-      iconContainerClass: 'bg-purple-50/90 text-purple-600 border border-purple-200/90 group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-600',
-      selectedIconClass: 'bg-purple-600 text-white border border-purple-400 shadow-md shadow-purple-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-purple-400',
       badgeClass: 'bg-purple-50 text-purple-900 border border-purple-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-purple-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-purple-50/30 via-white to-white'
     },
     {
       id: 'quantitative-aptitude',
       title: 'Quant / Maths',
+      shortTitle: 'Quant',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2401, '2.4k Qs'),
       exactCount: liveSubjectCounts['quantitative-aptitude'] || 2401,
-      icon: Calculator,
+      image3d: '/assets/aistudio/subject_icons/icon_quant.jpg',
+      concept: 'Calculator',
       themeColor: '#059669',
-      iconContainerClass: 'bg-emerald-50/90 text-emerald-600 border border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600',
-      selectedIconClass: 'bg-emerald-600 text-white border border-emerald-400 shadow-md shadow-emerald-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-emerald-400',
       badgeClass: 'bg-emerald-50 text-emerald-900 border border-emerald-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-emerald-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-emerald-50/30 via-white to-white'
     },
     {
       id: 'general-science',
       title: 'General Science',
+      shortTitle: 'Science',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 738, '738 Qs'),
       exactCount: liveSubjectCounts['general-science'] || 738,
-      icon: Atom,
+      image3d: '/assets/aistudio/subject_icons/icon_science.jpg',
+      concept: 'Flask and Microscope',
       themeColor: '#7C3AED',
-      iconContainerClass: 'bg-indigo-50/90 text-indigo-600 border border-indigo-200/90 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600',
-      selectedIconClass: 'bg-indigo-600 text-white border border-indigo-400 shadow-md shadow-indigo-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-indigo-400',
       badgeClass: 'bg-indigo-50 text-indigo-900 border border-indigo-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-indigo-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-indigo-50/30 via-white to-white'
     },
     {
       id: 'computer-science',
       title: 'Computer Science',
+      shortTitle: 'Computer',
       questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 568, '568 Qs'),
       exactCount: liveSubjectCounts['computer-science'] || 568,
-      icon: Cpu,
+      image3d: '/assets/aistudio/subject_icons/icon_computer.jpg',
+      concept: 'Coding Laptop',
       themeColor: '#0284C7',
-      iconContainerClass: 'bg-sky-50/90 text-sky-600 border border-sky-200/90 group-hover:bg-sky-600 group-hover:text-white group-hover:border-sky-600',
-      selectedIconClass: 'bg-sky-600 text-white border border-sky-400 shadow-md shadow-sky-900/20',
+      cardBorder: 'border-slate-200/90 hover:border-sky-400',
       badgeClass: 'bg-sky-50 text-sky-900 border border-sky-200/60',
       selectedBadgeClass: 'bg-[#12345A] text-white',
-      cardBorder: 'border-slate-200/90 hover:border-sky-400',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-sky-50/30 via-white to-white'
     }
   ];
@@ -957,38 +916,105 @@ export default function MockTestsHubPage() {
             </div>
           </div>
 
-          {/* Subject Cards Grid:
-              - Laptop & Desktop (sm/md/lg): 4 columns x 2 rows = 8 cards (Matching user attachment image_f0431591.png with big centered icons and text below)
-              - Mobile (< sm): 2 columns grid with big centered icons, perfect touch targets
-          */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-4.5 select-none">
+          {/* Mobile Display: 4 circular items visible in horizontal scrolling */}
+          <div className="block sm:hidden -mx-4 px-4 overflow-hidden">
+            <div className="flex items-start gap-2 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-2 px-1">
+              {subjectCards.map((sub) => {
+                const isSelected = selectedSubject === sub.id;
+                return (
+                  <button
+                    key={`mobile-${sub.id}`}
+                    type="button"
+                    onClick={() => handleSelectSubject(sub.id)}
+                    className="flex-[0_0_calc(25%-6px)] min-w-[72px] max-w-[85px] snap-start flex flex-col items-center text-center group cursor-pointer focus:outline-none"
+                    title={`${sub.title} (${sub.exactCount} Qs)`}
+                  >
+                    {/* Circular 3D Icon Container */}
+                    <div className="relative">
+                      <div
+                        className={`w-14 h-14 rounded-full p-1.5 flex items-center justify-center transition-all duration-200 bg-white shadow-xs ${
+                          isSelected
+                            ? 'border-2 border-[#12345A] ring-3 ring-[#12345A]/25 scale-105 shadow-md bg-blue-50/60'
+                            : 'border-2 border-slate-200/90 group-hover:border-[#12345A]/40'
+                        }`}
+                      >
+                        <img
+                          src={sub.image3d}
+                          alt={sub.title}
+                          className="w-full h-full object-contain rounded-full drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      </div>
+                      {isSelected && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                          <Check className="w-2.5 h-2.5 stroke-[3.5]" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Circular Subject Title */}
+                    <span
+                      className={`text-[11px] leading-tight mt-1.5 line-clamp-1 max-w-full px-0.5 tracking-tight ${
+                        isSelected ? 'font-black text-[#12345A]' : 'font-semibold text-slate-700'
+                      }`}
+                    >
+                      {sub.shortTitle || sub.title}
+                    </span>
+
+                    {/* Compact Question Count Pill */}
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 max-w-full truncate leading-none ${
+                        isSelected
+                          ? 'bg-[#12345A] text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      {sub.questionBadge.replace(' Questions', ' Qs')}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Scroll Indicator hint */}
+            <div className="flex items-center justify-between px-1 mt-1 text-[10px] text-slate-400 font-medium">
+              <span>← Swipe for all 8 subjects</span>
+              <span className="font-semibold text-[#12345A]">4 visible</span>
+            </div>
+          </div>
+
+          {/* Laptop & Desktop Display: 4 columns x 2 rows = 8 cards with prominent circular 3D icons */}
+          <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-4 gap-3.5 sm:gap-4 md:gap-4.5 select-none">
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
-              const IconComponent = sub.icon;
               return (
                 <button
                   key={sub.id}
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
                   title={`${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions`}
-                  className={`group relative flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center min-h-[160px] sm:min-h-[185px] ${
+                  className={`group relative flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center min-h-[168px] sm:min-h-[190px] ${
                     isSelected
                       ? sub.selectedCardClass
                       : `${sub.cardBorder} hover:shadow-lg hover:-translate-y-1 shadow-2xs`
                   }`}
                 >
-                  {/* BIG PROMINENT CENTERED ICON */}
+                  {/* PROMINENT CIRCULAR 3D ICON CONTAINER */}
                   <div
-                    className={`w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-2xl sm:rounded-3xl flex items-center justify-center transition-all duration-300 ${
+                    className={`w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-full p-1.5 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 ${
                       isSelected
-                        ? sub.selectedIconClass
-                        : sub.iconContainerClass
+                        ? 'border-[#12345A] ring-4 ring-[#12345A]/15 shadow-md shadow-blue-900/10 scale-105'
+                        : 'border-slate-200/90 group-hover:border-[#12345A]/40 group-hover:scale-105 shadow-2xs'
                     }`}
                   >
-                    <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2] transition-transform duration-200 group-hover:scale-110" />
+                    <img
+                      src={sub.image3d}
+                      alt={sub.title}
+                      className="w-full h-full object-contain rounded-full transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                      loading="lazy"
+                    />
                   </div>
 
-                  {/* SUBJECT TEXT DIRECTLY BELOW ICON */}
+                  {/* SUBJECT TEXT DIRECTLY BELOW CIRCULAR ICON */}
                   <h3
                     className={`font-heading font-black text-sm sm:text-[15px] md:text-base tracking-tight leading-snug mt-3 sm:mt-3.5 mb-1 text-center transition-colors line-clamp-1 max-w-full px-1 ${
                       isSelected ? 'text-[#12345A]' : 'text-[#0F172A] group-hover:text-[#12345A]'
