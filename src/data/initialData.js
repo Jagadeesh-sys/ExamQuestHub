@@ -716,8 +716,38 @@ export const INITIAL_CURRENT_AFFAIRS = [
 
 export const INITIAL_QUESTIONS = [
   {
+    id: 'gk-q0-constitution-adopted',
+    topic: 'Indian Polity',
+    category: 'General Studies',
+    isPyq: true,
+    examSource: 'UPSC Civil Services / SSC CGL',
+    question: {
+      en: 'When was the Constitution of India adopted?',
+      te: 'భారత రాజ్యాంగం ఎప్పుడు ఆమోదించబడింది?'
+    },
+    options: {
+      en: [
+        '15 August 1947',
+        '26 November 1949',
+        '26 January 1950',
+        '2 October 1949'
+      ],
+      te: [
+        '15 ఆగస్టు 1947',
+        '26 నవంబర్ 1949',
+        '26 జనవరి 1950',
+        '2 అక్టోబర్ 1949'
+      ]
+    },
+    correctAnswer: 1, // B. 26 November 1949
+    explanation: {
+      en: 'The Constitution of India was adopted on 26 November 1949 and came into force on 26 January 1950.',
+      te: 'భారత రాజ్యాంగం 1949 నవంబర్ 26న రాజ్యాంగ పరిషత్ ద్వారా ఆమోదించబడింది మరియు 1950 జనవరి 26న అమలులోకి వచ్చింది.'
+    }
+  },
+  {
     id: 'gk-q1-polity',
-    topic: 'Polity',
+    topic: 'Indian Polity',
     category: 'General Studies',
     isPyq: true,
     examSource: 'UPSC Civil Services Prelims 2023',

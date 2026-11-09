@@ -1,22 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  Sparkles,
-  HelpCircle,
+  Home,
+  ChevronRight,
+  Lightbulb,
+  Trophy,
+  Target,
+  LayoutGrid,
+  Landmark,
+  Globe,
+  TrendingUp,
+  Atom,
+  Cpu,
+  Newspaper,
+  Check,
   CheckCircle2,
   XCircle,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  ShieldCheck,
-  Eye,
-  EyeOff,
-  Award,
-  Layers,
-  BookOpen
+  ArrowLeft,
+  ArrowRight,
+  Info,
+  RotateCcw
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getQuestions } from '../firebase/firestoreService.js';
-import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 
 export default function GKPracticePage() {
@@ -26,14 +32,15 @@ export default function GKPracticePage() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({}); // { [qId]: optionIndex }
-  const [showExplanation, setShowExplanation] = useState({}); // { [qId]: boolean }
-  const [selectedTopic, setSelectedTopic] = useState('All');
+  const [selectedTopic, setSelectedTopic] = useState('All Topics');
+
+  const topicsContainerRef = useRef(null);
 
   useEffect(() => {
     async function loadQuiz() {
       try {
         const data = await getQuestions();
-        setQuestions(data);
+        setQuestions(data || []);
       } catch (err) {
         console.error('Failed to load GK questions:', err);
       } finally {
@@ -43,14 +50,33 @@ export default function GKPracticePage() {
     loadQuiz();
   }, []);
 
-  const topics = ['All', ...new Set(questions.map((q) => q.topic).filter(Boolean))];
+  const TOPIC_CONFIG = [
+    { label: 'All Topics', icon: LayoutGrid, key: 'All' },
+    { label: 'Indian Polity', icon: Landmark, key: 'Polity' },
+    { label: 'Indian History', icon: Landmark, key: 'History' },
+    { label: 'Geography', icon: Globe, key: 'Geography' },
+    { label: 'Economy', icon: TrendingUp, key: 'Economy' },
+    { label: 'General Science', icon: Atom, key: 'Science' },
+    { label: 'Computer Science', icon: Cpu, key: 'Computer' },
+    { label: 'Current Affairs', icon: Newspaper, key: 'Current Affairs' },
+  ];
 
   const filteredQuestions = questions.filter((q) => {
-    if (selectedTopic === 'All') return true;
-    return q.topic === selectedTopic;
+    if (selectedTopic === 'All Topics' || selectedTopic === 'All') return true;
+    const qTopic = (q.topic || '').toLowerCase();
+    const sel = selectedTopic.toLowerCase();
+
+    if (sel.includes('polity')) return qTopic.includes('polity');
+    if (sel.includes('history')) return qTopic.includes('history');
+    if (sel.includes('geography')) return qTopic.includes('geography');
+    if (sel.includes('economy')) return qTopic.includes('economy');
+    if (sel.includes('science')) return qTopic.includes('science');
+    if (sel.includes('computer')) return qTopic.includes('computer');
+    if (sel.includes('current')) return qTopic.includes('current');
+    return qTopic.includes(sel);
   });
 
-  const currentQ = filteredQuestions[currentIndex];
+  const currentQ = filteredQuestions[currentIndex] || filteredQuestions[0];
 
   const handleSelectOption = (index) => {
     if (!currentQ) return;
@@ -59,22 +85,9 @@ export default function GKPracticePage() {
       ...prev,
       [currentQ.id]: index
     }));
-    // Auto show explanation upon selection
-    setShowExplanation((prev) => ({
-      ...prev,
-      [currentQ.id]: true
-    }));
   };
 
-  const toggleExplanation = () => {
-    if (!currentQ) return;
-    setShowExplanation((prev) => ({
-      ...prev,
-      [currentQ.id]: !prev[currentQ.id]
-    }));
-  };
-
-  // Score calculation
+  // Score & Accuracy calculation
   const score = Object.entries(selectedAnswers).reduce((acc, [qId, chosenIndex]) => {
     const q = questions.find((item) => item.id === qId);
     if (q && q.correctAnswer === chosenIndex) {
@@ -84,301 +97,377 @@ export default function GKPracticePage() {
   }, 0);
 
   const answeredCount = Object.keys(selectedAnswers).length;
+  const accuracy = answeredCount > 0 ? Math.round((score / answeredCount) * 100) : 0;
 
   const handleResetQuiz = () => {
     setSelectedAnswers({});
-    setShowExplanation({});
     setCurrentIndex(0);
   };
 
+  const handleScrollTopicsRight = () => {
+    if (topicsContainerRef.current) {
+      topicsContainerRef.current.scrollBy({ left: 160, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="max-w-[1000px] mx-auto px-4 sm:px-6 py-6 space-y-6">
-      
-      {/* Breadcrumbs */}
-      <Breadcrumbs items={[{ label: t('gkModuleTitle') }]} />
+    <div className="min-h-screen bg-[#F4F8FB] pb-24 sm:pb-16 text-[#0B1F3A]">
+      <div className="max-w-[880px] mx-auto px-3.5 sm:px-6 py-3.5 sm:py-6 space-y-4 sm:space-y-6">
 
-      {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E3EAF2] flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#12345A] uppercase tracking-wider mb-1">
-            <Sparkles className="w-4 h-4 text-[#F2BE4F]" />
-            <span>Interactive Assessment Module</span>
-          </div>
-          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#182B45]">
-            {t('gkModuleTitle')}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            {t('gkModuleSubtitle')}
-          </p>
-        </div>
+        {/* 1. BREADCRUMBS (Matching image_dc5db239.png) */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-slate-500 pt-0.5">
+          <Link to="/" className="flex items-center gap-1.5 hover:text-[#0B4F9C] transition-colors">
+            <Home className="w-3.5 h-3.5 text-[#0B4F9C]" />
+            <span>Home</span>
+          </Link>
+          <ChevronRight className="w-3 h-3 text-slate-400" />
+          <span className="text-[#0B1F3A] font-bold">Daily General Knowledge Practice</span>
+        </nav>
 
-        {/* Live Score Counter */}
-        <div className="flex items-center gap-3 bg-[#F6F8FC] p-3 rounded-2xl border border-[#E3EAF2] self-start md:self-auto">
-          <div className="w-10 h-10 rounded-xl bg-[#12345A] flex items-center justify-center text-[#F2BE4F]">
-            <Award className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">
-              {t('yourScore')}
-            </span>
-            <div className="text-base font-bold text-[#182B45]">
-              {score} / {answeredCount}
-              <span className="text-xs text-slate-400 font-normal ml-1">
-                ({answeredCount > 0 ? Math.round((score / answeredCount) * 100) : 0}%)
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Topic Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <span className="text-xs text-slate-400 font-medium mr-1 hidden sm:inline">Topics:</span>
-        {topics.map((top) => (
-          <button
-            key={top}
-            type="button"
-            onClick={() => { setSelectedTopic(top); setCurrentIndex(0); }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
-              selectedTopic === top
-                ? 'bg-[#12345A] text-white shadow-xs'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            {top === 'All' ? 'All Topics' : top}
-          </button>
-        ))}
-      </div>
-
-      {/* Main Interactive Quiz Card */}
-      {loading ? (
-        <SkeletonLoader count={1} type="card" />
-      ) : currentQ ? (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E3EAF2] shadow-xs space-y-6">
-          
-          {/* Question Meta Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-lg bg-[#EAF3FF] text-[#12345A] font-bold">
-                {t('question')} {currentIndex + 1} of {filteredQuestions.length}
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium">
-                {currentQ.topic}
+        {/* 2. HERO BANNER CARD (Exact match from image_dc5db239.png) */}
+        <div className="bg-gradient-to-r from-[#F0F6FD] via-[#E9F3FC] to-[#E3EFFB] rounded-3xl p-5 sm:p-7 border border-[#D5E5F7] shadow-xs relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-3 z-10 max-w-xl">
+            {/* Top pill badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 backdrop-blur-xs border border-amber-200/80 shadow-2xs">
+              <div className="w-5 h-5 rounded-full bg-amber-100/90 text-amber-500 flex items-center justify-center">
+                <Lightbulb className="w-3 h-3 fill-amber-400 text-amber-500" />
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-black text-[#1864AB] tracking-widest uppercase">
+                INTERACTIVE ASSESSMENT MODULE
               </span>
             </div>
 
-            {/* Clear distinction between PYQ and Original Practice */}
-            <div>
-              {currentQ.isPyq ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-semibold border border-emerald-200">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>{currentQ.examSource || t('pyqNote')}</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#12345A] text-[11px] font-semibold border border-blue-200">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>{t('originalPracticeNote')}</span>
-                </span>
-              )}
-            </div>
-          </div>
+            {/* Title */}
+            <h1 className="font-heading font-black text-2xl sm:text-3xl lg:text-[32px] text-[#0B1F3A] leading-tight tracking-tight">
+              Daily General<br />Knowledge Practice
+            </h1>
 
-          {/* Question Text */}
-          <div className="space-y-3">
-            <h2 className="font-heading font-bold text-lg sm:text-xl text-[#182B45] leading-relaxed">
-              {getLocalized(currentQ.question)}
-            </h2>
+            {/* Subtitle */}
+            <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed max-w-md font-medium">
+              Topic-wise multiple-choice questions with verified explanations in English and Telugu.
+            </p>
 
-            {/* Show both languages if English or Telugu has secondary display */}
-            {language === 'te' && currentQ.question?.en && (
-              <p className="text-xs text-slate-400 italic">
-                En: {currentQ.question.en}
-              </p>
-            )}
-            {language === 'en' && currentQ.question?.te && (
-              <p className="text-xs text-slate-400 telugu-text">
-                తెలుగు: {currentQ.question.te}
-              </p>
-            )}
-          </div>
-
-          {/* Options List */}
-          <div className="space-y-3 pt-2">
-            {(() => {
-              const opts = (language === 'te' && currentQ.options?.te) 
-                ? currentQ.options.te 
-                : (currentQ.options?.en || currentQ.options || []);
-
-              const isAnswered = selectedAnswers[currentQ.id] !== undefined;
-              const selectedOption = selectedAnswers[currentQ.id];
-              const isCorrect = selectedOption === currentQ.correctAnswer;
-
-              return opts.map((optText, optIdx) => {
-                const isSelected = selectedOption === optIdx;
-                const isTheCorrectOption = optIdx === currentQ.correctAnswer;
-
-                let btnClasses = 'border-slate-200 bg-white hover:border-[#2468B4] hover:bg-slate-50 text-slate-800';
-
-                if (isAnswered) {
-                  if (isTheCorrectOption) {
-                    btnClasses = 'border-emerald-500 bg-emerald-50/80 text-emerald-950 font-semibold ring-1 ring-emerald-500';
-                  } else if (isSelected) {
-                    btnClasses = 'border-red-400 bg-red-50 text-red-950';
-                  } else {
-                    btnClasses = 'border-slate-200 bg-slate-50/50 text-slate-400 opacity-60';
-                  }
-                }
-
-                return (
-                  <button
-                    key={optIdx}
-                    type="button"
-                    disabled={isAnswered}
-                    onClick={() => handleSelectOption(optIdx)}
-                    className={`w-full text-left p-4 rounded-2xl border text-sm transition-all flex items-start gap-3 ${btnClasses}`}
-                  >
-                    <span className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-xs shrink-0 text-slate-600 mt-0.5">
-                      {String.fromCharCode(65 + optIdx)}
+            {/* Live Score Counter Floating Card */}
+            <div className="pt-1">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs inline-flex items-center gap-3 sm:gap-4">
+                {/* Score */}
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#0B4F9C] flex items-center justify-center text-amber-300 shadow-2xs shrink-0">
+                    <Trophy className="w-5 h-5 fill-amber-300 text-amber-400" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider block">
+                      YOUR SCORE
                     </span>
-                    <span className="flex-1 leading-snug">{optText}</span>
+                    <span className="font-black text-base text-[#0B1F3A]">
+                      {score} / {answeredCount}
+                    </span>
+                  </div>
+                </div>
 
-                    {isAnswered && isTheCorrectOption && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                    )}
-                    {isAnswered && isSelected && !isCorrect && (
-                      <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                    )}
-                  </button>
-                );
-              });
-            })()}
+                {/* Vertical Divider */}
+                <div className="w-px h-8 bg-slate-200" />
+
+                {/* Accuracy */}
+                <div className="flex items-center gap-2.5 pr-2">
+                  <div className="w-7 h-7 flex items-center justify-center text-[#0B4F9C] shrink-0">
+                    <Target className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 font-bold block">
+                      Accuracy
+                    </span>
+                    <span className="font-black text-base text-[#0B4F9C]">
+                      {accuracy}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Explanation Section */}
-          {showExplanation[currentQ.id] && (
-            <div className="p-5 rounded-2xl bg-[#EAF3FF] border border-[#2468B4]/20 space-y-2 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between text-xs font-bold text-[#12345A]">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-[#2468B4]" />
-                  <span>Explanation & Key Concepts</span>
+          {/* Right 3D Illustration */}
+          <div className="shrink-0 flex justify-center md:justify-end self-center md:self-auto">
+            <img
+              src="/assets/aistudio/practice_illustration.png"
+              alt="Learn Practice Improve"
+              className="w-52 sm:w-64 md:w-72 object-contain drop-shadow-xs"
+            />
+          </div>
+        </div>
+
+        {/* 3. TOPICS FILTER PILLS BAR (Exact match with icons and right arrow) */}
+        <div className="flex items-center gap-2">
+          <div
+            ref={topicsContainerRef}
+            className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 flex-1 scroll-smooth"
+          >
+            {TOPIC_CONFIG.map((tItem) => {
+              const Icon = tItem.icon;
+              const isSelected = selectedTopic === tItem.label;
+              return (
+                <button
+                  key={tItem.label}
+                  type="button"
+                  onClick={() => {
+                    setSelectedTopic(tItem.label);
+                    setCurrentIndex(0);
+                  }}
+                  className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shrink-0 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#0B1F3A] text-white shadow-xs'
+                      : 'bg-white border border-slate-200/90 text-[#182B45] hover:bg-slate-50 hover:border-slate-300 shadow-2xs'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tItem.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right Arrow Chevron Button */}
+          <button
+            type="button"
+            onClick={handleScrollTopicsRight}
+            aria-label="Scroll topics"
+            className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 4. MAIN INTERACTIVE QUESTION CARD (Exact match from image_dc5db239.png) */}
+        {loading ? (
+          <SkeletonLoader count={1} type="card" />
+        ) : currentQ ? (
+          <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-5">
+
+            {/* Top Meta Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Pill 1: Question counter */}
+                <span className="px-3.5 py-1.5 rounded-full bg-[#EBF3FC] text-[#0B4F9C] font-extrabold text-xs">
+                  Question {currentIndex + 1} of {filteredQuestions.length}
                 </span>
-                <span className="text-emerald-700">
-                  Correct Answer: Option {String.fromCharCode(65 + currentQ.correctAnswer)}
+
+                {/* Pill 2: Topic */}
+                <span className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-[#182B45] font-bold text-xs flex items-center gap-1.5 shadow-2xs">
+                  <Landmark className="w-3.5 h-3.5 text-[#0B4F9C]" />
+                  <span>{currentQ.topic || 'Indian Polity'}</span>
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                {getLocalized(currentQ.explanation)}
-              </p>
+
+              {/* Right: Progress bar & Counter */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-24 sm:w-28 h-2 rounded-full bg-[#E2EDFA] relative overflow-hidden">
+                  <div
+                    className="h-full bg-[#1864AB] rounded-full transition-all duration-300"
+                    style={{
+                      width: `${((currentIndex + 1) / filteredQuestions.length) * 100}%`
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-bold text-slate-500">
+                  {currentIndex + 1} / {filteredQuestions.length}
+                </span>
+              </div>
             </div>
-          )}
 
-          {/* Bottom Action Controls */}
-          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
-            <button
-              type="button"
-              onClick={toggleExplanation}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-slate-600 hover:text-[#12345A] hover:bg-slate-50 font-semibold transition-colors active:bg-slate-100"
-            >
-              {showExplanation[currentQ.id] ? (
-                <>
-                  <EyeOff className="w-4 h-4" />
-                  <span>{t('hideAnswer')}</span>
-                </>
-              ) : (
-                <>
-                  <Eye className="w-4 h-4" />
-                  <span>{t('showAnswer')}</span>
-                </>
-              )}
-            </button>
+            {/* Informational Tip Banner */}
+            <div className="bg-[#EDF5FD] rounded-xl p-3 sm:p-3.5 flex items-start gap-2.5 border border-[#D0E4FA]/70 text-[#1864AB]">
+              <div className="w-5 h-5 rounded-full bg-[#1864AB] text-white flex items-center justify-center shrink-0 mt-0.5">
+                <Info className="w-3.5 h-3.5 fill-current text-[#1864AB]" />
+              </div>
+              <div className="text-xs leading-snug">
+                <p className="font-bold text-[#1864AB]">Each question comes with a verified explanation.</p>
+                <p className="text-slate-600 font-medium">For competitive exams preparation.</p>
+              </div>
+            </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Question Text & Telugu Translation */}
+            <div className="flex items-start gap-3 pt-1">
+              {/* Q1 Blue Badge */}
+              <div className="w-8 h-8 rounded-full bg-[#0B4F9C] text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+                Q{currentIndex + 1}
+              </div>
+
+              <div className="space-y-1.5">
+                <h2 className="font-heading font-black text-base sm:text-xl text-[#0B1F3A] leading-snug">
+                  {getLocalized(currentQ.question)}
+                </h2>
+
+                {/* Telugu translation below headline */}
+                {currentQ.question?.te && (
+                  <p className="text-[#334E68] font-medium text-xs sm:text-sm leading-relaxed">
+                    {currentQ.question.te}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Options List (A, B, C, D) */}
+            <div className="space-y-2.5 pt-1">
+              {(() => {
+                const opts = (language === 'te' && currentQ.options?.te)
+                  ? currentQ.options.te
+                  : (currentQ.options?.en || currentQ.options || []);
+
+                const isAnswered = selectedAnswers[currentQ.id] !== undefined;
+                const userChoice = selectedAnswers[currentQ.id];
+
+                return opts.map((optText, optIdx) => {
+                  const isSelected = userChoice === optIdx;
+                  const isCorrectAnswer = optIdx === currentQ.correctAnswer;
+
+                  let borderClass = 'border-slate-200/90 bg-white hover:border-[#1864AB]/50 hover:bg-slate-50/70 text-slate-800';
+
+                  if (isAnswered) {
+                    if (isSelected) {
+                      borderClass = 'border-[#2468B4] bg-[#F4F9FE] ring-1 ring-[#2468B4] text-slate-900';
+                    } else if (isCorrectAnswer) {
+                      borderClass = 'border-emerald-500 bg-emerald-50/30 text-emerald-950';
+                    } else {
+                      borderClass = 'border-slate-200 bg-white opacity-60 text-slate-600';
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={optIdx}
+                      type="button"
+                      disabled={isAnswered}
+                      onClick={() => handleSelectOption(optIdx)}
+                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all flex items-center gap-3 relative cursor-pointer select-none active:scale-[0.99] ${borderClass}`}
+                    >
+                      {/* Radio Circle */}
+                      {isSelected ? (
+                        <div className="w-5 h-5 rounded-full border-2 border-[#0B4F9C] flex items-center justify-center shrink-0 bg-white">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#0B4F9C]" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-slate-300 shrink-0" />
+                      )}
+
+                      {/* Letter Badge A, B, C, D */}
+                      <span className="w-6 h-6 rounded-md bg-[#EDF5FD] text-[#0B4F9C] font-black text-xs flex items-center justify-center shrink-0">
+                        {String.fromCharCode(65 + optIdx)}
+                      </span>
+
+                      {/* Option Text */}
+                      <span className="flex-1 font-semibold text-xs sm:text-sm text-slate-800 leading-snug">
+                        {optText}
+                      </span>
+
+                      {/* Right Indicator (Green Checkmark on correct answer when answered) */}
+                      {isAnswered && isCorrectAnswer && (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600 fill-emerald-100 shrink-0" />
+                      )}
+                      {isAnswered && isSelected && !isCorrectAnswer && (
+                        <XCircle className="w-5 h-5 text-rose-500 fill-rose-100 shrink-0" />
+                      )}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Explanation & Correct Answer Box */}
+            {selectedAnswers[currentQ.id] !== undefined && (
+              <div className="bg-[#F0F6FD] rounded-2xl p-4 sm:p-5 border border-[#D5E5F7] flex flex-col md:flex-row gap-4 md:items-start animate-in fade-in duration-200">
+                {/* Left: Correct Answer */}
+                <div className="flex items-start gap-2.5 md:w-5/12 shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-extrabold text-emerald-700 uppercase tracking-wider block">
+                      Correct Answer
+                    </span>
+                    <p className="font-heading font-black text-xs sm:text-sm text-[#0B1F3A] mt-0.5">
+                      {String.fromCharCode(65 + currentQ.correctAnswer)}.{' '}
+                      {(() => {
+                        const opts = (language === 'te' && currentQ.options?.te)
+                          ? currentQ.options.te
+                          : (currentQ.options?.en || currentQ.options || []);
+                        return opts[currentQ.correctAnswer] || '';
+                      })()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Vertical Divider */}
+                <div className="hidden md:block w-px self-stretch bg-slate-200/80" />
+
+                {/* Right: Explanation */}
+                <div className="flex items-start gap-2.5 flex-1">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 text-[#0B4F9C] flex items-center justify-center shrink-0 mt-0.5">
+                    <Lightbulb className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-extrabold text-[#0B4F9C] uppercase tracking-wider block">
+                      Explanation
+                    </span>
+                    <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed mt-0.5 font-normal">
+                      {getLocalized(currentQ.explanation)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Navigation Buttons Row (Previous Question / Next Question) */}
+            <div className="pt-2 flex items-center justify-between gap-3">
               <button
                 type="button"
                 disabled={currentIndex === 0}
                 onClick={() => setCurrentIndex((idx) => Math.max(0, idx - 1))}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-50 active:bg-slate-100"
+                className="px-4 sm:px-5 py-2.5 rounded-full bg-white border border-slate-300 text-[#182B45] font-bold text-xs hover:bg-slate-50 flex items-center gap-2 shadow-2xs disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95 cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" />
-                <span>{t('prevQuestion')}</span>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Previous Question</span>
               </button>
 
               <button
                 type="button"
                 disabled={currentIndex === filteredQuestions.length - 1}
                 onClick={() => setCurrentIndex((idx) => Math.min(filteredQuestions.length - 1, idx + 1))}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 px-5 py-2.5 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-semibold disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs active:scale-95"
+                className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0B4F9C] hover:bg-[#083D7A] text-white font-black text-xs flex items-center gap-2 shadow-xs disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95 cursor-pointer"
               >
-                <span>{t('nextQuestion')}</span>
-                <ChevronRight className="w-4 h-4" />
+                <span>Next Question</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
+
           </div>
-
-          {/* Question Navigation Palette */}
-          <div className="pt-4 border-t border-slate-100">
-            <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">
-              Question Palette:
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {filteredQuestions.map((q, idx) => {
-                const isAnswered = selectedAnswers[q.id] !== undefined;
-                const isCurrent = idx === currentIndex;
-                const isCorrect = isAnswered && selectedAnswers[q.id] === q.correctAnswer;
-
-                let pillColor = 'bg-slate-100 text-slate-700 hover:bg-slate-200';
-                if (isAnswered) {
-                  pillColor = isCorrect
-                    ? 'bg-emerald-600 text-white font-bold'
-                    : 'bg-red-500 text-white font-bold';
-                }
-                if (isCurrent) {
-                  pillColor += ' ring-2 ring-offset-2 ring-[#12345A]';
-                }
-
-                return (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${pillColor}`}
-                    aria-label={`Go to question ${idx + 1}`}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
-            </div>
+        ) : (
+          <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center text-slate-500">
+            <p>No questions found for the selected topic.</p>
+            <button
+              type="button"
+              onClick={() => setSelectedTopic('All Topics')}
+              className="mt-3 text-xs font-semibold text-[#0B4F9C] hover:underline"
+            >
+              Show All Topics
+            </button>
           </div>
+        )}
 
-        </div>
-      ) : (
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center text-slate-500">
-          <p>No questions found for the selected topic.</p>
-          <button
-            type="button"
-            onClick={() => setSelectedTopic('All')}
-            className="mt-3 text-xs font-semibold text-[#2468B4] hover:underline"
-          >
-            Show All Topics
-          </button>
-        </div>
-      )}
+        {/* Reset Quiz Button */}
+        {answeredCount > 0 && (
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={handleResetQuiz}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-slate-600 hover:text-[#0B1F3A] hover:bg-white text-xs font-semibold transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Practice Quiz</span>
+            </button>
+          </div>
+        )}
 
-      {/* Restart Button */}
-      {answeredCount > 0 && (
-        <div className="text-center pt-2">
-          <button
-            type="button"
-            onClick={handleResetQuiz}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-slate-600 hover:text-[#12345A] text-xs font-semibold transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>{t('restartQuiz')}</span>
-          </button>
-        </div>
-      )}
-
+      </div>
     </div>
   );
 }
