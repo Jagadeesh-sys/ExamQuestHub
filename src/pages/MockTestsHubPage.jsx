@@ -963,20 +963,14 @@ export default function MockTestsHubPage() {
   }, [shifts, shiftSearch]);
 
   return (
-    <div className="min-h-screen bg-[#F4F7FC] relative pb-20 overflow-x-hidden transition-colors duration-700">
-      {/* Dynamic background gradient backdrop with smooth color blend shading merge on tab or subject click */}
+    <div className="min-h-screen bg-gradient-to-b from-[#1F224D] via-[#2D457B] via-15% via-[#BFD7F8]/40 to-[#F4F7FC] pb-20 relative overflow-x-hidden transition-colors duration-700">
+      {/* Ambient glowing atmospheric orbs merging into the deep blue header */}
       <div
-        className={`absolute top-0 left-0 right-0 h-[520px] sm:h-[580px] bg-gradient-to-b ${activeTheme.bgGradient} transition-all duration-700 ease-in-out pointer-events-none`}
-        aria-hidden="true"
-      />
-
-      {/* Atmospheric ambient glowing orbs that transition smoothly with active theme */}
-      <div
-        className={`absolute top-0 right-0 w-[420px] sm:w-[620px] h-[340px] sm:h-[460px] ${activeTheme.orb1} rounded-full blur-3xl transition-all duration-700 ease-in-out pointer-events-none`}
+        className="absolute top-0 right-0 w-[420px] sm:w-[620px] h-[340px] sm:h-[460px] bg-blue-500/15 rounded-full blur-3xl pointer-events-none"
         aria-hidden="true"
       />
       <div
-        className={`absolute top-28 left-0 w-[340px] sm:w-[500px] h-[300px] sm:h-[420px] ${activeTheme.orb2} rounded-full blur-3xl transition-all duration-700 ease-in-out pointer-events-none`}
+        className="absolute top-28 left-0 w-[340px] sm:w-[500px] h-[300px] sm:h-[420px] bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"
         aria-hidden="true"
       />
 
@@ -1017,11 +1011,11 @@ export default function MockTestsHubPage() {
         )}
 
         {/* =========================================================================
-            HERO BANNER - Shaded to merge seamlessly with page background gradient
+            HERO BANNER - Background color and shading merged seamlessly with the page
             ========================================================================= */}
         <section
           aria-label="Ace Your Government Exams"
-          className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B]"
+          className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B] group"
         >
           <img
             src="/assets/aistudio/image_ef986abf.png"
@@ -1029,9 +1023,9 @@ export default function MockTestsHubPage() {
             className="w-full h-auto object-cover block select-none pointer-events-none"
             loading="eager"
           />
-          {/* Dynamic theme-tinted shading overlays for seamless merging with the page header */}
-          <div className={`absolute inset-0 bg-gradient-to-r ${activeTheme.heroOverlay} pointer-events-none transition-all duration-700 ease-in-out`} />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#07183B]/45 via-transparent to-transparent pointer-events-none" />
+          {/* Shading overlays to merge the banner background seamlessly into the page, identical to home page */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/70 via-[#07183B]/25 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07183B]/55 via-transparent to-transparent pointer-events-none" />
         </section>
 
         {/* =========================================================================
@@ -1121,17 +1115,17 @@ export default function MockTestsHubPage() {
         </div>
 
         {/* =========================================================================
-            HORIZONTAL SEGMENTED TABS - Mock Tests, Practice, PYQs, Current Affairs, Important Qs, Topic Wise
+            HORIZONTAL SEGMENTED TABS - Mock Tests, Practice Tests, PYQs, Topic Wise
             ========================================================================= */}
-        <section className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5 select-none">
+        <section className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-0.5 select-none">
           {/* Tab 1: Mock Tests (75) */}
           <button
             type="button"
-            onClick={() => { setActiveMainTab('mocks'); if (selectedSubject === 'current-affairs') setSelectedSubject('all'); }}
-            className={`px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-300 cursor-pointer select-none shrink-0 ${
+            onClick={() => setActiveMainTab('mocks')}
+            className={`px-4 sm:px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
               activeMainTab === 'mocks'
-                ? activeTheme.activeTabBg
-                : 'bg-white/85 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+                ? 'bg-[#12345A] text-white ring-2 ring-[#12345A]/20 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90'
             }`}
           >
             <Play className={`w-3.5 h-3.5 ${activeMainTab === 'mocks' ? 'fill-white text-white' : 'text-slate-600'}`} />
@@ -1142,70 +1136,42 @@ export default function MockTestsHubPage() {
           <button
             type="button"
             onClick={() => setActiveMainTab('practice')}
-            className={`px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-300 cursor-pointer select-none shrink-0 ${
+            className={`px-4 sm:px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
               activeMainTab === 'practice'
-                ? activeTheme.activeTabBg
-                : 'bg-white/85 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+                ? 'bg-[#12345A] text-white ring-2 ring-[#12345A]/20 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90'
             }`}
           >
             <Layers className={`w-4 h-4 ${activeMainTab === 'practice' ? 'text-white' : 'text-slate-600'}`} />
             <span>Practice Tests (320)</span>
           </button>
 
-          {/* Tab 3: PYQs (114) */}
+          {/* Tab 3: PYQs (100) */}
           <button
             type="button"
             onClick={() => setActiveMainTab('pyqs')}
-            className={`px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-300 cursor-pointer select-none shrink-0 ${
+            className={`px-4 sm:px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
               activeMainTab === 'pyqs'
-                ? activeTheme.activeTabBg
-                : 'bg-white/85 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+                ? 'bg-[#12345A] text-white ring-2 ring-[#12345A]/20 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90'
             }`}
           >
             <BookOpen className={`w-4 h-4 ${activeMainTab === 'pyqs' ? 'text-white' : 'text-slate-600'}`} />
             <span>PYQs ({uniqueShiftsCount})</span>
           </button>
 
-          {/* Tab 4: Current Affairs (Smooth crimson-rose background shading merge) */}
-          <button
-            type="button"
-            onClick={() => { setActiveMainTab('current-affairs'); setSelectedSubject('current-affairs'); }}
-            className={`px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-300 cursor-pointer select-none shrink-0 ${
-              activeMainTab === 'current-affairs'
-                ? activeTheme.activeTabBg
-                : 'bg-rose-50/70 hover:bg-rose-50 text-rose-900 border border-rose-200/80 shadow-2xs'
-            }`}
-          >
-            <Newspaper className={`w-4 h-4 ${activeMainTab === 'current-affairs' ? 'text-white' : 'text-rose-600'}`} />
-            <span>Current Affairs (100+)</span>
-          </button>
-
-          {/* Tab 5: Important Questions (Separated Unverified / Priority Revision Bank) */}
-          <button
-            type="button"
-            onClick={() => setActiveMainTab('important')}
-            className={`px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-300 cursor-pointer select-none shrink-0 ${
-              activeMainTab === 'important'
-                ? activeTheme.activeTabBg
-                : 'bg-amber-50/70 hover:bg-amber-100 text-amber-900 border border-amber-300/80 shadow-2xs'
-            }`}
-          >
-            <AlertTriangle className={`w-4 h-4 ${activeMainTab === 'important' ? 'text-white' : 'text-amber-600'}`} />
-            <span>Important Questions ({unverifiedQuestionsCount})</span>
-          </button>
-
-          {/* Tab 6: Topic Wise (35) */}
+          {/* Tab 4: Topic Wise */}
           <button
             type="button"
             onClick={() => setActiveMainTab('topic-wise')}
-            className={`px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-300 cursor-pointer select-none shrink-0 ${
+            className={`px-4 sm:px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
               activeMainTab === 'topic-wise'
-                ? activeTheme.activeTabBg
-                : 'bg-white/85 hover:bg-white text-slate-700 border border-slate-200/80 shadow-2xs'
+                ? 'bg-[#12345A] text-white ring-2 ring-[#12345A]/20 shadow-md scale-[1.02]'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90'
             }`}
           >
-            <LayoutGrid className={`w-4 h-4 ${activeMainTab === 'topic-wise' ? 'text-white' : 'text-slate-600'}`} />
-            <span>Topic Wise (35)</span>
+            <Sparkles className={`w-4 h-4 ${activeMainTab === 'topic-wise' ? 'text-[#F2BE4F]' : 'text-amber-500'}`} />
+            <span>Topic Wise (80+)</span>
           </button>
         </section>
 
@@ -1241,9 +1207,34 @@ export default function MockTestsHubPage() {
             </div>
           </div>
 
-          {/* Mobile Display: 4 circular items visible in horizontal scrolling */}
-          <div className="block sm:hidden -mx-4 px-4 overflow-hidden">
-            <div className="flex items-start gap-2 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-2 px-1">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <span className="w-1.5 h-6 bg-[#F2BE4F] rounded-full inline-block shrink-0" />
+                <h2 className="text-lg sm:text-2xl font-black text-[#12345A] font-heading tracking-tight">
+                  Select Subject for Mock Tests
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1 pl-3.5">
+                Choose a subject to attempt mock tests, practice tests, and topic-wise quizzes.
+              </p>
+            </div>
+
+            {/* All Subjects CTA Button */}
+            <button
+              type="button"
+              onClick={() => handleSelectSubject('all')}
+              className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/90 hover:border-[#12345A]/40 text-xs font-bold text-[#12345A] hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+            >
+              <span>All Subjects</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Mobile Display: Horizontal scroll of wide square-shaped subject cards */}
+          <div className="block sm:hidden -mx-3.5 px-3.5 overflow-hidden">
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth py-2 px-0.5">
               {subjectCards.map((sub) => {
                 const isSelected = selectedSubject === sub.id;
                 return (
@@ -1251,69 +1242,72 @@ export default function MockTestsHubPage() {
                     key={`mobile-${sub.id}`}
                     type="button"
                     onClick={() => handleSelectSubject(sub.id)}
-                    className="flex-[0_0_calc(25%-6px)] min-w-[72px] max-w-[85px] snap-start flex flex-col items-center text-center group cursor-pointer focus:outline-none"
+                    className={`group relative min-w-[125px] w-[130px] aspect-square flex-shrink-0 flex flex-col items-center justify-between p-3 rounded-2xl bg-white border-2 text-center transition-all duration-200 cursor-pointer ${
+                      isSelected
+                        ? sub.selectedCardClass
+                        : `${sub.cardBorder} hover:shadow-md shadow-2xs`
+                    }`}
                     title={`${sub.title} (${sub.exactCount} Qs)`}
                   >
-                    {/* Circular 3D Icon Container */}
-                    <div className="relative">
-                      <div
-                        className={`w-14 h-14 rounded-full p-0.5 flex items-center justify-center transition-all duration-200 bg-white shadow-xs overflow-hidden ${
-                          isSelected
-                            ? 'border-2 border-[#12345A] ring-3 ring-[#12345A]/25 scale-105 shadow-md bg-blue-50/60'
-                            : 'border-2 border-slate-200/90 group-hover:border-[#12345A]/40'
-                        }`}
-                      >
-                        <img
-                          src={sub.image3d}
-                          alt={sub.title}
-                          className="w-full h-full object-cover rounded-full drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
-                          loading="lazy"
-                          onError={(e) => {
-                            if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
-                              e.currentTarget.src = sub.fallbackUrl;
-                            }
-                          }}
-                        />
-                      </div>
-                      {isSelected && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
-                          <Check className="w-2.5 h-2.5 stroke-[3.5]" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Circular Subject Title */}
-                    <span
-                      className={`text-[11px] leading-tight mt-1.5 line-clamp-1 max-w-full px-0.5 tracking-tight ${
-                        isSelected ? 'font-black text-[#12345A]' : 'font-semibold text-slate-700'
+                    {/* 3D Medallion Icon Container */}
+                    <div
+                      className={`w-13 h-13 rounded-2xl p-0.5 bg-gradient-to-b from-white to-slate-50 border flex items-center justify-center overflow-hidden transition-all shrink-0 ${
+                        isSelected
+                          ? 'border-[#12345A] ring-2 ring-[#12345A]/20 scale-105 shadow-sm'
+                          : 'border-slate-200/90 group-hover:scale-105 shadow-2xs'
                       }`}
                     >
-                      {sub.shortTitle || sub.title}
+                      <img
+                        src={sub.image3d}
+                        alt={sub.title}
+                        className="w-full h-full object-cover rounded-xl drop-shadow-xs"
+                        loading="lazy"
+                        onError={(e) => {
+                          if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
+                            e.currentTarget.src = sub.fallbackUrl;
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Subject Title */}
+                    <span
+                      className={`text-xs leading-tight font-heading font-black tracking-tight line-clamp-1 truncate w-full px-1 ${
+                        isSelected ? 'text-[#12345A]' : 'text-[#0F172A]'
+                      }`}
+                    >
+                      {sub.title}
                     </span>
 
-                    {/* Compact Question Count Pill */}
+                    {/* Question Count Pill */}
                     <span
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 max-w-full truncate leading-none ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full truncate leading-none ${
                         isSelected
-                          ? 'bg-[#12345A] text-white shadow-2xs'
-                          : 'bg-slate-100 text-slate-500'
+                          ? sub.selectedBadgeClass
+                          : sub.badgeClass
                       }`}
                     >
                       {sub.questionBadge.replace(' Questions', ' Qs')}
                     </span>
+
+                    {/* Active Corner Checkmark */}
+                    {isSelected && (
+                      <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                        <Check className="w-2.5 h-2.5 stroke-[3.5]" />
+                      </div>
+                    )}
                   </button>
                 );
               })}
             </div>
-            {/* Scroll Indicator hint */}
             <div className="flex items-center justify-between px-1 mt-1 text-[10px] text-slate-400 font-medium">
-              <span>← Swipe for all 8 subjects</span>
-              <span className="font-semibold text-[#12345A]">4 visible</span>
+              <span>← Swipe for all subjects (Square cards)</span>
+              <span className="font-semibold text-[#12345A]">8 Available</span>
             </div>
           </div>
 
-          {/* Laptop & Desktop Display: All 8 subjects displayed in a single row with square shape */}
-          <div className="hidden sm:grid sm:grid-cols-8 gap-1.5 md:gap-2 lg:gap-3 select-none">
+          {/* Tablet & Desktop Display: 8 wide square-shaped subject cards */}
+          <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-3.5 select-none">
             {subjectCards.map((sub) => {
               const isSelected = selectedSubject === sub.id;
               return (
@@ -1322,24 +1316,24 @@ export default function MockTestsHubPage() {
                   type="button"
                   onClick={() => handleSelectSubject(sub.id)}
                   title={`${sub.title} (${sub.exactCount?.toLocaleString?.() || sub.questionBadge} Questions)`}
-                  className={`group relative flex flex-col items-center justify-between p-2 sm:p-2 md:p-2.5 lg:p-3 rounded-2xl lg:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center aspect-square ${
+                  className={`group relative flex flex-col items-center justify-between p-3 rounded-2xl lg:rounded-3xl bg-white border-2 transition-all duration-200 cursor-pointer text-center aspect-square ${
                     isSelected
                       ? sub.selectedCardClass
                       : `${sub.cardBorder} hover:shadow-lg hover:-translate-y-1 shadow-2xs`
                   }`}
                 >
-                  {/* PROMINENT CIRCULAR 3D MEDALLION ICON CONTAINER */}
+                  {/* 3D Medallion Icon Container */}
                   <div
-                    className={`w-12 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full p-0.5 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 shrink-0 aspect-square ${
+                    className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl p-0.5 bg-gradient-to-b from-white to-slate-50 border flex items-center justify-center overflow-hidden transition-all duration-300 shrink-0 ${
                       isSelected
-                        ? 'border-[#12345A] ring-3 ring-[#12345A]/15 shadow-md shadow-blue-900/10 scale-105'
+                        ? 'border-[#12345A] ring-3 ring-[#12345A]/15 shadow-md scale-105'
                         : 'border-slate-200/90 group-hover:border-[#12345A]/40 group-hover:scale-105 shadow-2xs'
                     }`}
                   >
                     <img
                       src={sub.image3d}
                       alt={sub.title}
-                      className="w-full h-full object-cover rounded-full transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                      className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
                       loading="lazy"
                       onError={(e) => {
                         if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
@@ -1349,10 +1343,10 @@ export default function MockTestsHubPage() {
                     />
                   </div>
 
-                  {/* SUBJECT TEXT DIRECTLY BELOW SQUARE ICON */}
+                  {/* Subject Title */}
                   <div className="w-full flex-1 flex flex-col items-center justify-center my-1 min-w-0">
                     <h3
-                      className={`font-heading font-black text-[10.5px] sm:text-[11px] md:text-xs lg:text-[13px] tracking-tight leading-tight text-center transition-colors line-clamp-1 max-w-full px-0.5 truncate ${
+                      className={`font-heading font-black text-xs md:text-[13px] lg:text-[13.5px] tracking-tight leading-tight text-center transition-colors line-clamp-1 max-w-full px-1 truncate ${
                         isSelected ? 'text-[#12345A]' : 'text-[#0F172A] group-hover:text-[#12345A]'
                       }`}
                     >
@@ -1360,9 +1354,9 @@ export default function MockTestsHubPage() {
                     </h3>
                   </div>
 
-                  {/* QUESTION COUNT BADGE DIRECTLY BELOW TEXT */}
+                  {/* Question Count Pill Badge */}
                   <span
-                    className={`inline-flex items-center justify-center gap-1 px-1.5 md:px-2 py-0.5 rounded-full text-[8.5px] md:text-[9.5px] lg:text-[10px] font-bold transition-all max-w-full truncate leading-none ${
+                    className={`inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] md:text-[10.5px] font-bold transition-all max-w-full truncate leading-none ${
                       isSelected
                         ? sub.selectedBadgeClass
                         : `${sub.badgeClass} group-hover:shadow-2xs`
@@ -1372,9 +1366,9 @@ export default function MockTestsHubPage() {
                     <span className="truncate">{sub.questionBadge.replace(' Questions', ' Qs')}</span>
                   </span>
 
-                  {/* ACTIVE CORNER BADGE */}
+                  {/* Active Corner Badge */}
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                    <div className="absolute top-2 right-2 w-4.5 h-4.5 md:w-5 md:h-5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
                       <Check className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />
                     </div>
                   )}

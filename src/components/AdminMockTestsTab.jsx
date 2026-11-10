@@ -29,7 +29,8 @@ import {
   Cpu,
   Languages,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ShieldCheck
 } from 'lucide-react';
 import {
   bulkSaveMockQuestions,
