@@ -28,7 +28,7 @@ import {
   Play
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { subscribeToUpdates, subscribeToCurrentAffairs } from '../firebase/firestoreService.js';
+import { subscribeToUpdates, subscribeToCurrentAffairs, getDirectFirestoreMockStats } from '../firebase/firestoreService.js';
 import AgencyLogo from '../components/AgencyLogo.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
@@ -40,10 +40,17 @@ export default function HomePage() {
 
   const [updates, setUpdates] = useState([]);
   const [currentAffairs, setCurrentAffairs] = useState([]);
+  const [mockStats, setMockStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [isListening, setIsListening] = useState(false);
+
+  useEffect(() => {
+    getDirectFirestoreMockStats().then((data) => {
+      if (data) setMockStats(data);
+    });
+  }, []);
 
   const caScrollRef = useRef(null);
 
@@ -75,7 +82,7 @@ export default function HomePage() {
       id: 'banner-mock-tests',
       image: '/assets/aistudio/image_ef986abf.png',
       alt: 'Ace Your Government Exams - Mock Tests & Practice Tests with Real Exam Pattern',
-      eyebrow: '15,544+ Questions • 163 CBT Shifts',
+      eyebrow: `${(mockStats?.totalQuestions || 19121).toLocaleString()}+ Questions • ${mockStats?.totalShifts || 163} CBT Shifts`,
       ctaText: 'Start Tests',
       ctaLink: '/mocks'
     },

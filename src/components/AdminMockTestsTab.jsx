@@ -30,7 +30,12 @@ import {
   Languages,
   ChevronDown,
   ChevronUp,
-  ShieldCheck
+  ShieldCheck,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronLeft,
+  ChevronRight,
+  Hash
 } from 'lucide-react';
 import {
   bulkSaveMockQuestions,
@@ -82,7 +87,12 @@ export default function AdminMockTestsTab({ onNotify }) {
   const [rrbStatusFilter, setRrbStatusFilter] = useState('All'); // 'All' | 'Published' | 'Needs Review'
   const [rrbSearch, setRrbSearch] = useState('');
   const [rrbPage, setRrbPage] = useState(1);
+  const [pageInputVal, setPageInputVal] = useState('1');
   const itemsPerPage = 20;
+
+  useEffect(() => {
+    setPageInputVal(String(rrbPage));
+  }, [rrbPage]);
 
   // Question Edit Modal State
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -208,11 +218,191 @@ export default function AdminMockTestsTab({ onNotify }) {
     });
   }, [rrbQuestions, rrbSubjectFilter, rrbTopicFilter, rrbShiftFilter, rrbExamFilter, rrbStatusFilter, rrbSearch]);
 
-  const totalPages = Math.ceil(filteredRrbQuestions.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredRrbQuestions.length / itemsPerPage));
   const paginatedQuestions = useMemo(() => {
     const start = (rrbPage - 1) * itemsPerPage;
     return filteredRrbQuestions.slice(start, start + itemsPerPage);
   }, [filteredRrbQuestions, rrbPage]);
+
+  // Jump to specific page number with bounds check and smooth scrolling
+  const handleJumpToPage = (targetPage) => {
+    const pageNum = parseInt(targetPage, 10);
+    if (isNaN(pageNum)) return;
+    const clamped = Math.max(1, Math.min(totalPages, pageNum));
+    setRrbPage(clamped);
+    setPageInputVal(String(clamped));
+    try {
+      const container = document.getElementById('admin-questions-list-top');
+      if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const renderPagination = (position = 'bottom') => {
+    if (totalPages <= 1) return null;
+
+    const middlePage = Math.max(1, Math.ceil(totalPages / 2));
+    const startIdx = (rrbPage - 1) * itemsPerPage + 1;
+    const endIdx = Math.min(rrbPage * itemsPerPage, filteredRrbQuestions.length);
+
+    // Compute surrounding page numbers: e.g. current page - 2 to + 2
+    const pageNumbers = [];
+    const windowSize = 2;
+    for (let i = Math.max(1, rrbPage - windowSize); i <= Math.min(totalPages, rrbPage + windowSize); i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className={`flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white rounded-2xl p-3 sm:p-4 border border-[#E3EAF2] text-xs shadow-xs ${position === 'top' ? 'mb-2' : 'mt-4'}`}>
+        {/* Left: Summary text */}
+        <div className="flex items-center gap-2 flex-wrap text-slate-600">
+          <span className="font-medium">
+            Showing <strong className="text-[#12345A]">{startIdx.toLocaleString()}</strong> to{' '}
+            <strong className="text-[#12345A]">{endIdx.toLocaleString()}</strong> of{' '}
+            <strong className="text-[#12345A]">{filteredRrbQuestions.length.toLocaleString()}</strong> questions
+          </span>
+          <span className="text-slate-300">|</span>
+          <span className="font-bold text-[#12345A]">
+            Page {rrbPage} of {totalPages}
+          </span>
+        </div>
+
+        {/* Center / Right: Jump Presets + Navigation + Page Input */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Quick Presets: First, Middle, Last */}
+          <div className="flex items-center gap-1 bg-[#F6F8FC] p-1 rounded-xl border border-slate-200">
+            <button
+              type="button"
+              disabled={rrbPage === 1}
+              onClick={() => handleJumpToPage(1)}
+              className="px-2 py-1 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-white hover:text-[#12345A] hover:shadow-2xs disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+              title="Jump to First Page (1)"
+            >
+              First (1)
+            </button>
+            <button
+              type="button"
+              disabled={rrbPage === middlePage}
+              onClick={() => handleJumpToPage(middlePage)}
+              className={`px-2 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                rrbPage === middlePage
+                  ? 'bg-[#12345A] text-white shadow-2xs'
+                  : 'text-slate-700 hover:bg-white hover:text-[#12345A] hover:shadow-2xs'
+              }`}
+              title={`Jump to Middle Page (${middlePage})`}
+            >
+              Middle ({middlePage})
+            </button>
+            <button
+              type="button"
+              disabled={rrbPage === totalPages}
+              onClick={() => handleJumpToPage(totalPages)}
+              className="px-2 py-1 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-white hover:text-[#12345A] hover:shadow-2xs disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+              title={`Jump to Last Page (${totalPages})`}
+            >
+              Last ({totalPages})
+            </button>
+          </div>
+
+          {/* Previous / Next + Numeric Buttons */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={rrbPage <= 1}
+              onClick={() => handleJumpToPage(rrbPage - 1)}
+              className="px-2.5 py-1.5 rounded-lg border border-[#E3EAF2] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer"
+              title="Previous Page"
+            >
+              Prev
+            </button>
+
+            {pageNumbers[0] > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleJumpToPage(1)}
+                  className="w-7 h-7 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[11px] transition cursor-pointer"
+                >
+                  1
+                </button>
+                {pageNumbers[0] > 2 && <span className="text-slate-400 px-0.5">...</span>}
+              </>
+            )}
+
+            {pageNumbers.map((num) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => handleJumpToPage(num)}
+                className={`w-7 h-7 rounded-lg font-bold text-[11px] transition cursor-pointer ${
+                  rrbPage === num
+                    ? 'bg-[#12345A] text-white shadow-xs'
+                    : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {num}
+              </button>
+            ))}
+
+            {pageNumbers[pageNumbers.length - 1] < totalPages && (
+              <>
+                {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && <span className="text-slate-400 px-0.5">...</span>}
+                <button
+                  type="button"
+                  onClick={() => handleJumpToPage(totalPages)}
+                  className="w-7 h-7 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[11px] transition cursor-pointer"
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+
+            <button
+              type="button"
+              disabled={rrbPage >= totalPages}
+              onClick={() => handleJumpToPage(rrbPage + 1)}
+              className="px-2.5 py-1.5 rounded-lg border border-[#E3EAF2] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer"
+              title="Next Page"
+            >
+              Next
+            </button>
+          </div>
+
+          {/* Direct "Go to Page" Input */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleJumpToPage(pageInputVal);
+            }}
+            className="flex items-center gap-1.5 bg-[#F6F8FC] border border-[#E3EAF2] rounded-xl px-2 py-1"
+          >
+            <label htmlFor={`jump-page-${position}`} className="text-slate-500 font-semibold text-[11px] whitespace-nowrap">
+              Go to:
+            </label>
+            <input
+              id={`jump-page-${position}`}
+              type="number"
+              min="1"
+              max={totalPages}
+              value={pageInputVal}
+              onChange={(e) => setPageInputVal(e.target.value)}
+              className="w-14 px-1.5 py-0.5 bg-white border border-slate-300 rounded-md text-center font-bold text-slate-800 text-xs focus:outline-hidden focus:border-[#2468B4] focus:ring-1 focus:ring-[#2468B4]"
+              placeholder={String(rrbPage)}
+            />
+            <button
+              type="submit"
+              className="px-2.5 py-1 rounded-lg bg-[#12345A] hover:bg-[#1A4574] text-white font-bold text-[11px] transition cursor-pointer shadow-2xs active:scale-95"
+            >
+              Go
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  };
 
   // Statistics with exact counts for Reasoning, GK, Quant, Science, English, Computer Science & Subtopics
   const rrbStats = useMemo(() => {
@@ -617,7 +807,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             Previous Year Verified Questions Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '15,544+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 163} official examination shifts.
+            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 163} official examination shifts.
           </p>
         </div>
 
@@ -632,7 +822,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '15,544+'})</span>
+            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'})</span>
           </button>
 
           <button
@@ -674,7 +864,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                     <Award className="w-6 h-6 text-[#F2BE4F]" />
-                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '15,544+'} Questions)
+                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'} Questions)
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
                     Full official question bank with verified answer keys across 163 shifts (5,700 Under-Graduate questions in 57 shifts + 2,400 March 2026 Graduate questions in 24 sets + 4,700 2024 Graduate questions in 47 shifts + 3,600 SSC CGL questions). All questions are segregated based on existing curriculum topics.
@@ -696,7 +886,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '15,544+'})</span>
+                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'})</span>
                   </button>
 
                   <button
@@ -732,14 +922,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onClick={() => { setRrbStatusFilter('All'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '15,544+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'}</div>
                   <div className="text-[11px] text-slate-300">Total Questions</div>
                 </div>
                 <div
                   onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-emerald-500/20 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-emerald-400/30"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '15,600+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '19,121+'}</div>
                   <div className="text-[11px] text-emerald-200 font-semibold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
                     <span>100% Verified</span>
@@ -1225,8 +1415,10 @@ export default function AdminMockTestsTab({ onNotify }) {
             )}
           </div>
 
-          {/* QUESTIONS LIST */}
-          <div className="space-y-3">
+          {/* QUESTIONS LIST WITH TOP PAGINATION & JUMP CONTROLS */}
+          {!rrbLoading && filteredRrbQuestions.length > 0 && renderPagination('top')}
+
+          <div id="admin-questions-list-top" className="space-y-3">
             {rrbLoading ? (
               <div className="text-center py-16 space-y-2">
                 <Loader2 className="w-8 h-8 text-[#2468B4] animate-spin mx-auto" />
@@ -1373,36 +1565,8 @@ export default function AdminMockTestsTab({ onNotify }) {
             )}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-white rounded-2xl p-4 border border-[#E3EAF2] text-xs">
-              <span className="text-slate-500">
-                Showing {((rrbPage - 1) * itemsPerPage) + 1} to{' '}
-                {Math.min(rrbPage * itemsPerPage, filteredRrbQuestions.length)} of{' '}
-                {filteredRrbQuestions.length} questions
-              </span>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  disabled={rrbPage === 1}
-                  onClick={() => setRrbPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1.5 rounded-lg border border-[#E3EAF2] hover:bg-slate-50 disabled:opacity-40"
-                >
-                  Previous
-                </button>
-                <span className="font-bold px-2">
-                  Page {rrbPage} of {totalPages}
-                </span>
-                <button
-                  disabled={rrbPage >= totalPages}
-                  onClick={() => setRrbPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-3 py-1.5 rounded-lg border border-[#E3EAF2] hover:bg-slate-50 disabled:opacity-40"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Bottom Pagination & Jump Controls */}
+          {renderPagination('bottom')}
         </div>
       )}
 

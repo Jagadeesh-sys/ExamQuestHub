@@ -12,55 +12,36 @@ import { lazy } from 'react';
  * reloads the page to load the latest HTML and asset chunks.
  */
 
-// Global Vite preload error listener
+// Global Vite preload error listener: prevent automatic browser reload loops
 if (typeof window !== 'undefined') {
   window.addEventListener('vite:preloadError', (event) => {
-    console.warn('[Vite] Preload error detected. Attempting automatic recovery...', event);
-    const reloadKey = 'eqh_vite_preload_reload';
-    const lastReload = parseInt(window.sessionStorage?.getItem(reloadKey) || '0', 10);
-    const now = Date.now();
-    // Allow reload only once every 10 seconds to prevent loops
-    if (now - lastReload > 10000) {
-      window.sessionStorage?.setItem(reloadKey, String(now));
-      window.location.reload();
+    // Suppress Vite's unhandled preload error and prevent automated page reload loops
+    try {
+      event?.preventDefault?.();
+    } catch {
+      // ignore
     }
+    console.warn('[Vite] Preload error handled gracefully (automatic reload disabled).', event);
   });
 }
 
 export function lazyWithRetry(componentImport, componentName = 'component') {
   return lazy(async () => {
-    const sessionKey = `eqh_chunk_retry_${componentName}`;
-    const hasRetried = window.sessionStorage?.getItem(sessionKey) === 'true';
-
     try {
-      const component = await componentImport();
-      // Successful load - clear retry flag
-      window.sessionStorage?.removeItem(sessionKey);
-      return component;
+      // First attempt
+      return await componentImport();
     } catch (error) {
-      console.warn(`[LazyLoader] Error loading ${componentName}:`, error);
-
-      const errorMessage = String(error?.message || error || '');
-      const isChunkError =
-        errorMessage.includes('Failed to fetch dynamically imported module') ||
-        errorMessage.includes('dynamically imported module') ||
-        errorMessage.includes('Loading chunk') ||
-        errorMessage.includes('error loading dynamically imported module') ||
-        error?.name === 'ChunkLoadError' ||
-        errorMessage.includes('Importing a module script failed');
-
-      if (isChunkError && !hasRetried && typeof window !== 'undefined') {
-        console.info(`[LazyLoader] Stale bundle chunk detected for ${componentName}. Refreshing with latest assets...`);
-        window.sessionStorage?.setItem(sessionKey, 'true');
-        // Force reload page to fetch latest index.html with new asset hashes
-        window.location.reload();
-        // Return a pending promise so React doesn't render an error before reload completes
-        return new Promise(() => {});
+      console.warn(`[LazyLoader] Initial load failed for ${componentName}, retrying in-memory once...`, error);
+      
+      try {
+        // Wait 350ms and attempt a single programmatic retry before bubbling to ErrorBoundary
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        return await componentImport();
+      } catch (retryError) {
+        console.error(`[LazyLoader] Retry failed for ${componentName}:`, retryError);
+        // Rethrow to ErrorBoundary so user gets a clean, non-disruptive retry button instead of a jarring loop
+        throw retryError;
       }
-
-      // If already retried or not a chunk error, rethrow to ErrorBoundary
-      window.sessionStorage?.removeItem(sessionKey);
-      throw error;
     }
   });
 }
