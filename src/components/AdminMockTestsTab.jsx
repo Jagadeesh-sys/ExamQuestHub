@@ -579,7 +579,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             Previous Year Verified Questions Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '12,157+'} previous year verified questions segregated across core examination topics and 114 official examination shifts.
+            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 100} official examination shifts.
           </p>
         </div>
 
@@ -594,7 +594,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '12,157+'})</span>
+            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'})</span>
           </button>
 
           <button
@@ -606,7 +606,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Columns3 className="w-3.5 h-3.5" />
-            <span>Shifts Manager ({shifts.length >= 114 ? shifts.length : 114})</span>
+            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 100})</span>
           </button>
 
           <button
@@ -694,14 +694,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onClick={() => { setRrbStatusFilter('All'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '12,157+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'}</div>
                   <div className="text-[11px] text-slate-300">Total Questions</div>
                 </div>
                 <div
                   onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-emerald-500/20 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-emerald-400/30"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '11,221+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '10,578+'}</div>
                   <div className="text-[11px] text-emerald-200 font-semibold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
                     <span>100% Verified</span>
@@ -718,16 +718,16 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length >= 114 ? shifts.length : 114}</div>
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 100}</div>
                   <div className="text-[11px] text-slate-300">Exam Shifts (CBT)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl || '3,500'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl ? `${rrbStats.sscCgl.toLocaleString()}+` : '3,500'}</div>
                   <div className="text-[11px] text-slate-300">SSC CGL (35 Shifts)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate || '4,700'}</div>
-                  <div className="text-[11px] text-slate-300">RRB Grad (47 Shifts)</div>
+                  <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate ? `${rrbStats.graduate.toLocaleString()}+` : '2,394+'}</div>
+                  <div className="text-[11px] text-slate-300">RRB Grad (24 Shifts)</div>
                 </div>
               </div>
 

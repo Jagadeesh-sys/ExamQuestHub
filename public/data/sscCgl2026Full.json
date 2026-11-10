@@ -760,7 +760,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -1726,10 +1726,10 @@
       "sectionQuestionNumber": 2,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -2953,7 +2953,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -3004,7 +3004,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -3055,7 +3055,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -3412,7 +3412,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -3514,7 +3514,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -3565,7 +3565,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -3616,7 +3616,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -3769,7 +3769,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -3820,7 +3820,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -3922,7 +3922,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -3973,7 +3973,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -4075,7 +4075,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -4126,7 +4126,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -5707,7 +5707,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -7948,10 +7948,10 @@
       "sectionQuestionNumber": 24,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -8359,7 +8359,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -8461,7 +8461,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -8512,7 +8512,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -8563,7 +8563,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -8716,7 +8716,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -8767,7 +8767,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -8869,7 +8869,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -8920,7 +8920,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -9022,7 +9022,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -9073,7 +9073,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -9175,7 +9175,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -9226,7 +9226,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -9277,7 +9277,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -10654,7 +10654,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -12895,10 +12895,10 @@
       "sectionQuestionNumber": 21,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -13306,7 +13306,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -13408,7 +13408,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -13459,7 +13459,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -13510,7 +13510,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -13663,7 +13663,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -13714,7 +13714,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -13816,7 +13816,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -13867,7 +13867,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -13969,7 +13969,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -14020,7 +14020,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -14122,7 +14122,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -14173,7 +14173,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -14224,7 +14224,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -16876,7 +16876,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -17842,10 +17842,10 @@
       "sectionQuestionNumber": 18,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -18253,7 +18253,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -18355,7 +18355,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -18406,7 +18406,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -18457,7 +18457,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -18610,7 +18610,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -18661,7 +18661,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -18763,7 +18763,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -18814,7 +18814,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -18916,7 +18916,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -18967,7 +18967,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -19069,7 +19069,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -19120,7 +19120,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -19171,7 +19171,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -21823,7 +21823,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -22789,10 +22789,10 @@
       "sectionQuestionNumber": 15,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -23353,7 +23353,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -23404,7 +23404,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -23557,7 +23557,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -23608,7 +23608,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -23710,7 +23710,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -23761,7 +23761,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -23863,7 +23863,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -23914,7 +23914,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -24016,7 +24016,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -24067,7 +24067,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -24118,7 +24118,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -24475,7 +24475,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -24577,7 +24577,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -26770,7 +26770,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -27736,10 +27736,10 @@
       "sectionQuestionNumber": 12,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -28504,7 +28504,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -28555,7 +28555,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -28657,7 +28657,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -28708,7 +28708,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -28810,7 +28810,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -28861,7 +28861,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -28963,7 +28963,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -29014,7 +29014,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -29065,7 +29065,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -29422,7 +29422,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -29524,7 +29524,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -29575,7 +29575,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -29626,7 +29626,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -31717,7 +31717,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -32683,10 +32683,10 @@
       "sectionQuestionNumber": 9,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -33604,7 +33604,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -33655,7 +33655,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -33757,7 +33757,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -33808,7 +33808,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -33910,7 +33910,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -33961,7 +33961,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -34012,7 +34012,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -34369,7 +34369,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -34471,7 +34471,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -34522,7 +34522,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -34573,7 +34573,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -34726,7 +34726,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -34777,7 +34777,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -36664,7 +36664,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -37630,10 +37630,10 @@
       "sectionQuestionNumber": 6,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -38704,7 +38704,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -38755,7 +38755,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -38857,7 +38857,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -38908,7 +38908,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -38959,7 +38959,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -39316,7 +39316,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -39418,7 +39418,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -39469,7 +39469,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -39520,7 +39520,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -39673,7 +39673,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -39724,7 +39724,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -39826,7 +39826,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -39877,7 +39877,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -41611,7 +41611,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -42577,10 +42577,10 @@
       "sectionQuestionNumber": 3,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -43804,7 +43804,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -43855,7 +43855,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -43906,7 +43906,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -44263,7 +44263,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -44365,7 +44365,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -44416,7 +44416,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -44467,7 +44467,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -44620,7 +44620,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -44671,7 +44671,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -44773,7 +44773,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -44824,7 +44824,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -44926,7 +44926,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -44977,7 +44977,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -46558,7 +46558,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -48799,10 +48799,10 @@
       "sectionQuestionNumber": 25,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -48853,7 +48853,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -49210,7 +49210,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -49312,7 +49312,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -49363,7 +49363,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -49414,7 +49414,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -49567,7 +49567,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -49618,7 +49618,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -49720,7 +49720,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -49771,7 +49771,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -49873,7 +49873,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -49924,7 +49924,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -50026,7 +50026,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -50077,7 +50077,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -51505,7 +51505,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -53746,10 +53746,10 @@
       "sectionQuestionNumber": 22,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -54157,7 +54157,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -54259,7 +54259,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -54310,7 +54310,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -54361,7 +54361,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -54514,7 +54514,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -54565,7 +54565,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -54667,7 +54667,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -54718,7 +54718,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -54820,7 +54820,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -54871,7 +54871,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -54973,7 +54973,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -55024,7 +55024,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -55075,7 +55075,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -57727,7 +57727,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -58693,10 +58693,10 @@
       "sectionQuestionNumber": 19,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -59104,7 +59104,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -59206,7 +59206,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -59257,7 +59257,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -59308,7 +59308,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -59461,7 +59461,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -59512,7 +59512,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -59614,7 +59614,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -59665,7 +59665,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -59767,7 +59767,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -59818,7 +59818,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -59920,7 +59920,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -59971,7 +59971,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -60022,7 +60022,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -62674,7 +62674,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -63640,10 +63640,10 @@
       "sectionQuestionNumber": 16,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -64153,7 +64153,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -64204,7 +64204,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -64255,7 +64255,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""
@@ -64408,7 +64408,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -64459,7 +64459,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -64561,7 +64561,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -64612,7 +64612,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -64714,7 +64714,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -64765,7 +64765,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -64867,7 +64867,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -64918,7 +64918,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -64969,7 +64969,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -65326,7 +65326,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -67621,7 +67621,7 @@
       "subject": "Reasoning",
       "categoryId": "reasoning",
       "subjectId": "reasoning",
-      "subtopic": "Analogy & Classification",
+      "subtopic": "Puzzles & Seating Arrangement",
       "question": {
         "en": "Select the option that is related to the third word: Lion : Den :: Rabbit : ?",
         "te": ""
@@ -68587,10 +68587,10 @@
       "sectionQuestionNumber": 13,
       "sectionName": "General Awareness",
       "sectionNumber": 2,
-      "subject": "General Knowledge",
-      "categoryId": "gk",
-      "subjectId": "general-knowledge",
-      "subtopic": "Static GK & Culture",
+      "subject": "General Science",
+      "categoryId": "general-science",
+      "subjectId": "general-science",
+      "subtopic": "Physics",
       "question": {
         "en": "Which commission was set up in the year 1957 to foster the development of nuclear energy in India?",
         "te": ""
@@ -69355,7 +69355,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The area of a rectangle with breadth 9 cm is equal to area of square of side 12 cm. Find length of rectangle.",
         "te": ""
@@ -69406,7 +69406,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A cone has volume 300π cm³ and height 9 cm. Find the radius of its base.",
         "te": ""
@@ -69508,7 +69508,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A spherical iron ball of radius 3 cm is dropped into cylindrical tub of radius 4 cm. By how much will water level rise?",
         "te": ""
@@ -69559,7 +69559,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Algebra & Trigonometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "In right triangle ABC with ∠B = 90°, sin² A + sin² C = ?",
         "te": ""
@@ -69661,7 +69661,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A hemispherical bowl is made of steel, 1 cm thick. The inner radius of the bowl is 4 cm. What will be the outer curved surface area?",
         "te": ""
@@ -69712,7 +69712,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "If all edges of a rectangular parallelepiped are equal, it becomes a:",
         "te": ""
@@ -69814,7 +69814,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The sides of a triangle are 7 cm, 24 cm, and 25 cm. What is the length of the altitude corresponding to the longest side?",
         "te": ""
@@ -69865,7 +69865,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "Two complementary angles add up to 90°. If one angle is 18° less than the other, find the angles.",
         "te": ""
@@ -69916,7 +69916,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "The heights of two cones are in the ratio 1:3, and the radii of their bases are in the ratio 3:1. What is the ratio of their volumes?",
         "te": ""
@@ -70273,7 +70273,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A circle has diameter 20 cm. Two equal chords AB and CD are parallel. BC is diameter. If chord AB is 6 cm from centre, find length of chord CD.",
         "te": ""
@@ -70375,7 +70375,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Time, Speed, Distance & Work",
       "question": {
         "en": "Two identical circles, each of radius r, are placed such that distance between centers is d. Ratio of length of direct common tangent segment to distance between centers is:",
         "te": ""
@@ -70426,7 +70426,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "A right prism has a hexagonal base with area 90 cm². The height of the prism is 20 cm. Find the volume.",
         "te": ""
@@ -70477,7 +70477,7 @@
       "subject": "Quantitative Aptitude",
       "categoryId": "quant",
       "subjectId": "quantitative-aptitude",
-      "subtopic": "Mensuration & Geometry",
+      "subtopic": "Ratio, Proportion & Mixtures",
       "question": {
         "en": "What is the ratio of sum of interior angles of a regular 7-sided polygon to regular 9-sided polygon?",
         "te": ""

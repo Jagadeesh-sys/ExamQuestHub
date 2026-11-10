@@ -250,7 +250,7 @@ export default function MockTestsHubPage() {
 
   // 1. Total questions count derived strictly from the live question bank (Matching Admin)
   const totalQuestionsCount = useMemo(() => {
-    const count = firestoreQuestions && firestoreQuestions.length > 0 ? firestoreQuestions.length : (firestoreStats.totalQuestions || 11400);
+    const count = firestoreQuestions && firestoreQuestions.length > 0 ? firestoreQuestions.length : (firestoreStats.totalQuestions || 10757);
     return `${count.toLocaleString()}+`;
   }, [firestoreQuestions, firestoreStats]);
 
@@ -261,7 +261,7 @@ export default function MockTestsHubPage() {
         (q) => (q.status === 'Published' || q.verificationStatus === 'VERIFIED') && q.status !== 'Needs Review' && q.verificationStatus !== 'UNVERIFIED'
       ).length;
     }
-    return firestoreStats.verifiedQuestions || 11221;
+    return firestoreStats.verifiedQuestions || 10578;
   }, [firestoreQuestions, firestoreStats]);
 
   // 3. Important Questions Count (Separated Unverified / Priority Revision Bank)
@@ -274,15 +274,16 @@ export default function MockTestsHubPage() {
     return firestoreStats.unverifiedQuestions || 179;
   }, [firestoreQuestions, firestoreStats]);
 
-  // 4. Unique shifts count (114 Official Shifts: 32 RRB UG + 47 RRB Grad + 21 SSC CGL 2020 + 14 SSC CGL 2026)
+  // 4. Unique shifts count (100 Official Shifts: RRB UG + RRB Grad + SSC CGL)
   const uniqueShiftsCount = useMemo(() => {
-    return shifts && shifts.length >= 114 ? shifts.length : 114;
-  }, [shifts]);
+    if (shifts && shifts.length > 0) return shifts.length;
+    return firestoreStats.totalShifts || 100;
+  }, [shifts, firestoreStats]);
 
-  // 5. Unique subtopics count (Matching official syllabus units)
+  // 5. Unique subtopics count (Matching syllabus units)
   const uniqueSubtopicsCount = useMemo(() => {
-    return 35;
-  }, []);
+    return firestoreStats.totalSubtopics || 37;
+  }, [firestoreStats]);
 
   // 6. Live subject-wise question counts calculated from official question bank
   const liveSubjectCounts = useMemo(() => {
@@ -527,7 +528,7 @@ export default function MockTestsHubPage() {
 
   const liveTotalQuestionsNumber = firestoreQuestions && firestoreQuestions.length > 0
     ? firestoreQuestions.length
-    : (firestoreStats.totalQuestions || 12157);
+    : (firestoreStats.totalQuestions || 10757);
 
   // 8 Subject cards with consistent premium 3D icon family and live question counts
   const subjectCards = useMemo(() => [
@@ -1232,9 +1233,9 @@ export default function MockTestsHubPage() {
             </button>
           </div>
 
-          {/* Mobile Display: Horizontal scroll of wide square-shaped subject cards */}
+          {/* Mobile Display: Horizontal scroll of circular subject cards */}
           <div className="block sm:hidden -mx-3.5 px-3.5 overflow-hidden">
-            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth py-2 px-0.5">
+            <div className="flex items-start gap-3.5 overflow-x-auto no-scrollbar scroll-smooth py-2 px-1">
               {subjectCards.map((sub) => {
                 const isSelected = selectedSubject === sub.id;
                 return (
@@ -1242,25 +1243,21 @@ export default function MockTestsHubPage() {
                     key={`mobile-${sub.id}`}
                     type="button"
                     onClick={() => handleSelectSubject(sub.id)}
-                    className={`group relative min-w-[125px] w-[130px] aspect-square flex-shrink-0 flex flex-col items-center justify-between p-3 rounded-2xl bg-white border-2 text-center transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? sub.selectedCardClass
-                        : `${sub.cardBorder} hover:shadow-md shadow-2xs`
-                    }`}
+                    className="group relative flex-shrink-0 flex flex-col items-center justify-start w-[84px] text-center transition-all duration-200 cursor-pointer active:scale-95"
                     title={`${sub.title} (${sub.exactCount} Qs)`}
                   >
-                    {/* 3D Medallion Icon Container */}
+                    {/* Circular 3D Icon Container */}
                     <div
-                      className={`w-13 h-13 rounded-2xl p-0.5 bg-gradient-to-b from-white to-slate-50 border flex items-center justify-center overflow-hidden transition-all shrink-0 ${
+                      className={`w-[68px] h-[68px] rounded-full p-1 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center relative transition-all duration-200 shrink-0 ${
                         isSelected
-                          ? 'border-[#12345A] ring-2 ring-[#12345A]/20 scale-105 shadow-sm'
-                          : 'border-slate-200/90 group-hover:scale-105 shadow-2xs'
+                          ? 'border-[#12345A] ring-3 ring-[#12345A]/25 scale-105 shadow-md bg-blue-50/50'
+                          : 'border-slate-200/90 hover:border-[#12345A]/40 shadow-xs'
                       }`}
                     >
                       <img
                         src={sub.image3d}
                         alt={sub.title}
-                        className="w-full h-full object-cover rounded-xl drop-shadow-xs"
+                        className="w-full h-full object-cover rounded-full drop-shadow-xs"
                         loading="lazy"
                         onError={(e) => {
                           if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
@@ -1268,20 +1265,27 @@ export default function MockTestsHubPage() {
                           }
                         }}
                       />
+
+                      {/* Active Circle Corner Checkmark */}
+                      {isSelected && (
+                        <div className="absolute top-0 right-0 w-4.5 h-4.5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                          <Check className="w-2.5 h-2.5 stroke-[3.5]" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Subject Title */}
                     <span
-                      className={`text-xs leading-tight font-heading font-black tracking-tight line-clamp-1 truncate w-full px-1 ${
+                      className={`text-[11px] leading-tight font-heading font-black tracking-tight line-clamp-1 truncate w-full px-0.5 mt-2 ${
                         isSelected ? 'text-[#12345A]' : 'text-[#0F172A]'
                       }`}
                     >
-                      {sub.title}
+                      {sub.shortTitle || sub.title}
                     </span>
 
                     {/* Question Count Pill */}
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full truncate leading-none ${
+                      className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full mt-1 truncate leading-none ${
                         isSelected
                           ? sub.selectedBadgeClass
                           : sub.badgeClass
@@ -1289,19 +1293,12 @@ export default function MockTestsHubPage() {
                     >
                       {sub.questionBadge.replace(' Questions', ' Qs')}
                     </span>
-
-                    {/* Active Corner Checkmark */}
-                    {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
-                        <Check className="w-2.5 h-2.5 stroke-[3.5]" />
-                      </div>
-                    )}
                   </button>
                 );
               })}
             </div>
             <div className="flex items-center justify-between px-1 mt-1 text-[10px] text-slate-400 font-medium">
-              <span>← Swipe for all subjects (Square cards)</span>
+              <span>← Swipe for all subjects (Circular)</span>
               <span className="font-semibold text-[#12345A]">8 Available</span>
             </div>
           </div>

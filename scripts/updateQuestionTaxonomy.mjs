@@ -108,7 +108,7 @@ function classifyQuestion(q) {
   };
 }
 
-const files = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json', 'sscCgl2020Full.json'];
+const files = ['rrbNtpc2025Full.json', 'rrbNtpcGraduate2025Full.json', 'sscCgl2020Full.json', 'sscCgl2026Full.json'];
 for (const f of files) {
   const filePath = path.join('public', 'data', f);
   if (!fs.existsSync(filePath)) continue;

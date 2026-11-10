@@ -19,7 +19,9 @@ import fs from 'fs';
 import { PDFParse } from 'pdf-parse';
 import { OPS } from 'pdfjs-dist';
 
-const PDF_PATH = 'public/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf';
+const PDF_PATH = process.argv[2] || (fs.existsSync('public/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf')
+  ? 'public/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf'
+  : 'public/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf');
 const OUT_PATH = 'public/data/rrbNtpcGraduate2025Full.json';
 const LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -232,7 +234,9 @@ async function main() {
       const blockEnd = i + 1 < markers.length ? markers[i + 1].index : cleanedText.length;
       const block = cleanedText.slice(blockStart, blockEnd).trim();
 
-      const ansIdx = block.search(/\bAns\s*1\./i) !== -1 ? block.search(/\bAns\s*1\./i) : block.search(/\b1\.\s/);
+      const ansIdx = block.search(/\bAns\s*[A-D1-4]\./i) !== -1
+        ? block.search(/\bAns\s*[A-D1-4]\./i)
+        : (block.search(/\bAns\s+/i) !== -1 ? block.search(/\bAns\s+/i) : block.search(/\b[A-D1-4]\.\s/));
       let qText = block;
       let opts = ['', '', '', ''];
 
@@ -240,15 +244,29 @@ async function main() {
         qText = block.slice(0, ansIdx).replace(/^[\s.:]+/, '').trim();
         const optsPart = block.slice(ansIdx).replace(/^Ans\s*/i, '').trim();
 
-        const m1 = optsPart.match(/1\.\s*([\s\S]*?)(?=2\.\s*|$)/);
-        const m2 = optsPart.match(/2\.\s*([\s\S]*?)(?=3\.\s*|$)/);
-        const m3 = optsPart.match(/3\.\s*([\s\S]*?)(?=4\.\s*|$)/);
-        const m4 = optsPart.match(/4\.\s*([\s\S]*?)$/);
+        // Match 1./2./3./4. or A./B./C./D.
+        const isLetterFormat = /(?:^|\s)A\./i.test(optsPart);
+        if (isLetterFormat) {
+          const mA = optsPart.match(/(?:^|\s)A\.\s*([\s\S]*?)(?=(?:^|\s)B\.\s*|$)/i);
+          const mB = optsPart.match(/(?:^|\s)B\.\s*([\s\S]*?)(?=(?:^|\s)C\.\s*|$)/i);
+          const mC = optsPart.match(/(?:^|\s)C\.\s*([\s\S]*?)(?=(?:^|\s)D\.\s*|$)/i);
+          const mD = optsPart.match(/(?:^|\s)D\.\s*([\s\S]*?)$/i);
 
-        if (m1) opts[0] = m1[1].replace(/Blackbook[\s\S]*/, '').trim();
-        if (m2) opts[1] = m2[1].replace(/Blackbook[\s\S]*/, '').trim();
-        if (m3) opts[2] = m3[1].replace(/Blackbook[\s\S]*/, '').trim();
-        if (m4) opts[3] = m4[1].replace(/Blackbook[\s\S]*/, '').trim();
+          if (mA) opts[0] = mA[1].replace(/Blackbook[\s\S]*/, '').trim();
+          if (mB) opts[1] = mB[1].replace(/Blackbook[\s\S]*/, '').trim();
+          if (mC) opts[2] = mC[1].replace(/Blackbook[\s\S]*/, '').trim();
+          if (mD) opts[3] = mD[1].replace(/Blackbook[\s\S]*/, '').trim();
+        } else {
+          const m1 = optsPart.match(/(?:^|\s)1\.\s*([\s\S]*?)(?=(?:^|\s)2\.\s*|$)/);
+          const m2 = optsPart.match(/(?:^|\s)2\.\s*([\s\S]*?)(?=(?:^|\s)3\.\s*|$)/);
+          const m3 = optsPart.match(/(?:^|\s)3\.\s*([\s\S]*?)(?=(?:^|\s)4\.\s*|$)/);
+          const m4 = optsPart.match(/(?:^|\s)4\.\s*([\s\S]*?)$/);
+
+          if (m1) opts[0] = m1[1].replace(/Blackbook[\s\S]*/, '').trim();
+          if (m2) opts[1] = m2[1].replace(/Blackbook[\s\S]*/, '').trim();
+          if (m3) opts[2] = m3[1].replace(/Blackbook[\s\S]*/, '').trim();
+          if (m4) opts[3] = m4[1].replace(/Blackbook[\s\S]*/, '').trim();
+        }
       }
 
       // Determine correct answer letter from the 4 option icons for this question
