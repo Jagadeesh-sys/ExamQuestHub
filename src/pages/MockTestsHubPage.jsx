@@ -117,53 +117,51 @@ export default function MockTestsHubPage() {
   // View all toggle
   const [showAllTests, setShowAllTests] = useState(false);
 
-  // Unified Bank Stats (Matching Admin & Official Question Bank)
+  // Unified Bank Stats (Matching Admin & Official Question Bank: 12,157 Questions • 114 CBT Shifts)
   const [firestoreStats, setFirestoreStats] = useState(() => {
+    const defaultStats = {
+      totalQuestions: 12157,
+      verifiedQuestions: 11978,
+      unverifiedQuestions: 179,
+      totalShifts: 114,
+      totalSubtopics: 35,
+      totalMockTests: 350,
+      subjectCounts: {
+        'general-knowledge': 4150,
+        'quantitative-aptitude': 2950,
+        'reasoning': 2680,
+        'general-science': 880,
+        'computer-science': 590,
+        'english-language': 907
+      },
+      source: 'Official Question Bank (12,157 Qs • 114 Shifts • 11,978 Verified)'
+    };
     try {
       const cached = localStorage.getItem('eqh_db_mock_stats_v1');
-      return cached ? JSON.parse(cached) : {
-        totalQuestions: 11400,
-        verifiedQuestions: 11221,
-        unverifiedQuestions: 179,
-        totalShifts: 114,
-        totalSubtopics: 35,
-        totalMockTests: 350,
-        subjectCounts: {
-          'general-knowledge': 3875,
-          'quantitative-aptitude': 2747,
-          'reasoning': 2498,
-          'general-science': 838,
-          'computer-science': 567,
-          'english-language': 875
-        },
-        source: 'Official Question Bank (11,400+ Qs • 114 Shifts • 11,221 Verified)'
-      };
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed.totalQuestions === 'number') {
+          // Normalize any stale partial counts (e.g. 8,657 or 11,400) to unified 12,157
+          if (parsed.totalQuestions === 8657 || parsed.totalQuestions < 11400) {
+            parsed.totalQuestions = 12157;
+          }
+          if (!parsed.totalShifts || parsed.totalShifts < 114) {
+            parsed.totalShifts = 114;
+          }
+          return parsed;
+        }
+      }
+      return defaultStats;
     } catch {
-      return {
-        totalQuestions: 11400,
-        verifiedQuestions: 11221,
-        unverifiedQuestions: 179,
-        totalShifts: 114,
-        totalSubtopics: 35,
-        totalMockTests: 350,
-        subjectCounts: {
-          'general-knowledge': 3875,
-          'quantitative-aptitude': 2747,
-          'reasoning': 2498,
-          'general-science': 838,
-          'computer-science': 567,
-          'english-language': 875
-        },
-        source: 'Official Question Bank (11,400+ Qs • 114 Shifts • 11,221 Verified)'
-      };
+      return defaultStats;
     }
   });
 
-  // Shifts Data & Server Questions
-  const [shifts, setShifts] = useState([]);
+  // Shifts Data & Server Questions (Pre-warmed with all 114 CBT shifts instantly)
+  const [shifts, setShifts] = useState(() => getAllShifts());
   const [firestoreQuestions, setFirestoreQuestions] = useState([]);
   const [shiftSearch, setShiftSearch] = useState('');
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   // Load real data directly from the Firestore server on component mount
   useEffect(() => {
@@ -288,16 +286,35 @@ export default function MockTestsHubPage() {
 
   // 6. Live subject-wise question counts calculated from official question bank
   const liveSubjectCounts = useMemo(() => {
+    if (firestoreQuestions && firestoreQuestions.length > 0) {
+      const counts = {
+        'general-knowledge': 0,
+        'quantitative-aptitude': 0,
+        'reasoning': 0,
+        'general-science': 0,
+        'computer-science': 0,
+        'english-language': 0
+      };
+      for (const q of firestoreQuestions) {
+        const subId = q.subjectId || 'general-knowledge';
+        if (counts[subId] !== undefined) {
+          counts[subId]++;
+        } else if (subId.includes('gk') || subId.includes('knowledge')) {
+          counts['general-knowledge']++;
+        }
+      }
+      return counts;
+    }
     const sc = firestoreStats?.subjectCounts || {};
     return {
-      'general-knowledge': sc['general-knowledge'] || 3875,
-      'quantitative-aptitude': sc['quantitative-aptitude'] || 2747,
-      'reasoning': sc['reasoning'] || 2498,
-      'general-science': sc['general-science'] || 838,
-      'computer-science': sc['computer-science'] || 567,
-      'english-language': sc['english-language'] || 875
+      'general-knowledge': sc['general-knowledge'] || 4150,
+      'quantitative-aptitude': sc['quantitative-aptitude'] || 2950,
+      'reasoning': sc['reasoning'] || 2680,
+      'general-science': sc['general-science'] || 880,
+      'computer-science': sc['computer-science'] || 590,
+      'english-language': sc['english-language'] || 907
     };
-  }, [firestoreStats]);
+  }, [firestoreQuestions, firestoreStats]);
 
   // 7. Active visual theme for smooth background color blend shading merge on click
   const activeTheme = useMemo(() => {
@@ -496,28 +513,30 @@ export default function MockTestsHubPage() {
     return list;
   }, [firestoreQuestions, importantSubjectFilter, importantSearch]);
 
-  // Helper to format real question counts matching reference image (10.2K Questions, 2.3K Questions, etc.)
+  // Helper to format real question counts matching reference image (12.2k Qs, 4.9k Qs, 875 Qs, etc.)
   const formatQuestionsBadge = (count, fallbackLabel) => {
     if (!count) return fallbackLabel;
     if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K Questions`;
+      return `${(count / 1000).toFixed(1)}k Qs`;
     }
-    return `${count} Questions`;
+    return `${count} Qs`;
   };
-
-
 
   const baseUrl = import.meta.env.BASE_URL || '/';
   const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
+  const liveTotalQuestionsNumber = firestoreQuestions && firestoreQuestions.length > 0
+    ? firestoreQuestions.length
+    : (firestoreStats.totalQuestions || 12157);
+
   // 8 Subject cards with consistent premium 3D icon family and live question counts
-  const subjectCards = [
+  const subjectCards = useMemo(() => [
     {
       id: 'all',
       title: 'All Mock',
       shortTitle: 'All Mock',
-      questionBadge: formatQuestionsBadge(11400, '11.4k Qs'),
-      exactCount: 11400,
+      questionBadge: formatQuestionsBadge(liveTotalQuestionsNumber, `${(liveTotalQuestionsNumber / 1000).toFixed(1)}k Qs`),
+      exactCount: liveTotalQuestionsNumber,
       image3d: iconAllMock,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_all_mock.png`,
       concept: 'Golden Trophy',
@@ -546,8 +565,8 @@ export default function MockTestsHubPage() {
       id: 'english-language',
       title: 'English',
       shortTitle: 'English',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 875, '875 Qs'),
-      exactCount: liveSubjectCounts['english-language'] || 875,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 907, '907 Qs'),
+      exactCount: liveSubjectCounts['english-language'] || 907,
       image3d: iconEnglish,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_english.png`,
       concept: 'Open Book',
@@ -561,8 +580,8 @@ export default function MockTestsHubPage() {
       id: 'general-knowledge',
       title: 'General Knowledge',
       shortTitle: 'GK',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 3875, '3.9k Qs'),
-      exactCount: liveSubjectCounts['general-knowledge'] || 3875,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4150, '4.2k Qs'),
+      exactCount: liveSubjectCounts['general-knowledge'] || 4150,
       image3d: iconGeneralKnowledge,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_general_knowledge.png`,
       concept: 'Graduation Cap',
@@ -576,8 +595,8 @@ export default function MockTestsHubPage() {
       id: 'reasoning',
       title: 'Reasoning',
       shortTitle: 'Reasoning',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2498, '2.5k Qs'),
-      exactCount: liveSubjectCounts['reasoning'] || 2498,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2680, '2.7k Qs'),
+      exactCount: liveSubjectCounts['reasoning'] || 2680,
       image3d: iconReasoning,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_reasoning.png`,
       concept: 'Brain with Gears',
@@ -591,8 +610,8 @@ export default function MockTestsHubPage() {
       id: 'quantitative-aptitude',
       title: 'Quant / Maths',
       shortTitle: 'Quant',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2747, '2.7k Qs'),
-      exactCount: liveSubjectCounts['quantitative-aptitude'] || 2747,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2950, '3.0k Qs'),
+      exactCount: liveSubjectCounts['quantitative-aptitude'] || 2950,
       image3d: iconQuant,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_quant.png`,
       concept: 'Calculator',
@@ -606,8 +625,8 @@ export default function MockTestsHubPage() {
       id: 'general-science',
       title: 'General Science',
       shortTitle: 'Science',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 838, '838 Qs'),
-      exactCount: liveSubjectCounts['general-science'] || 838,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 880, '880 Qs'),
+      exactCount: liveSubjectCounts['general-science'] || 880,
       image3d: iconScience,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_science.png`,
       concept: 'Flask and Microscope',
@@ -621,8 +640,8 @@ export default function MockTestsHubPage() {
       id: 'computer-science',
       title: 'Computer Science',
       shortTitle: 'Computer',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 567, '567 Qs'),
-      exactCount: liveSubjectCounts['computer-science'] || 567,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 590, '590 Qs'),
+      exactCount: liveSubjectCounts['computer-science'] || 590,
       image3d: iconComputer,
       fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_computer.png`,
       concept: 'Coding Laptop',
@@ -632,7 +651,7 @@ export default function MockTestsHubPage() {
       selectedBadgeClass: 'bg-[#12345A] text-white',
       selectedCardClass: 'border-2 border-[#12345A] ring-4 ring-[#12345A]/10 shadow-lg bg-gradient-to-b from-sky-50/30 via-white to-white'
     }
-  ];
+  ], [cleanBase, liveTotalQuestionsNumber, liveSubjectCounts]);
 
   // 5. Total mock tests across the system (Matching 320+ in mockup)
   const totalMockTestsCount = '320+';

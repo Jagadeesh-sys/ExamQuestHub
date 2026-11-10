@@ -181,8 +181,28 @@ export function classifyComputerTopic(question) {
   return 'Computer Fundamentals & Awareness';
 }
 
+const STORAGE_KEY_CACHED_SHIFTS = 'eqh_cached_cbt_shifts_v1';
+
 let cachedQuestions = null;
 let cachedShifts = null;
+let inflightLoadPromise = null;
+
+function getInitialShifts() {
+  if (cachedShifts && cachedShifts.length > 0) return cachedShifts;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CACHED_SHIFTS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length >= 114) {
+        cachedShifts = parsed;
+        return cachedShifts;
+      }
+    }
+  } catch {
+    // Ignore storage parse issues
+  }
+  return RRB_NTPC_SHIFTS;
+}
 
 /**
  * Extracted question banks merged into one pool:
@@ -249,12 +269,12 @@ async function loadRrbDataFile(fileName) {
   };
 
   try {
-    return await fetchAndParseJson(primaryUrl, 'no-cache');
+    return await fetchAndParseJson(primaryUrl, 'default');
   } catch (err) {
     // Try fallback path with relative URL and cache-busting timestamp
     try {
       const fallbackUrl = `/data/${fileName}?_t=${Date.now()}`;
-      return await fetchAndParseJson(fallbackUrl, 'reload');
+      return await fetchAndParseJson(fallbackUrl, 'default');
     } catch {
       // If still unavailable, log a single warning and return null gracefully
       console.warn(`Static question bank ${fileName} not available via fetch; using live database.`);
@@ -264,30 +284,58 @@ async function loadRrbDataFile(fileName) {
 }
 
 /**
- * Fetch and cache all RRB questions from the merged JSON banks.
+ * Fetch and cache all RRB and SSC examination questions in parallel.
+ * Sub-second sync with inflight promise deduplication.
  */
 export async function loadAllRRBQuestions() {
   if (cachedQuestions && cachedQuestions.length > 0) {
     return applyLocalOverrides(cachedQuestions);
   }
 
-  const merged = [];
-  const mergedShifts = [];
-  for (const fileName of RRB_DATA_FILES) {
-    try {
-      const data = await loadRrbDataFile(fileName);
-      if (data) {
-        if (Array.isArray(data.questions)) merged.push(...data.questions);
-        if (Array.isArray(data.shifts)) mergedShifts.push(...data.shifts);
-      }
-    } catch (err) {
-      console.warn(`Notice while loading ${fileName}:`, err?.message || err);
-    }
+  if (inflightLoadPromise) {
+    return inflightLoadPromise;
   }
 
-  if (merged.length > 0) cachedQuestions = merged;
-  if (mergedShifts.length > 0) cachedShifts = mergedShifts;
-  return applyLocalOverrides(cachedQuestions || []);
+  inflightLoadPromise = (async () => {
+    try {
+      // Concurrent parallel loading of all 4 question banks
+      const results = await Promise.allSettled(
+        RRB_DATA_FILES.map((fileName) => loadRrbDataFile(fileName))
+      );
+
+      const merged = [];
+      const mergedShifts = [];
+
+      for (let i = 0; i < results.length; i++) {
+        const item = results[i];
+        if (item.status === 'fulfilled' && item.value) {
+          const data = item.value;
+          if (Array.isArray(data.questions)) merged.push(...data.questions);
+          if (Array.isArray(data.shifts)) mergedShifts.push(...data.shifts);
+        } else {
+          console.warn(`Notice while loading question bank ${RRB_DATA_FILES[i]}:`, item.reason);
+        }
+      }
+
+      if (merged.length > 0) {
+        cachedQuestions = merged;
+      }
+      if (mergedShifts.length > 0) {
+        cachedShifts = mergedShifts;
+        try {
+          localStorage.setItem(STORAGE_KEY_CACHED_SHIFTS, JSON.stringify(mergedShifts));
+        } catch {
+          // Ignore local storage quota limits
+        }
+      }
+
+      return applyLocalOverrides(cachedQuestions || []);
+    } finally {
+      inflightLoadPromise = null;
+    }
+  })();
+
+  return inflightLoadPromise;
 }
 
 /**
@@ -365,7 +413,7 @@ export function deleteLocalQuestionOverride(questionId) {
 }
 
 export async function loadAllShifts() {
-  if (cachedShifts && cachedShifts.length > 0) return getAllShifts();
+  if (cachedShifts && cachedShifts.length >= 114) return getAllShifts();
   await loadAllRRBQuestions();
   return getAllShifts();
 }
@@ -376,13 +424,13 @@ export async function loadAllShifts() {
 export function getAllShifts() {
   try {
     const overrides = JSON.parse(localStorage.getItem(STORAGE_KEY_TEST_OVERRIDES) || '{}');
-    const base = (cachedShifts && cachedShifts.length > 0) ? cachedShifts : RRB_NTPC_SHIFTS;
+    const base = (cachedShifts && cachedShifts.length > 0) ? cachedShifts : getInitialShifts();
     return base.map((shift) => {
       const ov = overrides[shift.id];
       return ov ? { ...shift, ...ov } : shift;
     });
   } catch {
-    return (cachedShifts && cachedShifts.length > 0) ? cachedShifts : RRB_NTPC_SHIFTS;
+    return (cachedShifts && cachedShifts.length > 0) ? cachedShifts : getInitialShifts();
   }
 }
 

@@ -738,11 +738,11 @@ export default function AdminPage() {
             Verified Questions
           </span>
           <div className="text-2xl font-extrabold text-[#12345A] mt-1 flex items-center gap-1.5">
-            <span>10,757+</span>
+            <span>{mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '12,157+'}</span>
             <Award className="w-4 h-4 text-[#F2BE4F]" />
           </div>
           <span className="text-[10px] text-[#2468B4] font-medium flex items-center gap-1">
-            100 Shifts (CBT) · 320+ Tests
+            114 Shifts (CBT) · 350+ Tests
           </span>
         </div>
       </div>
