@@ -666,8 +666,58 @@ export function mapRrbToMockQuestion(q) {
   const status = isUnverified ? (q.status || 'Needs Review') : (q.status || 'Published');
   const questionType = isUnverified ? 'IMPORTANT' : (q.questionType || 'PYQ');
 
+  // Graduate 2026 (March 16-27, 2026 CBT-1) vs Previous Graduate (05/06/2025 relabeled to 2024 as requested)
+  let examLevel = q.examLevel || (isSsc ? 'Graduate' : 'Under Graduate');
+  let examLevelLabel = q.examLevelLabel || (isSsc ? 'SSC CGL' : 'Under Graduate');
+  let examYear = q.examYear || (isSsc ? '2020' : '2025');
+  let examName = q.examName || (isSsc ? 'SSC CGL 2020 Tier-I' : 'RRB NTPC Under Graduate 2025 (CEN 07/2025)');
+  let source = q.source;
+  let paperUrl = q.paperUrl;
+  let paperFileName = q.paperFileName;
+
+  const isGrad = q.examLevel === 'Graduate' || String(q.id || '').includes('rrb-ntpc-grad');
+  if (isGrad) {
+    examLevel = 'Graduate';
+    const is2026Exam =
+      q.examYear === '2026' ||
+      String(q.id || '').includes('grad-2026') ||
+      String(q.examDate || '').includes('2026') ||
+      String(q.examDate || '').includes('Mar') ||
+      String(q.source || '').includes('2025-26') ||
+      String(q.paperFileName || '').includes('Complete-Paper');
+
+    if (is2026Exam) {
+      examYear = '2026';
+      examName = 'RRB NTPC Graduate 2025-26 (CEN 06/2025)';
+      examLevelLabel = 'Graduate (March 2026 Exam)';
+      source = q.source || 'RRB NTPC Graduate 2025-26 Official Answer Key (CEN 06/2025 · Sets 1-24)';
+      paperUrl = '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf';
+      paperFileName = 'RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper.pdf';
+    } else {
+      // User explicitly requested: "then change previous rrb ntpc graduate 2025 to 2024"
+      examYear = '2024';
+      examName = 'RRB NTPC Graduate 2024 (CBT-1)';
+      examLevelLabel = 'Graduate 2024';
+      source = q.source || 'RRB NTPC Graduate 2024 Official Answer Key (CEN 06/2024)';
+      paperUrl = '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf';
+      paperFileName = 'RRB-NTPC-Graduate-2024-CBT1-Official-Answer-Key.pdf';
+    }
+  } else if (isSsc) {
+    source = q.source || 'SSC CGL Tier-I Official Question Paper (QMaths / SSC)';
+    paperUrl = q.paperUrl || '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf';
+    paperFileName = q.paperFileName || 'SSC_CGL_2020_All_21_Sets_English.pdf';
+  } else {
+    source = q.source || 'RRB Official Answer Key (CEN 07/2025)';
+    paperUrl = q.paperUrl || '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf';
+    paperFileName = q.paperFileName || 'RRB-NTPC-UG-2025-EN-All-Papers.pdf';
+  }
+
   return {
     ...q,
+    examLevel,
+    examLevelLabel,
+    examYear,
+    examName,
     subject,
     categoryId,
     subjectId,
@@ -676,9 +726,9 @@ export function mapRrbToMockQuestion(q) {
     difficulty: q.difficulty || 'Medium',
     status,
     verificationStatus,
-    source: q.source || (isSsc ? 'SSC CGL Tier-I Official Question Paper (QMaths / SSC)' : q.examLevel === 'Graduate' ? 'RRB NTPC Graduate 2025 Official Answer Key (CEN 06/2025)' : 'RRB Official Answer Key (CEN 07/2025)'),
-    paperUrl: q.paperUrl || (isSsc ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf' : q.examLevel === 'Graduate' ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf'),
-    paperFileName: q.paperFileName || (isSsc ? 'SSC_CGL_2020_All_21_Sets_English.pdf' : q.examLevel === 'Graduate' ? 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf')
+    source,
+    paperUrl,
+    paperFileName
   };
 }
 
@@ -942,7 +992,16 @@ export async function saveMockQuestion(question) {
 export async function bulkSaveMockQuestions(questions, onProgress) {
   requireFirebaseWrite();
   const rawList = Array.isArray(questions) ? questions : [];
-  const list = rawList.map(mapRrbToMockQuestion);
+  
+  // Deduplicate strictly by question ID to prevent duplicate questions in Firestore
+  const dedupMap = new Map();
+  for (const item of rawList) {
+    if (!item) continue;
+    const clean = mapRrbToMockQuestion(item);
+    const id = safeId(clean.id || `mock-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, 'mock');
+    dedupMap.set(id, { ...clean, id });
+  }
+  const list = Array.from(dedupMap.values());
   const CHUNK_SIZE = 450;
   let saved = 0;
 
@@ -951,7 +1010,7 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
       const batch = writeBatch(db);
       const slice = list.slice(i, i + CHUNK_SIZE);
       for (const question of slice) {
-        const id = safeId(question.id || `mock-${Date.now()}`, 'mock');
+        const id = question.id;
         batch.set(
           doc(db, 'mockQuestions', id),
           { ...stripUndefined({ ...question, id }), serverUpdatedAt: serverTimestamp() },
@@ -974,17 +1033,35 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
       let cse = 0;
       let english = 0;
       let verified = 0;
+      let graduate2026 = 0;
+      let graduate2024 = 0;
+      let underGraduate = 0;
+      let sscCgl = 0;
 
       list.forEach((q) => {
         if (q.shiftNumber) shiftsSet.add(q.shiftNumber);
         if (q.subtopic) subtopicsSet.add(q.subtopic);
         if (q.status === 'Published' || q.verificationStatus === 'VERIFIED') verified++;
+
+        if (q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl')) {
+          sscCgl++;
+        } else if (q.examLevel === 'Graduate') {
+          if (q.examYear === '2026' || String(q.id || '').includes('2026')) {
+            graduate2026++;
+          } else {
+            graduate2024++;
+          }
+        } else {
+          underGraduate++;
+        }
+
         const s = (q.subject || '').toLowerCase();
-        if (s.includes('english')) english++;
-        else if (s.includes('computer')) cse++;
-        else if (s.includes('science')) science++;
+        const cat = (q.categoryId || '').toLowerCase();
+        if (s.includes('english') || cat === 'english') english++;
+        else if (cat === 'cse' || s.includes('computer')) cse++;
+        else if (cat === 'general-science' || s.includes('science')) science++;
         else if (s.includes('quant') || s.includes('math')) quant++;
-        else if (s.includes('reason')) reasoning++;
+        else if (s.includes('reason') || cat === 'reasoning') reasoning++;
         else gk++;
       });
 
@@ -992,9 +1069,13 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
         totalQuestions: list.length,
         verifiedQuestions: verified,
         unverifiedQuestions: list.length - verified,
-        totalShifts: shiftsSet.size || 100,
-        totalSubtopics: subtopicsSet.size || 37,
+        totalShifts: Math.max(shiftsSet.size, 100),
+        totalSubtopics: Math.max(subtopicsSet.size, 37),
         totalMockTests: 320,
+        graduate2026,
+        graduate2024,
+        underGraduate,
+        sscCgl,
         subjectCounts: {
           'general-knowledge': gk,
           'quantitative-aptitude': quant,
@@ -1021,6 +1102,65 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
   saveLocalData(STORAGE_KEYS.MOCK_QUESTIONS, list);
   markSyncSuccess();
   return saved;
+}
+
+/**
+ * Migrate existing older Graduate questions in Firestore (dates like 05/06/2025)
+ * to RRB NTPC Graduate 2024 as requested by the user, while keeping new March 2026
+ * questions under RRB NTPC Graduate 2025-26.
+ */
+export async function migrateOlderGraduateQuestionsTo2024(onProgress) {
+  requireFirebaseWrite();
+  if (!isFirebaseConfigured || !db) return 0;
+
+  const snap = await getDocs(collection(db, 'mockQuestions'));
+  const toUpdate = [];
+
+  snap.forEach((d) => {
+    if (d.id === '_stats_' || d.id === '_test_ping_') return;
+    const data = d.data();
+    if (
+      data.examLevel === 'Graduate' &&
+      (data.examYear === '2025' ||
+       data.examDate === '05/06/2025' ||
+       String(d.id).includes('grad-2025'))
+    ) {
+      toUpdate.push({
+        id: d.id,
+        examYear: '2024',
+        examName: 'RRB NTPC Graduate 2024 (CBT-1)',
+        examLevelLabel: 'Graduate 2024',
+        source: 'RRB NTPC Graduate 2024 Official Answer Key (CEN 06/2024)'
+      });
+    }
+  });
+
+  const CHUNK_SIZE = 450;
+  let updatedCount = 0;
+  for (let i = 0; i < toUpdate.length; i += CHUNK_SIZE) {
+    const batch = writeBatch(db);
+    const slice = toUpdate.slice(i, i + CHUNK_SIZE);
+    for (const item of slice) {
+      batch.set(
+        doc(db, 'mockQuestions', item.id),
+        {
+          examYear: item.examYear,
+          examName: item.examName,
+          examLevelLabel: item.examLevelLabel,
+          source: item.source,
+          serverUpdatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+    }
+    await batch.commit();
+    updatedCount += slice.length;
+    if (typeof onProgress === 'function') {
+      onProgress(updatedCount, toUpdate.length);
+    }
+  }
+
+  return updatedCount;
 }
 
 export async function deleteMockQuestion(id) {

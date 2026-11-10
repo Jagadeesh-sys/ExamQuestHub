@@ -949,21 +949,39 @@ export const INITIAL_RESOURCES = [
     }
   },
   {
-    id: 'pyq-rrb-ntpc-graduate-2025-cbt1',
+    id: 'pyq-rrb-ntpc-graduate-2026-cbt1',
     title: {
-      en: 'RRB NTPC Graduate Level 2025 (CEN 06/2025) CBT-1 Official Answer Key & Papers (All 47 Shifts)',
-      te: 'RRB NTPC గ్రాడ్యుయేట్ లెవెల్ 2025 (CEN 06/2025) CBT-1 అధికారిక కీ & ప్రశ్నాపత్రాలు (47 షిఫ్టులు)'
+      en: 'RRB NTPC Graduate Level 2025-26 (CEN 06/2025) CBT-1 Official Answer Key & Papers (All 24 Sets · 16-27 March 2026)',
+      te: 'RRB NTPC గ్రాడ్యుయేట్ లెవెల్ 2025-26 (CEN 06/2025) CBT-1 అధికారిక కీ & ప్రశ్నాపత్రాలు (24 సెట్లు · 16-27 మార్చి 2026)'
     },
     category: 'Previous Year Question Papers',
     examBoard: 'RRB',
-    year: '2025',
+    year: '2026',
     type: 'Official Question Paper & Answer Key',
-    fileSize: '8.3 MB PDF (791 Pages)',
-    downloadUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf',
+    fileSize: '335 Pages PDF',
+    downloadUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf',
     officialSource: 'https://rrbcdg.gov.in',
     description: {
-      en: 'Complete authentic examination compilation of all 47 shifts with 4,700 questions and official green-tick verified answer keys.',
-      te: 'అన్ని 47 షిఫ్టుల అధికారిక ప్రశ్నాపత్రాలు మరియు రైల్వే రిక్రూట్‌మెంట్ బోర్డు వెరిఫై చేసిన సమాధానాలు (4,700 ప్రశ్నలు).'
+      en: 'Official 24 shifts compilation conducted from 16 March 2026 to 27 March 2026 with 2,400 questions and official verified answer keys.',
+      te: '16 మార్చి 2026 నుండి 27 మార్చి 2026 వరకు జరిగిన మొత్తం 24 షిఫ్టుల అధికారిక ప్రశ్నాపత్రాలు మరియు రైల్వే రిక్రూట్‌మెంట్ బోర్డు వెరిఫై చేసిన సమాధానాలు (2,400 ప్రశ్నలు).'
+    }
+  },
+  {
+    id: 'pyq-rrb-ntpc-graduate-2024-cbt1',
+    title: {
+      en: 'RRB NTPC Graduate Level 2024 (CEN 06/2024) CBT-1 Official Answer Key & Papers (Previous Exam)',
+      te: 'RRB NTPC గ్రాడ్యుయేట్ లెవెల్ 2024 (CEN 06/2024) CBT-1 అధికారిక కీ & ప్రశ్నాపత్రాలు'
+    },
+    category: 'Previous Year Question Papers',
+    examBoard: 'RRB',
+    year: '2024',
+    type: 'Official Question Paper & Answer Key',
+    fileSize: '8.3 MB PDF (791 Pages)',
+    downloadUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf',
+    officialSource: 'https://rrbcdg.gov.in',
+    description: {
+      en: 'Previous examination compilation with authentic questions and verified official keys.',
+      te: 'గత పరీక్షల అధికారిక ప్రశ్నాపత్రాలు మరియు వెరిఫై చేసిన సమాధానాలు.'
     }
   },
   {

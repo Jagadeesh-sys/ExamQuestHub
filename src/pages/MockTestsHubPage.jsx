@@ -56,7 +56,8 @@ import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import {
   getMockQuestions,
   bulkSaveMockQuestions,
-  getDirectFirestoreMockStats
+  getDirectFirestoreMockStats,
+  migrateOlderGraduateQuestionsTo2024
 } from '../firebase/firestoreService.js';
 
 // Import Circular 3D Medallion Subject Icons provided by user
@@ -213,15 +214,20 @@ export default function MockTestsHubPage() {
   const handlePushAllToServer = async () => {
     if (isPushingServer) return;
     setIsPushingServer(true);
-    setServerPushStatus({ inProgress: true, text: 'Preparing verified examination questions...' });
+    setServerPushStatus({ inProgress: true, text: 'Preparing verified official examination questions...' });
     try {
+      try {
+        await migrateOlderGraduateQuestionsTo2024();
+      } catch (migErr) {
+        console.warn('Graduate migration note:', migErr.message);
+      }
       const qList = firestoreQuestions && firestoreQuestions.length > 0
         ? firestoreQuestions
         : await getMockQuestions();
       const saved = await bulkSaveMockQuestions(qList, (done, total) => {
         setServerPushStatus({
           inProgress: true,
-          text: `Pushing ${done.toLocaleString()} of ${total.toLocaleString()} questions to server...`
+          text: `Pushing ${done.toLocaleString()} of ${total.toLocaleString()} deduplicated questions to server...`
         });
       });
       setServerPushStatus({

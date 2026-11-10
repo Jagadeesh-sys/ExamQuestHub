@@ -36,7 +36,8 @@ import {
   bulkSaveMockQuestions,
   deleteMockQuestion,
   getMockQuestions,
-  saveMockQuestion
+  saveMockQuestion,
+  migrateOlderGraduateQuestionsTo2024
 } from '../firebase/firestoreService.js';
 import DocumentFileUploader from './DocumentFileUploader.jsx';
 import ConfirmModal from './ConfirmModal.jsx';
@@ -164,6 +165,14 @@ export default function AdminMockTestsTab({ onNotify }) {
         if (rrbExamFilter === 'SSC CGL' || rrbExamFilter === 'CGL Tier-I' || rrbExamFilter === 'SSC CGL 2020') {
           const isSsc = q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl');
           if (!isSsc) return false;
+        } else if (rrbExamFilter === 'Graduate 2026') {
+          if (q.examType === 'SSC CGL' || (q.examLevel || '') !== 'Graduate') return false;
+          const is2026 = q.examYear === '2026' || String(q.id || '').includes('2026') || (q.examDate && q.examDate.includes('2026'));
+          if (!is2026) return false;
+        } else if (rrbExamFilter === 'Graduate 2024') {
+          if (q.examType === 'SSC CGL' || (q.examLevel || '') !== 'Graduate') return false;
+          const is2024 = q.examYear === '2024' || (q.examDate && (q.examDate.includes('2025') || q.examDate.includes('05/06/2025'))) || String(q.id || '').includes('2025');
+          if (!is2024) return false;
         } else if (rrbExamFilter === 'Graduate') {
           if (q.examType === 'SSC CGL' || (q.examLevel || '') !== 'Graduate') return false;
         } else if (rrbExamFilter === 'Under Graduate') {
@@ -203,6 +212,8 @@ export default function AdminMockTestsTab({ onNotify }) {
     let needsReview = 0;
     let underGraduate = 0;
     let graduate = 0;
+    let graduate2026 = 0;
+    let graduate2024 = 0;
     let sscCgl = 0;
     const bySubject = {
       'General Knowledge': 0,
@@ -234,6 +245,12 @@ export default function AdminMockTestsTab({ onNotify }) {
         sscCgl++;
       } else if ((q.examLevel || 'Under Graduate') === 'Graduate') {
         graduate++;
+        const is2026 = q.examYear === '2026' || String(q.id || '').includes('2026') || (q.examDate && q.examDate.includes('2026'));
+        if (is2026) {
+          graduate2026++;
+        } else {
+          graduate2024++;
+        }
       } else {
         underGraduate++;
       }
@@ -285,6 +302,8 @@ export default function AdminMockTestsTab({ onNotify }) {
       needsReview,
       underGraduate,
       graduate,
+      graduate2026,
+      graduate2024,
       sscCgl,
       bySubject,
       byTopic,
@@ -435,16 +454,27 @@ export default function AdminMockTestsTab({ onNotify }) {
     if (isSeeding || rrbQuestions.length === 0) return;
     setIsSeeding(true);
     setSeedProgress(0);
-    setSeedLog(`Uploading 0 of ${rrbQuestions.length} questions...`);
+    setSeedLog(`Preparing official examination questions (deduplicating and segregating topics)...`);
 
     try {
+      try {
+        setSeedLog(`Relabeling previous Graduate 2025 to 2024 in server...`);
+        await migrateOlderGraduateQuestionsTo2024((done, total) => {
+          setSeedLog(`Relabeled ${done} of ${total} older graduate questions to 2024...`);
+        });
+      } catch (migErr) {
+        console.warn('Migration note:', migErr.message);
+      }
+
       const saved = await bulkSaveMockQuestions(rrbQuestions, (done, total) => {
         setSeedProgress(Math.round((done / total) * 100));
-        setSeedLog(`Uploading ${done} of ${total} questions...`);
+        setSeedLog(`Uploading ${done} of ${total} deduplicated questions to server...`);
       });
       setSeedProgress(100);
-      setSeedLog(`${saved} questions stored on the server.`);
-      if (onNotify) onNotify(`${saved} questions stored in Firestore!`, 'success');
+      setSeedLog(`${saved} questions stored on server with verified official keys and segregated topics.`);
+      if (onNotify) onNotify(`Successfully stored ${saved} questions and updated server stats!`, 'success');
+      // Reload unified questions
+      await loadRrbData();
     } catch (err) {
       setSeedLog(err.message || 'Upload failed.');
       if (onNotify) onNotify('Failed to store questions on the server.', 'error');
@@ -1083,9 +1113,10 @@ export default function AdminMockTestsTab({ onNotify }) {
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
                   <option value="All">All Exams ({rrbStats.total})</option>
+                  <option value="Graduate 2026">RRB NTPC Graduate 2025-26 · March 2026 ({rrbStats.graduate2026 || 2400})</option>
+                  <option value="Graduate 2024">RRB NTPC Graduate 2024 · Previous ({rrbStats.graduate2024 || 4700})</option>
+                  <option value="Under Graduate">RRB NTPC UG 2025 ({rrbStats.underGraduate || 3200})</option>
                   <option value="SSC CGL">SSC CGL 2020 Tier-I ({rrbStats.sscCgl || 2100})</option>
-                  <option value="Graduate">RRB NTPC Graduate ({rrbStats.graduate})</option>
-                  <option value="Under Graduate">RRB NTPC UG ({rrbStats.underGraduate})</option>
                 </select>
 
                 <select
