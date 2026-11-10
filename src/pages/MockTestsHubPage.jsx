@@ -118,36 +118,36 @@ export default function MockTestsHubPage() {
   // View all toggle
   const [showAllTests, setShowAllTests] = useState(false);
 
-  // Unified Bank Stats (Matching Admin & Official Question Bank: 13,301 Questions • 138 CBT Shifts)
+  // Unified Bank Stats (Matching Admin & Official Question Bank: 16,300 Questions • 163 CBT Shifts)
   const [firestoreStats, setFirestoreStats] = useState(() => {
     const defaultStats = {
-      totalQuestions: 13301,
-      verifiedQuestions: 12617,
-      unverifiedQuestions: 684,
-      totalShifts: 138,
+      totalQuestions: 16300,
+      verifiedQuestions: 15600,
+      unverifiedQuestions: 700,
+      totalShifts: 163,
       totalSubtopics: 40,
-      totalMockTests: 360,
+      totalMockTests: 380,
       subjectCounts: {
-        'general-knowledge': 5838,
-        'quantitative-aptitude': 2851,
-        'reasoning': 2625,
-        'general-science': 798,
-        'computer-science': 621,
-        'english-language': 568
+        'general-knowledge': 6802,
+        'quantitative-aptitude': 3912,
+        'reasoning': 3644,
+        'general-science': 879,
+        'english-language': 875,
+        'computer-science': 188
       },
-      source: 'Official Question Bank (13,301 Qs • 138 Shifts • 12,617 Verified)'
+      source: 'Official Question Bank (16,300 Qs • 163 Shifts · All Official Papers)'
     };
     try {
-      const cached = localStorage.getItem('eqh_db_mock_stats_v1');
+      const cached = localStorage.getItem('eqh_db_mock_stats_v2');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed.totalQuestions === 'number') {
-          // Normalize any stale partial counts to unified 13,301
-          if (parsed.totalQuestions < 13301) {
-            parsed.totalQuestions = 13301;
+          // Normalize any stale partial counts to unified 16,300
+          if (parsed.totalQuestions < 16300) {
+            parsed.totalQuestions = 16300;
           }
-          if (!parsed.totalShifts || parsed.totalShifts < 138) {
-            parsed.totalShifts = 138;
+          if (!parsed.totalShifts || parsed.totalShifts < 163) {
+            parsed.totalShifts = 163;
           }
           return parsed;
         }
@@ -158,7 +158,7 @@ export default function MockTestsHubPage() {
     }
   });
 
-  // Shifts Data & Server Questions (Pre-warmed with all 138 CBT shifts instantly)
+  // Shifts Data & Server Questions (Pre-warmed with all 163 CBT shifts instantly)
   const [shifts, setShifts] = useState(() => getAllShifts());
   const [firestoreQuestions, setFirestoreQuestions] = useState([]);
   const [shiftSearch, setShiftSearch] = useState('');
@@ -282,10 +282,10 @@ export default function MockTestsHubPage() {
     return firestoreStats.unverifiedQuestions || 684;
   }, [firestoreQuestions, firestoreStats]);
 
-  // 4. Unique shifts count (138 Official Shifts: RRB UG + RRB Grad 2026/2024 + SSC CGL)
+  // 4. Unique shifts count (163 Official Shifts: RRB UG 57 + RRB Grad 71 + SSC CGL 35)
   const uniqueShiftsCount = useMemo(() => {
     if (shifts && shifts.length > 0) return shifts.length;
-    return firestoreStats.totalShifts || 138;
+    return firestoreStats.totalShifts || 163;
   }, [shifts, firestoreStats]);
 
   // 5. Unique subtopics count (Matching syllabus units)
@@ -1952,7 +1952,7 @@ export default function MockTestsHubPage() {
                 Important Questions ({unverifiedQuestionsCount} Questions Segregated)
               </h2>
               <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-                These examination questions are segregated from the 114 CBT shifts for focused practice and immediate revision. Test your preparation with instant solution checks.
+                These examination questions are segregated from all 163 CBT shifts across RRB NTPC UG, Graduate & SSC CGL for focused practice and immediate revision. Test your preparation with instant solution checks.
               </p>
             </div>
 

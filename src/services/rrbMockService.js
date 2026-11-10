@@ -182,7 +182,7 @@ export function classifyComputerTopic(question) {
   return 'Computer Fundamentals & Awareness';
 }
 
-const STORAGE_KEY_CACHED_SHIFTS = 'eqh_cached_cbt_shifts_v2';
+const STORAGE_KEY_CACHED_SHIFTS = 'eqh_cached_cbt_shifts_v3';
 
 let cachedQuestions = null;
 let cachedShifts = null;
@@ -194,7 +194,7 @@ function getInitialShifts() {
     const raw = localStorage.getItem(STORAGE_KEY_CACHED_SHIFTS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length >= 138) {
+      if (Array.isArray(parsed) && parsed.length >= 160) {
         cachedShifts = parsed;
         return cachedShifts;
       }
@@ -206,15 +206,15 @@ function getInitialShifts() {
 }
 
 /**
- * Extracted question banks merged into one pool:
- * - RRB NTPC Graduate 2025-26 papers (24 shifts, 2,400 Qs)
- * - RRB NTPC Graduate 2024 papers (47 shifts, 4,700 Qs)
- * - RRB NTPC Under-Graduate 2025 papers (32 shifts, 3,950 Qs)
- * - SSC CGL 2020 & 2026 Tier-I papers (35 shifts, 2,251 Qs)
- * Total: 13,301 official examination questions across 138 shifts!
+ * Extracted official CBT question banks merged into one unified pool:
+ * - RRB NTPC Under-Graduate 2024 papers (57 shifts, 5,700 Qs · CEN 06/2024)
+ * - RRB NTPC Graduate 2025-26 papers (24 shifts, 2,400 Qs · CEN 06/2025)
+ * - RRB NTPC Graduate 2024 papers (47 shifts, 4,700 Qs · CEN 06/2024)
+ * - SSC CGL 2020 & 2026 Tier-I papers (35 shifts, 3,600 Qs)
+ * Total: 16,400 official examination questions across 163 CBT shifts!
  */
 const RRB_DATA_FILES = [
-  'rrbNtpc2025Full.json',
+  'rrbNtpcUg2024Full.json',
   'rrbNtpcGraduate2024Full.json',
   'rrbNtpcGraduate2025Full.json',
   'sscCgl2020Full.json',
@@ -483,7 +483,7 @@ export function deleteLocalQuestionOverride(questionId) {
 }
 
 export async function loadAllShifts() {
-  if (cachedShifts && cachedShifts.length >= 138) return getAllShifts();
+  if (cachedShifts && cachedShifts.length >= 160) return getAllShifts();
   await loadAllRRBQuestions();
   return getAllShifts();
 }
@@ -623,7 +623,7 @@ export async function getQuestionsForShift(shiftNumberOrId, subject = null) {
       const matchExam = (q.examYear === '2024' || String(q.id).includes('grad-2024') || String(q.id).includes('grad-2025')) && q.examYear !== '2026';
       if (!matchExam) return false;
     } else if (isUg) {
-      const matchExam = q.examLevel === 'Under Graduate' || String(q.id).includes('ug-2025');
+      const matchExam = q.examLevel === 'Under Graduate' || String(q.id).includes('ug-2024') || String(q.id).includes('ug-2025');
       if (!matchExam) return false;
     } else if (isSsc) {
       const matchExam = q.examType === 'SSC CGL' || String(q.id).includes('ssc');
@@ -754,12 +754,30 @@ export async function getEngineMockTest(testId, subjectParam = null) {
       if (topicName) {
         // A topic test serves only the questions classified under its own topic. When
         // nothing matches we keep the full subject pool instead of showing an empty test.
+        const cleanTopic = slugifyTopic(topicName);
         const topicPool =
           subject === 'General Knowledge'
-            ? subjectPool.filter((q) => classifyGkTopic(q) === topicName)
+            ? subjectPool.filter(
+                (q) =>
+                  classifyGkTopic(q) === topicName ||
+                  slugifyTopic(q.subtopic) === cleanTopic ||
+                  String(q.subtopic || '').toLowerCase().includes(topicName.toLowerCase())
+              )
             : subject === 'Computer Science'
-              ? subjectPool.filter((q) => classifyComputerTopic(q) === topicName)
-              : [];
+              ? subjectPool.filter(
+                  (q) =>
+                    classifyComputerTopic(q) === topicName ||
+                    slugifyTopic(q.subtopic) === cleanTopic ||
+                    String(q.subtopic || '').toLowerCase().includes(topicName.toLowerCase())
+                )
+              : subjectPool.filter((q) => {
+                  if (!q.subtopic) return false;
+                  return (
+                    slugifyTopic(q.subtopic) === cleanTopic ||
+                    String(q.subtopic).toLowerCase().includes(topicName.toLowerCase()) ||
+                    topicName.toLowerCase().includes(String(q.subtopic).toLowerCase())
+                  );
+                });
         if (topicPool.length > 0) picked = topicPool.slice(0, targetCount);
         title = `${subject} · ${topicName} Topic Test`;
         duration = Math.max(5, Math.min(duration, picked.length));

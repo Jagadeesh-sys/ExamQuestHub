@@ -758,25 +758,25 @@ export function mapRrbToMockQuestion(q) {
  */
 export async function getDirectFirestoreMockStats() {
   const fallbackStats = {
-    totalQuestions: 13301,
-    verifiedQuestions: 12617,
-    unverifiedQuestions: 684,
-    totalShifts: 138,
+    totalQuestions: 16300,
+    verifiedQuestions: 15600,
+    unverifiedQuestions: 700,
+    totalShifts: 163,
     totalSubtopics: 40,
-    totalMockTests: 360,
+    totalMockTests: 380,
     subjectCounts: {
-      'general-knowledge': 5838,
-      'quantitative-aptitude': 2851,
-      'reasoning': 2625,
-      'general-science': 798,
-      'computer-science': 621,
-      'english-language': 568
+      'general-knowledge': 6802,
+      'quantitative-aptitude': 3912,
+      'reasoning': 3644,
+      'general-science': 879,
+      'english-language': 875,
+      'computer-science': 188
     },
     exams: {
-      'rrb-ntpc-ug-2025': 3950,
+      'rrb-ntpc-ug-2024': 5700,
       'rrb-ntpc-grad-2024': 4700,
       'rrb-ntpc-grad-2026': 2400,
-      'ssc-cgl': 2251
+      'ssc-cgl': 3600
     },
     source: 'Firestore Server (examquesthub • mockQuestions)'
   };
@@ -887,23 +887,23 @@ export async function getDirectFirestoreMockStats() {
       }
     });
 
-    const realShifts = shiftsSet.size > 0 ? Math.max(shiftsSet.size, 138) : 138;
-    const realTotal = totalDocsCount > 0 ? Math.max(totalDocsCount, 13301) : 13301;
+    const realShifts = shiftsSet.size > 0 ? Math.max(shiftsSet.size, 163) : 163;
+    const realTotal = totalDocsCount > 0 ? Math.max(totalDocsCount, 16300) : 16300;
 
     const stats = {
       totalQuestions: realTotal,
-      verifiedQuestions: verifiedCount > 0 ? verifiedCount : 12617,
-      unverifiedQuestions: unverifiedCount > 0 ? unverifiedCount : 684,
+      verifiedQuestions: verifiedCount > 0 ? verifiedCount : 15600,
+      unverifiedQuestions: unverifiedCount > 0 ? unverifiedCount : 700,
       totalShifts: realShifts,
       totalSubtopics: subtopicsSet.size > 0 ? Math.max(subtopicsSet.size, 40) : 40,
-      totalMockTests: 360,
+      totalMockTests: 380,
       subjectCounts: {
-        'general-knowledge': gk || 5838,
-        'quantitative-aptitude': quant || 2851,
-        'reasoning': reasoning || 2625,
-        'general-science': science || 798,
-        'computer-science': cse || 621,
-        'english-language': english || 568
+        'general-knowledge': gk || 6802,
+        'quantitative-aptitude': quant || 3912,
+        'reasoning': reasoning || 3644,
+        'general-science': science || 879,
+        'computer-science': cse || 188,
+        'english-language': english || 875
       },
       source: 'Firestore Server (examquesthub • mockQuestions)',
       syncedAt: new Date().toISOString()
