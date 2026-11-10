@@ -59,15 +59,15 @@ import {
   getDirectFirestoreMockStats
 } from '../firebase/firestoreService.js';
 
-// Import 3D Subject Icons directly via ESM so Vite bundles and resolves them across all deployment environments (GitHub Pages, Vercel, sub-paths)
-import iconAllMock from '../assets/images/icon_all_mock.jpg';
-import iconCurrentAffairs from '../assets/images/icon_current_affairs.jpg';
-import iconEnglish from '../assets/images/icon_english.jpg';
-import iconGeneralKnowledge from '../assets/images/icon_general_knowledge.jpg';
-import iconReasoning from '../assets/images/icon_reasoning.jpg';
-import iconQuant from '../assets/images/icon_quant.jpg';
-import iconScience from '../assets/images/icon_science.jpg';
-import iconComputer from '../assets/images/icon_computer.jpg';
+// Import Circular 3D Medallion Subject Icons provided by user
+import iconAllMock from '../assets/images/subject_all_mock.png';
+import iconCurrentAffairs from '../assets/images/subject_current_affairs.png';
+import iconEnglish from '../assets/images/subject_english.png';
+import iconGeneralKnowledge from '../assets/images/subject_general_knowledge.png';
+import iconReasoning from '../assets/images/subject_reasoning.png';
+import iconQuant from '../assets/images/subject_quant.png';
+import iconScience from '../assets/images/subject_science.png';
+import iconComputer from '../assets/images/subject_computer.png';
 
 export default function MockTestsHubPage() {
   const { t } = useLanguage();
@@ -538,8 +538,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(liveTotalQuestionsNumber, `${(liveTotalQuestionsNumber / 1000).toFixed(1)}k Qs`),
       exactCount: liveTotalQuestionsNumber,
       image3d: iconAllMock,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_all_mock.png`,
-      concept: 'Golden Trophy',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_a918d86e.png`,
+      concept: 'Mock Test Medallion',
       themeColor: '#12345A',
       cardBorder: 'border-slate-200/90 hover:border-[#12345A]/60',
       badgeClass: 'bg-blue-50 text-blue-900 border border-blue-200/60',
@@ -553,8 +553,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(3500, '3.5k Qs'),
       exactCount: 3500,
       image3d: iconCurrentAffairs,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_current_affairs.png`,
-      concept: 'Newspaper',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_e57fb5b8.png`,
+      concept: 'Current Affairs Medallion',
       themeColor: '#E11D48',
       cardBorder: 'border-slate-200/90 hover:border-rose-400',
       badgeClass: 'bg-rose-50 text-rose-900 border border-rose-200/60',
@@ -568,8 +568,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 907, '907 Qs'),
       exactCount: liveSubjectCounts['english-language'] || 907,
       image3d: iconEnglish,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_english.png`,
-      concept: 'Open Book',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_33dcd63b.png`,
+      concept: 'English Language Medallion',
       themeColor: '#2563EB',
       cardBorder: 'border-slate-200/90 hover:border-blue-400',
       badgeClass: 'bg-blue-50 text-blue-900 border border-blue-200/60',
@@ -583,8 +583,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4150, '4.2k Qs'),
       exactCount: liveSubjectCounts['general-knowledge'] || 4150,
       image3d: iconGeneralKnowledge,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_general_knowledge.png`,
-      concept: 'Graduation Cap',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_1955d35b.png`,
+      concept: 'General Knowledge Medallion',
       themeColor: '#D97706',
       cardBorder: 'border-slate-200/90 hover:border-amber-400',
       badgeClass: 'bg-amber-50 text-amber-900 border border-amber-200/60',
@@ -598,8 +598,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2680, '2.7k Qs'),
       exactCount: liveSubjectCounts['reasoning'] || 2680,
       image3d: iconReasoning,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_reasoning.png`,
-      concept: 'Brain with Gears',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_70b0a70b.png`,
+      concept: 'Reasoning Medallion',
       themeColor: '#9333EA',
       cardBorder: 'border-slate-200/90 hover:border-purple-400',
       badgeClass: 'bg-purple-50 text-purple-900 border border-purple-200/60',
@@ -613,8 +613,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2950, '3.0k Qs'),
       exactCount: liveSubjectCounts['quantitative-aptitude'] || 2950,
       image3d: iconQuant,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_quant.png`,
-      concept: 'Calculator',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_6a75de99.png`,
+      concept: 'Quant Maths Medallion',
       themeColor: '#059669',
       cardBorder: 'border-slate-200/90 hover:border-emerald-400',
       badgeClass: 'bg-emerald-50 text-emerald-900 border border-emerald-200/60',
@@ -628,8 +628,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 880, '880 Qs'),
       exactCount: liveSubjectCounts['general-science'] || 880,
       image3d: iconScience,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_science.png`,
-      concept: 'Flask and Microscope',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_dbf284c6.png`,
+      concept: 'General Science Medallion',
       themeColor: '#7C3AED',
       cardBorder: 'border-slate-200/90 hover:border-indigo-400',
       badgeClass: 'bg-indigo-50 text-indigo-900 border border-indigo-200/60',
@@ -643,8 +643,8 @@ export default function MockTestsHubPage() {
       questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 590, '590 Qs'),
       exactCount: liveSubjectCounts['computer-science'] || 590,
       image3d: iconComputer,
-      fallbackUrl: `${cleanBase}assets/aistudio/subject_icons/icon_computer.png`,
-      concept: 'Coding Laptop',
+      fallbackUrl: `${cleanBase}assets/aistudio/image_faf0f66f.png`,
+      concept: 'Computer Science Medallion',
       themeColor: '#0284C7',
       cardBorder: 'border-slate-200/90 hover:border-sky-400',
       badgeClass: 'bg-sky-50 text-sky-900 border border-sky-200/60',
@@ -1257,7 +1257,7 @@ export default function MockTestsHubPage() {
                     {/* Circular 3D Icon Container */}
                     <div className="relative">
                       <div
-                        className={`w-14 h-14 rounded-full p-1.5 flex items-center justify-center transition-all duration-200 bg-white shadow-xs ${
+                        className={`w-14 h-14 rounded-full p-0.5 flex items-center justify-center transition-all duration-200 bg-white shadow-xs overflow-hidden ${
                           isSelected
                             ? 'border-2 border-[#12345A] ring-3 ring-[#12345A]/25 scale-105 shadow-md bg-blue-50/60'
                             : 'border-2 border-slate-200/90 group-hover:border-[#12345A]/40'
@@ -1266,7 +1266,7 @@ export default function MockTestsHubPage() {
                         <img
                           src={sub.image3d}
                           alt={sub.title}
-                          className="w-full h-full object-contain rounded-full drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
+                          className="w-full h-full object-cover rounded-full drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
                           loading="lazy"
                           onError={(e) => {
                             if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
@@ -1328,9 +1328,9 @@ export default function MockTestsHubPage() {
                       : `${sub.cardBorder} hover:shadow-lg hover:-translate-y-1 shadow-2xs`
                   }`}
                 >
-                  {/* PROMINENT SQUARE 3D ICON CONTAINER */}
+                  {/* PROMINENT CIRCULAR 3D MEDALLION ICON CONTAINER */}
                   <div
-                    className={`w-11 h-11 sm:w-11 sm:h-11 md:w-13 md:h-13 lg:w-15 lg:h-15 rounded-xl sm:rounded-2xl p-1 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 shrink-0 aspect-square ${
+                    className={`w-12 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full p-0.5 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center overflow-hidden transition-all duration-300 shrink-0 aspect-square ${
                       isSelected
                         ? 'border-[#12345A] ring-3 ring-[#12345A]/15 shadow-md shadow-blue-900/10 scale-105'
                         : 'border-slate-200/90 group-hover:border-[#12345A]/40 group-hover:scale-105 shadow-2xs'
@@ -1339,7 +1339,7 @@ export default function MockTestsHubPage() {
                     <img
                       src={sub.image3d}
                       alt={sub.title}
-                      className="w-full h-full object-contain rounded-lg sm:rounded-xl transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                      className="w-full h-full object-cover rounded-full transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
                       loading="lazy"
                       onError={(e) => {
                         if (sub.fallbackUrl && e.currentTarget.src !== sub.fallbackUrl) {
