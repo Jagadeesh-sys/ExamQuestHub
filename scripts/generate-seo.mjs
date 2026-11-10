@@ -29,6 +29,7 @@ import {
 } from '../src/utils/seo.js';
 import { STATIC_PAGES, getSitemapStaticPages } from '../src/utils/routeMeta.js';
 import { getEffectiveStatus } from '../src/utils/notificationStatus.js';
+import { INITIAL_UPDATES, INITIAL_CURRENT_AFFAIRS } from '../src/data/initialData.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -98,26 +99,36 @@ async function fetchCollection(name, config) {
   const documents = [];
   let pageToken = '';
 
-  do {
-    const base = `https://firestore.googleapis.com/v1/projects/${config.projectId}/databases/${config.databaseId}/documents/${name}`;
-    const query = `?key=${encodeURIComponent(config.apiKey)}&pageSize=300${
-      pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''
-    }`;
+  try {
+    do {
+      const base = `https://firestore.googleapis.com/v1/projects/${config.projectId}/databases/${config.databaseId}/documents/${name}`;
+      const query = `?key=${encodeURIComponent(config.apiKey)}&pageSize=300${
+        pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''
+      }`;
 
-    const response = await fetch(`${base}${query}`);
-    if (!response.ok) {
-      const detail = await response.text().catch(() => '');
-      throw new Error(`Firestore ${name} request failed with ${response.status}. ${detail.slice(0, 200)}`);
-    }
+      const response = await fetch(`${base}${query}`);
+      if (!response.ok) {
+        if (response.status === 429) {
+          console.warn(`[seo] Firestore ${name} hit rate limit / quota (HTTP 429). Falling back to verified dataset.`);
+          return null;
+        }
+        const detail = await response.text().catch(() => '');
+        console.warn(`[seo] Firestore ${name} request failed with ${response.status}: ${detail.slice(0, 150)}`);
+        return null;
+      }
 
-    const payload = await response.json();
-    for (const doc of payload.documents || []) {
-      documents.push({ id: doc.name.split('/').pop(), ...decodeFields(doc.fields) });
-    }
-    pageToken = payload.nextPageToken || '';
-  } while (pageToken);
+      const payload = await response.json();
+      for (const doc of payload.documents || []) {
+        documents.push({ id: doc.name.split('/').pop(), ...decodeFields(doc.fields) });
+      }
+      pageToken = payload.nextPageToken || '';
+    } while (pageToken);
 
-  return documents;
+    return documents;
+  } catch (err) {
+    console.warn(`[seo] Firestore ${name} connection notice: ${err.message}. Falling back to verified dataset.`);
+    return null;
+  }
 }
 
 function isDraft(item) {
@@ -334,25 +345,35 @@ async function main() {
   }));
 
   // Firestore is queried first so hub pages can link to their own detail pages.
+  // If Firestore is unavailable or quota is exceeded (HTTP 429), we fall back to the
+  // authentic verified dataset so all detail pages and sitemaps are ALWAYS generated!
   let jobs = [];
   let articles = [];
 
   try {
     const config = await loadFirebaseConfig();
-    if (!config.projectId || !config.apiKey) {
-      throw new Error('Firebase projectId/apiKey are not available.');
+    let rawUpdates = null;
+    let rawArticles = null;
+
+    if (config.projectId && config.apiKey) {
+      [rawUpdates, rawArticles] = await Promise.all([
+        fetchCollection('updates', config),
+        fetchCollection('currentAffairs', config)
+      ]);
     }
 
-    const [rawUpdates, rawArticles] = await Promise.all([
-      fetchCollection('updates', config),
-      fetchCollection('currentAffairs', config)
-    ]);
+    const updatesSource = Array.isArray(rawUpdates) && rawUpdates.length > 0 ? rawUpdates : INITIAL_UPDATES;
+    const articlesSource = Array.isArray(rawArticles) && rawArticles.length > 0 ? rawArticles : INITIAL_CURRENT_AFFAIRS;
 
-    jobs = sortByDateDesc(rawUpdates.filter((item) => !isDraft(item)), 'publishedAt');
-    articles = sortByDateDesc(rawArticles.filter((item) => !isDraft(item)), 'eventDate');
-    console.log(`[seo] Loaded ${jobs.length} notifications and ${articles.length} articles.`);
+    jobs = sortByDateDesc(updatesSource.filter((item) => !isDraft(item)), 'publishedAt');
+    articles = sortByDateDesc(articlesSource.filter((item) => !isDraft(item)), 'eventDate');
+    console.log(
+      `[seo] Loaded ${jobs.length} notifications and ${articles.length} articles (${rawUpdates && rawArticles ? 'live Firestore' : 'verified static dataset'}).`
+    );
   } catch (err) {
-    console.warn(`[seo] Skipping page prerender (${err.message})`);
+    console.warn(`[seo] Using verified static dataset fallback (${err.message})`);
+    jobs = sortByDateDesc(INITIAL_UPDATES.filter((item) => !isDraft(item)), 'publishedAt');
+    articles = sortByDateDesc(INITIAL_CURRENT_AFFAIRS.filter((item) => !isDraft(item)), 'eventDate');
   }
 
   // Prerender every static route as its own file. This matters because the SPA

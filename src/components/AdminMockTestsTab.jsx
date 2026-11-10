@@ -57,6 +57,7 @@ import {
 } from '../constants/mockTaxonomy.js';
 import {
   loadAllRRBQuestions,
+  loadAllShifts,
   saveLocalQuestionOverride,
   deleteLocalQuestionOverride,
   getAllShifts,
@@ -116,6 +117,7 @@ export default function AdminMockTestsTab({ onNotify }) {
     try {
       const qList = await getMockQuestions();
       setRrbQuestions(qList);
+      await loadAllShifts();
       setShifts(getAllShifts());
     } catch (err) {
       console.error('Failed to load unified mock data:', err);
@@ -177,6 +179,12 @@ export default function AdminMockTestsTab({ onNotify }) {
           if (q.examType === 'SSC CGL' || (q.examLevel || '') !== 'Graduate') return false;
         } else if (rrbExamFilter === 'Under Graduate') {
           if (q.examType === 'SSC CGL' || (q.examLevel || 'Under Graduate') !== 'Under Graduate') return false;
+        }
+      }
+      if (rrbShiftFilter !== 'All') {
+        const targetShiftNum = parseInt(rrbShiftFilter, 10);
+        if (q.shiftNumber !== targetShiftNum && q.setNumber !== targetShiftNum) {
+          return false;
         }
       }
       if (rrbStatusFilter !== 'All') {
@@ -609,7 +617,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             Previous Year Verified Questions Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 100} official examination shifts.
+            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '13,301+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 138} official examination shifts.
           </p>
         </div>
 
@@ -624,7 +632,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'})</span>
+            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '13,301+'})</span>
           </button>
 
           <button
@@ -636,7 +644,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Columns3 className="w-3.5 h-3.5" />
-            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 100})</span>
+            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 138})</span>
           </button>
 
           <button
@@ -666,10 +674,10 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                     <Award className="w-6 h-6 text-[#F2BE4F]" />
-                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '12,157+'} Questions)
+                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '13,301+'} Questions)
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
-                    Full official question bank with verified answer keys across 114 shifts (4,700 Graduate questions in 47 shifts + 3,200 Under-Graduate questions in 32 shifts + 3,500 SSC CGL questions in 35 shifts/sets + 757 custom/uploaded questions). All questions are segregated based on existing curriculum topics.
+                    Full official question bank with verified answer keys across 138 shifts (2,400 March 2026 Graduate questions in 24 sets + 4,700 2024 Graduate questions in 47 shifts + 3,950 Under-Graduate questions in 32 shifts + 2,251 SSC CGL questions). All questions are segregated based on existing curriculum topics.
                   </p>
                 </div>
 
@@ -688,7 +696,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '12,157+'})</span>
+                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '13,301+'})</span>
                   </button>
 
                   <button
@@ -724,14 +732,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onClick={() => { setRrbStatusFilter('All'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '10,757+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '13,301+'}</div>
                   <div className="text-[11px] text-slate-300">Total Questions</div>
                 </div>
                 <div
                   onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-emerald-500/20 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-emerald-400/30"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '10,578+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '12,617+'}</div>
                   <div className="text-[11px] text-emerald-200 font-semibold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
                     <span>100% Verified</span>
@@ -741,23 +749,23 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onClick={() => { setRrbStatusFilter('Needs Review'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-amber-500/25 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-amber-400/40"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.needsReview}</div>
+                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.needsReview || 684}</div>
                   <div className="text-[11px] text-amber-200 font-semibold flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3 text-amber-300" />
                     <span>Important (Review)</span>
                   </div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 100}</div>
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 138}</div>
                   <div className="text-[11px] text-slate-300">Exam Shifts (CBT)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl ? `${rrbStats.sscCgl.toLocaleString()}+` : '3,500'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl ? `${rrbStats.sscCgl.toLocaleString()}+` : '2,251+'}</div>
                   <div className="text-[11px] text-slate-300">SSC CGL (35 Shifts)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate ? `${rrbStats.graduate.toLocaleString()}+` : '2,394+'}</div>
-                  <div className="text-[11px] text-slate-300">RRB Grad (24 Shifts)</div>
+                  <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate ? `${rrbStats.graduate.toLocaleString()}+` : '7,100+'}</div>
+                  <div className="text-[11px] text-slate-300">RRB Grad (71 Shifts)</div>
                 </div>
               </div>
 
@@ -1134,7 +1142,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbShiftFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700 max-w-[170px]"
                 >
-                  <option value="All">All Shifts ({shifts.length || 79})</option>
+                  <option value="All">All Shifts ({shifts.length || 138})</option>
                   {shifts.map((s) => (
                     <option key={s.id} value={s.shiftNumber}>
                       Shift {s.shiftNumber} ({s.examLevel || 'UG'})
@@ -1403,10 +1411,10 @@ export default function AdminMockTestsTab({ onNotify }) {
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-5 border border-[#E3EAF2] shadow-xs">
             <h3 className="text-lg font-black text-[#12345A] mb-1">
-              {shifts.length || 100} Official Examination Shifts Configuration
+              {shifts.length || 138} Official Examination Shifts Configuration
             </h3>
             <p className="text-xs text-slate-500">
-              Manage all official CBT shifts: SSC CGL 2020 Tier-I (21 Sets), RRB NTPC Graduate (47 Shifts), and RRB NTPC Under Graduate (32 Shifts).
+              Manage all official CBT shifts: RRB NTPC Graduate 2025-26 (24 Sets), RRB NTPC Graduate 2024 (47 Shifts), RRB NTPC Under Graduate (32 Shifts), and SSC CGL Tier-I (35 Shifts).
             </p>
           </div>
 

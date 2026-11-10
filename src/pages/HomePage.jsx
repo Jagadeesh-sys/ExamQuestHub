@@ -75,7 +75,7 @@ export default function HomePage() {
       id: 'banner-mock-tests',
       image: '/assets/aistudio/image_ef986abf.png',
       alt: 'Ace Your Government Exams - Mock Tests & Practice Tests with Real Exam Pattern',
-      eyebrow: '10,757+ Questions • CBT Engine',
+      eyebrow: '13,300+ Questions • CBT Engine',
       ctaText: 'Start Tests',
       ctaLink: '/mocks'
     },

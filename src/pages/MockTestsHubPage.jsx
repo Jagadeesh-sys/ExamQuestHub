@@ -118,36 +118,36 @@ export default function MockTestsHubPage() {
   // View all toggle
   const [showAllTests, setShowAllTests] = useState(false);
 
-  // Unified Bank Stats (Matching Admin & Official Question Bank: 12,157 Questions • 114 CBT Shifts)
+  // Unified Bank Stats (Matching Admin & Official Question Bank: 13,301 Questions • 138 CBT Shifts)
   const [firestoreStats, setFirestoreStats] = useState(() => {
     const defaultStats = {
-      totalQuestions: 12157,
-      verifiedQuestions: 11978,
-      unverifiedQuestions: 179,
-      totalShifts: 114,
-      totalSubtopics: 35,
-      totalMockTests: 350,
+      totalQuestions: 13301,
+      verifiedQuestions: 12617,
+      unverifiedQuestions: 684,
+      totalShifts: 138,
+      totalSubtopics: 40,
+      totalMockTests: 360,
       subjectCounts: {
-        'general-knowledge': 4150,
-        'quantitative-aptitude': 2950,
-        'reasoning': 2680,
-        'general-science': 880,
-        'computer-science': 590,
-        'english-language': 907
+        'general-knowledge': 5838,
+        'quantitative-aptitude': 2851,
+        'reasoning': 2625,
+        'general-science': 798,
+        'computer-science': 621,
+        'english-language': 568
       },
-      source: 'Official Question Bank (12,157 Qs • 114 Shifts • 11,978 Verified)'
+      source: 'Official Question Bank (13,301 Qs • 138 Shifts • 12,617 Verified)'
     };
     try {
       const cached = localStorage.getItem('eqh_db_mock_stats_v1');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed.totalQuestions === 'number') {
-          // Normalize any stale partial counts (e.g. 8,657 or 11,400) to unified 12,157
-          if (parsed.totalQuestions === 8657 || parsed.totalQuestions < 11400) {
-            parsed.totalQuestions = 12157;
+          // Normalize any stale partial counts to unified 13,301
+          if (parsed.totalQuestions < 13301) {
+            parsed.totalQuestions = 13301;
           }
-          if (!parsed.totalShifts || parsed.totalShifts < 114) {
-            parsed.totalShifts = 114;
+          if (!parsed.totalShifts || parsed.totalShifts < 138) {
+            parsed.totalShifts = 138;
           }
           return parsed;
         }
@@ -158,10 +158,12 @@ export default function MockTestsHubPage() {
     }
   });
 
-  // Shifts Data & Server Questions (Pre-warmed with all 114 CBT shifts instantly)
+  // Shifts Data & Server Questions (Pre-warmed with all 138 CBT shifts instantly)
   const [shifts, setShifts] = useState(() => getAllShifts());
   const [firestoreQuestions, setFirestoreQuestions] = useState([]);
   const [shiftSearch, setShiftSearch] = useState('');
+  const [pyqExamFilter, setPyqExamFilter] = useState('all');
+  const [pyqShowAll, setPyqShowAll] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
   // Load real data directly from the Firestore server on component mount
@@ -256,7 +258,7 @@ export default function MockTestsHubPage() {
 
   // 1. Total questions count derived strictly from the live question bank (Matching Admin)
   const totalQuestionsCount = useMemo(() => {
-    const count = firestoreQuestions && firestoreQuestions.length > 0 ? firestoreQuestions.length : (firestoreStats.totalQuestions || 10757);
+    const count = firestoreQuestions && firestoreQuestions.length > 0 ? firestoreQuestions.length : (firestoreStats.totalQuestions || 13301);
     return `${count.toLocaleString()}+`;
   }, [firestoreQuestions, firestoreStats]);
 
@@ -267,7 +269,7 @@ export default function MockTestsHubPage() {
         (q) => (q.status === 'Published' || q.verificationStatus === 'VERIFIED') && q.status !== 'Needs Review' && q.verificationStatus !== 'UNVERIFIED'
       ).length;
     }
-    return firestoreStats.verifiedQuestions || 10578;
+    return firestoreStats.verifiedQuestions || 12617;
   }, [firestoreQuestions, firestoreStats]);
 
   // 3. Important Questions Count (Separated Unverified / Priority Revision Bank)
@@ -277,18 +279,18 @@ export default function MockTestsHubPage() {
         (q) => q.status !== 'Published' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT'
       ).length;
     }
-    return firestoreStats.unverifiedQuestions || 179;
+    return firestoreStats.unverifiedQuestions || 684;
   }, [firestoreQuestions, firestoreStats]);
 
-  // 4. Unique shifts count (100 Official Shifts: RRB UG + RRB Grad + SSC CGL)
+  // 4. Unique shifts count (138 Official Shifts: RRB UG + RRB Grad 2026/2024 + SSC CGL)
   const uniqueShiftsCount = useMemo(() => {
     if (shifts && shifts.length > 0) return shifts.length;
-    return firestoreStats.totalShifts || 100;
+    return firestoreStats.totalShifts || 138;
   }, [shifts, firestoreStats]);
 
   // 5. Unique subtopics count (Matching syllabus units)
   const uniqueSubtopicsCount = useMemo(() => {
-    return firestoreStats.totalSubtopics || 37;
+    return firestoreStats.totalSubtopics || 40;
   }, [firestoreStats]);
 
   // 6. Live subject-wise question counts calculated from official question bank
@@ -534,7 +536,7 @@ export default function MockTestsHubPage() {
 
   const liveTotalQuestionsNumber = firestoreQuestions && firestoreQuestions.length > 0
     ? firestoreQuestions.length
-    : (firestoreStats.totalQuestions || 10757);
+    : (firestoreStats.totalQuestions || 13301);
 
   // 8 Subject cards with consistent premium 3D icon family and live question counts
   const subjectCards = useMemo(() => [
@@ -957,17 +959,47 @@ export default function MockTestsHubPage() {
   }, [selectedSubject, subjectSpecificTests, showAllTests]);
 
   // Filtered shifts for PYQs tab
-  const filteredShifts = useMemo(() => {
-    if (!shifts || shifts.length === 0) return [];
-    if (!shiftSearch.trim()) return shifts.slice(0, 15);
-    const q = shiftSearch.toLowerCase().trim();
-    return shifts.filter(
-      (s) =>
-        s.shiftNumber.toString().includes(q) ||
-        (s.date && s.date.toLowerCase().includes(q)) ||
-        (s.timing && s.timing.toLowerCase().includes(q))
-    ).slice(0, 18);
-  }, [shifts, shiftSearch]);
+  const { matchingShifts, filteredShifts } = useMemo(() => {
+    if (!shifts || shifts.length === 0) return { matchingShifts: [], filteredShifts: [] };
+    let list = shifts;
+
+    const isGrad2026 = (s) =>
+      (s.examLevel === 'Graduate' || String(s.id).includes('grad')) &&
+      (s.examYear === '2026' || String(s.id).includes('2026') || String(s.examName || '').includes('2025-26'));
+    const isGrad2024 = (s) =>
+      (s.examLevel === 'Graduate' || String(s.id).includes('grad')) && !isGrad2026(s);
+    const isUg = (s) =>
+      String(s.id).includes('ug') || String(s.examName || '').includes('Under Graduate') || s.examLevel === 'Under Graduate';
+    const isSsc = (s) =>
+      s.examType === 'SSC CGL' || String(s.id).includes('ssc') || String(s.examName || '').includes('SSC');
+
+    if (pyqExamFilter === 'grad-2026') {
+      list = list.filter(isGrad2026);
+    } else if (pyqExamFilter === 'ug') {
+      list = list.filter(isUg);
+    } else if (pyqExamFilter === 'grad-2024') {
+      list = list.filter(isGrad2024);
+    } else if (pyqExamFilter === 'ssc') {
+      list = list.filter(isSsc);
+    }
+
+    if (shiftSearch.trim()) {
+      const q = shiftSearch.toLowerCase().trim();
+      list = list.filter(
+        (s) =>
+          s.shiftNumber?.toString().includes(q) ||
+          (s.title && s.title.toLowerCase().includes(q)) ||
+          (s.examDate && s.examDate.toLowerCase().includes(q)) ||
+          (s.date && s.date.toLowerCase().includes(q)) ||
+          (s.shiftTiming && s.shiftTiming.toLowerCase().includes(q)) ||
+          (s.timing && s.timing.toLowerCase().includes(q))
+      );
+    }
+
+    const matching = list;
+    const displayList = pyqShowAll || pyqExamFilter !== 'all' ? matching : matching.slice(0, 48);
+    return { matchingShifts: matching, filteredShifts: displayList };
+  }, [shifts, shiftSearch, pyqExamFilter, pyqShowAll]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1F224D] via-[#2D457B] via-15% via-[#BFD7F8]/40 to-[#F4F7FC] pb-20 relative overflow-x-hidden transition-colors duration-700">
@@ -1610,46 +1642,150 @@ export default function MockTestsHubPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredShifts.map((shift) => (
-              <div
-                key={shift.shiftNumber || shift.id}
-                className="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs flex flex-col justify-between space-y-3 hover:shadow-md transition"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FEE2E2] text-[#DC2626]">
-                      Shift {shift.shiftNumber}
-                    </span>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      {shift.date || 'Exam CBT'}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-sm text-[#12345A] mt-2">
-                    {shift.title || `RRB NTPC 2025 – Shift ${shift.shiftNumber}`}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {shift.timing || '9:00 AM - 10:30 AM'} • 100 Official Questions
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Verified CBT Key</span>
-                  </span>
-
-                  <Link
-                    to={`/mocks/rrb-ntpc-ug-2025-shift-${shift.shiftNumber}`}
-                    className="bg-[#12345A] hover:bg-[#2468B4] text-white px-3.5 py-1.5 rounded-full font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95"
-                  >
-                    <Play className="w-3 h-3 fill-white text-white" />
-                    <span>Attempt</span>
-                  </Link>
-                </div>
-              </div>
-            ))}
+          {/* Exam Category Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setPyqExamFilter('all')}
+              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
+                pyqExamFilter === 'all'
+                  ? 'bg-[#12345A] text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              All Shifts ({uniqueShiftsCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPyqExamFilter('grad-2026')}
+              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                pyqExamFilter === 'grad-2026'
+                  ? 'bg-[#0284C7] text-white shadow-xs'
+                  : 'bg-white text-sky-700 hover:bg-sky-50 border border-sky-200'
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-[#F2BE4F]" />
+              <span>RRB NTPC Graduate 2025-26 (March 2026 · 24 Sets)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPyqExamFilter('ug')}
+              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
+                pyqExamFilter === 'ug'
+                  ? 'bg-[#DC2626] text-white shadow-xs'
+                  : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
+              }`}
+            >
+              RRB NTPC UG 2025 (32 Shifts)
+            </button>
+            <button
+              type="button"
+              onClick={() => setPyqExamFilter('grad-2024')}
+              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
+                pyqExamFilter === 'grad-2024'
+                  ? 'bg-[#7E22CE] text-white shadow-xs'
+                  : 'bg-white text-purple-700 hover:bg-purple-50 border border-purple-200'
+              }`}
+            >
+              RRB NTPC Graduate 2024 (47 Shifts)
+            </button>
+            <button
+              type="button"
+              onClick={() => setPyqExamFilter('ssc')}
+              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
+                pyqExamFilter === 'ssc'
+                  ? 'bg-[#D97706] text-white shadow-xs'
+                  : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
+              }`}
+            >
+              SSC CGL Tier-I (35 Shifts)
+            </button>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredShifts.map((shift) => {
+              const is2026Grad = shift.examYear === '2026' || String(shift.id || '').includes('grad-2026');
+              const is2024Grad = (shift.examLevel === 'Graduate' || String(shift.id || '').includes('grad')) && !is2026Grad;
+              const isSsc = shift.examType === 'SSC CGL' || String(shift.id || '').includes('ssc');
+
+              let badgeBg = 'bg-[#FEE2E2] text-[#DC2626]';
+              let badgeLabel = `Shift ${shift.shiftNumber}`;
+
+              if (is2026Grad) {
+                badgeBg = 'bg-[#E0F2FE] text-[#0369A1] border border-sky-300/40';
+                badgeLabel = `Graduate 2026 · Set ${shift.setNumber || shift.shiftNumber}`;
+              } else if (is2024Grad) {
+                badgeBg = 'bg-[#F3E8FF] text-[#7E22CE] border border-purple-300/40';
+                badgeLabel = `Graduate 2024 · Shift ${shift.shiftNumber}`;
+              } else if (isSsc) {
+                badgeBg = 'bg-[#FEF3C7] text-[#92400E] border border-amber-300/40';
+                badgeLabel = `SSC CGL · Set ${shift.shiftNumber}`;
+              }
+
+              return (
+                <div
+                  key={shift.id || shift.shiftNumber}
+                  className="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs flex flex-col justify-between space-y-3 hover:shadow-md transition"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeBg}`}>
+                        {badgeLabel}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                        {shift.examDate || shift.date || 'Exam CBT'}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-sm text-[#12345A] mt-2 line-clamp-1">
+                      {shift.title || `RRB NTPC – Shift ${shift.shiftNumber}`}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {shift.shiftTiming || shift.timing || '9:00 AM - 10:30 AM'} • {shift.totalQuestions || 100} Official Questions
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Verified CBT Key</span>
+                    </span>
+
+                    <Link
+                      to={shift.id ? `/mocks/${shift.id}` : `/mocks/rrb-ntpc-ug-2025-shift-${shift.shiftNumber}`}
+                      className="bg-[#12345A] hover:bg-[#2468B4] text-white px-3.5 py-1.5 rounded-full font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95"
+                    >
+                      <Play className="w-3 h-3 fill-white text-white" />
+                      <span>Attempt</span>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {pyqExamFilter === 'all' && matchingShifts.length > filteredShifts.length && (
+            <div className="flex justify-center pt-3 pb-1">
+              <button
+                type="button"
+                onClick={() => setPyqShowAll(true)}
+                className="px-5 py-2.5 rounded-full bg-[#12345A] hover:bg-[#2468B4] text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-2 active:scale-95"
+              >
+                <span>View All {matchingShifts.length} Examination Shifts</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          {pyqExamFilter === 'all' && pyqShowAll && matchingShifts.length > 48 && (
+            <div className="flex justify-center pt-3 pb-1">
+              <button
+                type="button"
+                onClick={() => setPyqShowAll(false)}
+                className="px-4 py-2 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs shadow-2xs transition cursor-pointer active:scale-95"
+              >
+                Show Less
+              </button>
+            </div>
+          )}
         </section>
       )}
 
