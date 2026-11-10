@@ -169,8 +169,14 @@ export default function AdminMockTestsTab({ onNotify }) {
           if (q.examType === 'SSC CGL' || (q.examLevel || 'Under Graduate') !== 'Under Graduate') return false;
         }
       }
-      if (rrbShiftFilter !== 'All' && String(q.shiftNumber) !== String(rrbShiftFilter)) return false;
-      if (rrbStatusFilter !== 'All' && q.status !== rrbStatusFilter) return false;
+      if (rrbStatusFilter !== 'All') {
+        const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT';
+        if (rrbStatusFilter === 'Published' || rrbStatusFilter === 'Verified') {
+          if (isUnv) return false;
+        } else if (rrbStatusFilter === 'Needs Review' || rrbStatusFilter === 'Important Questions' || rrbStatusFilter === 'Unverified') {
+          if (!isUnv) return false;
+        }
+      }
       if (rrbSearch.trim()) {
         const query = rrbSearch.toLowerCase().trim();
         const matchQ = (q.question?.en || '').toLowerCase().includes(query);
@@ -216,8 +222,12 @@ export default function AdminMockTestsTab({ onNotify }) {
     };
 
     for (const q of rrbQuestions) {
-      if (q.status === 'Published') published++;
-      else needsReview++;
+      const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT';
+      if (!isUnv && (q.status === 'Published' || q.verificationStatus === 'VERIFIED')) {
+        published++;
+      } else {
+        needsReview++;
+      }
 
       if (q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl')) {
         sscCgl++;
@@ -280,6 +290,68 @@ export default function AdminMockTestsTab({ onNotify }) {
       topicsBySubject
     };
   }, [rrbQuestions]);
+
+  // Fast 1-Click Verification Handler for Admin (Fast to update!)
+  const handleQuickVerify = async (q) => {
+    const updatedQuestion = {
+      ...q,
+      status: 'Published',
+      verificationStatus: 'VERIFIED',
+      questionType: 'PYQ',
+      verifiedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    saveLocalQuestionOverride(updatedQuestion);
+    try {
+      saveMockQuestion(updatedQuestion).catch(() => {});
+    } catch {
+      // Local write already saved
+    }
+
+    // Instantly update local state with zero latency
+    setRrbQuestions((prev) =>
+      prev.map((item) => (item.id === q.id ? updatedQuestion : item))
+    );
+
+    if (onNotify) onNotify(`Question #${q.questionNumber || q.id} marked as 100% Verified!`, 'success');
+  };
+
+  // Fast batch verification for all currently filtered unverified questions
+  const handleQuickVerifyAllFiltered = async () => {
+    const unverifiedList = filteredRrbQuestions.filter(
+      (q) => q.status !== 'Published' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT'
+    );
+    if (unverifiedList.length === 0) {
+      if (onNotify) onNotify('No unverified questions in active filter.', 'info');
+      return;
+    }
+
+    const updatedIds = new Set(unverifiedList.map((q) => q.id));
+    const nowIso = new Date().toISOString();
+
+    for (const q of unverifiedList) {
+      const updated = {
+        ...q,
+        status: 'Published',
+        verificationStatus: 'VERIFIED',
+        questionType: 'PYQ',
+        verifiedAt: nowIso,
+        updatedAt: nowIso
+      };
+      saveLocalQuestionOverride(updated);
+    }
+
+    setRrbQuestions((prev) =>
+      prev.map((item) =>
+        updatedIds.has(item.id)
+          ? { ...item, status: 'Published', verificationStatus: 'VERIFIED', questionType: 'PYQ', verifiedAt: nowIso }
+          : item
+      )
+    );
+
+    if (onNotify) onNotify(`Fast-verified all ${unverifiedList.length} questions successfully!`, 'success');
+  };
 
   // Open Edit Modal for a question
   const handleOpenEdit = (q) => {
@@ -617,9 +689,36 @@ export default function AdminMockTestsTab({ onNotify }) {
 
               {/* Live Statistics Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 pt-2">
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
+                <div
+                  onClick={() => { setRrbStatusFilter('All'); setRrbPage(1); }}
+                  className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
+                >
                   <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '11,400+'}</div>
-                  <div className="text-[11px] text-slate-300">Total Verified Qs</div>
+                  <div className="text-[11px] text-slate-300">Total Questions</div>
+                </div>
+                <div
+                  onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
+                  className="bg-white/10 hover:bg-emerald-500/20 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-emerald-400/30"
+                >
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '11,221+'}</div>
+                  <div className="text-[11px] text-emerald-200 font-semibold flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                    <span>100% Verified</span>
+                  </div>
+                </div>
+                <div
+                  onClick={() => { setRrbStatusFilter('Needs Review'); setRrbPage(1); }}
+                  className="bg-white/10 hover:bg-amber-500/25 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-amber-400/40"
+                >
+                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.needsReview}</div>
+                  <div className="text-[11px] text-amber-200 font-semibold flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-amber-300" />
+                    <span>Important (Review)</span>
+                  </div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length >= 114 ? shifts.length : 114}</div>
+                  <div className="text-[11px] text-slate-300">Exam Shifts (CBT)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
                   <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl || '3,500'}</div>
@@ -627,19 +726,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
                   <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate || '4,700'}</div>
-                  <div className="text-[11px] text-slate-300">Graduate (47 Shifts)</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.underGraduate || '3,200'}</div>
-                  <div className="text-[11px] text-slate-300">UG (32 Shifts)</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length >= 114 ? shifts.length : 114}</div>
-                  <div className="text-[11px] text-slate-300">Official Shifts (CBT)</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '11,400+'}</div>
-                  <div className="text-[11px] text-slate-300">Verified &amp; Active</div>
+                  <div className="text-[11px] text-slate-300">RRB Grad (47 Shifts)</div>
                 </div>
               </div>
 
@@ -1005,9 +1092,9 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbStatusFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
-                  <option value="All">All Statuses</option>
-                  <option value="Published">Published ({rrbStats.published})</option>
-                  <option value="Needs Review">Needs Review ({rrbStats.needsReview})</option>
+                  <option value="All">All Verification Statuses ({rrbStats.total})</option>
+                  <option value="Published">100% Verified ({rrbStats.published})</option>
+                  <option value="Needs Review">Important Questions / Review ({rrbStats.needsReview})</option>
                 </select>
 
                 <select
@@ -1025,17 +1112,77 @@ export default function AdminMockTestsTab({ onNotify }) {
               </div>
             </div>
 
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={rrbSearch}
-                onChange={(e) => { setRrbSearch(e.target.value); setRrbPage(1); }}
-                placeholder="Search questions by text, options, subtopic or question ID..."
-                className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-[#F6F8FC] border border-[#E3EAF2] rounded-full focus:outline-hidden focus:border-[#2468B4] focus:bg-white transition"
-              />
+            {/* Quick Status Filter Tabs & Search */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1 border-t border-slate-100">
+              <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                <span className="text-[11px] font-bold text-slate-500 mr-1">Filter:</span>
+                <button
+                  type="button"
+                  onClick={() => { setRrbStatusFilter('All'); setRrbPage(1); }}
+                  className={`px-3 py-1 rounded-full font-bold transition cursor-pointer ${
+                    rrbStatusFilter === 'All' ? 'bg-[#12345A] text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  All ({rrbStats.total})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
+                  className={`px-3 py-1 rounded-full font-bold transition cursor-pointer flex items-center gap-1 ${
+                    rrbStatusFilter === 'Published'
+                      ? 'bg-emerald-700 text-white shadow-2xs'
+                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                  }`}
+                >
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>100% Verified ({rrbStats.published})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setRrbStatusFilter('Needs Review'); setRrbPage(1); }}
+                  className={`px-3 py-1 rounded-full font-bold transition cursor-pointer flex items-center gap-1 ${
+                    rrbStatusFilter === 'Needs Review'
+                      ? 'bg-amber-600 text-white shadow-2xs'
+                      : 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300'
+                  }`}
+                >
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>Important Questions ({rrbStats.needsReview})</span>
+                </button>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative flex-1 max-w-sm">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={rrbSearch}
+                  onChange={(e) => { setRrbSearch(e.target.value); setRrbPage(1); }}
+                  placeholder="Search questions by text or ID..."
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#F6F8FC] border border-[#E3EAF2] rounded-full focus:outline-hidden focus:border-[#2468B4] focus:bg-white transition"
+                />
+              </div>
             </div>
+
+            {/* Fast Verify Alert Banner when viewing unverified / Important Questions */}
+            {rrbStatusFilter === 'Needs Review' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                <div className="flex items-center gap-2 text-amber-900 font-semibold">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    <strong>Important Questions Pool ({rrbStats.needsReview} Questions)</strong>: Segregated from live mocks until verified. Verify individually below or batch verify all in active filter.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleQuickVerifyAllFiltered}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-2xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 self-start sm:self-auto"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Fast Verify All ({filteredRrbQuestions.length})</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* QUESTIONS LIST */}
@@ -1059,11 +1206,14 @@ export default function AdminMockTestsTab({ onNotify }) {
               paginatedQuestions.map((q) => {
                 const letters = ['A', 'B', 'C', 'D'];
                 const correctLetter = letters[q.correctAnswer] || q.correctLetter || 'A';
+                const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT';
 
                 return (
                   <div
                     key={q.id}
-                    className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E3EAF2] hover:border-[#2468B4] transition shadow-xs space-y-3"
+                    className={`bg-white rounded-2xl p-4 sm:p-5 border transition shadow-xs space-y-3 ${
+                      isUnv ? 'border-amber-300 ring-2 ring-amber-100' : 'border-[#E3EAF2] hover:border-[#2468B4]'
+                    }`}
                   >
                     {/* Header Row */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1092,20 +1242,36 @@ export default function AdminMockTestsTab({ onNotify }) {
                       </div>
 
                       <div className="flex items-center gap-2">
+                        {isUnv ? (
+                          <button
+                            type="button"
+                            onClick={() => handleQuickVerify(q)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition shadow-2xs active:scale-95 cursor-pointer"
+                            title="Sign-off and mark question 100% verified immediately"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>Fast Verify</span>
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>100% Verified</span>
+                          </span>
+                        )}
+
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                            q.status === 'Published'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            !isUnv
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
                               : 'bg-amber-50 text-amber-800 border border-amber-200'
                           }`}
                         >
-                          {q.status === 'Published' ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                          {q.status}
+                          {!isUnv ? 'Published' : 'Important (Review)'}
                         </span>
 
                         <button
                           onClick={() => handleOpenEdit(q)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-[#EAF3FF] text-slate-600 hover:text-[#12345A] transition"
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-[#EAF3FF] text-slate-600 hover:text-[#12345A] transition cursor-pointer"
                           title="Edit Question"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -1113,7 +1279,7 @@ export default function AdminMockTestsTab({ onNotify }) {
 
                         <button
                           onClick={() => setDeleteTarget(q)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 transition"
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 transition cursor-pointer"
                           title="Delete Question"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

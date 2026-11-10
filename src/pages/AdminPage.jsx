@@ -817,7 +817,9 @@ export default function AdminPage() {
           }`}
         >
           <Award className="w-3.5 h-3.5 text-[#F2BE4F]" />
-          <span>Previous Year Verified Questions (10,757+)</span>
+          <span>
+            Previous Year Questions ({mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '11,400+'})
+          </span>
         </button>
         <button
           type="button"

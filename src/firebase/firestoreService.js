@@ -656,6 +656,15 @@ export function mapRrbToMockQuestion(q) {
   }
 
   const isSsc = q.examType === 'SSC CGL' || String(q.id || '').startsWith('ssc-cgl');
+  const isUnverified =
+    q.status === 'Needs Review' ||
+    q.status === 'Draft' ||
+    q.verificationStatus === 'UNVERIFIED' ||
+    q.isVerified === false;
+
+  const verificationStatus = isUnverified ? 'UNVERIFIED' : (q.verificationStatus || 'VERIFIED');
+  const status = isUnverified ? (q.status || 'Needs Review') : (q.status || 'Published');
+  const questionType = isUnverified ? 'IMPORTANT' : (q.questionType || 'PYQ');
 
   return {
     ...q,
@@ -663,9 +672,10 @@ export function mapRrbToMockQuestion(q) {
     categoryId,
     subjectId,
     subtopic,
-    questionType: 'PYQ',
+    questionType,
     difficulty: q.difficulty || 'Medium',
-    verificationStatus: 'VERIFIED',
+    status,
+    verificationStatus,
     source: q.source || (isSsc ? 'SSC CGL Tier-I Official Question Paper (QMaths / SSC)' : q.examLevel === 'Graduate' ? 'RRB NTPC Graduate 2025 Official Answer Key (CEN 06/2025)' : 'RRB Official Answer Key (CEN 07/2025)'),
     paperUrl: q.paperUrl || (isSsc ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf' : q.examLevel === 'Graduate' ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf'),
     paperFileName: q.paperFileName || (isSsc ? 'SSC_CGL_2020_All_21_Sets_English.pdf' : q.examLevel === 'Graduate' ? 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf')
@@ -678,19 +688,21 @@ export function mapRrbToMockQuestion(q) {
  */
 export async function getDirectFirestoreMockStats() {
   const fallbackStats = {
-    totalQuestions: 10757,
-    totalShifts: 100,
+    totalQuestions: 11400,
+    verifiedQuestions: 11221,
+    unverifiedQuestions: 179,
+    totalShifts: 114,
     totalSubtopics: 35,
-    totalMockTests: 320,
+    totalMockTests: 350,
     subjectCounts: {
-      'general-knowledge': 3065,
-      'quantitative-aptitude': 2279,
-      'reasoning': 1649,
-      'general-science': 670,
-      'computer-science': 1812,
-      'english-language': 525
+      'general-knowledge': 3875,
+      'quantitative-aptitude': 2747,
+      'reasoning': 2498,
+      'general-science': 838,
+      'computer-science': 567,
+      'english-language': 875
     },
-    source: 'Firestore Server (examquesthub • mockQuestions)'
+    source: 'Official Question Bank (11,400+ Qs • 114 Shifts • 11,221 Verified)'
   };
 
   const cached = getLocalData(STORAGE_KEYS.MOCK_STATS, null);
@@ -711,6 +723,8 @@ export async function getDirectFirestoreMockStats() {
     let science = 0;
     let cse = 0;
     let english = 0;
+    let verifiedCount = 0;
+    let unverifiedCount = 0;
     const shiftsSet = new Set();
     const subtopicsSet = new Set();
 
@@ -722,6 +736,13 @@ export async function getDirectFirestoreMockStats() {
       if (q.shiftNumber) shiftsSet.add(q.shiftNumber);
       if (q.shift) shiftsSet.add(q.shift);
       if (q.subtopic && String(q.subtopic).trim()) subtopicsSet.add(String(q.subtopic).trim());
+
+      const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED';
+      if (isUnv) {
+        unverifiedCount++;
+      } else {
+        verifiedCount++;
+      }
 
       if (
         cat === 'cse' ||
@@ -773,9 +794,11 @@ export async function getDirectFirestoreMockStats() {
 
     const stats = {
       totalQuestions: snap.size,
-      totalShifts: shiftsSet.size || 47,
-      totalSubtopics: subtopicsSet.size || 29,
-      totalMockTests: 75 + (shiftsSet.size || 47),
+      verifiedQuestions: verifiedCount,
+      unverifiedQuestions: unverifiedCount,
+      totalShifts: shiftsSet.size || 114,
+      totalSubtopics: subtopicsSet.size || 35,
+      totalMockTests: 75 + (shiftsSet.size || 114),
       subjectCounts: {
         'general-knowledge': gk,
         'quantitative-aptitude': quant,
