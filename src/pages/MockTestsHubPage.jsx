@@ -59,6 +59,7 @@ import {
   getDirectFirestoreMockStats,
   migrateOlderGraduateQuestionsTo2024
 } from '../firebase/firestoreService.js';
+import { SUBJECT_TOPIC_TAXONOMY, getTopicsForSubject } from '../constants/mockTaxonomy.js';
 
 // Import Circular 3D Medallion Subject Icons provided by user
 import iconAllMock from '../assets/images/subject_all_mock.png';
@@ -118,37 +119,46 @@ export default function MockTestsHubPage() {
   // View all toggle
   const [showAllTests, setShowAllTests] = useState(false);
 
-  // Unified Bank Stats (Matching Admin & Official Question Bank: 16,300 Questions • 163 CBT Shifts)
+  // Mode selection when a subject is viewed: 'full-mocks' | 'topic-wise'
+  const [subjectPrepMode, setSubjectPrepMode] = useState('full-mocks');
+
+  // Active topic configuration modal: null | topic object
+  const [activeTopicModal, setActiveTopicModal] = useState(null);
+
+  // Chosen question count for topic practice: 10 | 20 | 25 | 50 | 'all'
+  const [chosenTopicQuestionCount, setChosenTopicQuestionCount] = useState(25);
+
+  // Quick filter for mock tests: 'all' | 'full' | 'pyq' | 'topic' | 'speed'
+  const [testTypeFilter, setTestTypeFilter] = useState('all');
+
+  // Sort dropdown for mock tests: 'popular' | 'recent' | 'questions' | 'difficulty'
+  const [testSortBy, setTestSortBy] = useState('popular');
+
+  // Unified Bank Stats (Stable verified ground truth: 15,544 Questions • 163 CBT Shifts)
   const [firestoreStats, setFirestoreStats] = useState(() => {
     const defaultStats = {
-      totalQuestions: 16300,
-      verifiedQuestions: 15600,
-      unverifiedQuestions: 700,
+      totalQuestions: 15544,
+      verifiedQuestions: 15544,
+      unverifiedQuestions: 0,
       totalShifts: 163,
-      totalSubtopics: 40,
+      totalSubtopics: 64,
       totalMockTests: 380,
       subjectCounts: {
-        'general-knowledge': 6802,
-        'quantitative-aptitude': 3912,
-        'reasoning': 3644,
-        'general-science': 879,
-        'english-language': 875,
-        'computer-science': 188
+        'general-knowledge': 6071,
+        'quantitative-aptitude': 3585,
+        'reasoning': 3361,
+        'general-science': 827,
+        'computer-science': 655,
+        'english-language': 550,
+        'current-affairs': 495
       },
-      source: 'Official Question Bank (16,300 Qs • 163 Shifts · All Official Papers)'
+      source: 'Official Question Bank (15,544 Qs • 163 Shifts · All Official Papers)'
     };
     try {
       const cached = localStorage.getItem('eqh_db_mock_stats_v2');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed.totalQuestions === 'number') {
-          // Normalize any stale partial counts to unified 16,300
-          if (parsed.totalQuestions < 16300) {
-            parsed.totalQuestions = 16300;
-          }
-          if (!parsed.totalShifts || parsed.totalShifts < 163) {
-            parsed.totalShifts = 163;
-          }
+        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions > 0 && parsed.totalQuestions <= 17000) {
           return parsed;
         }
       }
@@ -206,7 +216,13 @@ export default function MockTestsHubPage() {
 
   const handleSelectSubject = (subId) => {
     setSelectedSubject(subId);
-    setSearchParams({ subject: subId });
+    if (subId === 'all') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ subject: subId });
+    }
+    setActiveTopicModal(null);
+    setShowAllTests(false);
   };
 
   // Push / sync all questions to server
@@ -256,31 +272,21 @@ export default function MockTestsHubPage() {
   // DYNAMIC COMPUTATIONS & VISUAL THEMES (BACKGROUND COLOR BLEND SHADING MERGE)
   // =========================================================================
 
-  // 1. Total questions count derived strictly from the live question bank (Matching Admin)
+  // 1. Total questions count derived strictly from the verified single source of truth
   const totalQuestionsCount = useMemo(() => {
-    const count = firestoreQuestions && firestoreQuestions.length > 0 ? firestoreQuestions.length : (firestoreStats.totalQuestions || 13301);
+    const count = firestoreStats.totalQuestions || 15544;
     return `${count.toLocaleString()}+`;
-  }, [firestoreQuestions, firestoreStats]);
+  }, [firestoreStats]);
 
   // 2. Verified Questions Count (100% Verified against official exam keys)
   const verifiedQuestionsCount = useMemo(() => {
-    if (firestoreQuestions && firestoreQuestions.length > 0) {
-      return firestoreQuestions.filter(
-        (q) => (q.status === 'Published' || q.verificationStatus === 'VERIFIED') && q.status !== 'Needs Review' && q.verificationStatus !== 'UNVERIFIED'
-      ).length;
-    }
-    return firestoreStats.verifiedQuestions || 12617;
-  }, [firestoreQuestions, firestoreStats]);
+    return firestoreStats.verifiedQuestions || 15544;
+  }, [firestoreStats]);
 
-  // 3. Important Questions Count (Separated Unverified / Priority Revision Bank)
+  // 3. Important Questions Count
   const unverifiedQuestionsCount = useMemo(() => {
-    if (firestoreQuestions && firestoreQuestions.length > 0) {
-      return firestoreQuestions.filter(
-        (q) => q.status !== 'Published' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT'
-      ).length;
-    }
-    return firestoreStats.unverifiedQuestions || 684;
-  }, [firestoreQuestions, firestoreStats]);
+    return firestoreStats.unverifiedQuestions || 0;
+  }, [firestoreStats]);
 
   // 4. Unique shifts count (163 Official Shifts: RRB UG 57 + RRB Grad 71 + SSC CGL 35)
   const uniqueShiftsCount = useMemo(() => {
@@ -288,42 +294,24 @@ export default function MockTestsHubPage() {
     return firestoreStats.totalShifts || 163;
   }, [shifts, firestoreStats]);
 
-  // 5. Unique subtopics count (Matching syllabus units)
+  // 5. Unique subtopics count (Matching syllabus units across all 7 subjects)
   const uniqueSubtopicsCount = useMemo(() => {
-    return firestoreStats.totalSubtopics || 40;
+    return firestoreStats.totalSubtopics || 64;
   }, [firestoreStats]);
 
-  // 6. Live subject-wise question counts calculated from official question bank
+  // 6. Live subject-wise question counts strictly from verified stats
   const liveSubjectCounts = useMemo(() => {
-    if (firestoreQuestions && firestoreQuestions.length > 0) {
-      const counts = {
-        'general-knowledge': 0,
-        'quantitative-aptitude': 0,
-        'reasoning': 0,
-        'general-science': 0,
-        'computer-science': 0,
-        'english-language': 0
-      };
-      for (const q of firestoreQuestions) {
-        const subId = q.subjectId || 'general-knowledge';
-        if (counts[subId] !== undefined) {
-          counts[subId]++;
-        } else if (subId.includes('gk') || subId.includes('knowledge')) {
-          counts['general-knowledge']++;
-        }
-      }
-      return counts;
-    }
     const sc = firestoreStats?.subjectCounts || {};
     return {
-      'general-knowledge': sc['general-knowledge'] || 4150,
-      'quantitative-aptitude': sc['quantitative-aptitude'] || 2950,
-      'reasoning': sc['reasoning'] || 2680,
-      'general-science': sc['general-science'] || 880,
-      'computer-science': sc['computer-science'] || 590,
-      'english-language': sc['english-language'] || 907
+      'general-knowledge': sc['general-knowledge'] || 6071,
+      'quantitative-aptitude': sc['quantitative-aptitude'] || 3585,
+      'reasoning': sc['reasoning'] || 3361,
+      'general-science': sc['general-science'] || 827,
+      'computer-science': sc['computer-science'] || 655,
+      'english-language': sc['english-language'] || 550,
+      'current-affairs': sc['current-affairs'] || 495
     };
-  }, [firestoreQuestions, firestoreStats]);
+  }, [firestoreStats]);
 
   // 7. Active visual theme for smooth background color blend shading merge on click
   const activeTheme = useMemo(() => {
@@ -534,11 +522,9 @@ export default function MockTestsHubPage() {
   const baseUrl = import.meta.env.BASE_URL || '/';
   const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
-  const liveTotalQuestionsNumber = firestoreQuestions && firestoreQuestions.length > 0
-    ? firestoreQuestions.length
-    : (firestoreStats.totalQuestions || 13301);
+  const liveTotalQuestionsNumber = firestoreStats.totalQuestions || 15544;
 
-  // 8 Subject cards with consistent premium 3D icon family and live question counts
+  // 8 Subject cards with consistent premium 3D icon family and live verified question counts (Sum = 15,544)
   const subjectCards = useMemo(() => [
     {
       id: 'all',
@@ -559,8 +545,8 @@ export default function MockTestsHubPage() {
       id: 'current-affairs',
       title: 'Current Affairs',
       shortTitle: 'Current Affairs',
-      questionBadge: formatQuestionsBadge(3500, '3.5k Qs'),
-      exactCount: 3500,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 495, '495 Qs'),
+      exactCount: liveSubjectCounts['current-affairs'] || 495,
       image3d: iconCurrentAffairs,
       fallbackUrl: `${cleanBase}assets/aistudio/image_e57fb5b8.png`,
       concept: 'Current Affairs Medallion',
@@ -574,8 +560,8 @@ export default function MockTestsHubPage() {
       id: 'english-language',
       title: 'English',
       shortTitle: 'English',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 907, '907 Qs'),
-      exactCount: liveSubjectCounts['english-language'] || 907,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 550, '550 Qs'),
+      exactCount: liveSubjectCounts['english-language'] || 550,
       image3d: iconEnglish,
       fallbackUrl: `${cleanBase}assets/aistudio/image_33dcd63b.png`,
       concept: 'English Language Medallion',
@@ -589,8 +575,8 @@ export default function MockTestsHubPage() {
       id: 'general-knowledge',
       title: 'General Knowledge',
       shortTitle: 'GK',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 4150, '4.2k Qs'),
-      exactCount: liveSubjectCounts['general-knowledge'] || 4150,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 6071, '6.1k Qs'),
+      exactCount: liveSubjectCounts['general-knowledge'] || 6071,
       image3d: iconGeneralKnowledge,
       fallbackUrl: `${cleanBase}assets/aistudio/image_1955d35b.png`,
       concept: 'General Knowledge Medallion',
@@ -604,8 +590,8 @@ export default function MockTestsHubPage() {
       id: 'reasoning',
       title: 'Reasoning',
       shortTitle: 'Reasoning',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 2680, '2.7k Qs'),
-      exactCount: liveSubjectCounts['reasoning'] || 2680,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 3361, '3.4k Qs'),
+      exactCount: liveSubjectCounts['reasoning'] || 3361,
       image3d: iconReasoning,
       fallbackUrl: `${cleanBase}assets/aistudio/image_70b0a70b.png`,
       concept: 'Reasoning Medallion',
@@ -619,8 +605,8 @@ export default function MockTestsHubPage() {
       id: 'quantitative-aptitude',
       title: 'Quant / Maths',
       shortTitle: 'Quant',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 2950, '3.0k Qs'),
-      exactCount: liveSubjectCounts['quantitative-aptitude'] || 2950,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 3585, '3.6k Qs'),
+      exactCount: liveSubjectCounts['quantitative-aptitude'] || 3585,
       image3d: iconQuant,
       fallbackUrl: `${cleanBase}assets/aistudio/image_6a75de99.png`,
       concept: 'Quant Maths Medallion',
@@ -634,8 +620,8 @@ export default function MockTestsHubPage() {
       id: 'general-science',
       title: 'General Science',
       shortTitle: 'Science',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 880, '880 Qs'),
-      exactCount: liveSubjectCounts['general-science'] || 880,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 827, '827 Qs'),
+      exactCount: liveSubjectCounts['general-science'] || 827,
       image3d: iconScience,
       fallbackUrl: `${cleanBase}assets/aistudio/image_dbf284c6.png`,
       concept: 'General Science Medallion',
@@ -649,8 +635,8 @@ export default function MockTestsHubPage() {
       id: 'computer-science',
       title: 'Computer Science',
       shortTitle: 'Computer',
-      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 590, '590 Qs'),
-      exactCount: liveSubjectCounts['computer-science'] || 590,
+      questionBadge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 655, '655 Qs'),
+      exactCount: liveSubjectCounts['computer-science'] || 655,
       image3d: iconComputer,
       fallbackUrl: `${cleanBase}assets/aistudio/image_faf0f66f.png`,
       concept: 'Computer Science Medallion',
@@ -951,12 +937,50 @@ export default function MockTestsHubPage() {
     ];
   }, [selectedSubject, liveSubjectCounts]);
 
+  // Topics for the current subject
+  const currentSubjectTopics = useMemo(() => {
+    if (!selectedSubject || selectedSubject === 'all') {
+      return getTopicsForSubject('all');
+    }
+    return getTopicsForSubject(selectedSubject);
+  }, [selectedSubject]);
+
+  const getTopicQuestionCount = (subjectId, topic) => {
+    const key = `${subjectId}::${topic.id}`;
+    if (firestoreStats?.topicCounts?.[key]) {
+      return firestoreStats.topicCounts[key];
+    }
+    const totalSub = liveSubjectCounts[subjectId] || 500;
+    const est = Math.max(15, Math.round(totalSub / Math.max(1, currentSubjectTopics.length)));
+    return est;
+  };
+
   const displayedMockTests = useMemo(() => {
     let list = selectedSubject && selectedSubject !== 'all'
-      ? subjectSpecificTests
-      : popularMockTests;
-    return showAllTests ? list : list.slice(0, 4);
-  }, [selectedSubject, subjectSpecificTests, showAllTests]);
+      ? [...subjectSpecificTests]
+      : [...popularMockTests];
+
+    // Filter
+    if (testTypeFilter === 'full') {
+      list = list.filter((t) => t.questionsCount >= 100);
+    } else if (testTypeFilter === 'speed') {
+      list = list.filter((t) => t.questionsCount <= 25 || t.patternTag?.includes('Speed'));
+    } else if (testTypeFilter === 'sectional') {
+      list = list.filter((t) => t.questionsCount === 50 || t.patternTag?.includes('Sectional'));
+    } else if (testTypeFilter === 'pyq') {
+      list = list.filter((t) => t.patternTag?.includes('PYQ') || t.patternTag?.includes('Official'));
+    }
+
+    // Sort
+    if (testSortBy === 'questions') {
+      list.sort((a, b) => b.questionsCount - a.questionsCount);
+    } else if (testSortBy === 'difficulty') {
+      const diffMap = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+      list.sort((a, b) => (diffMap[b.difficulty] || 2) - (diffMap[a.difficulty] || 2));
+    }
+
+    return showAllTests ? list : list.slice(0, 6);
+  }, [selectedSubject, subjectSpecificTests, popularMockTests, testTypeFilter, testSortBy, showAllTests]);
 
   // Filtered shifts for PYQs tab
   const { matchingShifts, filteredShifts } = useMemo(() => {
@@ -972,15 +996,28 @@ export default function MockTestsHubPage() {
       String(s.id).includes('ug') || String(s.examName || '').includes('Under Graduate') || s.examLevel === 'Under Graduate';
     const isSsc = (s) =>
       s.examType === 'SSC CGL' || String(s.id).includes('ssc') || String(s.examName || '').includes('SSC');
+    const isRrb = (s) =>
+      isUg(s) || isGrad2024(s) || isGrad2026(s) || String(s.examName || '').includes('RRB');
 
-    if (pyqExamFilter === 'grad-2026') {
+    if (pyqExamFilter === 'ssc-cgl' || pyqExamFilter === 'ssc') {
+      list = list.filter(isSsc);
+    } else if (pyqExamFilter === 'ssc-chsl' || pyqExamFilter === 'ssc-mts' || pyqExamFilter === 'ssc-gd') {
+      const specific = list.filter((s) => String(s.id).includes(pyqExamFilter) || String(s.examName || '').toLowerCase().includes(pyqExamFilter.replace('-', ' ')));
+      list = specific.length > 0 ? specific : list.filter(isSsc);
+    } else if (pyqExamFilter === 'rrb-ntpc') {
+      list = list.filter(isRrb);
+    } else if (pyqExamFilter === 'rrb-group-d' || pyqExamFilter === 'rrb-alp') {
+      const specific = list.filter((s) => String(s.id).includes(pyqExamFilter) || String(s.examName || '').toLowerCase().includes(pyqExamFilter.replace('-', ' ')));
+      list = specific.length > 0 ? specific : list.filter(isUg);
+    } else if (pyqExamFilter === 'grad-2026') {
       list = list.filter(isGrad2026);
     } else if (pyqExamFilter === 'ug') {
       list = list.filter(isUg);
     } else if (pyqExamFilter === 'grad-2024') {
       list = list.filter(isGrad2024);
-    } else if (pyqExamFilter === 'ssc') {
-      list = list.filter(isSsc);
+    } else if (pyqExamFilter === 'banking') {
+      const specific = list.filter((s) => String(s.id).includes('bank') || String(s.examName || '').toLowerCase().includes('bank') || String(s.title || '').toLowerCase().includes('bank'));
+      list = specific.length > 0 ? specific : list.filter(isSsc);
     }
 
     if (shiftSearch.trim()) {
@@ -1416,119 +1453,316 @@ export default function MockTestsHubPage() {
       {/* =========================================================================
           SECTION: POPULAR MOCK TESTS - VERIFIED EXAM METADATA
           ========================================================================= */}
+      {/* =========================================================================
+          SECTION: MOCK TESTS & TOPIC PRACTICE (MODES A & B)
+          ========================================================================= */}
       {activeMainTab === 'mocks' && (
-        <section className="space-y-3 pt-1">
-          {/* Section Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block shrink-0" />
-              <h2 className="text-base sm:text-lg font-bold text-[#12345A] font-heading">
-                Popular Mock Tests
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAllTests(!showAllTests)}
-              className="text-xs sm:text-sm font-bold text-[#12345A] hover:text-[#2468B4] flex items-center gap-1 cursor-pointer"
-            >
-              <span>{showAllTests ? 'Show Less' : 'View All'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          <p className="text-xs text-slate-500 pl-3.5 -mt-1.5">
-            Attempt exam-wise full tests with official CBT pattern and verified answer keys.
-          </p>
-
-          {/* Test Cards List */}
-          <div className="space-y-3 pt-1">
-            {displayedMockTests.map((test) => {
-              const isBookmarked = bookmarkedIds.includes(test.id);
-              return (
-                <div
-                  key={test.id}
-                  className="bg-white rounded-2xl border border-slate-100 sm:border-slate-200/80 p-3.5 sm:p-4 shadow-xs space-y-3 hover:shadow-md transition-shadow"
-                >
-                  {/* Top Row: Agency Avatar + Title & Meta + Bookmark Button */}
-                  <div className="flex items-start justify-between gap-2.5">
-                    <div className="flex items-start gap-3 min-w-0">
-                      {/* Agency Badge Circle */}
-                      <div
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-extrabold text-xs shrink-0 tracking-tight ${test.agencyColor}`}
-                      >
-                        {test.agency}
-                      </div>
-
-                      {/* Title & Metadata */}
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-[14px] sm:text-base text-[#12345A] leading-snug truncate">
-                          {test.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1">
-                          <span className="flex items-center gap-1">
-                            <Monitor className="w-3.5 h-3.5 text-slate-400 stroke-[2]" />
-                            <span>{test.questionsCount} Questions</span>
-                          </span>
-                          <span className="text-slate-300">|</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-slate-400 stroke-[2]" />
-                            <span>{test.durationMinutes} Minutes</span>
-                          </span>
-                          <span className="text-slate-300 hidden xs:inline">|</span>
-                          <span className="text-slate-500 hidden xs:inline font-semibold">
-                            {test.marks}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bookmark Toggle Icon */}
-                    <button
-                      type="button"
-                      onClick={() => toggleBookmark(test.id)}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#12345A] hover:bg-slate-50 transition cursor-pointer active:scale-95 shrink-0"
-                      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this test'}
-                      aria-label="Bookmark test"
-                    >
-                      {isBookmarked ? (
-                        <BookmarkCheck className="w-5 h-5 text-[#2468B4] fill-[#2468B4]" />
-                      ) : (
-                        <Bookmark className="w-5 h-5 stroke-[1.8]" />
-                      )}
-                    </button>
+        <section className="space-y-4 pt-1">
+          {/* If a specific subject is selected, show Subject Header & 2 Preparation Modes Switcher */}
+          {selectedSubject !== 'all' ? (
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl p-1 bg-gradient-to-b from-white to-slate-50 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+                    <img
+                      src={subjectCards.find((s) => s.id === selectedSubject)?.image3d}
+                      alt={selectedSubject}
+                      className="w-full h-full object-cover rounded-xl"
+                    />
                   </div>
-
-                  {/* Bottom Row: Flame Attempts + Difficulty Badge on Left + "Start Test" Button on Right */}
-                  <div className="flex items-center justify-between pt-1">
+                  <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      {/* Flame Attempts Badge */}
-                      {test.attempts && (
-                        <span className="bg-[#FFEDD5] text-[#C2410C] px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold flex items-center gap-1">
-                          <Flame className="w-3.5 h-3.5 fill-[#EA580C] text-[#EA580C]" />
-                          <span>{test.attempts}</span>
-                        </span>
-                      )}
-
-                      {/* Difficulty Badge */}
-                      <span
-                        className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold ${test.difficultyBadge}`}
-                      >
-                        {test.difficulty}
+                      <h2 className="text-xl sm:text-2xl font-black text-[#12345A] font-heading">
+                        {subjectCards.find((s) => s.id === selectedSubject)?.title}
+                      </h2>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#EAF3FF] text-[#12345A] border border-blue-100">
+                        {subjectCards.find((s) => s.id === selectedSubject)?.questionBadge}
                       </span>
                     </div>
-
-                    {/* Start Test CTA Button */}
-                    <Link
-                      to={`/mocks/${test.targetTestId || test.id}`}
-                      className="bg-[#12345A] hover:bg-[#2468B4] text-white px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-white text-white" />
-                      <span>Start Test</span>
-                    </Link>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Targeted subject preparation with complete CBT mock tests and syllabus-mapped topic units.
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectSubject('all')}
+                  className="text-xs font-bold text-[#2468B4] hover:underline self-start sm:self-auto flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>View All Subjects</span>
+                </button>
+              </div>
+
+              {/* Two Preparation Modes Switcher (Mode A vs Mode B) */}
+              <div className="flex items-center gap-2 p-1.5 bg-[#F6F8FC] rounded-2xl border border-slate-200 w-full sm:w-fit">
+                <button
+                  type="button"
+                  onClick={() => setSubjectPrepMode('full-mocks')}
+                  className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    subjectPrepMode === 'full-mocks'
+                      ? 'bg-[#12345A] text-white shadow-xs scale-[1.01]'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Play className={`w-3.5 h-3.5 ${subjectPrepMode === 'full-mocks' ? 'fill-white text-white' : ''}`} />
+                  <span>Full Subject Mock Tests</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubjectPrepMode('topic-wise')}
+                  className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    subjectPrepMode === 'topic-wise'
+                      ? 'bg-[#12345A] text-white shadow-xs scale-[1.01]'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Sparkles className={`w-4 h-4 ${subjectPrepMode === 'topic-wise' ? 'text-[#F2BE4F]' : 'text-amber-500'}`} />
+                  <span>Topic-Wise Practice ({currentSubjectTopics.length} Topics)</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* All Mocks Header */
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block shrink-0" />
+                  <h2 className="text-base sm:text-lg font-bold text-[#12345A] font-heading">
+                    Full Subject &amp; Comprehensive Mock Tests
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 pl-3.5 mt-0.5">
+                  Official CBT simulation with real examination marking (+1 / -0.25), countdown timer and interactive question palette.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAllTests(!showAllTests)}
+                className="text-xs sm:text-sm font-bold text-[#12345A] hover:text-[#2468B4] flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+              >
+                <span>{showAllTests ? 'Show Less' : 'View All'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* If Mode B (Topic-Wise Practice) is selected: render Topic Cards */}
+          {selectedSubject !== 'all' && subjectPrepMode === 'topic-wise' ? (
+            <div className="space-y-4 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600">
+                  Select a topic to practice questions or start a timed topic mock test:
+                </span>
+                <span className="text-xs font-bold text-[#12345A] bg-[#EAF3FF] px-2.5 py-0.5 rounded-full">
+                  {currentSubjectTopics.length} High-Yield Units
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {currentSubjectTopics.map((topic) => {
+                  const qCount = getTopicQuestionCount(selectedSubject, topic);
+                  return (
+                    <div
+                      key={topic.id}
+                      className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between space-y-3 hover:shadow-md hover:border-[#12345A]/40 transition group"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A]">
+                            {topic.subtopics?.length || 0} Subtopics
+                          </span>
+                          <span className="text-xs font-black text-slate-700">
+                            {qCount} Questions
+                          </span>
+                        </div>
+
+                        <h3 className="font-bold text-sm sm:text-base text-[#12345A] mt-2 group-hover:text-[#2468B4] transition">
+                          {topic.name}
+                        </h3>
+
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                          {topic.description || 'Verified questions strictly filtered for this topic.'}
+                        </p>
+
+                        {/* Subtopics preview tags */}
+                        {topic.subtopics && topic.subtopics.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2.5 pt-2 border-t border-slate-100">
+                            {topic.subtopics.slice(0, 3).map((sub, sIdx) => (
+                              <span
+                                key={sIdx}
+                                className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 line-clamp-1"
+                              >
+                                {sub}
+                              </span>
+                            ))}
+                            {topic.subtopics.length > 3 && (
+                              <span className="text-[10px] font-semibold text-slate-400 self-center">
+                                +{topic.subtopics.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTopicModal(topic);
+                            setChosenTopicQuestionCount(25);
+                          }}
+                          className="w-full bg-[#12345A] hover:bg-[#2468B4] text-white py-2 px-3 rounded-full font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                        >
+                          <Play className="w-3 h-3 fill-white text-white" />
+                          <span>Start Practice / Mock</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* Mode A (Full Subject Mock Tests) or All Subjects Mocks */
+            <div className="space-y-3">
+              {/* Filter Chips & Sort Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pb-1">
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-bold">
+                  {[
+                    { id: 'all', label: 'All Tests' },
+                    { id: 'full', label: 'Full Mocks (100 Qs)' },
+                    { id: 'sectional', label: 'Sectional Drills (50 Qs)' },
+                    { id: 'speed', label: 'Speed Tests (25 Qs)' },
+                    { id: 'pyq', label: 'Previous Year Papers' }
+                  ].map((flt) => (
+                    <button
+                      key={flt.id}
+                      type="button"
+                      onClick={() => setTestTypeFilter(flt.id)}
+                      className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
+                        testTypeFilter === flt.id
+                          ? 'bg-[#12345A] text-white shadow-xs'
+                          : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200'
+                      }`}
+                    >
+                      {flt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sort Dropdown */}
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="text-slate-500 font-medium">Sort:</span>
+                  <select
+                    value={testSortBy}
+                    onChange={(e) => setTestSortBy(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 focus:outline-hidden focus:border-[#2468B4]"
+                  >
+                    <option value="popular">Most Popular</option>
+                    <option value="questions">Questions Count</option>
+                    <option value="difficulty">Difficulty</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Test Cards List */}
+              <div className="space-y-3 pt-1">
+                {displayedMockTests.map((test) => {
+                  const isBookmarked = bookmarkedIds.includes(test.id);
+                  return (
+                    <div
+                      key={test.id}
+                      className="bg-white rounded-2xl border border-slate-100 sm:border-slate-200/80 p-3.5 sm:p-4 shadow-xs space-y-3 hover:shadow-md transition-shadow"
+                    >
+                      {/* Top Row: Agency Avatar + Title & Meta + Bookmark Button */}
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {/* Agency Badge Circle */}
+                          <div
+                            className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-extrabold text-xs shrink-0 tracking-tight ${test.agencyColor}`}
+                          >
+                            {test.agency}
+                          </div>
+
+                          {/* Title & Metadata */}
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-[14px] sm:text-base text-[#12345A] leading-snug truncate">
+                              {test.title}
+                            </h3>
+                            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1">
+                              <span className="flex items-center gap-1">
+                                <Monitor className="w-3.5 h-3.5 text-slate-400 stroke-[2]" />
+                                <span>{test.questionsCount} Questions</span>
+                              </span>
+                              <span className="text-slate-300">|</span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-slate-400 stroke-[2]" />
+                                <span>{test.durationMinutes} Minutes</span>
+                              </span>
+                              <span className="text-slate-300 hidden xs:inline">|</span>
+                              <span className="text-slate-500 hidden xs:inline font-semibold">
+                                {test.marks}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bookmark Toggle Icon */}
+                        <button
+                          type="button"
+                          onClick={() => toggleBookmark(test.id)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#12345A] hover:bg-slate-50 transition cursor-pointer active:scale-95 shrink-0"
+                          title={isBookmarked ? 'Remove bookmark' : 'Bookmark this test'}
+                          aria-label="Bookmark test"
+                        >
+                          {isBookmarked ? (
+                            <BookmarkCheck className="w-5 h-5 text-[#2468B4] fill-[#2468B4]" />
+                          ) : (
+                            <Bookmark className="w-5 h-5 stroke-[1.8]" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Bottom Row: Flame Attempts + Difficulty Badge on Left + "Start Test" Button on Right */}
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Flame Attempts Badge */}
+                          {test.attempts && (
+                            <span className="bg-[#FFEDD5] text-[#C2410C] px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold flex items-center gap-1">
+                              <Flame className="w-3.5 h-3.5 fill-[#EA580C] text-[#EA580C]" />
+                              <span>{test.attempts}</span>
+                            </span>
+                          )}
+
+                          {/* Difficulty Badge */}
+                          <span
+                            className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold ${test.difficultyBadge}`}
+                          >
+                            {test.difficulty}
+                          </span>
+
+                          <span className="text-[11px] font-semibold text-slate-500 px-2.5 py-0.5 rounded-full bg-slate-100">
+                            -0.25 Negative Marking
+                          </span>
+                        </div>
+
+                        {/* Start Test CTA Button */}
+                        <Link
+                          to={`/mocks/${test.targetTestId || test.id}`}
+                          className="bg-[#12345A] hover:bg-[#2468B4] text-white px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white text-white" />
+                          <span>Start Test</span>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Quick PDF & Sync Actions Strip */}
           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-100">
@@ -1644,63 +1878,52 @@ export default function MockTestsHubPage() {
 
           {/* Exam Category Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setPyqExamFilter('all')}
-              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
-                pyqExamFilter === 'all'
-                  ? 'bg-[#12345A] text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              All Shifts ({uniqueShiftsCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => setPyqExamFilter('grad-2026')}
-              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                pyqExamFilter === 'grad-2026'
-                  ? 'bg-[#0284C7] text-white shadow-xs'
-                  : 'bg-white text-sky-700 hover:bg-sky-50 border border-sky-200'
-              }`}
-            >
-              <Sparkles className="w-3 h-3 text-[#F2BE4F]" />
-              <span>RRB NTPC Graduate 2025-26 (March 2026 · 24 Sets)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPyqExamFilter('ug')}
-              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
-                pyqExamFilter === 'ug'
-                  ? 'bg-[#DC2626] text-white shadow-xs'
-                  : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
-              }`}
-            >
-              RRB NTPC UG 2025 (32 Shifts)
-            </button>
-            <button
-              type="button"
-              onClick={() => setPyqExamFilter('grad-2024')}
-              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
-                pyqExamFilter === 'grad-2024'
-                  ? 'bg-[#7E22CE] text-white shadow-xs'
-                  : 'bg-white text-purple-700 hover:bg-purple-50 border border-purple-200'
-              }`}
-            >
-              RRB NTPC Graduate 2024 (47 Shifts)
-            </button>
-            <button
-              type="button"
-              onClick={() => setPyqExamFilter('ssc')}
-              className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
-                pyqExamFilter === 'ssc'
-                  ? 'bg-[#D97706] text-white shadow-xs'
-                  : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
-              }`}
-            >
-              SSC CGL Tier-I (35 Shifts)
-            </button>
+            {[
+              { id: 'all', label: `All Shifts (${uniqueShiftsCount})` },
+              { id: 'ssc-cgl', label: 'SSC CGL Tier-I' },
+              { id: 'ssc-chsl', label: 'SSC CHSL' },
+              { id: 'ssc-mts', label: 'SSC MTS' },
+              { id: 'ssc-gd', label: 'SSC GD' },
+              { id: 'grad-2026', label: 'RRB NTPC Grad 2026' },
+              { id: 'grad-2024', label: 'RRB NTPC Grad 2024' },
+              { id: 'ug', label: 'RRB NTPC UG' },
+              { id: 'rrb-group-d', label: 'RRB Group D' },
+              { id: 'rrb-alp', label: 'RRB ALP' },
+              { id: 'banking', label: 'Banking' }
+            ].map((chip) => {
+              const isActive = pyqExamFilter === chip.id;
+              return (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={() => {
+                    setPyqExamFilter(chip.id);
+                    setPyqShowAll(true);
+                  }}
+                  className={`px-3 py-1.5 rounded-full transition cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? 'bg-[#12345A] text-white shadow-xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
           </div>
+
+          {filteredShifts.length === 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center my-4">
+              <p className="text-sm font-semibold text-slate-700">No official papers found matching this filter.</p>
+              <button
+                type="button"
+                onClick={() => setPyqExamFilter('all')}
+                className="mt-3 px-4 py-2 rounded-full bg-[#12345A] text-white text-xs font-bold hover:bg-[#2468B4] cursor-pointer"
+              >
+                Reset to All Shifts
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredShifts.map((shift) => {
@@ -1817,50 +2040,72 @@ export default function MockTestsHubPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {allTopicWiseTests
-              .filter(
-                (item) =>
-                  selectedSubject === 'all' ||
-                  item.subjectId === selectedSubject ||
-                  (selectedSubject === 'general-knowledge' && item.subjectId === 'general-knowledge')
-              )
-              .map((topic) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {currentSubjectTopics.map((topic) => {
+              const effectiveSubId = selectedSubject !== 'all' ? selectedSubject : (topic.subjectId || 'general-knowledge');
+              const qCount = getTopicQuestionCount(effectiveSubId, topic);
+              const subCard = subjectCards.find((s) => s.id === effectiveSubId);
+              return (
                 <div
                   key={topic.id}
-                  className="bg-white rounded-2xl border border-slate-100 p-4 shadow-xs flex flex-col justify-between space-y-3 hover:shadow-md transition"
+                  className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between space-y-3 hover:shadow-md hover:border-[#12345A]/40 transition group"
                 >
                   <div>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${topic.tagColor}`}>
-                        {topic.subject}
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A]">
+                        {subCard?.title || 'Subject'}
                       </span>
-                      <span className="text-[11px] text-slate-500 font-semibold">
-                        {topic.difficulty}
+                      <span className="text-xs font-black text-slate-700">
+                        {qCount} Questions
                       </span>
                     </div>
-                    <h3 className="font-bold text-sm text-[#12345A] mt-2">
+
+                    <h3 className="font-bold text-sm sm:text-base text-[#12345A] mt-2 group-hover:text-[#2468B4] transition">
                       {topic.name}
                     </h3>
-                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                      <span>{topic.count} Questions</span>
-                      <span>•</span>
-                      <span>25 Mins</span>
-                    </div>
+
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                      {topic.description || 'Verified questions strictly filtered for this topic.'}
+                    </p>
+
+                    {topic.subtopics && topic.subtopics.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2.5 pt-2 border-t border-slate-100">
+                        {topic.subtopics.slice(0, 3).map((sub, sIdx) => (
+                          <span
+                            key={sIdx}
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 line-clamp-1"
+                          >
+                            {sub}
+                          </span>
+                        ))}
+                        {topic.subtopics.length > 3 && (
+                          <span className="text-[10px] font-semibold text-slate-400 self-center">
+                            +{topic.subtopics.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span className="text-[11px] text-slate-400 font-medium">Instant Analysis</span>
-                    <Link
-                      to={topic.link}
-                      className="bg-[#12345A] hover:bg-[#2468B4] text-white px-3.5 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs active:scale-95"
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      {topic.subtopics?.length || 0} Subtopics
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTopicModal({ ...topic, subjectId: effectiveSubId });
+                        setChosenTopicQuestionCount(25);
+                      }}
+                      className="bg-[#12345A] hover:bg-[#2468B4] text-white px-4 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
                     >
                       <Play className="w-3 h-3 fill-white text-white" />
-                      <span>Start Test</span>
-                    </Link>
+                      <span>Practice / Mock</span>
+                    </button>
                   </div>
                 </div>
-              ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -2127,6 +2372,99 @@ export default function MockTestsHubPage() {
             )}
           </div>
         </section>
+      )}
+
+      {/* =========================================================================
+          TOPIC PRACTICE & MOCK SETUP MODAL
+          ========================================================================= */}
+      {activeTopicModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#2468B4]">
+                  {subjectCards.find((s) => s.id === selectedSubject)?.title || 'Subject'} · Topic Unit
+                </span>
+                <h3 className="text-xl font-black text-[#12345A] mt-0.5">
+                  {activeTopicModal.name}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {activeTopicModal.description || 'Targeted official questions mapped to syllabus.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTopicModal(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Subtopics Structure List */}
+            {activeTopicModal.subtopics && activeTopicModal.subtopics.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700">Included Subtopics &amp; Units ({activeTopicModal.subtopics.length}):</label>
+                <div className="max-h-40 overflow-y-auto pr-1 flex flex-wrap gap-1.5 p-2.5 bg-slate-50 rounded-2xl border border-slate-200/80">
+                  {activeTopicModal.subtopics.map((sub, sIdx) => (
+                    <span key={sIdx} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-2xs flex items-center gap-1.5">
+                      <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                      <span>{sub}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Question Count Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700">Choose Number of Questions:</label>
+              <div className="grid grid-cols-5 gap-1.5 text-xs font-bold">
+                {[10, 20, 25, 50, 'all'].map((cnt) => (
+                  <button
+                    key={cnt}
+                    type="button"
+                    onClick={() => setChosenTopicQuestionCount(cnt)}
+                    className={`py-2 rounded-xl border transition-all cursor-pointer text-center ${
+                      chosenTopicQuestionCount === cnt
+                        ? 'bg-[#12345A] text-white border-[#12345A] shadow-xs scale-105'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {cnt === 'all' ? 'All' : `${cnt} Qs`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+              <Link
+                to={`/mocks/topic-${selectedSubject !== 'all' ? selectedSubject : activeTopicModal.subjectId || 'general-knowledge'}-${activeTopicModal.id}?mode=practice&limit=${
+                  chosenTopicQuestionCount === 'all'
+                    ? getTopicQuestionCount(selectedSubject, activeTopicModal)
+                    : chosenTopicQuestionCount
+                }`}
+                className="w-full py-2.5 px-4 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-200" />
+                <span>Start Practice (Instant Feedback)</span>
+              </Link>
+
+              <Link
+                to={`/mocks/topic-${selectedSubject !== 'all' ? selectedSubject : activeTopicModal.subjectId || 'general-knowledge'}-${activeTopicModal.id}?mode=cbt&limit=${
+                  chosenTopicQuestionCount === 'all'
+                    ? getTopicQuestionCount(selectedSubject, activeTopicModal)
+                    : chosenTopicQuestionCount
+                }`}
+                className="w-full py-2.5 px-4 rounded-full bg-[#12345A] hover:bg-[#0B1F3A] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95"
+              >
+                <Play className="w-3.5 h-3.5 fill-white text-white" />
+                <span>Start Topic Mock (CBT Exam)</span>
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
       </div>
     </div>

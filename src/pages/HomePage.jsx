@@ -75,7 +75,7 @@ export default function HomePage() {
       id: 'banner-mock-tests',
       image: '/assets/aistudio/image_ef986abf.png',
       alt: 'Ace Your Government Exams - Mock Tests & Practice Tests with Real Exam Pattern',
-      eyebrow: '16,300+ Questions • 163 CBT Shifts',
+      eyebrow: '15,544+ Questions • 163 CBT Shifts',
       ctaText: 'Start Tests',
       ctaLink: '/mocks'
     },

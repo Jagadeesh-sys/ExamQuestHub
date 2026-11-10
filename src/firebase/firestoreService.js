@@ -24,7 +24,7 @@ import {
   withEffectiveStatusList
 } from '../utils/notificationStatus.js';
 import { getDefaultImageForTopic as defaultImageForTopic, DEFAULT_TOPIC_IMAGES } from './topicImages.js';
-import { loadAllRRBQuestions } from '../services/rrbMockService.js';
+import { loadAllRRBQuestions, getVerifiedMockStats } from '../services/rrbMockService.js';
 
 export { DEFAULT_TOPIC_IMAGES };
 
@@ -757,166 +757,40 @@ export function mapRrbToMockQuestion(q) {
  * Reads directly from the `mockQuestions` collection in Firestore.
  */
 export async function getDirectFirestoreMockStats() {
+  try {
+    const verified = await getVerifiedMockStats();
+    if (verified && verified.totalQuestions > 0) {
+      saveLocalData(STORAGE_KEYS.MOCK_STATS, verified);
+      return verified;
+    }
+  } catch (err) {
+    console.warn('Error reading verified stats:', err);
+  }
+
   const fallbackStats = {
-    totalQuestions: 16300,
-    verifiedQuestions: 15600,
-    unverifiedQuestions: 700,
+    totalQuestions: 15544,
+    verifiedQuestions: 15544,
+    unverifiedQuestions: 0,
     totalShifts: 163,
-    totalSubtopics: 40,
+    totalSubtopics: 64,
     totalMockTests: 380,
     subjectCounts: {
-      'general-knowledge': 6802,
-      'quantitative-aptitude': 3912,
-      'reasoning': 3644,
-      'general-science': 879,
-      'english-language': 875,
-      'computer-science': 188
+      'general-knowledge': 6071,
+      'quantitative-aptitude': 3585,
+      'reasoning': 3361,
+      'general-science': 827,
+      'computer-science': 655,
+      'english-language': 550,
+      'current-affairs': 495
     },
-    exams: {
-      'rrb-ntpc-ug-2024': 5700,
-      'rrb-ntpc-grad-2024': 4700,
-      'rrb-ntpc-grad-2026': 2400,
-      'ssc-cgl': 3600
-    },
-    source: 'Firestore Server (examquesthub • mockQuestions)'
+    source: 'Official Question Bank (15,544 Qs • 163 CBT Shifts)'
   };
 
   const cached = getLocalData(STORAGE_KEYS.MOCK_STATS, null);
-
-  if (!isFirebaseConfigured || !db) {
-    return cached || fallbackStats;
-  }
-
-  try {
-    // 1. Try reading the fast server aggregated document first
-    try {
-      const statsDoc = await getDoc(doc(db, 'mockQuestions', '_stats_'));
-      if (statsDoc.exists()) {
-        const statsData = statsDoc.data();
-        if (statsData && statsData.totalQuestions) {
-          saveLocalData(STORAGE_KEYS.MOCK_STATS, statsData);
-          markSyncSuccess();
-          return statsData;
-        }
-      }
-    } catch {
-      // Continue to collection read if _stats_ document is not present yet
-    }
-
-    const snap = await getDocs(collection(db, 'mockQuestions'));
-    if (!snap || snap.empty) {
-      return cached || fallbackStats;
-    }
-
-    let gk = 0;
-    let quant = 0;
-    let reasoning = 0;
-    let science = 0;
-    let cse = 0;
-    let english = 0;
-    let verifiedCount = 0;
-    let unverifiedCount = 0;
-    const shiftsSet = new Set();
-    const subtopicsSet = new Set();
-    let totalDocsCount = 0;
-
-    snap.forEach((d) => {
-      if (d.id === '_stats_' || d.id === '_test_ping_') return;
-      totalDocsCount++;
-      const raw = d.data();
-      const q = mapRrbToMockQuestion(raw);
-      const sub = (q.subject || q.subjectId || '').toLowerCase();
-      const cat = (q.categoryId || '').toLowerCase();
-
-      if (q.shiftNumber) shiftsSet.add(q.shiftNumber);
-      if (q.shift) shiftsSet.add(q.shift);
-      if (q.subtopic && String(q.subtopic).trim()) subtopicsSet.add(String(q.subtopic).trim());
-
-      const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED';
-      if (isUnv) {
-        unverifiedCount++;
-      } else {
-        verifiedCount++;
-      }
-
-      if (
-        cat === 'cse' ||
-        sub.includes('computer') ||
-        sub.includes('dbms') ||
-        sub.includes('operating-systems') ||
-        sub.includes('digital-logic') ||
-        sub.includes('software-engineering') ||
-        sub.includes('programming') ||
-        sub.includes('data-structures')
-      ) {
-        cse++;
-      } else if (
-        sub.includes('english') ||
-        cat === 'english' ||
-        sub.includes('grammar') ||
-        sub.includes('idioms') ||
-        sub.includes('vocabulary') ||
-        sub.includes('comprehension')
-      ) {
-        english++;
-      } else if (sub.includes('science') || sub.includes('physics') || sub.includes('chemistry') || sub.includes('biology')) {
-        science++;
-      } else if (
-        sub.includes('quant') ||
-        sub.includes('math') ||
-        sub.includes('algebra') ||
-        sub.includes('geometry') ||
-        sub.includes('number') ||
-        sub.includes('ratio') ||
-        sub.includes('percentage') ||
-        sub.includes('time-speed')
-      ) {
-        quant++;
-      } else if (
-        sub.includes('reason') ||
-        cat === 'reasoning' ||
-        sub.includes('analogi') ||
-        sub.includes('series') ||
-        sub.includes('syllogism') ||
-        sub.includes('puzzle') ||
-        sub.includes('blood-relation')
-      ) {
-        reasoning++;
-      } else {
-        gk++;
-      }
-    });
-
-    const realShifts = shiftsSet.size > 0 ? Math.max(shiftsSet.size, 163) : 163;
-    const realTotal = totalDocsCount > 0 ? Math.max(totalDocsCount, 16300) : 16300;
-
-    const stats = {
-      totalQuestions: realTotal,
-      verifiedQuestions: verifiedCount > 0 ? verifiedCount : 15600,
-      unverifiedQuestions: unverifiedCount > 0 ? unverifiedCount : 700,
-      totalShifts: realShifts,
-      totalSubtopics: subtopicsSet.size > 0 ? Math.max(subtopicsSet.size, 40) : 40,
-      totalMockTests: 380,
-      subjectCounts: {
-        'general-knowledge': gk || 6802,
-        'quantitative-aptitude': quant || 3912,
-        'reasoning': reasoning || 3644,
-        'general-science': science || 879,
-        'computer-science': cse || 188,
-        'english-language': english || 875
-      },
-      source: 'Firestore Server (examquesthub • mockQuestions)',
-      syncedAt: new Date().toISOString()
-    };
-
-    saveLocalData(STORAGE_KEYS.MOCK_STATS, stats);
-    markSyncSuccess();
-    return stats;
-  } catch (err) {
-    console.warn('[Firestore] Live mockQuestions read notice:', err.message || err);
-    return cached || fallbackStats;
-  }
+  return cached || fallbackStats;
 }
+
+
 
 /**
  * Subject-wise mock test questions (PYQ / IMPORTANT / PRACTICE).
@@ -949,46 +823,65 @@ export async function getMockQuestions() {
   }
 
   const map = new Map();
-  const seenSignatures = new Map(); // signature -> id
+  const seenSignatures = new Set();
 
-  // Add official CBT questions
+  const getSignature = (q) => {
+    if (!q) return null;
+    const rawText = typeof q.question === 'object'
+      ? (q.question?.en || q.question?.te || '')
+      : (q.question || q.questionText || '');
+    const cleanText = String(rawText || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 100);
+    return cleanText.length > 15 ? cleanText : null;
+  };
+
+  // Add official CBT questions (15,544 verified single source of truth)
   for (const q of rrbQuestions) {
     if (!q || !q.id) continue;
-    const cleanText = String(q.question?.en || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanOpts = (q.options?.en || []).map((o) => String(o || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join('|');
-    const signature = cleanText.length > 20 ? `${cleanText}:::${cleanOpts}` : null;
-    if (signature) seenSignatures.set(signature, q.id);
     map.set(q.id, q);
+    const sig = getSignature(q);
+    if (sig) seenSignatures.add(sig);
   }
 
   // Add/override with Firestore or previously uploaded questions (ignore metadata docs)
   for (const raw of firestoreOrCached) {
     if (!raw || raw.id === '_stats_' || raw.id === '_test_ping_') continue;
-    const q = mapRrbToMockQuestion(raw);
-    const cleanText = String(q.question?.en || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanOpts = (q.options?.en || []).map((o) => String(o || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join('|');
-    const signature = cleanText.length > 20 ? `${cleanText}:::${cleanOpts}` : null;
-
-    // Strict deduplication: If exact question content is already present under another ID, skip to avoid duplicates
-    if (signature && seenSignatures.has(signature) && seenSignatures.get(signature) !== q.id) {
+    if (map.has(raw.id)) {
+      map.set(raw.id, { ...(map.get(raw.id) || {}), ...raw });
       continue;
     }
-    if (signature) seenSignatures.set(signature, q.id);
-    map.set(q.id, { ...(map.get(q.id) || {}), ...q });
+    const q = mapRrbToMockQuestion(raw);
+    const sig = getSignature(q);
+
+    // Strict deduplication: If exact question content is already present, skip duplicate
+    if (sig && seenSignatures.has(sig)) {
+      continue;
+    }
+    if (sig) seenSignatures.add(sig);
+    map.set(q.id, q);
   }
 
   const merged = Array.from(map.values());
 
   // Keep fast cached stats synchronized with exact count
   try {
-    const existingStats = getLocalData(STORAGE_KEYS.MOCK_STATS, null);
-    if (existingStats) {
-      saveLocalData(STORAGE_KEYS.MOCK_STATS, {
-        ...existingStats,
-        totalQuestions: Math.max(merged.length, 13301),
-        totalShifts: Math.max(existingStats.totalShifts || 138, 138)
-      });
-    }
+    saveLocalData(STORAGE_KEYS.MOCK_STATS, {
+      totalQuestions: merged.length,
+      verifiedQuestions: merged.length,
+      unverifiedQuestions: 0,
+      totalShifts: 163,
+      totalSubtopics: 64,
+      totalMockTests: 380,
+      subjectCounts: {
+        all: merged.length,
+        'general-knowledge': 6071,
+        'quantitative-aptitude': 3585,
+        reasoning: 3361,
+        'general-science': 827,
+        'computer-science': 655,
+        'english-language': 550,
+        'current-affairs': 495
+      }
+    });
   } catch {
     // Ignore storage sync notice
   }

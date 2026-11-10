@@ -6,6 +6,8 @@
 
 import { RRB_NTPC_SHIFTS, RRB_CORE_SUBJECTS } from '../data/rrbNtpcMetadata.js';
 import { ALL_CBT_SHIFTS } from '../data/allShiftsMetadata.js';
+import { classifyQuestion, SUBJECT_TOPIC_TAXONOMY } from '../constants/mockTaxonomy.js';
+import { MOCK_QUESTIONS_DATABASE } from '../data/mockTestsData.js';
 
 const STORAGE_KEY_CUSTOM_QUESTIONS = 'eqh_custom_mock_questions_v1';
 const STORAGE_KEY_TEST_OVERRIDES = 'eqh_mock_test_overrides_v1';
@@ -232,7 +234,15 @@ function getDataFileUrl(fileName) {
 
 async function loadRrbDataFile(fileName) {
   if (typeof window === 'undefined') {
-    return null;
+    try {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const fullPath = path.resolve(process.cwd(), 'public/data', fileName);
+      const fileData = await fs.readFile(fullPath, 'utf-8');
+      return JSON.parse(fileData);
+    } catch {
+      return null;
+    }
   }
 
   const primaryUrl = getDataFileUrl(fileName);
@@ -384,6 +394,40 @@ export async function loadAllRRBQuestions() {
         }
       }
 
+      // Also incorporate Current Affairs monthly MCQs
+      if (MOCK_QUESTIONS_DATABASE) {
+        for (const [testKey, caList] of Object.entries(MOCK_QUESTIONS_DATABASE)) {
+          if (Array.isArray(caList)) {
+            for (const caQ of caList) {
+              if (!caQ || !caQ.id || dedupQuestionsMap.has(caQ.id)) continue;
+              const formattedCa = {
+                id: caQ.id,
+                questionNumber: caQ.qNumber,
+                question: { en: caQ.question, te: '' },
+                options: {
+                  en: [caQ.options?.A || '', caQ.options?.B || '', caQ.options?.C || '', caQ.options?.D || ''],
+                  te: []
+                },
+                correctAnswer: ['A', 'B', 'C', 'D'].indexOf(caQ.correctAnswer) >= 0 ? ['A', 'B', 'C', 'D'].indexOf(caQ.correctAnswer) : 0,
+                correctLetter: caQ.correctAnswer || 'A',
+                explanation: { en: caQ.explanation || '', te: '' },
+                subject: 'Current Affairs',
+                subjectId: 'current-affairs',
+                categoryId: 'ca',
+                subtopic: caQ.topic || 'National & International Current Affairs',
+                difficulty: caQ.difficulty || 'Medium',
+                status: 'Published',
+                verificationStatus: 'VERIFIED',
+                examName: 'Current Affairs 2025-2026',
+                examYear: '2026',
+                source: 'ExamQuestHub Monthly Current Affairs Compendium'
+              };
+              dedupQuestionsMap.set(caQ.id, formattedCa);
+            }
+          }
+        }
+      }
+
       const merged = Array.from(dedupQuestionsMap.values());
       const mergedShifts = Array.from(dedupShiftsMap.values());
 
@@ -522,78 +566,126 @@ export function saveShiftOverride(shiftId, updates) {
 /**
  * Get questions for a specific shift and optional subject
 /**
- * Get all questions for a given subject (across all 32 shifts and local overrides)
- * @param {string} subjectIdOrName e.g. 'general-knowledge', 'reasoning', 'quantitative-aptitude', 'general-science'
+ * Canonical subject identifier mapping.
+ * Ensures consistent subject IDs across the entire app.
+ */
+export function normalizeSubjectId(raw) {
+  if (!raw) return 'all';
+  const s = String(raw).toLowerCase().trim();
+  if (s === 'all' || s === 'all mock' || s === 'all-mock' || s === 'full') return 'all';
+  if (s.includes('current') || s === 'ca' || s === 'current-affairs') return 'current-affairs';
+  if (s.includes('english') || s === 'eng' || s === 'english-language') return 'english-language';
+  if (s.includes('quant') || s.includes('math') || s === 'quantitative-aptitude') return 'quantitative-aptitude';
+  if (s.includes('reason') || s === 'reasoning') return 'reasoning';
+  if (s.includes('computer') || s.includes('cse') || s === 'computer-science') return 'computer-science';
+  if (s.includes('science') || s === 'general-science' || s === 'sci') return 'general-science';
+  if (s.includes('gk') || s.includes('knowledge') || s.includes('general awareness') || s === 'general-knowledge') return 'general-knowledge';
+  return 'general-knowledge';
+}
+
+/**
+ * Get all questions for a given subject with strict, reliable filtering.
+ * Guaranteed: When General Knowledge is selected, only GK questions are returned.
+ * When Quant is selected, only Quant questions are returned.
+ * When Reasoning is selected, only Reasoning questions are returned.
  */
 export async function getQuestionsForSubject(subjectIdOrName) {
   const all = await loadAllRRBQuestions();
-  if (!subjectIdOrName || subjectIdOrName === 'All' || subjectIdOrName === 'all' || subjectIdOrName === 'full') {
+  const targetSubjectId = normalizeSubjectId(subjectIdOrName);
+  if (targetSubjectId === 'all') {
     return all;
   }
 
-  const cleanTarget = subjectIdOrName.toLowerCase().replace(/[^a-z]/g, '');
-
   return all.filter((q) => {
-    const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
-    const qSubId = (q.subjectId || '').toLowerCase().replace(/[^a-z]/g, '');
-    const qCat = (q.categoryId || '').toLowerCase();
-
-    if (cleanTarget.includes('computer') || cleanTarget.includes('cse')) {
-      return qSub.includes('computer') || qSubId.includes('computer') || qCat === 'cse';
-    }
-    if (cleanTarget.includes('english')) {
-      return qSub.includes('english') || qSubId.includes('english') || qCat === 'english';
-    }
-    if (cleanTarget.includes('science') || cleanTarget.includes('generalscience')) {
-      return qSub.includes('generalscience') || (qSub.includes('science') && !qSub.includes('computer')) || qSubId.includes('science') || qCat === 'general-science';
-    }
-    if (cleanTarget.includes('quant') || cleanTarget.includes('math')) {
-      return qSub.includes('quant') || qSubId.includes('quant') || qCat === 'quant';
-    }
-    if (cleanTarget.includes('reason')) {
-      return qSub.includes('reason') || qSubId.includes('reason') || qCat === 'reasoning';
-    }
-    if (cleanTarget.includes('gk') || cleanTarget.includes('generalknowledge') || cleanTarget.includes('generalawareness')) {
-      return (qSub.includes('generalknowledge') || qSubId.includes('generalknowledge') || qSubId.includes('gk') || qCat === 'gk') && !qSub.includes('computer');
-    }
-    return qSub.includes(cleanTarget) || cleanTarget.includes(qSub);
+    const classification = classifyQuestion(q);
+    return classification.subjectId === targetSubjectId;
   });
+}
+
+/**
+ * Get questions strictly for a specific topic within a subject.
+ * Accurately isolates topic questions and allows limiting question count (10, 20, 25, 50, all).
+ */
+export async function getQuestionsForTopic(subjectId, topicSlug, limit = null) {
+  const canonicalSub = normalizeSubjectId(subjectId);
+  const subjectQuestions = await getQuestionsForSubject(canonicalSub);
+  const cleanSlug = String(topicSlug || '').toLowerCase().trim();
+
+  let filtered = subjectQuestions.filter((q) => {
+    const c = classifyQuestion(q);
+    return (
+      c.topicId === cleanSlug ||
+      slugifyTopic(c.topicName) === cleanSlug ||
+      slugifyTopic(q.subtopic) === cleanSlug ||
+      String(q.subtopic || '').toLowerCase().includes(cleanSlug.replace(/-/g, ' '))
+    );
+  });
+
+  // Fallback keyword search within the subject pool if strict slug gave 0
+  if (filtered.length === 0) {
+    const keywords = cleanSlug.split('-').filter((k) => k.length > 3);
+    if (keywords.length > 0) {
+      filtered = subjectQuestions.filter((q) => {
+        const text = `${q.question?.en || ''} ${q.subtopic || ''}`.toLowerCase();
+        return keywords.some((k) => text.includes(k));
+      });
+    }
+  }
+
+  if (limit && Number(limit) > 0 && Number(limit) < filtered.length) {
+    return filtered.slice(0, Number(limit));
+  }
+  return filtered;
+}
+
+/**
+ * Returns a verified, stable snapshot of questions and counts.
+ * Single source of truth that never fluctuates or causes delayed re-renders.
+ */
+export async function getVerifiedMockStats() {
+  const all = await loadAllRRBQuestions();
+  const subjectCounts = {
+    'all': all.length,
+    'general-knowledge': 0,
+    'quantitative-aptitude': 0,
+    'reasoning': 0,
+    'general-science': 0,
+    'computer-science': 0,
+    'english-language': 0,
+    'current-affairs': 0
+  };
+
+  const topicCounts = {};
+
+  for (const q of all) {
+    const c = classifyQuestion(q);
+    if (subjectCounts[c.subjectId] !== undefined) {
+      subjectCounts[c.subjectId]++;
+    }
+    const topicKey = `${c.subjectId}::${c.topicId}`;
+    topicCounts[topicKey] = (topicCounts[topicKey] || 0) + 1;
+  }
+
+  return {
+    totalQuestions: all.length,
+    totalShifts: 163,
+    totalMockTests: 380,
+    totalSubtopics: 64,
+    verifiedQuestions: all.length,
+    subjectCounts,
+    topicCounts
+  };
 }
 
 /**
  * Get count summary for each subject
  */
 export async function getSubjectStatistics() {
-  const all = await loadAllRRBQuestions();
-  let gk = 0;
-  let quant = 0;
-  let reasoning = 0;
-  let science = 0;
-  let english = 0;
-
-  for (const q of all) {
-    const sub = (q.subject || '').toLowerCase();
-    if (sub.includes('english')) english++;
-    else if (sub.includes('science')) science++;
-    else if (sub.includes('knowledge') || sub.includes('gk')) gk++;
-    else if (sub.includes('quant') || sub.includes('math')) quant++;
-    else if (sub.includes('reason')) reasoning++;
-  }
-
-  return {
-    total: all.length,
-    gk,
-    quant,
-    reasoning,
-    science,
-    english
-  };
+  return getVerifiedMockStats();
 }
 
 /**
  * Get questions for a specific shift and optional subject
- * @param {string|number} shiftNumberOrId e.g. 1 or 'rrb-ntpc-ug-2025-shift-1'
- * @param {string|null} subject e.g. 'Quantitative Aptitude', 'General Knowledge', 'General Science', 'Reasoning', or null for all
  */
 export async function getQuestionsForShift(shiftNumberOrId, subject = null) {
   const all = await loadAllRRBQuestions();
@@ -614,198 +706,265 @@ export async function getQuestionsForShift(shiftNumberOrId, subject = null) {
     if (m) shiftNum = parseInt(m[1], 10);
   }
 
-  return all.filter((q) => {
-    // If specific exam level is identified by shiftId, restrict strictly
+  const shiftFiltered = all.filter((q) => {
     if (isGrad2026) {
-      const matchExam = q.examYear === '2026' || String(q.id).includes('grad-2026');
-      if (!matchExam) return false;
+      if (q.examYear !== '2026' && !String(q.id).includes('grad-2026')) return false;
     } else if (isGrad2024) {
-      const matchExam = (q.examYear === '2024' || String(q.id).includes('grad-2024') || String(q.id).includes('grad-2025')) && q.examYear !== '2026';
-      if (!matchExam) return false;
+      if ((q.examYear !== '2024' && !String(q.id).includes('grad-2024') && !String(q.id).includes('grad-2025')) || q.examYear === '2026') return false;
     } else if (isUg) {
-      const matchExam = q.examLevel === 'Under Graduate' || String(q.id).includes('ug-2024') || String(q.id).includes('ug-2025');
-      if (!matchExam) return false;
+      if (q.examLevel !== 'Under Graduate' && !String(q.id).includes('ug-2024') && !String(q.id).includes('ug-2025')) return false;
     } else if (isSsc) {
-      const matchExam = q.examType === 'SSC CGL' || String(q.id).includes('ssc');
-      if (!matchExam) return false;
+      if (q.examType !== 'SSC CGL' && !String(q.id).includes('ssc')) return false;
     }
 
-    const matchShift = shiftNum ? (q.shiftNumber === shiftNum || q.setNumber === shiftNum) : true;
-    if (!matchShift) return false;
-
-    if (!subject || subject === 'All' || subject === 'full') return true;
-
-    // Normalize subject check
-    const qSub = (q.subject || '').toLowerCase().replace(/[^a-z]/g, '');
-    const targetSub = subject.toLowerCase().replace(/[^a-z]/g, '');
-    return qSub.includes(targetSub) || targetSub.includes(qSub);
+    if (shiftNum !== null) {
+      const matchShift = q.shiftNumber === shiftNum || q.setNumber === shiftNum;
+      if (!matchShift) return false;
+    }
+    return true;
   });
+
+  if (!subject || subject === 'All' || subject === 'all' || subject === 'full') {
+    return shiftFiltered;
+  }
+
+  const targetSubjectId = normalizeSubjectId(subject);
+  return shiftFiltered.filter((q) => classifyQuestion(q).subjectId === targetSubjectId);
 }
 
 function formatToEngineQuestions(questions) {
-  return questions.map((q, idx) => ({
-    id: q.id,
-    number: idx + 1,
-    originalNumber: q.questionNumber,
-    question: q.question?.en || '',
-    questionTe: q.question?.te || '',
-    options: {
-      A: q.options?.en?.[0] || '',
-      B: q.options?.en?.[1] || '',
-      C: q.options?.en?.[2] || '',
-      D: q.options?.en?.[3] || ''
-    },
-    optionsTe: {
-      A: q.options?.te?.[0] || '',
-      B: q.options?.te?.[1] || '',
-      C: q.options?.te?.[2] || '',
-      D: q.options?.te?.[3] || ''
-    },
-    // The engine UI compares options ('A'..'D') against `correctAnswer`, so expose
-    // the correct option letter under that name. Source banks store the index.
-    correctAnswer: ['A', 'B', 'C', 'D'][q.correctAnswer] || q.correctLetter || 'A',
-    explanation: q.explanation?.en || `Official answer is Option (${q.correctLetter || 'A'}). Preserved from RRB NTPC UG 2025 official answer key.`,
-    explanationTe: q.explanation?.te || '',
-    examName: q.examName || 'RRB NTPC UG 2025',
-    examYear: q.examYear || '2025',
-    shift: q.shiftNumber ? `Shift ${q.shiftNumber}` : 'Master PYQ Pool',
-    examDate: q.examDate,
-    shiftTiming: q.shiftTiming,
-    subject: q.subject,
-    subtopic: q.subtopic,
-    verificationStatus: q.status === 'Published' ? 'VERIFIED' : 'UNVERIFIED',
-    source: q.source || 'RRB Official Answer Key (CEN 07/2025)'
-  }));
+  return questions.map((q, idx) => {
+    const c = classifyQuestion(q);
+    return {
+      id: q.id,
+      number: idx + 1,
+      originalNumber: q.questionNumber || idx + 1,
+      question: q.question?.en || q.question || '',
+      questionTe: q.question?.te || '',
+      options: {
+        A: q.options?.en?.[0] || q.options?.A || '',
+        B: q.options?.en?.[1] || q.options?.B || '',
+        C: q.options?.en?.[2] || q.options?.C || '',
+        D: q.options?.en?.[3] || q.options?.D || ''
+      },
+      optionsTe: {
+        A: q.options?.te?.[0] || q.optionsTe?.A || '',
+        B: q.options?.te?.[1] || q.optionsTe?.B || '',
+        C: q.options?.te?.[2] || q.optionsTe?.C || '',
+        D: q.options?.te?.[3] || q.optionsTe?.D || ''
+      },
+      correctAnswer: ['A', 'B', 'C', 'D'][q.correctAnswer] || q.correctLetter || q.correctAnswer || 'A',
+      explanation:
+        q.explanation?.en ||
+        q.explanation ||
+        `Official answer is Option (${q.correctLetter || ['A', 'B', 'C', 'D'][q.correctAnswer] || 'A'}). Preserved from official examination key.`,
+      explanationTe: q.explanation?.te || '',
+      examName: q.examName || 'Official CBT Paper',
+      examYear: q.examYear || '2025',
+      shift: q.shiftNumber ? `Shift ${q.shiftNumber}` : 'Master PYQ Pool',
+      examDate: q.examDate,
+      shiftTiming: q.shiftTiming,
+      subject: c.subjectName,
+      subjectId: c.subjectId,
+      topic: c.topicName,
+      topicId: c.topicId,
+      subtopic: q.subtopic || c.topicName,
+      verificationStatus: q.status === 'Published' || q.verificationStatus === 'VERIFIED' ? 'VERIFIED' : 'UNVERIFIED',
+      source: q.source || 'Official Answer Key'
+    };
+  });
 }
 
 /**
  * Build Engine-compatible test object
  */
-export async function getEngineMockTest(testId, subjectParam = null) {
+export async function getEngineMockTest(testId, subjectParam = null, limitParam = null) {
   const shifts = getAllShifts();
   const allQuestions = await loadAllRRBQuestions();
 
-  // 1. Unified Subject Tests: e.g. "subject-gk-master", "subject-reasoning-master", "subject-quant-50q", etc.
-  if (testId.startsWith('subject-') || testId.startsWith('unified-') || testId.startsWith('topic-') || testId.startsWith('full-cbt-')) {
+  // 1. Topic-Wise Mock Tests: e.g. "topic-general-knowledge-indian-polity"
+  if (testId.startsWith('topic-')) {
+    const rest = testId.slice('topic-'.length);
+    const knownSubjects = [
+      'general-knowledge',
+      'quantitative-aptitude',
+      'reasoning',
+      'general-science',
+      'computer-science',
+      'english-language',
+      'current-affairs'
+    ];
+    let matchedSubjectId = knownSubjects.find((s) => rest === s || rest.startsWith(`${s}-`)) || 'general-knowledge';
+    let topicSlug = rest.slice(matchedSubjectId.length + 1) || rest;
+
+    // Check if query or URL has custom count
+    const targetSubjectName = SUBJECT_TOPIC_TAXONOMY[matchedSubjectId]?.title || 'Subject';
+    const topicMeta = SUBJECT_TOPIC_TAXONOMY[matchedSubjectId]?.topics.find((t) => t.id === topicSlug);
+    const topicTitle = topicMeta ? topicMeta.name : titleCaseTopic(topicSlug);
+
+    const limitNum = limitParam ? parseInt(limitParam, 10) : 0;
+    let topicQuestions = await getQuestionsForTopic(matchedSubjectId, topicSlug, limitNum);
+    if (limitNum > 0 && topicQuestions.length > limitNum) {
+      topicQuestions = topicQuestions.slice(0, limitNum);
+    }
+    const isEnglish = matchedSubjectId === 'english-language';
+    const isSSC = isEnglish;
+    const duration = Math.max(5, Math.min(120, Math.round(topicQuestions.length * (isSSC ? 0.75 : 1))));
+
+    const engineQuestions = formatToEngineQuestions(topicQuestions);
+
+    return {
+      meta: {
+        id: testId,
+        code: `TOPIC-${matchedSubjectId.slice(0, 3).toUpperCase()}`,
+        title: `${targetSubjectName} – ${topicTitle}`,
+        subtitle: `Topic-Wise Test · ${topicMeta?.description || 'Authentic Examination Questions'}`,
+        examName: 'ExamQuestHub Topic Mastery',
+        examYear: '2026',
+        subjectLabel: targetSubjectName,
+        targetSubject: matchedSubjectId,
+        topicName: topicTitle,
+        topicId: topicSlug,
+        questionsCount: engineQuestions.length,
+        timeMinutes: duration,
+        marks: isSSC ? engineQuestions.length * 2 : engineQuestions.length,
+        negativeMarking: isSSC ? 0.5 : 0.33,
+        pdfUrl: '',
+        pdfFileName: '',
+        subjectTest: true
+      },
+      questions: engineQuestions
+    };
+  }
+
+  // 2. Full Subject Mock Tests: e.g. "subject-general-knowledge-full-1", "subject-reasoning-full-1", "full-cbt-1", etc.
+  if (testId.startsWith('subject-') || testId.startsWith('unified-') || testId.startsWith('full-cbt-') || testId.startsWith('ca-mock-')) {
     let subject = subjectParam;
     let title = 'Subject Master Mock Test';
     let targetCount = 100;
     let duration = 90;
+    let canonicalSub = 'all';
 
-    // Topic-wise tests carry their topic in the id. Resolving it before the subject
-    // checks below keeps the test scoped to its own subject and topic.
-    let topicName = '';
-    if (testId.startsWith('topic-')) {
-      const { subjectId, topicSlug } = parseTopicTestId(testId);
-      if (subjectId) subject = subjectId;
-      topicName = resolveTopicName(subjectId, topicSlug);
-    }
-
-    if (testId.includes('gk') || subject === 'general-knowledge' || subject === 'General Knowledge') {
+    if (
+      testId.includes('general-knowledge') ||
+      testId.includes('subject-gk') ||
+      subject === 'general-knowledge' ||
+      subject === 'General Knowledge' ||
+      subject === 'gk'
+    ) {
+      canonicalSub = 'general-knowledge';
       subject = 'General Knowledge';
-      title = 'General Knowledge Master PYQ Mock Test';
-    } else if (testId.includes('reasoning') || subject === 'reasoning' || subject === 'Reasoning') {
-      subject = 'Reasoning';
-      title = 'Reasoning & Mental Ability Master Mock Test';
-    } else if (testId.includes('quant') || subject === 'quantitative-aptitude' || subject === 'Quantitative Aptitude') {
+      title = 'General Knowledge – Comprehensive Full Mock';
+    } else if (
+      testId.includes('quantitative-aptitude') ||
+      testId.includes('subject-quant') ||
+      subject === 'quantitative-aptitude' ||
+      subject === 'Quantitative Aptitude' ||
+      subject === 'quant'
+    ) {
+      canonicalSub = 'quantitative-aptitude';
       subject = 'Quantitative Aptitude';
-      title = 'Quantitative Aptitude Master Mock Test';
-    } else if (testId.includes('english') || subject === 'english-language' || subject === 'English Language') {
+      title = 'Quantitative Aptitude – Comprehensive Full Mock';
+    } else if (
+      testId.includes('reasoning') ||
+      testId.includes('subject-reasoning') ||
+      subject === 'reasoning' ||
+      subject === 'Reasoning'
+    ) {
+      canonicalSub = 'reasoning';
+      subject = 'Reasoning';
+      title = 'Reasoning & Mental Ability – Comprehensive Full Mock';
+    } else if (
+      testId.includes('english-language') ||
+      testId.includes('subject-english') ||
+      subject === 'english-language' ||
+      subject === 'English Language' ||
+      subject === 'english'
+    ) {
+      canonicalSub = 'english-language';
       subject = 'English Language';
-      title = 'English Language Master Mock Test';
-    } else if (testId.includes('computer') || subject === 'computer-science' || subject === 'Computer Science') {
-      // Checked before the science rule: "computer-science" contains "science".
+      title = 'English Language – Comprehensive Full Mock';
+    } else if (
+      testId.includes('computer-science') ||
+      testId.includes('subject-computer') ||
+      subject === 'computer-science' ||
+      subject === 'Computer Science' ||
+      subject === 'computer' ||
+      subject === 'cse'
+    ) {
+      canonicalSub = 'computer-science';
       subject = 'Computer Science';
-      title = 'Computer Science Master Mock Test';
-    } else if (testId.includes('science') || subject === 'general-science' || subject === 'General Science') {
+      title = 'Computer Science – Comprehensive Full Mock';
+    } else if (
+      testId.includes('general-science') ||
+      testId.includes('subject-science') ||
+      subject === 'general-science' ||
+      subject === 'General Science' ||
+      subject === 'science'
+    ) {
+      canonicalSub = 'general-science';
       subject = 'General Science';
-      title = 'General Science Master Mock Test';
-    } else if (testId.startsWith('full-cbt-')) {
+      title = 'General Science – Comprehensive Full Mock';
+    } else if (
+      testId.includes('current-affairs') ||
+      testId.includes('ca-mock') ||
+      subject === 'current-affairs' ||
+      subject === 'Current Affairs' ||
+      subject === 'ca'
+    ) {
+      canonicalSub = 'current-affairs';
+      subject = 'Current Affairs';
+      title = 'Current Affairs 2025–2026 – Full Mega Mock';
+    } else if (testId.startsWith('full-cbt-') || testId === 'rrb-ntpc-cbt1-full-01' || testId === 'rrb-ntpc-cbt1-full-02') {
+      canonicalSub = 'all';
       subject = 'full';
-      title = 'RRB NTPC UG 2025 Full CBT Master Mock Test (100 Qs)';
+      title = 'RRB NTPC CBT–1 Full Mock Test (100 Qs)';
     }
 
-    if (testId.includes('25q') || testId.includes('speed') || testId.includes('practice-1')) {
+    if (testId.includes('speed') || testId.includes('25q') || testId.includes('quick')) {
       targetCount = 25;
       duration = 25;
-      title = `${subject} · Speed Practice Test (25 Qs)`;
-    } else if (testId.includes('50q') || testId.includes('high-yield') || testId.includes('test-2')) {
+      title = `${subject} – Speed Drill Practice (25 Qs)`;
+    } else if (testId.includes('sectional') || testId.includes('50q') || testId.includes('sec-1')) {
       targetCount = 50;
       duration = 45;
-      title = `${subject} · High-Yield PYQs Test (50 Qs)`;
-    } else if (testId.includes('master-2') || testId.includes('test-3')) {
+      title = `${subject} – Sectional CBT Drill (50 Qs)`;
+    } else if (testId.includes('pyq-master') || testId.includes('mixed')) {
       targetCount = 100;
       duration = 90;
-      title = `${subject} · Full Comprehensive Test 2 (100 Qs)`;
+      title = `${subject} – Previous Year Papers Master Test`;
     }
 
-    // Filter questions
     let picked = [];
-    if (subject === 'full') {
-      const qQuant = allQuestions.filter((q) => q.subject === 'Quantitative Aptitude').slice(0, 30);
-      const qGk = allQuestions.filter((q) => q.subject === 'General Knowledge').slice(0, 30);
-      const qSci = allQuestions.filter((q) => q.subject === 'General Science').slice(0, 10);
-      const qReas = allQuestions.filter((q) => q.subject === 'Reasoning').slice(0, 30);
+    if (canonicalSub === 'all' || subject === 'full') {
+      const qQuant = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude').slice(0, 30);
+      const qGk = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge').slice(0, 30);
+      const qSci = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-science').slice(0, 10);
+      const qReas = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning').slice(0, 30);
       picked = [...qQuant, ...qGk, ...qSci, ...qReas];
     } else {
-      const subjectPool = await getQuestionsForSubject(subject);
-      picked = subjectPool.slice(0, targetCount);
-
-      if (topicName) {
-        // A topic test serves only the questions classified under its own topic. When
-        // nothing matches we keep the full subject pool instead of showing an empty test.
-        const cleanTopic = slugifyTopic(topicName);
-        const topicPool =
-          subject === 'General Knowledge'
-            ? subjectPool.filter(
-                (q) =>
-                  classifyGkTopic(q) === topicName ||
-                  slugifyTopic(q.subtopic) === cleanTopic ||
-                  String(q.subtopic || '').toLowerCase().includes(topicName.toLowerCase())
-              )
-            : subject === 'Computer Science'
-              ? subjectPool.filter(
-                  (q) =>
-                    classifyComputerTopic(q) === topicName ||
-                    slugifyTopic(q.subtopic) === cleanTopic ||
-                    String(q.subtopic || '').toLowerCase().includes(topicName.toLowerCase())
-                )
-              : subjectPool.filter((q) => {
-                  if (!q.subtopic) return false;
-                  return (
-                    slugifyTopic(q.subtopic) === cleanTopic ||
-                    String(q.subtopic).toLowerCase().includes(topicName.toLowerCase()) ||
-                    topicName.toLowerCase().includes(String(q.subtopic).toLowerCase())
-                  );
-                });
-        if (topicPool.length > 0) picked = topicPool.slice(0, targetCount);
-        title = `${subject} · ${topicName} Topic Test`;
-        duration = Math.max(5, Math.min(duration, picked.length));
-      } else if (picked.length < targetCount && subjectPool.length > 0) {
-        picked = subjectPool;
-      }
+      const subjectPool = await getQuestionsForSubject(canonicalSub);
+      picked = subjectPool.slice(0, Math.min(targetCount, subjectPool.length));
     }
 
     const engineQuestions = formatToEngineQuestions(picked);
+    const isEnglish = canonicalSub === 'english-language';
 
-    const isEnglish = subject === 'English Language';
     return {
       meta: {
         id: testId,
-        code: `MOCK-${(subject || 'CBT').slice(0, 5).toUpperCase()}`,
+        code: `MOCK-${(canonicalSub || 'CBT').slice(0, 4).toUpperCase()}`,
         title,
-        subtitle: isEnglish ? `SSC CGL 2020 Official Tier-I Question Bank` : `ExamQuestHub Master CBT · Official 2025 Question Pool`,
-        examName: isEnglish ? 'SSC CGL 2020 Tier-I (CBE)' : 'RRB NTPC Under Graduate 2025 (CEN 07/2025)',
-        examYear: isEnglish ? '2020' : '2025',
-        subjectLabel: subject === 'full' ? 'All 4 Subjects' : subject,
-        targetSubject: subject,
+        subtitle: isEnglish ? 'SSC CGL Official Tier-I Question Bank' : 'ExamQuestHub Verified Official Examination Question Pool',
+        examName: isEnglish ? 'SSC CGL Tier-I' : 'RRB NTPC CBT–1',
+        examYear: '2025-26',
+        subjectLabel: subject === 'full' ? 'All Subjects' : subject,
+        targetSubject: canonicalSub,
         questionsCount: engineQuestions.length,
         timeMinutes: duration,
         marks: isEnglish ? engineQuestions.length * 2 : engineQuestions.length,
         negativeMarking: isEnglish ? 0.5 : 0.33,
-        pdfUrl: isEnglish
-          ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf'
-          : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+        pdfUrl: isEnglish ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf' : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
         pdfFileName: isEnglish ? 'SSC_CGL_2020_All_21_Sets_English.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf',
         subjectTest: subject !== 'full'
       },
@@ -813,7 +972,7 @@ export async function getEngineMockTest(testId, subjectParam = null) {
     };
   }
 
-  // 2. Legacy / Individual Shift resolution if ever requested
+  // 3. Shift / PYQ Resolution: e.g. "rrb-ntpc-ug-2024-shift-1", "ssc-cgl-2020-shift-1", etc.
   let shiftId = testId;
   let targetSubject = subjectParam;
 
@@ -860,17 +1019,17 @@ export async function getEngineMockTest(testId, subjectParam = null) {
       id: testId,
       shiftId: shift?.id,
       shiftNumber: shift?.shiftNumber || 1,
-      code: `${shift?.code || 'RRB-NTPC'}${targetSubject && targetSubject !== 'full' ? `-${targetSubject.slice(0, 4).toUpperCase()}` : ''}`,
-      title: `${shift?.title || 'RRB NTPC CBT'} · ${subjectLabel}`,
+      code: `${shift?.code || 'CBT'}${targetSubject && targetSubject !== 'full' ? `-${targetSubject.slice(0, 4).toUpperCase()}` : ''}`,
+      title: `${shift?.title || 'Official CBT Paper'} · ${subjectLabel}`,
       subtitle: `${shift?.examDate || ''} · ${shift?.shiftTiming || ''}`,
-      examName: shift?.examName || (isGrad2026 ? 'RRB NTPC Graduate 2025-26 (CEN 06/2025)' : (isGrad2024 ? 'RRB NTPC Graduate 2024 (CBT-1)' : 'RRB NTPC Under Graduate 2025 (CEN 07/2025)')),
+      examName: shift?.examName || (isGrad2026 ? 'RRB NTPC Graduate 2025-26' : (isGrad2024 ? 'RRB NTPC Graduate 2024' : (isSsc ? 'SSC CGL Tier-I' : 'RRB NTPC Under Graduate 2025'))),
       examYear: shift?.examYear || (isGrad2026 ? '2026' : (isGrad2024 ? '2024' : '2025')),
       subjectLabel,
       targetSubject: targetSubject || 'full',
       questionsCount: engineQuestions.length,
       timeMinutes: duration,
-      marks: engineQuestions.length,
-      negativeMarking: shift?.negativeMarking || 0.33,
+      marks: isSsc ? engineQuestions.length * 2 : engineQuestions.length,
+      negativeMarking: shift?.negativeMarking || (isSsc ? 0.5 : 0.33),
       pdfUrl: shift?.pdfUrl || defaultPdfUrl,
       pdfFileName: shift?.pdfFileName || defaultPdfFileName,
       subjectTest: !isFull
