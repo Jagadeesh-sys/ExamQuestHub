@@ -42,7 +42,7 @@ export default function AgencyLogo({ org = '', size = 'md', className = '' }) {
       return (
         <div className={`${sizeClasses} shrink-0 rounded-full overflow-hidden shadow-xs border border-[#FCA5A5]/60 bg-[#991B1B] ${className}`}>
           <img
-            src="/assets/aistudio/logo_rrb_clean.png"
+            src="/assets/aistudio/image_cbd93505.png"
             alt="Railway Recruitment Board"
             className="w-full h-full object-cover rounded-full"
             onError={() => setImgError(true)}
@@ -255,6 +255,19 @@ export default function AgencyLogo({ org = '', size = 'md', className = '' }) {
 
   // 8. SSC (Staff Selection Commission)
   if (normalized.includes('ssc') || normalized.includes('staff selection')) {
+    if (!imgError) {
+      return (
+        <div className={`${sizeClasses} shrink-0 rounded-full overflow-hidden shadow-xs border border-amber-300/80 bg-white ${className}`}>
+          <img
+            src="/assets/aistudio/image_445d7a66.png"
+            alt="Staff Selection Commission"
+            className="w-full h-full object-contain rounded-full"
+            onError={() => setImgError(true)}
+            loading="lazy"
+          />
+        </div>
+      );
+    }
     return (
       <div
         className={`${sizeClasses} rounded-full bg-[#0B1F3A] text-white flex items-center justify-center shrink-0 shadow-xs border-2 border-[#38BDF8] overflow-hidden relative ${className}`}

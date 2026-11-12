@@ -101,7 +101,9 @@ export default defineConfig(() => {
           ]
         },
         devOptions: {
-          enabled: true,
+          // Disable dev service worker when HMR is disabled (AI Studio environment)
+          // to prevent SendBeforeConnectError from registerDevSW HMR WebSocket client
+          enabled: process.env.DISABLE_HMR !== 'true',
           type: 'module'
         }
       })

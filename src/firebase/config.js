@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, doc, getDocFromServer, setDoc, serverTimestamp } from 'firebase/firestore';
 import rawConfig from '../../firebase-applet-config.json';
 import { logAppError } from '../utils/errorLogger.js';
 
@@ -54,10 +54,25 @@ let initError = null;
 try {
   if (resolvedConfig.apiKey && resolvedConfig.projectId) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    // Use named database only when explicitly set; otherwise default `(default)`.
-    db = resolvedConfig.firestoreDatabaseId
-      ? getFirestore(app, resolvedConfig.firestoreDatabaseId)
-      : getFirestore(app);
+    
+    // Enable auto-detect long polling so sandboxed iframes, proxies and restricted
+    // networks gracefully fall back to HTTP long-polling instead of hanging on streaming channels.
+    const firestoreSettings = {
+      experimentalAutoDetectLongPolling: true,
+      ignoreUndefinedProperties: true
+    };
+
+    try {
+      db = resolvedConfig.firestoreDatabaseId
+        ? initializeFirestore(app, firestoreSettings, resolvedConfig.firestoreDatabaseId)
+        : initializeFirestore(app, firestoreSettings);
+    } catch {
+      // If already initialized on this app instance, retrieve existing instance
+      db = resolvedConfig.firestoreDatabaseId
+        ? getFirestore(app, resolvedConfig.firestoreDatabaseId)
+        : getFirestore(app);
+    }
+
     auth = getAuth(app);
     isFirebaseConfigured = true;
 
@@ -97,7 +112,7 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
  * `not-found` response still counts (the collection is simply empty). Any throw
  * is reported as a failure with an actionable reason.
  */
-export async function testFirestoreConnection() {
+export async function testFirestoreConnection(timeoutMs = 4000) {
   if (!db || !isFirebaseConfigured) {
     return {
       connected: false,
@@ -107,7 +122,11 @@ export async function testFirestoreConnection() {
 
   const startTime = Date.now();
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    const checkPromise = getDocFromServer(doc(db, 'test', 'connection'));
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Connection check timed out')), timeoutMs)
+    );
+    await Promise.race([checkPromise, timeoutPromise]);
     return {
       connected: true,
       verified: true,
@@ -140,8 +159,12 @@ export async function testFirestoreConnection() {
       };
     }
 
+    if (msg.includes('timed out')) {
+      return { connected: false, latencyMs, error: 'Connection check timed out.' };
+    }
+
     if (msg.includes('offline') || code === 'firestore/unavailable') {
-      return { connected: false, latencyMs, error: 'Client is offline or the network is blocking Firestore.' };
+      return { connected: false, latencyMs, error: 'Client is offline or operating with local cache.' };
     }
 
     return { connected: false, latencyMs, error: msg };
@@ -168,13 +191,6 @@ export async function testFirestoreWrite() {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, error: msg };
   }
-}
-
-// Initial passive connection check
-if (typeof window !== 'undefined' && db) {
-  testFirestoreConnection().catch((e) => {
-    console.debug('[ExamQuestHub] Initial Firestore connection ping caught:', e);
-  });
 }
 
 export { app, db, auth, analytics, isFirebaseConfigured, resolvedConfig, initError };

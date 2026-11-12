@@ -135,9 +135,23 @@ export function subscribeToErrorLogs(callback) {
 // Global browser window error listeners for uncaught errors
 if (typeof window !== 'undefined') {
   window.addEventListener('error', (event) => {
+    const msg = event.message || '';
+    // Ignore benign dev-server WebSocket / HMR disconnection errors and expected Firestore offline mode messages
+    if (
+      msg.includes('SendBeforeConnectError') ||
+      msg.includes('WebSocket') ||
+      msg.includes('@vite/client') ||
+      msg.includes('vite-plugin-pwa') ||
+      msg.includes('Could not reach Cloud Firestore backend') ||
+      msg.includes('Backend didn\'t respond within 10 seconds') ||
+      msg.includes('operate in offline mode')
+    ) {
+      return;
+    }
+
     logAppError({
       category: 'JavaScript',
-      message: event.message || 'Uncaught window error',
+      message: msg || 'Uncaught window error',
       component: event.filename ? `${event.filename}:${event.lineno}:${event.colno}` : 'Window',
       stack: event.error?.stack || ''
     });
@@ -146,6 +160,17 @@ if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
     const msg = reason instanceof Error ? reason.message : String(reason);
+
+    // Ignore benign Firestore offline mode or stream timeout rejections
+    if (
+      msg.includes('Could not reach Cloud Firestore backend') ||
+      msg.includes('Backend didn\'t respond within 10 seconds') ||
+      msg.includes('operate in offline mode') ||
+      msg.includes('Connection check timed out')
+    ) {
+      return;
+    }
+
     logAppError({
       category: 'UnhandledPromise',
       message: msg || 'Unhandled promise rejection',

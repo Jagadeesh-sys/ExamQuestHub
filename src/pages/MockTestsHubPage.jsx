@@ -266,8 +266,8 @@ export default function MockTestsHubPage() {
       title: 'RRB NTPC',
       shortTitle: 'RRB NTPC',
       badge: '128 Shifts',
-      image3d: `${cleanBase}assets/aistudio/logo_rrb_clean.png`,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_64ced5a3.png`,
+      image3d: `${cleanBase}assets/aistudio/image_cbd93505.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/image_cbd93505.png`,
       type: 'exam'
     },
     {
@@ -275,27 +275,18 @@ export default function MockTestsHubPage() {
       title: 'SSC CGL',
       shortTitle: 'SSC CGL',
       badge: '35 Shifts',
-      image3d: `${cleanBase}assets/aistudio/image_a918d86e.png`,
-      fallbackUrl: `${cleanBase}assets/aistudio/header_icon_trimmed.png`,
+      image3d: `${cleanBase}assets/aistudio/image_445d7a66.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/image_445d7a66.png`,
       type: 'exam'
     },
     {
-      id: 'ssc-chsl',
-      title: 'SSC CHSL',
-      shortTitle: 'SSC CHSL',
-      badge: '10+2 Tier-1',
-      image3d: `${cleanBase}assets/aistudio/header_icon_trimmed.png`,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_a918d86e.png`,
-      type: 'exam'
-    },
-    {
-      id: 'ssc-mts',
-      title: 'SSC MTS',
-      shortTitle: 'SSC MTS',
-      badge: 'Multi-Tasking',
-      image3d: `${cleanBase}assets/aistudio/image_3a489c44.png`,
-      fallbackUrl: `${cleanBase}assets/aistudio/header_icon_trimmed.png`,
-      type: 'exam'
+      id: 'current-affairs',
+      title: 'Current Affairs',
+      shortTitle: 'Current Affairs',
+      badge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 641, '641 Qs'),
+      image3d: iconCurrentAffairs,
+      fallbackUrl: `${cleanBase}assets/aistudio/image_1b19ce6e.png`,
+      type: 'subject'
     },
     {
       id: 'general-knowledge',
@@ -341,6 +332,15 @@ export default function MockTestsHubPage() {
       image3d: iconScience,
       fallbackUrl: `${cleanBase}assets/aistudio/image_dbf284c6.png`,
       type: 'subject'
+    },
+    {
+      id: 'computer-science',
+      title: 'Computer Science',
+      shortTitle: 'Computer',
+      badge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 810, '810 Qs'),
+      image3d: iconComputer,
+      fallbackUrl: `${cleanBase}assets/aistudio/image_6bd65727.png`,
+      type: 'subject'
     }
   ], [liveTotalQuestionsNumber, liveSubjectCounts, cleanBase]);
 
@@ -370,10 +370,6 @@ export default function MockTestsHubPage() {
       list = list.filter((m) => m.examId === 'rrb-ntpc');
     } else if (selectedSubject === 'ssc-cgl') {
       list = list.filter((m) => m.examId === 'ssc-cgl');
-    } else if (selectedSubject === 'ssc-chsl') {
-      list = list.filter((m) => m.examId === 'ssc-chsl');
-    } else if (selectedSubject === 'ssc-mts') {
-      list = list.filter((m) => m.examId === 'ssc-mts');
     } else if (selectedSubject !== 'all') {
       // If a subject is selected, show tests containing that section
       list = list.filter((m) => m.sections.some((s) => s.name.toLowerCase().includes(selectedSubject.replace('-', ' '))));
@@ -464,135 +460,220 @@ export default function MockTestsHubPage() {
     }
   };
 
-  // Series matching reference image: Screenshot_20261112_092302_2e65db37.jpg
-  const newTestSeriesList = [
-    {
-      id: 'series-rrb-ntpc-ug',
-      title: 'RRB NTPC Under Graduate 2026-27 (CBT 1 + CBT 2)',
-      totalTests: '656 Total Tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      agency: 'RRB',
-      examId: 'rrb-ntpc',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      badge: 'NEW'
-    },
-    {
-      id: 'series-opsc-grad',
-      title: 'OPSC Combined Graduate 2026 Mock Series',
-      totalTests: '175 Total Tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +4 more',
-      agency: 'OPSC',
-      examId: 'all',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      badge: 'NEW'
-    },
-    {
-      id: 'series-rrb-ntpc-grad',
-      title: 'RRB NTPC Graduate 2026-27 (CBT 1 + CBT 2)',
-      totalTests: '835 Total Tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      agency: 'RRB',
-      examId: 'rrb-ntpc',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      badge: 'NEW'
-    },
-    {
-      id: 'series-rrb-sm',
-      title: 'RRB Station Master (CBT + CBAT) 2026 Series',
-      totalTests: '164 Total Tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      agency: 'RRB',
-      examId: 'rrb-ntpc',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      badge: 'NEW'
-    },
-    {
-      id: 'series-ssc-cgl',
-      title: 'SSC CGL 2026 Complete (Tier 1 + Tier 2) Mock Series',
-      totalTests: '420 Total Tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      agency: 'SSC',
-      examId: 'ssc-cgl',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      badge: 'NEW'
-    }
-  ];
+  // Real, Dynamic Available Test Series (Strictly mapped to real data: 163 CBT Shifts & Full Mocks)
+  const realExamSeriesList = useMemo(() => {
+    const ugShifts = shifts.filter(
+      (s) =>
+        String(s.id).includes('ug') ||
+        String(s.examName || '').includes('Under Graduate') ||
+        s.examLevel === 'Under Graduate'
+    );
+    const gradShifts = shifts.filter(
+      (s) => s.examLevel === 'Graduate' || String(s.id).includes('grad')
+    );
+    const ssc2026Shifts = shifts.filter(
+      (s) =>
+        (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) &&
+        (s.examYear === '2026' || String(s.id).includes('2026'))
+    );
+    const ssc2020Shifts = shifts.filter(
+      (s) =>
+        (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) &&
+        (s.examYear === '2020' || String(s.id).includes('2020'))
+    );
 
-  const testSeriesForYouList = [
-    {
-      id: 'ts-rrb-grad',
-      title: 'RRB NTPC Graduate 2026-27 (CBT 1 + CBT 2) Mock Test Series',
-      totalTests: '835 Total tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      examId: 'rrb-ntpc',
-      category: 'rankers',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      targetTab: 'full-mock'
-    },
-    {
-      id: 'ts-rrb-sm',
-      title: 'RRB Station Master(CBT + CBAT) 2026 Mock Test Series',
-      totalTests: '164 Total tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      examId: 'rrb-ntpc',
-      category: 'rankers',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      targetTab: 'full-mock'
-    },
-    {
-      id: 'ts-rrb-ug',
-      title: 'RRB NTPC Under Graduate 2026-27 (CBT 1 + CBT 2) Mock Test Series',
-      totalTests: '656 Total tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      examId: 'rrb-ntpc',
-      category: 'rankers',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      targetTab: 'full-mock'
-    },
-    {
-      id: 'ts-ssc-cgl',
-      title: 'SSC CGL 2026 Complete (Tier 1 + Tier 2) Mock Test Series',
-      totalTests: '420 Total tests',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      examId: 'ssc-cgl',
-      category: 'rankers',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      targetTab: 'full-mock'
-    },
-    {
-      id: 'ts-rrb-pyqs',
-      title: 'RRB NTPC Official CBT 163 Shift Papers Series',
-      totalTests: '163 CBT Shift Papers',
-      freeLabel: '100% Free',
-      languages: 'English, Hindi +6 more',
-      examId: 'rrb-ntpc',
-      category: 'pyqs',
-      logoUrl: '/assets/aistudio/logo_rrb_clean.png',
-      targetTab: 'pyqs'
-    }
-  ];
+    const ugCount = ugShifts.length || 57;
+    const gradCount = gradShifts.length || 71;
+    const ssc26Count = ssc2026Shifts.length || 14;
+    const ssc20Count = ssc2020Shifts.length || 21;
+    const fullMockCount = FULL_MOCK_SERIES.length || 14;
 
-  const displayedTestSeries = useMemo(() => {
-    if (testSeriesSubFilter === 'rankers') {
-      return testSeriesForYouList.filter((t) => t.category === 'rankers');
+    return [
+      {
+        id: 'series-rrb-ug',
+        title: 'RRB NTPC Under Graduate Official CBT Papers',
+        subtitle: 'Authentic Shift Papers with Official Answer Keys & Live CBT Engine',
+        totalTests: `${ugCount} Official Shifts`,
+        questionsCount: `${(ugCount * 100).toLocaleString()} Qs`,
+        languages: 'English · Hindi',
+        agency: 'RRB',
+        examId: 'rrb-ntpc',
+        filterKey: 'rrb-ug',
+        targetTab: 'pyqs',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
+        badge: `${ugCount} SHIFTS`
+      },
+      {
+        id: 'series-rrb-grad',
+        title: 'RRB NTPC Graduate Level Official CBT Shift Papers',
+        subtitle: '2024 & 2025-26 Graduate Shift Question Papers with Detailed Solutions',
+        totalTests: `${gradCount} Official Shifts`,
+        questionsCount: `${(gradCount * 100).toLocaleString()} Qs`,
+        languages: 'English · Hindi',
+        agency: 'RRB',
+        examId: 'rrb-ntpc',
+        filterKey: 'rrb-grad-2024',
+        targetTab: 'pyqs',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
+        badge: `${gradCount} SHIFTS`
+      },
+      {
+        id: 'series-ssc-cgl-2026',
+        title: 'SSC CGL 2026 All Shift Official Question Papers',
+        subtitle: 'Extracted directly from official shift answer key papers (100 Qs / 60 Mins)',
+        totalTests: `${ssc26Count} Official Shifts`,
+        questionsCount: `${(ssc26Count * 100).toLocaleString()} Qs`,
+        languages: 'English',
+        agency: 'SSC',
+        examId: 'ssc-cgl',
+        filterKey: 'ssc-2026',
+        targetTab: 'pyqs',
+        logoUrl: '/assets/aistudio/image_445d7a66.png',
+        badge: '2026 LATEST'
+      },
+      {
+        id: 'series-ssc-cgl-2020',
+        title: 'SSC CGL Tier-1 Previous Year All 21 Shift Sets',
+        subtitle: 'Complete 21 Tier-1 shift papers with Quantitative, Reasoning, English & GA',
+        totalTests: `${ssc20Count} Official Shifts`,
+        questionsCount: `${(ssc20Count * 100).toLocaleString()} Qs`,
+        languages: 'English',
+        agency: 'SSC',
+        examId: 'ssc-cgl',
+        filterKey: 'ssc-2020',
+        targetTab: 'pyqs',
+        logoUrl: '/assets/aistudio/image_445d7a66.png',
+        badge: '21 SETS'
+      },
+      {
+        id: 'series-full-mocks',
+        title: 'Official Examination Full CBT Simulated Mocks',
+        subtitle: 'Timed full-length mocks matching RRB (90 min) & SSC (60 min) official patterns',
+        totalTests: `${fullMockCount} Full Mocks`,
+        questionsCount: `${(fullMockCount * 100).toLocaleString()} Qs`,
+        languages: 'English · Hindi',
+        agency: 'EXAM',
+        examId: 'all',
+        filterKey: 'all',
+        targetTab: 'full-mock',
+        logoUrl: '/assets/aistudio/examquesthub-logo.png',
+        badge: 'FULL CBT'
+      }
+    ];
+  }, [shifts]);
+
+  // Real Available Dynamic Mocks (Top available tests user can immediately launch)
+  const dynamicAvailableTests = useMemo(() => {
+    const list = [];
+    if (FULL_MOCK_SERIES[0]) {
+      list.push({
+        id: FULL_MOCK_SERIES[0].id,
+        title: FULL_MOCK_SERIES[0].title,
+        examName: FULL_MOCK_SERIES[0].examName,
+        questionsCount: FULL_MOCK_SERIES[0].questionsCount,
+        timeMinutes: FULL_MOCK_SERIES[0].timeMinutes,
+        pattern: FULL_MOCK_SERIES[0].pattern,
+        agency: FULL_MOCK_SERIES[0].agency,
+        category: 'full-mock',
+        badge: 'FULL CBT',
+        badgeColor: 'bg-indigo-100 text-indigo-700',
+        logoUrl: '/assets/aistudio/examquesthub-logo.png',
+        rawObj: FULL_MOCK_SERIES[0]
+      });
+    }
+
+    const ugShift = shifts.find((s) => String(s.id).includes('ug') || s.examLevel === 'Under Graduate');
+    if (ugShift) {
+      list.push({
+        id: ugShift.id,
+        title: ugShift.title || `RRB NTPC UG 2025 CBT–1 Shift ${ugShift.shiftNumber || 1}`,
+        examName: 'RRB NTPC Under Graduate',
+        questionsCount: 100,
+        timeMinutes: 90,
+        pattern: '30 Math · 30 Reasoning · 40 General Awareness',
+        agency: 'RRB',
+        category: 'pyqs',
+        badge: 'UG SHIFT',
+        badgeColor: 'bg-emerald-100 text-emerald-800',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
+        rawObj: ugShift
+      });
+    }
+
+    const gradShift = shifts.find((s) => s.examLevel === 'Graduate' || String(s.id).includes('grad'));
+    if (gradShift) {
+      list.push({
+        id: gradShift.id,
+        title: gradShift.title || `RRB NTPC Graduate CBT–1 Shift ${gradShift.shiftNumber || 1}`,
+        examName: 'RRB NTPC Graduate',
+        questionsCount: 100,
+        timeMinutes: 90,
+        pattern: '30 Math · 30 Reasoning · 40 General Awareness',
+        agency: 'RRB',
+        category: 'pyqs',
+        badge: 'GRAD SHIFT',
+        badgeColor: 'bg-blue-100 text-blue-800',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
+        rawObj: gradShift
+      });
+    }
+
+    const ssc26Shift = shifts.find(
+      (s) =>
+        (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) &&
+        (s.examYear === '2026' || String(s.id).includes('2026'))
+    );
+    if (ssc26Shift) {
+      list.push({
+        id: ssc26Shift.id,
+        title: ssc26Shift.title || `SSC CGL 2026 Shift ${ssc26Shift.shiftNumber || 1} Paper`,
+        examName: 'SSC CGL 2026',
+        questionsCount: 100,
+        timeMinutes: 60,
+        pattern: '25 Reasoning · 25 GA · 25 Quant · 25 English',
+        agency: 'SSC',
+        category: 'pyqs',
+        badge: '2026 CBT',
+        badgeColor: 'bg-purple-100 text-purple-800',
+        logoUrl: '/assets/aistudio/image_445d7a66.png',
+        rawObj: ssc26Shift
+      });
+    }
+
+    const ssc20Shift = shifts.find(
+      (s) =>
+        (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) &&
+        (s.examYear === '2020' || String(s.id).includes('2020'))
+    );
+    if (ssc20Shift) {
+      list.push({
+        id: ssc20Shift.id,
+        title: ssc20Shift.title || `SSC CGL 2020 Tier–I Set ${ssc20Shift.shiftNumber || 1}`,
+        examName: 'SSC CGL 2020',
+        questionsCount: 100,
+        timeMinutes: 60,
+        pattern: '25 Reasoning · 25 GA · 25 Quant · 25 English',
+        agency: 'SSC',
+        category: 'pyqs',
+        badge: 'TIER-1',
+        badgeColor: 'bg-amber-100 text-amber-800',
+        logoUrl: '/assets/aistudio/image_445d7a66.png',
+        rawObj: ssc20Shift
+      });
+    }
+
+    return list;
+  }, [shifts]);
+
+  const displayedDynamicTests = useMemo(() => {
+    if (testSeriesSubFilter === 'rankers' || testSeriesSubFilter === 'full-mock') {
+      return dynamicAvailableTests.filter((t) => t.category === 'full-mock');
     }
     if (testSeriesSubFilter === 'pyqs') {
-      return testSeriesForYouList.filter((t) => t.category === 'pyqs' || t.targetTab === 'pyqs');
+      return dynamicAvailableTests.filter((t) => t.category === 'pyqs');
     }
-    if (testSeriesSubFilter === 'full-mock') {
-      return testSeriesForYouList.filter((t) => t.targetTab === 'full-mock');
-    }
-    return testSeriesForYouList;
-  }, [testSeriesSubFilter]);
+    return dynamicAvailableTests;
+  }, [dynamicAvailableTests, testSeriesSubFilter]);
 
   // Launch test handler - 100% Free for everyone (No locks)
   const handleLaunchTest = (test, mode = 'cbt') => {
@@ -610,40 +691,13 @@ export default function MockTestsHubPage() {
         {/* =========================================================================
             HEADER & BREADCRUMBS
             ========================================================================= */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-200">
+        <div className="flex items-center justify-between gap-3 text-slate-200">
           <Breadcrumbs
             items={[
               { label: t('navHome') || 'Home', path: '/' },
               { label: 'Mock Tests' }
             ]}
           />
-
-          {/* Quick Header Actions: 100% Free For All Badge, Bookmarks Counter */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            {/* 100% Free For All Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 backdrop-blur-xs shadow-2xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
-              <span>100% Free For All</span>
-            </div>
-
-            {/* Bookmarks Counter */}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveCategoryTab('all');
-                setGlobalSearch('');
-              }}
-              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer relative"
-              title="Saved Tests"
-            >
-              <Bookmark className="w-4 h-4 text-slate-200" />
-              {bookmarkedIds.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {bookmarkedIds.length}
-                </span>
-              )}
-            </button>
-          </div>
         </div>
 
         {/* =========================================================================
@@ -731,211 +785,13 @@ export default function MockTestsHubPage() {
         </section>
 
         {/* =========================================================================
-            SECTION 1: NEW TEST SERIES (Application Color Theme)
-            ========================================================================= */}
-        <section className="space-y-3 pt-1">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-5 bg-[#2468B4] rounded-full inline-block" />
-            <h2 className="text-base sm:text-lg font-black text-[#12345A] font-heading tracking-tight">
-              New Test Series
-            </h2>
-          </div>
-
-          <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar py-1">
-            {newTestSeriesList.map((series) => (
-              <div
-                key={series.id}
-                onClick={() => {
-                  if (series.examId && series.examId !== 'all') {
-                    setSelectedSubject(series.examId);
-                  }
-                  setActiveCategoryTab('full-mock');
-                }}
-                className="min-w-[275px] sm:min-w-[315px] max-w-[330px] bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/90 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex items-center gap-3.5 group shrink-0 active:scale-[0.98]"
-              >
-                {/* Left: Round Emblem Logo + NEW Badge */}
-                <div className="flex flex-col items-center shrink-0">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-50 p-1 border border-slate-200 shadow-2xs flex items-center justify-center">
-                    <img
-                      src={series.logoUrl}
-                      alt={series.title}
-                      className="w-full h-full object-contain rounded-full"
-                      onError={(e) => {
-                        e.currentTarget.src = '/assets/aistudio/logo_rrb_clean.png';
-                      }}
-                    />
-                  </div>
-                  <span className="mt-1.5 px-2 py-0.5 rounded-xs bg-[#7C3AED] text-white text-[9px] font-black uppercase tracking-wider shadow-2xs">
-                    NEW
-                  </span>
-                </div>
-
-                {/* Right: Title, Tests Count + Free, Languages */}
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-heading font-black text-sm text-[#12345A] leading-snug line-clamp-2 group-hover:text-[#2468B4] transition-colors">
-                    {series.title}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-xs mt-1.5">
-                    <span className="text-slate-600 font-semibold">{series.totalTests}</span>
-                    <span className="text-slate-300">|</span>
-                    <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.2 rounded-full text-[11px] border border-emerald-200/60">
-                      {series.freeLabel}
-                    </span>
-                  </div>
-                  <div className="text-xs text-[#2468B4] font-semibold mt-1 truncate">
-                    {series.languages}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* =========================================================================
-            SECTION 2: TEST SERIES FOR YOU (Application Color Theme)
+            CIRCULAR HORIZONTAL EXAM / SUBJECT CAROUSEL
+            Display at TOP, right below counting questions as requested!
             ========================================================================= */}
         <section className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-5 bg-[#2468B4] rounded-full inline-block" />
-              <h2 className="text-base sm:text-lg font-black text-[#12345A] font-heading tracking-tight">
-                Test Series For You
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveCategoryTab('full-mock')}
-              className="text-xs sm:text-sm font-bold text-[#2468B4] hover:text-[#12345A] hover:underline cursor-pointer"
-            >
-              View All
-            </button>
-          </div>
-
-          {/* Sub-Filters Pill Row */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-            {[
-              { id: 'all', label: 'All' },
-              { id: 'rankers', label: 'Rankers Test Series' },
-              { id: 'pyqs', label: 'Previous Year Papers' },
-              { id: 'full-mock', label: 'Full Mock Tests' }
-            ].map((btn) => (
-              <button
-                key={btn.id}
-                type="button"
-                onClick={() => setTestSeriesSubFilter(btn.id)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                  testSeriesSubFilter === btn.id
-                    ? 'bg-[#12345A] text-white shadow-xs'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {btn.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Test Series List Card (Pure white clean application card container) */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-2 sm:p-3 border border-slate-200/90 shadow-xs divide-y divide-slate-100">
-            {displayedTestSeries.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => {
-                  if (item.examId && item.examId !== 'all') {
-                    setSelectedSubject(item.examId);
-                  }
-                  if (item.targetTab) {
-                    setActiveCategoryTab(item.targetTab);
-                  }
-                }}
-                className="flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl hover:bg-slate-50/80 transition cursor-pointer group"
-              >
-                <div className="flex items-center gap-3.5 min-w-0">
-                  {/* Circular Official Emblem */}
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-slate-50 p-1 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
-                    <img
-                      src={item.logoUrl}
-                      alt={item.title}
-                      className="w-full h-full object-contain rounded-full"
-                      onError={(e) => {
-                        e.currentTarget.src = '/assets/aistudio/logo_rrb_clean.png';
-                      }}
-                    />
-                  </div>
-
-                  {/* Title & Metadata */}
-                  <div className="min-w-0">
-                    <h3 className="font-heading font-black text-sm sm:text-base text-[#12345A] group-hover:text-[#2468B4] transition leading-snug line-clamp-1">
-                      {item.title}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-xs mt-1">
-                      <span className="text-slate-600 font-semibold">{item.totalTests}</span>
-                      <span className="text-slate-300">|</span>
-                      <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.2 rounded-full text-[11px] border border-emerald-200/60">
-                        {item.freeLabel}
-                      </span>
-                    </div>
-                    <div className="text-xs text-[#2468B4] font-semibold mt-0.5 truncate">
-                      {item.languages}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Arrow */}
-                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#12345A] group-hover:translate-x-0.5 transition shrink-0" />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* =========================================================================
-            TEST CATEGORY NAVIGATION TABS (Horizontally Scrollable)
-            1. All Tests  2. Full Mock Tests  3. Previous Year Papers
-            4. Subject-wise Tests  5. Topic-wise Practice  6. Sectional Tests
-            ========================================================================= */}
-        <section className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 select-none">
-          {[
-            { id: 'all', label: 'All Tests', icon: LayoutGrid, count: '380+' },
-            { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: '14 Series' },
-            { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: '163 Shifts' },
-            { id: 'subject-wise', label: 'Subject-wise Tests', icon: Layers, count: '8 Core' },
-            { id: 'topic-wise', label: 'Topic-wise Practice', icon: Sparkles, count: '64 Units' },
-            { id: 'sectional', label: 'Sectional Tests', icon: Target, count: 'Speed Drills' }
-          ].map((tab) => {
-            const isActive = activeCategoryTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleSelectCategoryTab(tab.id)}
-                className={`px-4 sm:px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
-                  isActive
-                    ? 'bg-[#12345A] text-white ring-2 ring-[#12345A]/20 shadow-md scale-[1.02]'
-                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90'
-                }`}
-              >
-                <tab.icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#F2BE4F]' : 'text-slate-500'}`} />
-                <span>{tab.label}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </section>
-
-        {/* =========================================================================
-            CIRCULAR HORIZONTAL EXAM / SUBJECT CAROUSEL
-            All Exams, RRB NTPC, SSC CGL, SSC CHSL, SSC MTS, General Awareness,
-            Mathematics, Reasoning, English, General Science
-            ========================================================================= */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block" />
               <h2 className="text-sm sm:text-base font-bold text-[#12345A]">
                 Select Exam or Subject
               </h2>
@@ -1018,6 +874,215 @@ export default function MockTestsHubPage() {
               })}
             </div>
           </div>
+        </section>
+
+        {/* =========================================================================
+            AVAILABLE REAL TEST SERIES (Strictly genuine series that actually exist)
+            ========================================================================= */}
+        <section className="space-y-3 pt-1">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-5 bg-[#2468B4] rounded-full inline-block" />
+            <h2 className="text-base sm:text-lg font-black text-[#12345A] font-heading tracking-tight">
+              Available Test Series
+            </h2>
+          </div>
+
+          <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar py-1">
+            {realExamSeriesList.map((series) => (
+              <div
+                key={series.id}
+                onClick={() => {
+                  if (series.examId && series.examId !== 'all') {
+                    setSelectedSubject(series.examId);
+                  }
+                  if (series.filterKey && series.targetTab === 'pyqs') {
+                    setPyqExamFilter(series.filterKey);
+                    setPyqCurrentPage(1);
+                  }
+                  setActiveCategoryTab(series.targetTab);
+                }}
+                className="w-[72vw] sm:w-[270px] min-w-[215px] max-w-[270px] bg-white rounded-2xl p-2.5 sm:p-3.5 border border-slate-200/90 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex items-center gap-2.5 sm:gap-3.5 group shrink-0 active:scale-[0.98]"
+              >
+                {/* Left: Round Emblem Logo + Badge */}
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden bg-slate-50 p-1 border border-slate-200 shadow-2xs flex items-center justify-center">
+                    <img
+                      src={series.logoUrl}
+                      alt={series.title}
+                      className="w-full h-full object-contain rounded-full"
+                      onError={(e) => {
+                        e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
+                      }}
+                    />
+                  </div>
+                  <span className="mt-1 px-1.5 py-0.5 rounded-xs bg-[#12345A] text-white text-[8.5px] font-black uppercase tracking-wider shadow-2xs">
+                    {series.badge}
+                  </span>
+                </div>
+
+                {/* Right: Title, Real Tests Count, Languages */}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-heading font-black text-xs sm:text-[13px] text-[#12345A] leading-snug line-clamp-2 group-hover:text-[#2468B4] transition-colors">
+                    {series.title}
+                  </h3>
+                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs mt-1">
+                    <span className="text-slate-700 font-bold">{series.totalTests}</span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-slate-500 font-semibold">{series.questionsCount}</span>
+                  </div>
+                  <div className="text-[11px] text-[#2468B4] font-semibold mt-0.5 truncate">
+                    {series.languages}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* =========================================================================
+            AVAILABLE MOCK TESTS (Real Available Mocks with Instant Start)
+            ========================================================================= */}
+        <section className="space-y-3 pt-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-5 bg-[#2468B4] rounded-full inline-block" />
+              <h2 className="text-base sm:text-lg font-black text-[#12345A] font-heading tracking-tight">
+                Available Mock Tests
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveCategoryTab('full-mock')}
+              className="text-xs sm:text-sm font-bold text-[#2468B4] hover:text-[#12345A] hover:underline cursor-pointer"
+            >
+              View All ({filteredFullMocks.length + matchingShifts.length})
+            </button>
+          </div>
+
+          {/* Sub-Filters Pill Row */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            {[
+              { id: 'all', label: 'All Mock Tests' },
+              { id: 'full-mock', label: 'Full Length Mocks' },
+              { id: 'pyqs', label: 'Official Shift Papers' }
+            ].map((btn) => (
+              <button
+                key={btn.id}
+                type="button"
+                onClick={() => setTestSeriesSubFilter(btn.id)}
+                className={`px-3.5 py-1 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                  testSeriesSubFilter === btn.id
+                    ? 'bg-[#12345A] text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {btn.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Mock Tests List Container (Decreased height, compact font sizes) */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs divide-y divide-slate-100">
+            {displayedDynamicTests.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-2.5 sm:py-2.5 sm:px-3 rounded-xl hover:bg-slate-50/80 transition group"
+              >
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  {/* Circular Official Emblem */}
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-slate-50 p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+                    <img
+                      src={item.logoUrl}
+                      alt={item.title}
+                      className="w-full h-full object-contain rounded-full"
+                      onError={(e) => {
+                        e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
+                      }}
+                    />
+                  </div>
+
+                  {/* Title & Metadata */}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider ${item.badgeColor}`}>
+                        {item.badge}
+                      </span>
+                      <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold truncate">{item.examName}</span>
+                    </div>
+                    <h3 className="font-heading font-black text-xs sm:text-[13px] text-[#12345A] group-hover:text-[#2468B4] transition leading-tight line-clamp-1 mt-0.5">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] text-slate-500 font-medium mt-0.5">
+                      <span>{item.questionsCount} Qs</span>
+                      <span>·</span>
+                      <span>{item.timeMinutes} Mins</span>
+                      <span>·</span>
+                      <span className="text-slate-600 font-semibold truncate">{item.pattern}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Direct Action Buttons */}
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-0.5 sm:pt-0">
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchTest(item.rawObj || item, 'practice')}
+                    className="px-2.5 py-1 rounded-md border border-slate-300 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#12345A] transition cursor-pointer"
+                  >
+                    Practice
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchTest(item.rawObj || item, 'cbt')}
+                    className="px-3 py-1 rounded-md bg-[#12345A] text-white text-[11px] font-semibold hover:bg-[#2468B4] shadow-xs hover:shadow-md transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Play className="w-2.5 h-2.5 fill-current" />
+                    <span>Attempt CBT</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* =========================================================================
+            TEST CATEGORY NAVIGATION TABS (Horizontally Scrollable)
+            1. All Tests  2. Full Mock Tests  3. Previous Year Papers
+            4. Subject-wise Tests  5. Topic-wise Practice  6. Sectional Tests
+            ========================================================================= */}
+        <section className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 select-none">
+          {[
+            { id: 'all', label: 'All Tests', icon: LayoutGrid, count: '380+' },
+            { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: '14 Series' },
+            { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: '163 Shifts' },
+            { id: 'subject-wise', label: 'Subject-wise Tests', icon: Layers, count: '8 Core' },
+            { id: 'topic-wise', label: 'Topic-wise Practice', icon: Sparkles, count: '64 Units' },
+            { id: 'sectional', label: 'Sectional Tests', icon: Target, count: 'Speed Drills' }
+          ].map((tab) => {
+            const isActive = activeCategoryTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleSelectCategoryTab(tab.id)}
+                className={`px-4 sm:px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
+                  isActive
+                    ? 'bg-[#12345A] text-white ring-2 ring-[#12345A]/20 shadow-md scale-[1.02]'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90'
+                }`}
+              >
+                <tab.icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#F2BE4F]' : 'text-slate-500'}`} />
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </section>
 
         {/* =========================================================================
