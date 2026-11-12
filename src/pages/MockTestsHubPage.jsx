@@ -176,7 +176,6 @@ export default function MockTestsHubPage() {
   const [shiftSearch, setShiftSearch] = useState('');
   const [pyqExamFilter, setPyqExamFilter] = useState('all');
   const [pyqCurrentPage, setPyqCurrentPage] = useState(1);
-  const [jumpPageInput, setJumpPageInput] = useState('');
   const SHIFTS_PER_PAGE = 24;
 
   // Load real data directly from the Firestore server on component mount
@@ -431,16 +430,6 @@ export default function MockTestsHubPage() {
 
     return { matchingShifts: list, paginatedShifts: paginated, totalPages: total };
   }, [shifts, selectedSubject, pyqExamFilter, shiftSearch, globalSearch, pyqCurrentPage]);
-
-  // Jump to page helper
-  const handleJumpToPage = (e) => {
-    e.preventDefault();
-    const p = parseInt(jumpPageInput, 10);
-    if (!isNaN(p) && p >= 1 && p <= totalPages) {
-      setPyqCurrentPage(p);
-      setJumpPageInput('');
-    }
-  };
 
   // Real, Dynamic Available Test Series (Strictly mapped to real data: 163 CBT Shifts & Full Mocks)
   const realExamSeriesList = useMemo(() => {
@@ -884,11 +873,11 @@ export default function MockTestsHubPage() {
                   }
                   setActiveCategoryTab(series.targetTab);
                 }}
-                className="w-[72vw] sm:w-[270px] min-w-[215px] max-w-[270px] bg-white rounded-2xl p-2.5 sm:p-3.5 border border-slate-200/90 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex items-center gap-2.5 sm:gap-3.5 group shrink-0 active:scale-[0.98]"
+                className="w-[76vw] sm:w-[280px] min-w-[225px] max-w-[280px] bg-white rounded-2xl p-2.5 sm:p-3.5 border border-slate-200/90 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex items-center gap-2.5 sm:gap-3.5 group shrink-0 active:scale-[0.98]"
               >
                 {/* Left: Round Emblem Logo + Badge */}
                 <div className="flex flex-col items-center shrink-0">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden bg-slate-50 p-1 border border-slate-200 shadow-2xs flex items-center justify-center">
+                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-slate-50 p-1 border border-slate-200 shadow-2xs flex items-center justify-center">
                     <img
                       src={series.logoUrl}
                       alt={series.title}
@@ -972,8 +961,8 @@ export default function MockTestsHubPage() {
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-2.5 sm:py-2.5 sm:px-3 rounded-xl hover:bg-slate-50/80 transition group"
               >
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  {/* Circular Official Emblem */}
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-slate-50 p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+                  {/* Circular Official Emblem (Prominent size) */}
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
                     <img
                       src={item.logoUrl}
                       alt={item.title}
@@ -1048,16 +1037,16 @@ export default function MockTestsHubPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => handleSelectCategoryTab(tab.id)}
-                className={`px-4 sm:px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 transition-all duration-200 cursor-pointer select-none shrink-0 shadow-2xs ${
                   isActive
                     ? 'bg-[#12345A] text-white ring-2 ring-[#12345A]/20 shadow-md scale-[1.02]'
                     : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90'
                 }`}
               >
-                <tab.icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#F2BE4F]' : 'text-slate-500'}`} />
+                <tab.icon className={`w-3 h-3 ${isActive ? 'text-[#F2BE4F]' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                  className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-semibold ${
                     isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
                   }`}
                 >
@@ -1153,63 +1142,7 @@ export default function MockTestsHubPage() {
               </div>
             </div>
 
-            {/* Shift Search & Pagination Bar Top */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 text-xs">
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                <input
-                  type="text"
-                  value={shiftSearch}
-                  onChange={(e) => {
-                    setShiftSearch(e.target.value);
-                    setPyqCurrentPage(1);
-                  }}
-                  placeholder="Filter shift by number (e.g. 1, 2, 3) or date (e.g. 2024, 2025)..."
-                  className="w-full text-xs bg-transparent focus:outline-hidden"
-                />
-              </div>
-
-              {/* Page Navigator */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-slate-500 font-medium">
-                  Page <strong className="text-slate-800">{pyqCurrentPage}</strong> of {totalPages} ({matchingShifts.length} papers)
-                </span>
-                <button
-                  type="button"
-                  disabled={pyqCurrentPage <= 1}
-                  onClick={() => setPyqCurrentPage((p) => Math.max(1, p - 1))}
-                  className="p-1 rounded-md border border-slate-200 disabled:opacity-30 hover:bg-slate-50 cursor-pointer"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  disabled={pyqCurrentPage >= totalPages}
-                  onClick={() => setPyqCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="p-1 rounded-md border border-slate-200 disabled:opacity-30 hover:bg-slate-50 cursor-pointer"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-
-                {/* Jump to page form */}
-                <form onSubmit={handleJumpToPage} className="flex items-center gap-1 pl-1 border-l border-slate-200">
-                  <input
-                    type="number"
-                    min="1"
-                    max={totalPages}
-                    value={jumpPageInput}
-                    onChange={(e) => setJumpPageInput(e.target.value)}
-                    placeholder="Page#"
-                    className="w-14 px-1.5 py-0.5 border border-slate-200 rounded text-center text-xs"
-                  />
-                  <button type="submit" className="px-2 py-0.5 bg-[#12345A] text-white rounded text-[11px] font-bold">
-                    Go
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* PYQ Shift Tests Container (Compact list styled like Available Mock Tests, no fake attempts) */}
+            {/* PYQ Shift Tests Container (Compact list styled like Available Mock Tests, prominent logos) */}
             <div className="bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs divide-y divide-slate-100">
               {paginatedShifts.map((shift) => {
                 const is2026Grad =
@@ -1247,8 +1180,8 @@ export default function MockTestsHubPage() {
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-2.5 sm:py-2.5 sm:px-3 rounded-xl hover:bg-slate-50/80 transition group"
                   >
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      {/* Circular Official Emblem */}
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-slate-50 p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+                      {/* Circular Official Emblem (Prominent size) */}
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
                         <img
                           src={logoUrl}
                           alt={examLabel}
@@ -1316,6 +1249,33 @@ export default function MockTestsHubPage() {
                 );
               })}
             </div>
+
+            {/* Clean bottom pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between gap-3 pt-2 px-1 text-xs text-slate-500 font-medium">
+                <span>
+                  Page <strong className="text-slate-800">{pyqCurrentPage}</strong> of {totalPages} ({matchingShifts.length} papers)
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={pyqCurrentPage <= 1}
+                    onClick={() => setPyqCurrentPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-1 rounded-md border border-slate-200 bg-white disabled:opacity-30 hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer shadow-2xs"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pyqCurrentPage >= totalPages}
+                    onClick={() => setPyqCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="px-3 py-1 rounded-md border border-slate-200 bg-white disabled:opacity-30 hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer shadow-2xs"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -1344,66 +1304,59 @@ export default function MockTestsHubPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs divide-y divide-slate-100">
               {currentSubjectTopics.map((topic) => {
                 const targetSub = selectedSubject.startsWith('rrb') || selectedSubject.startsWith('ssc')
                   ? 'general-knowledge'
                   : (selectedSubject === 'all' ? 'general-knowledge' : selectedSubject);
                 const qCount = getTopicQuestionCount(targetSub, topic);
+                const subCount = topic.subtopics?.length || 0;
 
                 return (
                   <div
                     key={topic.id}
-                    className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between space-y-3 hover:shadow-md hover:border-[#12345A]/40 transition group"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-2.5 sm:py-2.5 sm:px-3 rounded-xl hover:bg-slate-50/80 transition group"
                   >
-                    <div>
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A]">
-                          {topic.subtopics?.length || 0} Subtopics
-                        </span>
-                        <span className="text-xs font-black text-slate-700">
-                          {qCount} Questions
-                        </span>
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      {/* Circular Topic Medallion */}
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100/70 p-1 border border-blue-200/60 shadow-2xs flex items-center justify-center shrink-0">
+                        <Sparkles className="w-5 h-5 text-[#2468B4]" />
                       </div>
 
-                      <h4 className="font-bold text-sm sm:text-base text-[#12345A] mt-2 group-hover:text-[#2468B4] transition">
-                        {topic.name}
-                      </h4>
-
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                        {topic.description || 'Targeted official questions mapped to syllabus.'}
-                      </p>
-
-                      {topic.subtopics && topic.subtopics.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2.5 pt-2 border-t border-slate-100">
-                          {topic.subtopics.slice(0, 3).map((sub, sIdx) => (
-                            <span
-                              key={sIdx}
-                              className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 line-clamp-1"
-                            >
-                              {sub}
-                            </span>
-                          ))}
-                          {topic.subtopics.length > 3 && (
-                            <span className="text-[10px] font-semibold text-slate-400 self-center">
-                              +{topic.subtopics.length - 3} more
-                            </span>
-                          )}
+                      {/* Title & Metadata */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-100 text-[#12345A]">
+                            {subCount} SUBTOPICS
+                          </span>
+                          <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold truncate">
+                            {topic.subtopics?.slice(0, 2).join(' · ') || 'Topic Syllabus'}
+                          </span>
                         </div>
-                      )}
+                        <h4 className="font-heading font-black text-xs sm:text-[13px] text-[#12345A] group-hover:text-[#2468B4] transition leading-tight line-clamp-1 mt-0.5">
+                          {topic.name}
+                        </h4>
+                        <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] text-slate-500 font-medium mt-0.5">
+                          <span>{qCount} Questions</span>
+                          <span>·</span>
+                          <span>Configurable Practice</span>
+                          <span>·</span>
+                          <span className="text-emerald-700 font-bold">100% Free</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <span className="text-[11px] text-emerald-700 font-bold">Free Practice</span>
+                    {/* Right Direct Action Button */}
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-0.5 sm:pt-0">
                       <button
                         type="button"
                         onClick={() => {
                           setActiveTopicModal({ ...topic, subjectId: targetSub });
                           setChosenTopicQuestionCount(25);
                         }}
-                        className="bg-[#12345A] hover:bg-[#2468B4] text-white px-4 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-md bg-[#12345A] text-white text-[11px] font-semibold hover:bg-[#2468B4] shadow-xs hover:shadow-md transition flex items-center gap-1.5 cursor-pointer active:scale-95"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-[#F2BE4F]" />
+                        <Sparkles className="w-3 h-3 text-[#F2BE4F]" />
                         <span>Launch Drill</span>
                       </button>
                     </div>
