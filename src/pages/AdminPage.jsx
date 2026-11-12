@@ -24,7 +24,12 @@ import {
   Clipboard,
   Activity,
   Award,
-  Loader2
+  Loader2,
+  Upload,
+  FileUp,
+  Sparkles,
+  Download,
+  Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -70,6 +75,7 @@ import {
   STATUS_UPCOMING,
   STATUS_DATE_NOT_ANNOUNCED
 } from '../utils/notificationStatus.js';
+import { SAMPLE_NOTIFICATIONS_JSON, SAMPLE_MINIMAL_TEMPLATE_JSON } from '../data/sampleImportNotifications.js';
 
 /**
  * Comparison key for a current affairs headline. Case, spacing and punctuation
@@ -215,46 +221,189 @@ export default function AdminPage() {
     try {
       parsed = JSON.parse(importJson);
     } catch (e) {
-      setImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`] });
+      setImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON syntax: ${e.message}`], items: [] });
       return;
     }
 
-    const items = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.updates) ? parsed.updates : null;
+    const items = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.updates)
+        ? parsed.updates
+        : Array.isArray(parsed?.jobs)
+          ? parsed.jobs
+          : Array.isArray(parsed?.notifications)
+            ? parsed.notifications
+            : Array.isArray(parsed?.items)
+              ? parsed.items
+              : null;
+
     if (!items || items.length === 0) {
-      setImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of notifications.'] });
+      setImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of job notifications.'], items: [] });
       return;
     }
 
     setImportBusy(true);
     const errors = [];
+    const savedItems = [];
     let ok = 0;
 
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
-      const label = item?.title?.en || item?.id || `item ${i + 1}`;
-
-      if (!item?.title?.en || !item?.organization?.en || !item?.officialUrl || !item?.summary?.en) {
-        errors.push(`${label} — missing required field (title.en, organization.en, officialUrl, summary.en)`);
+      if (!item || typeof item !== 'object') {
+        errors.push(`Item ${i + 1} — Invalid item object format.`);
         continue;
       }
 
+      // Title normalization (string or multilingual object)
+      const enTitle = typeof item.title === 'string'
+        ? item.title.trim()
+        : item?.title?.en || item?.title?.te || item?.jobTitle || item?.name || '';
+      const teTitle = typeof item.title === 'object' ? item.title?.te || '' : '';
+
+      const label = enTitle || item?.id || `Item ${i + 1}`;
+
+      // Organization normalization (string or multilingual object)
+      const enOrg = typeof item.organization === 'string'
+        ? item.organization.trim()
+        : item?.organization?.en || item?.organization?.te || item?.org || item?.department || '';
+      const teOrg = typeof item.organization === 'object' ? item.organization?.te || '' : '';
+
+      // URL normalization
+      const officialUrl = item.officialUrl || item.official_url || item.website || item.applyUrl || item.apply_url || '';
+      const applyUrl = item.applyUrl || item.apply_url || officialUrl || '';
+      const pdfUrl = item.pdfUrl || item.pdf_url || item.notificationPdf || '';
+
+      // Summary normalization
+      const enSummary = typeof item.summary === 'string'
+        ? item.summary.trim()
+        : item?.summary?.en || (enTitle ? `${enTitle} recruitment notification issued by ${enOrg || 'Government Organization'}. Check official eligibility and important dates.` : '');
+      const teSummary = typeof item.summary === 'object' ? item.summary?.te || '' : '';
+
+      if (!enTitle) {
+        errors.push(`Item ${i + 1} — missing required job title.`);
+        continue;
+      }
+      if (!enOrg) {
+        errors.push(`${label} — missing required organization name.`);
+        continue;
+      }
+      if (!officialUrl) {
+        errors.push(`${label} — missing required official website URL.`);
+        continue;
+      }
+
+      // Important Date normalization
+      const rawStart = item.applicationStartDate || item.startDate || item.openingDate || item.applicationStart || '';
+      const rawLast = item.applicationLastDate || item.deadline || item.lastDate || item.closingDate || item.applicationEnd || '';
+      const rawPublished = item.publishedAt || item.publishedDate || item.publishDate || '';
+      const rawExam = item.examDate || item.examinationDate || '';
+      const rawAdmit = item.admitCardDate || item.hallTicketDate || '';
+      const rawResult = item.resultDate || '';
+
+      const normStart = normalizeDateIST(rawStart);
+      const normLast = normalizeDateIST(rawLast);
+      const normPublished = normalizeDateIST(rawPublished) || rawPublished;
+      const normAdmit = normalizeDateIST(rawAdmit) || rawAdmit;
+      const normResult = normalizeDateIST(rawResult) || rawResult;
+
+      // Validate dates order if both provided
+      if (normStart && normLast && normStart > normLast) {
+        errors.push(`${label} — Application Start Date (${normStart}) cannot be after Application Last Date (${normLast}).`);
+        continue;
+      }
+
+      const payload = {
+        ...item,
+        title: { en: enTitle, te: teTitle },
+        organization: { en: enOrg, te: teOrg },
+        summary: { en: enSummary, te: teSummary },
+        officialUrl,
+        applyUrl,
+        pdfUrl,
+        applicationStartDate: normStart || rawStart || undefined,
+        applicationLastDate: normLast || rawLast || undefined,
+        openingDate: normStart || rawStart || undefined,
+        deadline: normLast || rawLast || undefined,
+        publishedAt: normPublished || undefined,
+        examDate: rawExam ? String(rawExam).trim() : undefined,
+        admitCardDate: normAdmit || undefined,
+        resultDate: normResult || undefined
+      };
+
       try {
-        // Sequential on purpose: keeps ordering predictable and surfaces the first real
-        // Firestore error (e.g. permission-denied) instead of firing N failing writes.
+        // Sequential save guarantees predictable order and triggers automatic status calculation via calculateJobStatus
         // eslint-disable-next-line no-await-in-loop
-        await saveUpdate(item);
+        const saved = await saveUpdate(payload);
         ok += 1;
+        savedItems.push({
+          title: enTitle,
+          status: saved.status,
+          applicationStartDate: saved.applicationStartDate,
+          applicationLastDate: saved.applicationLastDate
+        });
       } catch (err) {
         errors.push(`${label} — ${err.message}`);
       }
     }
 
     setImportBusy(false);
-    setImportSummary({ ok, failed: errors.length, errors });
+    setImportSummary({ ok, failed: errors.length, errors, items: savedItems });
 
     if (ok > 0) {
       await loadAllAdminData();
-      triggerToast(`Imported ${ok} notification${ok === 1 ? '' : 's'}`);
+      triggerToast(`Imported ${ok} notification${ok === 1 ? '' : 's'} with auto-calculated application status`);
+    }
+  };
+
+  const importParseStatus = React.useMemo(() => {
+    if (!importJson || !importJson.trim()) return null;
+    try {
+      const parsed = JSON.parse(importJson);
+      const list = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.updates)
+          ? parsed.updates
+          : Array.isArray(parsed?.jobs)
+            ? parsed.jobs
+            : Array.isArray(parsed?.notifications)
+              ? parsed.notifications
+              : null;
+      if (!list) return { valid: false, message: 'JSON is valid syntax, but could not detect an array of jobs.' };
+      return { valid: true, count: list.length };
+    } catch (err) {
+      return { valid: false, message: err.message };
+    }
+  }, [importJson]);
+
+  const handleImportFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result;
+      if (typeof content === 'string') {
+        setImportJson(content);
+        setImportSummary(null);
+        triggerToast(`Loaded file: ${file.name}`);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleDownloadSample = () => {
+    try {
+      const blob = new Blob([SAMPLE_NOTIFICATIONS_JSON], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'examquesthub-notifications-sample.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      // ignore
     }
   };
 
@@ -2716,11 +2865,11 @@ export default function AdminPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-heading font-extrabold text-base text-[#182B45] flex items-center gap-1.5">
-                  <Clipboard className="w-4 h-4 text-[#2468B4]" />
+                  <Clipboard className="w-5 h-5 text-[#2468B4]" />
                   Bulk Import Notifications
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Paste a JSON array below. Each item is written to Firestore and is editable here afterwards.
+                  Paste a JSON array, load sample templates, or upload a .json file. Application status is automatically computed based on start and closing dates in Asia/Kolkata (IST).
                 </p>
               </div>
               <button
@@ -2733,68 +2882,221 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className="rounded-xl bg-[#F6F8FC] border border-[#E3EAF2] p-3 text-[11px] text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-700">Required per item</p>
-              <p>
-                <code>title.en</code>, <code>organization.en</code>, <code>officialUrl</code>, <code>summary.en</code>
-              </p>
-              <p className="font-semibold text-slate-700 pt-1">Optional</p>
-              <p>
-                <code>id</code>, <code>title.te</code>, <code>summary.te</code>, <code>category</code>, <code>region</code>,{' '}
-                <code>publishedAt</code> / <code>deadline</code> (YYYY-MM-DD), <code>status</code>,{' '}
-                <code>vacancies</code>, <code>applyUrl</code>, <code>pdfUrl</code>
-              </p>
+            {/* Quick Actions Toolbar */}
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setImportJson(SAMPLE_NOTIFICATIONS_JSON);
+                  setImportSummary(null);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EAF3FF] hover:bg-[#D5E7FF] text-[#12345A] text-xs font-bold transition-colors cursor-pointer border border-[#BDD8FF]"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#2468B4]" />
+                <span>Load Sample Jobs (4 Records)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setImportJson(SAMPLE_MINIMAL_TEMPLATE_JSON);
+                  setImportSummary(null);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200"
+              >
+                <FileText className="w-3.5 h-3.5 text-slate-500" />
+                <span>Minimal Template</span>
+              </button>
+              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200">
+                <Upload className="w-3.5 h-3.5 text-slate-500" />
+                <span>Upload .json File</span>
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportFileSelect}
+                  className="hidden"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleDownloadSample}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium transition-colors cursor-pointer border border-slate-200 ml-auto"
+                title="Download sample template as JSON"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>Download Sample</span>
+              </button>
+              {importJson.trim() && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImportJson('');
+                    setImportSummary(null);
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear</span>
+                </button>
+              )}
             </div>
 
-            <textarea
-              rows={12}
-              value={importJson}
-              onChange={(e) => setImportJson(e.target.value)}
-              spellCheck={false}
-              placeholder='[ { "title": { "en": "...", "te": "..." }, "organization": { "en": "..." } } ]'
-              className="w-full p-3 bg-[#F6F8FC] border border-slate-200 rounded-xl focus:bg-white font-mono text-[11px] leading-relaxed"
-            />
+            {/* Field Specification & Automatic Status Guidelines */}
+            <div className="rounded-2xl bg-[#F6F8FC] border border-[#E3EAF2] p-3.5 text-[11px] text-slate-600 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <p className="font-bold text-slate-800 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Required Fields:
+                  </p>
+                  <p className="mt-0.5 text-slate-600">
+                    <code>title</code> (or <code>title.en</code>), <code>organization</code> (or <code>organization.en</code>), <code>officialUrl</code>.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-bold text-slate-800 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-[#2468B4]" />
+                    Automatic Status Dates (YYYY-MM-DD):
+                  </p>
+                  <p className="mt-0.5 text-slate-600">
+                    <code>applicationStartDate</code> & <code>applicationLastDate</code>.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-1 border-t border-slate-200/80 text-[10.5px] text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+                <span><strong>Optional:</strong> <code>publishedAt</code>, <code>examDate</code>, <code>admitCardDate</code>, <code>resultDate</code>, <code>vacancies</code>, <code>category</code>, <code>region</code>, <code>applyUrl</code>, <code>pdfUrl</code>, <code>summary</code></span>
+                <span className="text-[#12345A] font-semibold">⚡ Status is dynamically computed: Today &lt; Start = Upcoming | Start &le; Today &le; Last = Open | Today &gt; Last = Closed (IST)</span>
+              </div>
+            </div>
 
+            {/* JSON Code Input Area */}
+            <div>
+              <textarea
+                rows={10}
+                value={importJson}
+                onChange={(e) => setImportJson(e.target.value)}
+                spellCheck={false}
+                placeholder='[
+  {
+    "title": "AP DSC Teacher Recruitment 2026",
+    "organization": "Department of School Education, AP",
+    "applicationStartDate": "2026-11-10",
+    "applicationLastDate": "2026-11-30",
+    "publishedAt": "2026-11-08",
+    "examDate": "2026-12-28",
+    "officialUrl": "https://apdsc.apcfss.in",
+    "vacancies": "16,347"
+  }
+]'
+                className="w-full p-3 bg-[#F8FAFC] border border-slate-200 rounded-xl focus:bg-white font-mono text-[11px] leading-relaxed resize-y focus:outline-hidden focus:border-[#2468B4]"
+              />
+
+              {/* Live JSON Validator Status Bar */}
+              <div className="mt-1 flex items-center justify-between text-xs">
+                {importParseStatus ? (
+                  importParseStatus.valid ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold text-[11px]">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      Valid JSON syntax: {importParseStatus.count} job notification{importParseStatus.count === 1 ? '' : 's'} ready for import
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-amber-700 font-medium text-[11px] truncate max-w-md">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      JSON syntax: {importParseStatus.message}
+                    </span>
+                  )
+                ) : (
+                  <span className="text-slate-400 text-[11px]">Paste JSON above or click a sample button</span>
+                )}
+                <span className="text-[11px] text-slate-400">
+                  {importJson.trim().length ? `${importJson.trim().length} chars` : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Import Results with Status Details */}
             {importSummary && (
               <div
-                className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                className={`p-3.5 rounded-2xl border text-xs space-y-2 ${
                   importSummary.ok > 0
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    ? 'bg-emerald-50/90 border-emerald-200 text-emerald-900'
                     : 'bg-red-50 border-red-200 text-red-700'
                 }`}
               >
-                <p className="font-bold">
-                  {importSummary.ok} imported
-                  {importSummary.failed > 0 ? `, ${importSummary.failed} failed` : ''}
-                </p>
+                <div className="flex items-center justify-between font-bold">
+                  <p className="flex items-center gap-1.5">
+                    {importSummary.ok > 0 ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                    )}
+                    {importSummary.ok} notification{importSummary.ok === 1 ? '' : 's'} imported successfully
+                    {importSummary.failed > 0 ? `, ${importSummary.failed} failed` : ''}
+                  </p>
+                </div>
+
+                {/* Display imported jobs with their computed status */}
+                {Array.isArray(importSummary.items) && importSummary.items.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <p className="font-semibold text-emerald-950 text-[11px]">Imported Items & Calculated Status:</p>
+                    <div className="max-h-36 overflow-y-auto space-y-1 pr-1 font-mono text-[11px]">
+                      {importSummary.items.map((entry, idx) => (
+                        <div key={idx} className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/70 border border-emerald-100">
+                          <span className="truncate font-sans font-medium text-slate-800" title={entry.title}>
+                            {entry.title}
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {entry.applicationStartDate && entry.applicationLastDate && (
+                              <span className="text-[10px] text-slate-500 font-sans">
+                                {entry.applicationStartDate} to {entry.applicationLastDate}
+                              </span>
+                            )}
+                            <StatusBadge status={entry.status} size="xs" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Display any validation or Firestore errors */}
                 {importSummary.errors.length > 0 && (
-                  <ul className="space-y-0.5 max-h-40 overflow-y-auto font-mono text-[11px]">
-                    {importSummary.errors.map((msg, i) => (
-                      <li key={i} className="break-words">
-                        • {msg}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="space-y-1 pt-1 border-t border-red-200">
+                    <p className="font-bold text-red-800 text-[11px]">Issues Encountered:</p>
+                    <ul className="space-y-0.5 max-h-32 overflow-y-auto font-mono text-[11px] text-red-700">
+                      {importSummary.errors.map((msg, i) => (
+                        <li key={i} className="break-words">
+                          • {msg}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             )}
 
+            {/* Modal Action Buttons */}
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setImportOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer text-xs"
               >
                 Close
               </button>
               <button
                 type="button"
-                disabled={importBusy || !importJson.trim()}
+                disabled={importBusy || !importJson.trim() || importParseStatus?.valid === false}
                 onClick={handleBulkImport}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-bold disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white font-bold text-xs disabled:opacity-50 cursor-pointer shadow-xs transition-colors"
               >
                 {importBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {importBusy ? 'Importing...' : 'Import'}
+                <span>
+                  {importBusy
+                    ? 'Importing...'
+                    : importParseStatus?.valid
+                      ? `Import ${importParseStatus.count} Notification${importParseStatus.count === 1 ? '' : 's'}`
+                      : 'Import Notifications'}
+                </span>
               </button>
             </div>
           </div>
