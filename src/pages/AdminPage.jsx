@@ -54,6 +54,18 @@ import DocumentFileUploader from '../components/DocumentFileUploader.jsx';
 import AdminDiagnosticsTab from '../components/AdminDiagnosticsTab.jsx';
 import AdminMockTestsTab from '../components/AdminMockTestsTab.jsx';
 import { CURRENT_AFFAIR_TOPICS, topicMatches, normalizeTopic } from '../constants/currentAffairs.js';
+import {
+  getEffectiveStatus,
+  getApplicationStartDate,
+  getApplicationLastDate,
+  calculateJobStatus,
+  normalizeDateIST,
+  formatDisplayDate,
+  getTodayIST,
+  STATUS_CLOSED,
+  STATUS_OPEN,
+  STATUS_UPCOMING
+} from '../utils/notificationStatus.js';
 
 /**
  * Comparison key for a current affairs headline. Case, spacing and punctuation
@@ -158,9 +170,12 @@ export default function AdminPage() {
   const handleTogglePublish = async (item, type = 'update') => {
     try {
       if (type === 'update') {
-        const newStatus = item.status === 'Draft' ? 'Applications Open' : 'Draft';
-        await saveUpdate({ ...item, status: newStatus });
-        triggerToast(`Notification marked as ${newStatus}`);
+        const isCurrentlyDraft = item.status === 'Draft' || item.isDraft;
+        const newStatus = isCurrentlyDraft
+          ? calculateJobStatus(item.applicationStartDate || item.openingDate, item.applicationLastDate || item.deadline)
+          : 'Draft';
+        await saveUpdate({ ...item, status: newStatus, isDraft: !isCurrentlyDraft });
+        triggerToast(`Notification marked as ${isCurrentlyDraft ? newStatus : 'Draft'}`);
       } else if (type === 'ca') {
         const newStatus = item.status === 'Draft' ? 'Published' : 'Draft';
         await saveCurrentAffair({ ...item, status: newStatus });
@@ -439,10 +454,10 @@ export default function AdminPage() {
   };
 
   // Metric counts calculated from real data
-  const totalPublished = updates.filter(u => u.status !== 'Draft').length;
-  const totalDrafts = updates.filter(u => u.status === 'Draft').length;
-  const needsVerification = updates.filter(u => !u.verifiedAt && u.status !== 'Draft').length;
-  const totalClosed = updates.filter(u => u.status === 'Closed').length;
+  const totalPublished = updates.filter(u => u.status !== 'Draft' && !u.isDraft).length;
+  const totalDrafts = updates.filter(u => u.status === 'Draft' || u.isDraft).length;
+  const needsVerification = updates.filter(u => !u.verifiedAt && u.status !== 'Draft' && !u.isDraft).length;
+  const totalClosed = updates.filter(u => getEffectiveStatus(u) === STATUS_CLOSED).length;
 
   // Delete handler
   const confirmDeleteAction = async () => {
@@ -864,14 +879,19 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => {
+                const todayStr = getTodayIST();
                 setEditingItem({
                   title: { en: '', te: '' },
                   organization: { en: '', te: '' },
                   category: 'State PSC',
                   region: 'All India',
                   notificationNo: '',
-                  publishedAt: new Date().toISOString().split('T')[0],
+                  publishedAt: todayStr,
+                  applicationStartDate: todayStr,
+                  applicationLastDate: '',
+                  openingDate: todayStr,
                   deadline: '',
+                  examDate: '',
                   vacancies: '',
                   qualification: { en: '', te: '' },
                   ageLimit: { en: '', te: '' },
@@ -880,7 +900,8 @@ export default function AdminPage() {
                   officialUrl: '',
                   applyUrl: '',
                   pdfUrl: '',
-                  status: 'Applications Open',
+                  status: 'OPEN',
+                  isDraft: false,
                   featured: false
                 });
                 setEditType('update');
@@ -922,7 +943,7 @@ export default function AdminPage() {
                       {getLocalized(item.title)}
                     </h4>
                   </div>
-                  <StatusBadge status={item.status} />
+                  <StatusBadge status={getEffectiveStatus(item)} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
@@ -930,8 +951,11 @@ export default function AdminPage() {
                     {item.category}
                   </span>
                   <span>{item.region}</span>
-                  {item.deadline && (
-                    <span className="text-amber-800 font-medium">Last Date: {item.deadline}</span>
+                  {getApplicationStartDate(item) && (
+                    <span className="text-slate-700">Start: {formatDisplayDate(getApplicationStartDate(item))}</span>
+                  )}
+                  {getApplicationLastDate(item) && (
+                    <span className="text-amber-800 font-medium">Last: {formatDisplayDate(getApplicationLastDate(item))}</span>
                   )}
                 </div>
 
@@ -952,7 +976,15 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setEditingItem(item);
+                        setEditingItem({
+                          ...item,
+                          applicationStartDate: getApplicationStartDate(item),
+                          applicationLastDate: getApplicationLastDate(item),
+                          publishedAt: item.publishedAt || '',
+                          examDate: item.examDate || '',
+                          vacancies: item.vacancies || '',
+                          isDraft: item.status === 'Draft'
+                        });
                         setEditType('update');
                         setFormError('');
                         setIsFormOpen(true);
@@ -991,7 +1023,7 @@ export default function AdminPage() {
                   <th className="py-3 px-3">Title & Organization</th>
                   <th className="py-3 px-3">Category</th>
                   <th className="py-3 px-3">Region</th>
-                  <th className="py-3 px-3">Dates</th>
+                  <th className="py-3 px-3">Dates (IST)</th>
                   <th className="py-3 px-3">Status</th>
                   <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
@@ -1016,12 +1048,13 @@ export default function AdminPage() {
                       {item.region}
                     </td>
                     <td className="py-3 px-3 text-slate-500 text-[11px]">
-                      <div>Pub: {item.publishedAt}</div>
-                      {item.deadline && <div className="text-amber-800">End: {item.deadline}</div>}
+                      {getApplicationStartDate(item) && <div className="text-slate-800">Start: {formatDisplayDate(getApplicationStartDate(item))}</div>}
+                      {getApplicationLastDate(item) && <div className="text-amber-800 font-semibold">End: {formatDisplayDate(getApplicationLastDate(item))}</div>}
+                      {item.publishedAt && <div className="text-slate-400 text-[10px]">Pub: {item.publishedAt}</div>}
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
-                        <StatusBadge status={item.status} />
+                        <StatusBadge status={getEffectiveStatus(item)} />
                         <button
                           type="button"
                           onClick={() => handleTogglePublish(item, 'update')}
@@ -1036,7 +1069,15 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingItem(item);
+                            setEditingItem({
+                              ...item,
+                              applicationStartDate: getApplicationStartDate(item),
+                              applicationLastDate: getApplicationLastDate(item),
+                              publishedAt: item.publishedAt || '',
+                              examDate: item.examDate || '',
+                              vacancies: item.vacancies || '',
+                              isDraft: item.status === 'Draft'
+                            });
                             setEditType('update');
                             setFormError('');
                             setIsFormOpen(true);
@@ -1611,6 +1652,20 @@ export default function AdminPage() {
                     if (!editingItem.officialUrl?.trim()) {
                       throw new Error('Official Portal URL is required.');
                     }
+
+                    const normStart = normalizeDateIST(editingItem.applicationStartDate || editingItem.openingDate);
+                    const normLast = normalizeDateIST(editingItem.applicationLastDate || editingItem.deadline);
+
+                    if (!normStart) {
+                      throw new Error('Application Start Date is required (format: YYYY-MM-DD).');
+                    }
+                    if (!normLast) {
+                      throw new Error('Application Last Date is required (format: YYYY-MM-DD).');
+                    }
+                    if (normStart > normLast) {
+                      throw new Error('Application Start Date cannot be after Application Last Date.');
+                    }
+
                     const duplicate = updates.find((existing) =>
                       existing.id !== editingItem.id &&
                       (existing.title?.en || '').trim().toLowerCase() === editingItem.title.en.trim().toLowerCase() &&
@@ -1619,7 +1674,21 @@ export default function AdminPage() {
                     if (duplicate) {
                       throw new Error('A notification with this title and organization already exists.');
                     }
-                    await saveUpdate(editingItem);
+
+                    const autoStatus = editingItem.isDraft ? 'Draft' : calculateJobStatus(normStart, normLast);
+                    const payloadToSave = {
+                      ...editingItem,
+                      applicationStartDate: normStart,
+                      applicationLastDate: normLast,
+                      openingDate: normStart, // Legacy compatibility
+                      deadline: normLast,     // Legacy compatibility
+                      publishedAt: normalizeDateIST(editingItem.publishedAt) || normStart,
+                      examDate: editingItem.examDate?.trim() || '',
+                      vacancies: editingItem.vacancies?.trim() || '',
+                      status: autoStatus
+                    };
+
+                    await saveUpdate(payloadToSave);
                     await loadAllAdminData();
                     setIsFormOpen(false);
                     triggerToast('Notification saved and permanently synced to Firestore database.');
@@ -1637,6 +1706,8 @@ export default function AdminPage() {
                     <span>{formError}</span>
                   </div>
                 )}
+
+                {/* Title Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Title (English) *</label>
@@ -1659,6 +1730,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Organization Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Organization (English) *</label>
@@ -1671,7 +1743,20 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Category *</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Organization (Telugu)</label>
+                    <input
+                      type="text"
+                      value={editingItem.organization?.te || ''}
+                      onChange={(e) => setEditingItem({ ...editingItem, organization: { ...editingItem.organization, te: e.target.value } })}
+                      className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Category & Region */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Job Category *</label>
                     <select
                       value={editingItem.category || 'State PSC'}
                       onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value })}
@@ -1687,11 +1772,8 @@ export default function AdminPage() {
                       <option value="GATE, ISRO, and other technical examinations">Technical / ISRO / GATE</option>
                     </select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Region *</label>
+                    <label className="block font-semibold text-slate-700 mb-1">State / Region *</label>
                     <select
                       value={editingItem.region || 'All India'}
                       onChange={(e) => setEditingItem({ ...editingItem, region: e.target.value })}
@@ -1702,53 +1784,128 @@ export default function AdminPage() {
                       <option value="Telangana">Telangana</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Dates: Application Start Date, Application Last Date, Notification Published Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-blue-50/40 p-3 rounded-2xl border border-blue-100">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Published Date</label>
+                    <label className="block font-bold text-[#12345A] mb-1">
+                      Application Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={editingItem.applicationStartDate || editingItem.openingDate || ''}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          applicationStartDate: e.target.value,
+                          openingDate: e.target.value
+                        })
+                      }
+                      className="w-full p-2 bg-white border border-blue-200 rounded-lg focus:border-[#2468B4]"
+                    />
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Becomes OPEN in IST</span>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-amber-900 mb-1">
+                      Application Last Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={editingItem.applicationLastDate || editingItem.deadline || ''}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          applicationLastDate: e.target.value,
+                          deadline: e.target.value
+                        })
+                      }
+                      className="w-full p-2 bg-white border border-amber-200 rounded-lg focus:border-[#2468B4]"
+                    />
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Closes 23:59 IST</span>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Notification Published Date
+                    </label>
                     <input
                       type="date"
                       value={editingItem.publishedAt || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, publishedAt: e.target.value })}
-                      className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
+                      className="w-full p-2 bg-white border rounded-lg focus:border-[#2468B4]"
                     />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Deadline / Last Date</label>
-                    <input
-                      type="date"
-                      value={editingItem.deadline || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, deadline: e.target.value })}
-                      className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
-                    />
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Notice Gazette Date</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Exam Date, Total Vacancies, and Notification No */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Status *</label>
-                    <select
-                      value={editingItem.status || 'Applications Open'}
-                      onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
-                      className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
-                    >
-                      <option value="Applications Open">Applications Open</option>
-                      <option value="Closing Soon">Closing Soon</option>
-                      <option value="Admit Card Released">Admit Card Released</option>
-                      <option value="Result Released">Result Released</option>
-                      <option value="Closed">Closed</option>
-                      <option value="Draft">Draft</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Confirmed Vacancy Count</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Exam Date</label>
                     <input
                       type="text"
-                      placeholder="e.g. 1056 (leave empty if unconfirmed)"
+                      placeholder="e.g. 25 May 2026 or June 2026"
+                      value={editingItem.examDate || ''}
+                      onChange={(e) => setEditingItem({ ...editingItem, examDate: e.target.value })}
+                      className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Total Vacancies</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1056"
                       value={editingItem.vacancies || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, vacancies: e.target.value })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
                     />
                   </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Notification / Advt No.</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 05/2026-CSP"
+                      value={editingItem.notificationNo || ''}
+                      onChange={(e) => setEditingItem({ ...editingItem, notificationNo: e.target.value })}
+                      className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
+                    />
+                  </div>
                 </div>
+
+                {/* Automatic Status Preview Card (Replaces manual status dropdown) */}
+                {(() => {
+                  const curStart = editingItem.applicationStartDate || editingItem.openingDate || '';
+                  const curLast = editingItem.applicationLastDate || editingItem.deadline || '';
+                  const previewStatus = calculateJobStatus(curStart, curLast);
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-[#F6F8FC] border border-[#E3EAF2] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                          Automatic Status Preview (Derived from Dates)
+                        </span>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Calculated in Indian Standard Time (Asia/Kolkata). Transitions UPCOMING &rarr; OPEN &rarr; CLOSED automatically without manual intervention.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <StatusBadge status={editingItem.isDraft ? 'Draft' : previewStatus} />
+                        <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!editingItem.isDraft}
+                            onChange={(e) => setEditingItem({ ...editingItem, isDraft: e.target.checked })}
+                            className="rounded text-[#12345A] focus:ring-[#2468B4]"
+                          />
+                          <span>Save as Draft</span>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>

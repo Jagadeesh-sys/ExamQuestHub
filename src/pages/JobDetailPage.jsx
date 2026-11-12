@@ -27,10 +27,18 @@ import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import NotificationCard from '../components/NotificationCard.jsx';
 import AgencyLogo from '../components/AgencyLogo.jsx';
+import {
+  getEffectiveStatus,
+  getApplicationStartDate,
+  getApplicationLastDate,
+  formatDisplayDate
+} from '../utils/notificationStatus.js';
+import useAutoStatusRefresh from '../hooks/useAutoStatusRefresh.js';
 
 export default function JobDetailPage() {
   const { slug } = useParams();
   const { t, getLocalized } = useLanguage();
+  useAutoStatusRefresh(); // Periodically checks IST date so status transitions automatically
 
   const [job, setJob] = useState(null);
   const [related, setRelated] = useState([]);
@@ -119,6 +127,15 @@ export default function JobDetailPage() {
     );
   }
 
+  // Dynamic status and date evaluation
+  const effectiveStatus = getEffectiveStatus(job);
+  const startDate = getApplicationStartDate(job);
+  const lastDate = getApplicationLastDate(job);
+  const normalizedStatus = effectiveStatus.toLowerCase();
+  const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
+  const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
+  const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
+
   const title = getLocalized(job.title);
   const org = getLocalized(job.organization);
   const qual = getLocalized(job.qualification, t('referOfficialNotice'));
@@ -130,7 +147,7 @@ export default function JobDetailPage() {
   const desc = getLocalized(job.description);
 
   return (
-    <div className="max-w-[1200px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-8 pb-32 lg:pb-8">
+    <div className="max-w-[1200px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-8 pb-40 lg:pb-8">
       
       {/* Breadcrumbs */}
       <Breadcrumbs
@@ -158,7 +175,7 @@ export default function JobDetailPage() {
             </span>
           </div>
 
-          <StatusBadge status={job.status} />
+          <StatusBadge status={effectiveStatus} />
         </div>
 
         {/* Title & Agency Lockup */}
@@ -178,18 +195,18 @@ export default function JobDetailPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#F6F8FC] p-4 rounded-2xl border border-[#E3EAF2]">
           <div>
             <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block">
-              {t('publishedOn')}
+              Application Start
             </span>
             <span className="text-xs sm:text-sm font-bold text-[#182B45]">
-              {job.publishedAt || t('referOfficialNotice')}
+              {startDate ? formatDisplayDate(startDate) : (job.publishedAt || t('referOfficialNotice'))}
             </span>
           </div>
           <div>
             <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block">
-              {t('closingDate')}
+              Application Last Date
             </span>
-            <span className="text-xs sm:text-sm font-bold text-amber-900">
-              {job.deadline || t('referOfficialNotice')}
+            <span className={`text-xs sm:text-sm font-bold ${isClosed ? 'text-slate-500' : 'text-amber-900'}`}>
+              {lastDate ? formatDisplayDate(lastDate) : t('referOfficialNotice')}
             </span>
           </div>
           <div>
@@ -210,21 +227,43 @@ export default function JobDetailPage() {
           </div>
         </div>
 
-        {/* Primary CTA Buttons */}
+        {/* Primary CTA Buttons (Desktop shows Apply; Mobile only shows ONE sticky Apply button below to prevent duplication) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            {job.applyUrl && (
+            {/* OPEN: Show active button on Desktop. Hidden on mobile because sticky bottom bar is active! */}
+            {isOpen && job.applyUrl && (
               <a
                 href={job.applyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95"
+                className="hidden lg:inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95"
               >
                 <span>{job.type === 'admit-card' ? t('downloadAdmitCard') : job.type === 'result' ? t('checkResult') : t('applyOnline')}</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             )}
 
+            {/* UPCOMING: Show upcoming applications indicator without active external apply link */}
+            {isUpcoming && (
+              <div className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-50 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold rounded-xl cursor-default">
+                <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>
+                  {startDate ? `Applications Open: ${formatDisplayDate(startDate)}` : 'Upcoming Applications'}
+                </span>
+              </div>
+            )}
+
+            {/* CLOSED: Show disabled closed badge without redirecting users to expired application forms */}
+            {isClosed && (
+              <div className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-slate-100 text-slate-600 border border-slate-300 text-xs sm:text-sm font-bold rounded-xl cursor-not-allowed">
+                <AlertCircle className="w-4 h-4 text-slate-500 shrink-0" />
+                <span>
+                  {lastDate ? `Applications Closed on ${formatDisplayDate(lastDate)}` : 'Applications Closed'}
+                </span>
+              </div>
+            )}
+
+            {/* Official Notification PDF download */}
             {job.pdfUrl && (
               <a
                 href={job.pdfUrl}
@@ -336,6 +375,28 @@ export default function JobDetailPage() {
                 </span>
               </div>
 
+              {startDate && (
+                <div className="py-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <span className="font-semibold text-slate-500 text-xs uppercase tracking-wider">
+                    Application Start Date
+                  </span>
+                  <span className="sm:col-span-2 font-semibold text-[#182B45] leading-relaxed">
+                    {formatDisplayDate(startDate)}
+                  </span>
+                </div>
+              )}
+
+              {lastDate && (
+                <div className="py-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <span className="font-semibold text-slate-500 text-xs uppercase tracking-wider">
+                    Application Deadline
+                  </span>
+                  <span className={`sm:col-span-2 font-bold leading-relaxed ${isClosed ? 'text-slate-500' : 'text-amber-900'}`}>
+                    {formatDisplayDate(lastDate)} (Throughout 23:59 IST)
+                  </span>
+                </div>
+              )}
+
               {job.examDate && (
                 <div className="py-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <span className="font-semibold text-slate-500 text-xs uppercase tracking-wider">
@@ -375,17 +436,27 @@ export default function JobDetailPage() {
             </h3>
             
             <div className="space-y-2.5 text-xs">
-              {job.applyUrl && (
+              {isOpen && job.applyUrl ? (
                 <a
                   href={job.applyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#12345A] text-white hover:bg-[#0B1F3A] font-semibold transition-colors"
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#12345A] text-white hover:bg-[#0B1F3A] font-semibold transition-colors shadow-xs"
                 >
                   <span>Apply on Official Board</span>
                   <ExternalLink className="w-4 h-4" />
                 </a>
-              )}
+              ) : isUpcoming ? (
+                <div className="w-full flex items-center justify-between p-3 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 font-semibold cursor-default">
+                  <span>Applications Open: {startDate ? formatDisplayDate(startDate) : 'Soon'}</span>
+                  <Clock className="w-4 h-4 text-blue-600" />
+                </div>
+              ) : isClosed ? (
+                <div className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 font-semibold cursor-not-allowed">
+                  <span>Applications Closed</span>
+                  <AlertCircle className="w-4 h-4 text-slate-400" />
+                </div>
+              ) : null}
 
               {job.pdfUrl && (
                 <a
@@ -459,26 +530,29 @@ export default function JobDetailPage() {
         </section>
       )}
 
-      {/* Floating Mobile Sticky Action Bar */}
-      {(job.applyUrl || job.pdfUrl) && (
-        <div className="lg:hidden fixed bottom-14 left-0 right-0 z-30 bg-white/95 backdrop-blur-md px-4 py-2 border-t border-slate-200 shadow-xl flex items-center gap-2">
-          {job.applyUrl && (
-            <a
-              href={job.applyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 py-2.5 px-3 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl text-center shadow-xs flex items-center justify-center gap-1.5 active:scale-98"
-            >
-              <span>{job.type === 'admit-card' ? t('downloadAdmitCard') : job.type === 'result' ? t('checkResult') : t('applyOnline')}</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
+      {/* Floating Mobile Sticky Action Bar:
+          - Rendered ONLY for OPEN jobs on mobile devices.
+          - Positioned above the mobile bottom nav without overlapping (bottom-16 / bottom-[68px]).
+          - Content area Apply button is hidden on mobile so only ONE Apply button is shown.
+          - Not displayed for UPCOMING or CLOSED jobs.
+      */}
+      {isOpen && job.applyUrl && (
+        <div className="lg:hidden fixed bottom-16 sm:bottom-[68px] left-0 right-0 z-[60] bg-white/95 backdrop-blur-md px-4 py-2.5 border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] flex items-center gap-2">
+          <a
+            href={job.applyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 py-2.5 px-4 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs sm:text-sm font-bold rounded-xl text-center shadow-xs flex items-center justify-center gap-1.5 active:scale-98"
+          >
+            <span>{job.type === 'admit-card' ? t('downloadAdmitCard') : job.type === 'result' ? t('checkResult') : t('applyOnline')}</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
           {job.pdfUrl && (
             <a
               href={job.pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center justify-center gap-1 border border-slate-200 active:scale-98"
+              className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center justify-center gap-1 border border-slate-200 active:scale-98 shrink-0"
               title="Official PDF"
             >
               <FileText className="w-4 h-4 text-red-500" />

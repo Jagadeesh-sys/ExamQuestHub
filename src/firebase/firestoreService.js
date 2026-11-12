@@ -21,7 +21,11 @@ import {
   AUTO_CLOSED_FLAG,
   hasDeadlinePassed,
   withEffectiveStatus,
-  withEffectiveStatusList
+  withEffectiveStatusList,
+  normalizeDateIST,
+  getApplicationStartDate,
+  getApplicationLastDate,
+  calculateJobStatus
 } from '../utils/notificationStatus.js';
 import { getDefaultImageForTopic as defaultImageForTopic, DEFAULT_TOPIC_IMAGES } from './topicImages.js';
 import { loadAllRRBQuestions, getVerifiedMockStats } from '../services/rrbMockService.js';
@@ -312,17 +316,24 @@ export async function saveUpdate(item) {
   const slug = safeId(rawSlug, id);
   const publishedAt = item.publishedAt || nowIso.split('T')[0];
 
-  // A "Closed" that was only worked out from a passed deadline is not the admin's
-  // own choice: the marker is never stored, and if the last date has since been
-  // moved into the future the notification reopens instead of staying closed.
-  const { [AUTO_CLOSED_FLAG]: statusAutoClosed, ...fields } = item;
-  const status =
-    statusAutoClosed && !hasDeadlinePassed(fields.deadline)
-      ? 'Applications Open'
-      : fields.status;
+  const { [AUTO_CLOSED_FLAG]: _unused, ...fields } = item;
+
+  const startDate = normalizeDateIST(getApplicationStartDate(fields));
+  const lastDate = normalizeDateIST(getApplicationLastDate(fields));
+
+  let status = fields.status;
+  if (!isDraft(fields)) {
+    if (startDate || lastDate) {
+      status = calculateJobStatus(startDate, lastDate);
+    }
+  }
 
   const payload = stripUndefined({
     ...fields,
+    applicationStartDate: startDate || undefined,
+    applicationLastDate: lastDate || undefined,
+    openingDate: startDate || fields.openingDate || undefined,
+    deadline: lastDate || fields.deadline || undefined,
     status,
     id,
     slug,

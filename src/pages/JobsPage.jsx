@@ -38,13 +38,22 @@ import NotificationCard from '../components/NotificationCard.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
 import jobBannerImg from '../assets/images/job_banner_8d9279ad.png';
+import {
+  getEffectiveStatus,
+  getApplicationStartDate,
+  getApplicationLastDate,
+  formatDisplayDate
+} from '../utils/notificationStatus.js';
+import useAutoStatusRefresh from '../hooks/useAutoStatusRefresh.js';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function JobsPage() {
   const { t, getLocalized } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
+  useAutoStatusRefresh();
 
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -146,9 +155,9 @@ export default function JobsPage() {
 
   const statuses = [
     'All',
-    'Applications Open',
-    'Closing Soon',
-    'Upcoming',
+    'OPEN',
+    'UPCOMING',
+    'CLOSED',
     'Admit Card Released',
     'Result Released'
   ];
@@ -164,7 +173,8 @@ export default function JobsPage() {
       const orgStr = (typeof item.organization === 'string' ? item.organization : item.organization?.en || '').trim();
       if (orgStr) distinctOrgs.add(orgStr.toLowerCase());
 
-      const st = (item.status || '').toLowerCase();
+      const effectiveSt = getEffectiveStatus(item);
+      const st = (effectiveSt || item.status || '').toLowerCase();
       if (st.includes('closing') || st.includes('soon')) {
         closingSoonCount++;
       }
@@ -222,9 +232,18 @@ export default function JobsPage() {
 
       let matchStatus = true;
       if (statusFilter !== 'All') {
-        const itemStatus = (item.status || '').toLowerCase();
+        const effectiveSt = getEffectiveStatus(item);
+        const itemStatus = (effectiveSt || item.status || '').toLowerCase();
         const targetStatus = statusFilter.toLowerCase();
-        matchStatus = itemStatus.includes(targetStatus);
+        if (targetStatus === 'open') {
+          matchStatus = itemStatus === 'open' || itemStatus === 'applications open' || itemStatus.includes('open');
+        } else if (targetStatus === 'upcoming') {
+          matchStatus = itemStatus === 'upcoming' || itemStatus.includes('upcoming');
+        } else if (targetStatus === 'closed') {
+          matchStatus = itemStatus === 'closed' || itemStatus.includes('closed');
+        } else {
+          matchStatus = itemStatus.includes(targetStatus);
+        }
       }
 
       return matchSearch && matchCat && matchReg && matchBoard && matchStatus;
@@ -627,9 +646,13 @@ export default function JobsPage() {
                   const salary = getLocalized(item.salary);
                   const detailSlug = item.slug || item.id;
 
-                  const statusLower = (item.status || '').toLowerCase();
-                  const isUpcoming = statusLower.includes('upcoming') || statusLower.includes('admit');
-                  const isOpen = statusLower.includes('open') || statusLower.includes('active');
+                  const effectiveStatus = getEffectiveStatus(item);
+                  const startDate = getApplicationStartDate(item);
+                  const lastDate = getApplicationLastDate(item);
+                  const normalizedStatus = effectiveStatus.toLowerCase();
+                  const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
+                  const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
+                  const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
 
                   return (
                     <div
@@ -654,6 +677,8 @@ export default function JobsPage() {
                                 ? 'bg-blue-500'
                                 : isOpen
                                 ? 'bg-emerald-500'
+                                : isClosed
+                                ? 'bg-slate-400'
                                 : 'bg-amber-500'
                             }`}
                           />
@@ -663,43 +688,23 @@ export default function JobsPage() {
 
                           {/* Status badge pill (Desktop & Tablet) */}
                           <div className="hidden xs:block shrink-0">
-                            <span
-                              className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 ${
-                                isUpcoming
-                                  ? 'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]'
-                                  : isOpen
-                                  ? 'bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]'
-                                  : 'bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]'
-                              }`}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                              <span>{item.status || 'Active'}</span>
-                            </span>
+                            <StatusBadge status={effectiveStatus} />
                           </div>
 
                           {/* Titles and Sub-details */}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               {/* Status pill on tiny screens */}
-                              <span
-                                className={`xs:hidden px-1.5 py-0.2 rounded-full text-[8px] font-black uppercase tracking-wider inline-flex items-center gap-1 shrink-0 ${
-                                  isUpcoming
-                                    ? 'bg-[#EFF6FF] text-[#1D4ED8]'
-                                    : isOpen
-                                    ? 'bg-[#ECFDF5] text-[#047857]'
-                                    : 'bg-[#FFFBEB] text-[#B45309]'
-                                }`}
-                              >
-                                <span className="w-1 h-1 rounded-full bg-current" />
-                                <span>{item.status}</span>
-                              </span>
+                              <div className="xs:hidden shrink-0">
+                                <StatusBadge status={effectiveStatus} />
+                              </div>
 
                               <h3 className="font-heading font-extrabold text-xs sm:text-sm md:text-base text-[#0F172A] leading-snug truncate">
                                 {title}
                               </h3>
                             </div>
 
-                            {/* Sub-row: Vacancies & Expected/Last Date */}
+                            {/* Sub-row: Vacancies & Start/Last Date */}
                             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
                               <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
                                 <Users className="w-3.5 h-3.5 text-slate-400" />
@@ -709,9 +714,9 @@ export default function JobsPage() {
                               <span className="inline-flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                 <span>
-                                  {item.deadline
-                                    ? `Last Date: ${item.deadline}`
-                                    : `Expected: ${item.publishedAt || 'Dec 2026'}`}
+                                  {startDate ? `Start: ${formatDisplayDate(startDate)}` : ''}
+                                  {startDate && lastDate ? ' • ' : ''}
+                                  {lastDate ? `Last Date: ${formatDisplayDate(lastDate)}` : (item.publishedAt || 'See Notice')}
                                 </span>
                               </span>
                             </div>
@@ -746,9 +751,12 @@ export default function JobsPage() {
                                 {title}
                               </h4>
                             </div>
-                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 self-start sm:self-auto">
-                              {item.vacancies || 'Multiple Posts'}
-                            </span>
+                            <div className="flex items-center gap-2 self-start sm:self-auto">
+                              <StatusBadge status={effectiveStatus} />
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                {item.vacancies || 'Multiple Posts'}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Summary */}
@@ -773,10 +781,15 @@ export default function JobsPage() {
                               </span>
                             </div>
                             <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-                              <span className="text-slate-400 block font-bold mb-1">Salary / Pay Scale</span>
-                              <span className="text-slate-800 font-semibold">
-                                {salary || 'As per 7th CPC Matrix / State Scales.'}
-                              </span>
+                              <span className="text-slate-400 block font-bold mb-1">Important Dates</span>
+                              <div className="text-slate-800 font-semibold space-y-0.5">
+                                {startDate && <div>Start: <span className="text-slate-900">{formatDisplayDate(startDate)}</span></div>}
+                                {lastDate && (
+                                  <div className={isClosed ? 'text-slate-500' : 'text-amber-900'}>
+                                    Last: {formatDisplayDate(lastDate)}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
                               <span className="text-slate-400 block font-bold mb-1">Application Fee</span>
@@ -800,7 +813,8 @@ export default function JobsPage() {
                                   <span>Download Official PDF</span>
                                 </a>
                               )}
-                              {item.applyUrl && (
+
+                              {isOpen && item.applyUrl ? (
                                 <a
                                   href={item.applyUrl}
                                   target="_blank"
@@ -810,7 +824,16 @@ export default function JobsPage() {
                                   <span>Apply Online</span>
                                   <ExternalLink className="w-3.5 h-3.5" />
                                 </a>
-                              )}
+                              ) : isUpcoming ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold cursor-default">
+                                  <Clock className="w-3.5 h-3.5 text-blue-600" />
+                                  <span>Opens {startDate ? formatDisplayDate(startDate) : 'Soon'}</span>
+                                </span>
+                              ) : isClosed ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-500 border border-slate-200 rounded-lg text-xs font-semibold cursor-not-allowed">
+                                  <span>Applications Closed</span>
+                                </span>
+                              ) : null}
                               <button
                                 type="button"
                                 onClick={() => {

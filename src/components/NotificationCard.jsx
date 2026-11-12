@@ -8,11 +8,16 @@ import {
   ExternalLink,
   FileText,
   MapPin,
-  CheckCircle2,
   ArrowRight
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StatusBadge from './StatusBadge.jsx';
+import {
+  getEffectiveStatus,
+  getApplicationStartDate,
+  getApplicationLastDate,
+  formatDisplayDate
+} from '../utils/notificationStatus.js';
 
 export default function NotificationCard({ item }) {
   const { t, getLocalized } = useLanguage();
@@ -23,6 +28,14 @@ export default function NotificationCard({ item }) {
   const org = getLocalized(item.organization);
   const qual = getLocalized(item.qualification);
   const detailSlug = item.slug || item.id;
+
+  const effectiveStatus = getEffectiveStatus(item);
+  const startDate = getApplicationStartDate(item);
+  const lastDate = getApplicationLastDate(item);
+  const normalizedStatus = effectiveStatus.toLowerCase();
+  const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
+  const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
+  const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
 
   return (
     <article className="bg-white rounded-2xl border border-[#E3EAF2] hover:border-[#2468B4]/40 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
@@ -36,7 +49,7 @@ export default function NotificationCard({ item }) {
               {org}
             </span>
           </div>
-          <StatusBadge status={item.status} />
+          <StatusBadge status={effectiveStatus} />
         </div>
 
         {/* Title */}
@@ -76,15 +89,17 @@ export default function NotificationCard({ item }) {
 
       {/* Middle Dates & Verification Section */}
       <div className="px-5 py-2.5 bg-[#F6F8FC]/60 border-t border-b border-[#E3EAF2]/60 flex items-center justify-between text-xs text-slate-500">
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <span>{item.publishedAt}</span>
+        <div className="flex items-center gap-1.5 truncate">
+          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="truncate">
+            {startDate ? `Start: ${formatDisplayDate(startDate)}` : (item.publishedAt || 'See Notice')}
+          </span>
         </div>
 
-        {item.deadline ? (
-          <div className="flex items-center gap-1.5 text-amber-900 font-medium">
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>Last Date: {item.deadline}</span>
+        {lastDate ? (
+          <div className={`flex items-center gap-1.5 font-medium shrink-0 ${isClosed ? 'text-slate-500' : 'text-amber-900'}`}>
+            <Clock className={`w-3.5 h-3.5 ${isClosed ? 'text-slate-400' : 'text-amber-600'}`} />
+            <span>Last Date: {formatDisplayDate(lastDate)}</span>
           </div>
         ) : (
           <span className="text-slate-400 italic text-[11px]">
@@ -117,7 +132,8 @@ export default function NotificationCard({ item }) {
             </a>
           )}
 
-          {item.applyUrl && (
+          {/* Dynamic Apply button behavior */}
+          {isOpen && item.applyUrl ? (
             <a
               href={item.applyUrl}
               target="_blank"
@@ -127,7 +143,22 @@ export default function NotificationCard({ item }) {
               <span>{item.type === 'admit-card' ? 'Admit Card' : item.type === 'result' ? 'Result' : 'Apply'}</span>
               <ExternalLink className="w-3 h-3 text-slate-300" />
             </a>
-          )}
+          ) : isUpcoming ? (
+            <span
+              className="inline-flex items-center gap-1 px-3 py-2 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 cursor-default"
+              title="Applications opening soon"
+            >
+              <Clock className="w-3 h-3 text-blue-600" />
+              <span>{startDate ? `Opens ${formatDisplayDate(startDate)}` : 'Upcoming'}</span>
+            </span>
+          ) : isClosed ? (
+            <span
+              className="inline-flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-500 text-xs font-semibold rounded-xl border border-slate-200 cursor-not-allowed"
+              title="Applications closed"
+            >
+              <span>Closed</span>
+            </span>
+          ) : null}
         </div>
       </div>
 

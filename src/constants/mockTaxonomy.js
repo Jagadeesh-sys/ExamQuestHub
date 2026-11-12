@@ -1911,3 +1911,23 @@ export function classifyQuestion(question) {
   };
 }
 
+export const SUBJECT_ICON_ASSETS = {
+  'all': '/assets/aistudio/examquesthub_all_mock_icon_92222837.png',
+  'current-affairs': '/assets/aistudio/examquesthub_current_affairs_icon_fdc345ae.png',
+  'general-knowledge': '/assets/aistudio/examquesthub_general_awareness_icon_2f897e54.png',
+  'gk': '/assets/aistudio/examquesthub_general_awareness_icon_2f897e54.png',
+  'quantitative-aptitude': '/assets/aistudio/examquesthub_mathematics_icon_ab20c36e.png',
+  'quant': '/assets/aistudio/examquesthub_mathematics_icon_ab20c36e.png',
+  'reasoning': '/assets/aistudio/examquesthub_reasoning_icon_b6acb299.png',
+  'english-language': '/assets/aistudio/examquesthub_english_icon_cb4147e7.png',
+  'english': '/assets/aistudio/examquesthub_english_icon_cb4147e7.png',
+  'general-science': '/assets/aistudio/examquesthub_general_science_icon_02b3df39.png',
+  'computer-science': '/assets/aistudio/examquesthub_computer_science_icon_573cd928.png',
+  'cse': '/assets/aistudio/examquesthub_computer_science_icon_573cd928.png'
+};
+
+export function getSubjectIconAsset(id) {
+  if (!id) return SUBJECT_ICON_ASSETS['all'];
+  const normalized = String(id).toLowerCase();
+  return SUBJECT_ICON_ASSETS[normalized] || SUBJECT_ICON_ASSETS['all'];
+}

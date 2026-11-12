@@ -6,6 +6,64 @@
 
 export const INITIAL_UPDATES = [
   {
+    id: 'ap-dsc-teacher-recruitment-2026',
+    slug: 'ap-dsc-teacher-recruitment-2026',
+    type: 'job',
+    title: {
+      en: 'AP DSC 2026 Teacher Recruitment (SGT, School Assistant, TGT, PGT)',
+      te: 'ఆంధ్రప్రదేశ్ డీఎస్సీ (AP DSC) 2026 ఉపాధ్యాయ నియామక నోటిఫికేషన్'
+    },
+    organization: {
+      en: 'Department of School Education, Andhra Pradesh (AP DSC)',
+      te: 'పాఠశాల విద్యాశాఖ, ఆంధ్రప్రదేశ్ ప్రభుత్వం'
+    },
+    category: 'Teaching',
+    region: 'Andhra Pradesh',
+    notificationNo: '01/AP-DSC/2026',
+    publishedAt: '2026-11-08',
+    applicationStartDate: '2026-11-10',
+    applicationLastDate: '2026-11-30',
+    openingDate: '2026-11-10',
+    deadline: '2026-11-30',
+    examDate: 'December 2026 - January 2027',
+    vacancies: '16,347',
+    qualification: {
+      en: 'D.Ed / D.El.Ed for SGT; B.Ed with relevant Graduation/Post-Graduation for School Assistant & TGT/PGT. AP TET qualification mandatory.',
+      te: 'ఎస్జీటీ పోస్టులకు డీఈడీ/డీఎల్ఈడీ; స్కూల్ అసిస్టెంట్ మరియు టీజీటీ/పీజీటీ పోస్టులకు సంబంధిత డిగ్రీ/పీజీతో పాటు బీఈడీ. టెట్ అర్హత తప్పనిసరి.'
+    },
+    ageLimit: {
+      en: '18 to 44 years as on 1st July 2026 (5 years relaxation for SC/ST/BC/EWS; 10 years for PwD).',
+      te: '1 జూలై 2026 నాటికి 18 నుండి 44 సంవత్సరాలు (ఎస్సీ, ఎస్టీ, బీసీ, ఈడబ్ల్యూఎస్ అభ్యర్థులకు 5 ఏళ్లు, దివ్యాంగులకు 10 ఏళ్లు సడలింపు).'
+    },
+    applicationFee: {
+      en: '₹750 per candidate for each paper/post applied.',
+      te: 'దరఖాస్తు చేసుకునే ప్రతి పోస్టుకు/పేపరుకు ₹750.'
+    },
+    selectionProcess: {
+      en: 'Computer Based Test (CBT - 80% weightage) + Teacher Eligibility Test (TET - 20% weightage) -> Certificate Verification.',
+      te: 'కంప్యూటర్ ఆధారిత రాత పరీక్ష (80% వెయిటేజీ) + టెట్ స్కోర్ (20% వెయిటేజీ) ఆధారంగా ఎంపిక.'
+    },
+    salary: {
+      en: 'Pay Scale as per AP PRC 2022 (SGT: ₹34,580 - ₹1,07,210; School Assistant: ₹44,570 - ₹1,27,480).',
+      te: 'ఏపీ పీఆర్‌సీ ప్రకారం వేతనాలు (ఎస్జీటీ: ₹34,580 - ₹1,07,210; స్కూల్ అసిస్టెంట్: ₹44,570 - ₹1,27,480).'
+    },
+    summary: {
+      en: 'Government of Andhra Pradesh has commenced the mega teacher recruitment process through AP DSC 2026 for 16,347 secondary grade teacher and school assistant vacancies.',
+      te: 'ఆంధ్రప్రదేశ్ ప్రభుత్వం 16,347 టీచర్ పోస్టుల భర్తీకి మెగా డీఎస్సీ 2026 దరఖాస్తు ప్రక్రియను ప్రారంభించింది.'
+    },
+    description: {
+      en: 'Candidates must submit their applications online through the official portal apdsc.apcfss.in. Ensure payment of the application processing fee and verification of the user profile before final submission.',
+      te: 'అభ్యర్థులు apdsc.apcfss.in అధికారిక పోర్టల్ ద్వారా ఆన్‌లైన్‌లో దరఖాస్తు చేసుకోవాలి.'
+    },
+    officialUrl: 'https://apdsc.apcfss.in',
+    pdfUrl: 'https://apdsc.apcfss.in',
+    applyUrl: 'https://apdsc.apcfss.in',
+    status: 'OPEN',
+    verifiedAt: '2026-11-10T09:00:00Z',
+    featured: true,
+    isDemoRecord: true
+  },
+  {
     id: 'upsc-civil-services-2025',
     slug: 'upsc-civil-services-2025',
     type: 'job', // 'job' | 'admit-card' | 'result'

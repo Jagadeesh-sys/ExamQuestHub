@@ -16,6 +16,12 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StatusBadge from './StatusBadge.jsx';
+import {
+  getEffectiveStatus,
+  getApplicationStartDate,
+  getApplicationLastDate,
+  formatDisplayDate
+} from '../utils/notificationStatus.js';
 
 /**
  * LiveAlertsBar:
@@ -220,17 +226,44 @@ export default function LiveAlertsBar({ notifications = [] }) {
                   </a>
                 )}
 
-                {currentItem.applyUrl && (
-                  <a
-                    href={currentItem.applyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] rounded-xl text-xs font-bold transition-colors shadow-sm"
-                  >
-                    <span>Apply Online</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
+                {(() => {
+                  const effectiveSt = getEffectiveStatus(currentItem);
+                  const normSt = effectiveSt.toLowerCase();
+                  const isOpen = normSt === 'open' || normSt.includes('open');
+                  const isUpcoming = normSt === 'upcoming' || normSt.includes('upcoming');
+                  const isClosed = normSt === 'closed' || normSt.includes('closed');
+                  const startD = getApplicationStartDate(currentItem);
+
+                  if (isOpen && currentItem.applyUrl) {
+                    return (
+                      <a
+                        href={currentItem.applyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] rounded-xl text-xs font-bold transition-colors shadow-sm"
+                      >
+                        <span>Apply Online</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    );
+                  }
+                  if (isUpcoming) {
+                    return (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-500/20 text-sky-200 rounded-xl text-xs font-bold border border-blue-400/30">
+                        <Clock className="w-3 h-3" />
+                        <span>Opens {startD ? formatDisplayDate(startD) : 'Soon'}</span>
+                      </span>
+                    );
+                  }
+                  if (isClosed) {
+                    return (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/5 text-slate-400 rounded-xl text-xs font-semibold border border-white/10 cursor-not-allowed">
+                        <span>Applications Closed</span>
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               <div className="flex items-center gap-3">

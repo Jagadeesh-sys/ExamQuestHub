@@ -21,6 +21,12 @@ import {
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StatusBadge from './StatusBadge.jsx';
 import AgencyLogo from './AgencyLogo.jsx';
+import {
+  getEffectiveStatus,
+  getApplicationStartDate,
+  getApplicationLastDate,
+  formatDisplayDate
+} from '../utils/notificationStatus.js';
 
 /**
  * StraightLineNotification:
@@ -59,6 +65,14 @@ export default function StraightLineNotification({
   const selection = getLocalized(item.selectionProcess);
   const detailSlug = item.slug || item.id;
 
+  const effectiveStatus = getEffectiveStatus(item);
+  const startDate = getApplicationStartDate(item);
+  const lastDate = getApplicationLastDate(item);
+  const normalizedStatus = effectiveStatus.toLowerCase();
+  const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
+  const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
+  const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
+
   // Navy theme (matches the user's screenshot straight-line banner)
   if (theme === 'navy') {
     return (
@@ -84,10 +98,10 @@ export default function StraightLineNotification({
             <span className="text-xs sm:text-sm font-medium text-white truncate flex-1">
               {title}
             </span>
-            {item.deadline && (
-              <span className="hidden md:inline-flex items-center gap-1 text-[11px] text-amber-300 font-semibold shrink-0">
+            {lastDate && (
+              <span className={`hidden md:inline-flex items-center gap-1 text-[11px] font-semibold shrink-0 ${isClosed ? 'text-slate-400' : 'text-amber-300'}`}>
                 <Clock className="w-3 h-3" />
-                <span>Last Date: {item.deadline}</span>
+                <span>Last Date: {formatDisplayDate(lastDate)}</span>
               </span>
             )}
           </div>
@@ -115,7 +129,7 @@ export default function StraightLineNotification({
                   {org} • {item.region} {item.notificationNo ? `• Ref No: ${item.notificationNo}` : ''}
                 </p>
               </div>
-              <StatusBadge status={item.status} />
+              <StatusBadge status={effectiveStatus} />
             </div>
 
             {/* Quick highlight summary */}
@@ -132,8 +146,11 @@ export default function StraightLineNotification({
                 <span className="text-white font-medium line-clamp-2">{qual || 'See official notification'}</span>
               </div>
               <div className="bg-white/5 p-3 rounded-xl border border-white/10">
-                <span className="text-slate-400 block font-semibold mb-1">Age Limit</span>
-                <span className="text-white font-medium">{ageLimit || 'As per recruitment rules'}</span>
+                <span className="text-slate-400 block font-semibold mb-1">Important Dates</span>
+                <div className="text-white font-medium space-y-0.5">
+                  {startDate && <div>Start: <span className="text-sky-200">{formatDisplayDate(startDate)}</span></div>}
+                  {lastDate && <div className={isClosed ? 'text-slate-400' : 'text-[#F2BE4F] font-bold'}>Last: {formatDisplayDate(lastDate)}</div>}
+                </div>
               </div>
               <div className="bg-white/5 p-3 rounded-xl border border-white/10">
                 <span className="text-slate-400 block font-semibold mb-1">Total Vacancies</span>
@@ -159,7 +176,7 @@ export default function StraightLineNotification({
                     <span>Download Official PDF</span>
                   </a>
                 )}
-                {item.applyUrl && (
+                {isOpen && item.applyUrl ? (
                   <a
                     href={item.applyUrl}
                     target="_blank"
@@ -169,7 +186,16 @@ export default function StraightLineNotification({
                     <span>Apply Online</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
-                )}
+                ) : isUpcoming ? (
+                  <span className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-500/20 text-sky-200 rounded-lg text-xs font-bold border border-blue-400/30">
+                    <Clock className="w-3 h-3" />
+                    <span>Opens {startDate ? formatDisplayDate(startDate) : 'Soon'}</span>
+                  </span>
+                ) : isClosed ? (
+                  <span className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/5 text-slate-400 rounded-lg text-xs font-semibold border border-white/10 cursor-not-allowed">
+                    <span>Applications Closed</span>
+                  </span>
+                ) : null}
               </div>
 
               <div className="flex items-center gap-3">
@@ -219,7 +245,7 @@ export default function StraightLineNotification({
 
           {/* Status badge */}
           <div className="shrink-0 scale-90 sm:scale-100 origin-left">
-            <StatusBadge status={item.status} />
+            <StatusBadge status={effectiveStatus} />
           </div>
 
           {/* Category */}
@@ -240,10 +266,12 @@ export default function StraightLineNotification({
           </span>
 
           {/* Date info */}
-          {item.deadline ? (
-            <span className="hidden lg:inline-flex items-center gap-1 text-xs text-amber-900 font-medium shrink-0 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+          {lastDate ? (
+            <span className={`hidden lg:inline-flex items-center gap-1 text-xs font-medium shrink-0 px-2 py-0.5 rounded-md border ${
+              isClosed ? 'text-slate-600 bg-slate-100 border-slate-200' : 'text-amber-900 bg-amber-50 border-amber-200'
+            }`}>
               <Clock className="w-3 h-3 text-amber-600" />
-              <span>Last Date: {item.deadline}</span>
+              <span>Last Date: {formatDisplayDate(lastDate)}</span>
             </span>
           ) : (
             <span className="hidden lg:inline text-[11px] text-slate-400 shrink-0">
@@ -267,7 +295,7 @@ export default function StraightLineNotification({
         </div>
       </div>
 
-      {/* Expanded Details Section (Opens smoothly up to readable length) */}
+      {/* Expanded Details Section */}
       {isExpanded && (
         <div className="border-t border-[#E3EAF2] bg-[#F6F8FC]/60 p-4 sm:p-6 animate-in slide-in-from-top-1 duration-150 space-y-4">
           
@@ -291,7 +319,7 @@ export default function StraightLineNotification({
             </div>
 
             <div className="flex items-center gap-2">
-              <StatusBadge status={item.status} />
+              <StatusBadge status={effectiveStatus} />
               {item.vacancies && item.vacancies !== 'TBD' && (
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                   {item.vacancies}
@@ -339,10 +367,10 @@ export default function StraightLineNotification({
                 <span>Important Dates</span>
               </div>
               <div className="space-y-0.5 text-slate-700 font-medium">
-                <div>Posted: <span className="text-slate-900 font-bold">{item.publishedAt}</span></div>
-                {item.deadline && (
-                  <div className="text-amber-900 font-bold">
-                    Last Date: {item.deadline}
+                {startDate && <div>Application Start: <span className="text-slate-900 font-bold">{formatDisplayDate(startDate)}</span></div>}
+                {lastDate && (
+                  <div className={isClosed ? 'text-slate-500' : 'text-amber-900 font-bold'}>
+                    Last Date: {formatDisplayDate(lastDate)}
                   </div>
                 )}
                 {item.examDate && <div>Exam: {item.examDate}</div>}
@@ -388,7 +416,7 @@ export default function StraightLineNotification({
                 </a>
               )}
 
-              {item.applyUrl && (
+              {isOpen && item.applyUrl ? (
                 <a
                   href={item.applyUrl}
                   target="_blank"
@@ -398,7 +426,16 @@ export default function StraightLineNotification({
                   <span>Apply Online</span>
                   <ExternalLink className="w-3 h-3 text-slate-300" />
                 </a>
-              )}
+              ) : isUpcoming ? (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-bold border border-blue-200 cursor-default">
+                  <Clock className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Opens {startDate ? formatDisplayDate(startDate) : 'Soon'}</span>
+                </span>
+              ) : isClosed ? (
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold border border-slate-200 cursor-not-allowed">
+                  <span>Applications Closed</span>
+                </span>
+              ) : null}
             </div>
 
             <div className="flex items-center gap-3">

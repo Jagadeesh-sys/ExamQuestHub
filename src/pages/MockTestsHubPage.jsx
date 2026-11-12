@@ -257,7 +257,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'All Mock',
       badge: `${(liveTotalQuestionsNumber / 1000).toFixed(1)}k Qs`,
       image3d: iconAllMock,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_a918d86e.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_all_mock_icon_92222837.png`,
       type: 'all'
     },
     {
@@ -266,7 +266,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'Current Affairs',
       badge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 641, '641 Qs'),
       image3d: iconCurrentAffairs,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_1b19ce6e.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_current_affairs_icon_fdc345ae.png`,
       type: 'subject'
     },
     {
@@ -275,7 +275,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'GA / GK',
       badge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 7420, '7.4k Qs'),
       image3d: iconGeneralKnowledge,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_1955d35b.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_general_awareness_icon_2f897e54.png`,
       type: 'subject'
     },
     {
@@ -284,7 +284,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'Maths / Quant',
       badge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 4410, '4.4k Qs'),
       image3d: iconQuant,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_6a75de99.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_mathematics_icon_ab20c36e.png`,
       type: 'subject'
     },
     {
@@ -293,7 +293,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'Reasoning',
       badge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 4140, '4.1k Qs'),
       image3d: iconReasoning,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_70b0a70b.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_reasoning_icon_b6acb299.png`,
       type: 'subject'
     },
     {
@@ -302,7 +302,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'English',
       badge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 680, '680 Qs'),
       image3d: iconEnglish,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_33dcd63b.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_english_icon_cb4147e7.png`,
       type: 'subject'
     },
     {
@@ -311,7 +311,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'Science',
       badge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 1020, '1.0k Qs'),
       image3d: iconScience,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_dbf284c6.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_general_science_icon_02b3df39.png`,
       type: 'subject'
     },
     {
@@ -320,7 +320,7 @@ export default function MockTestsHubPage() {
       shortTitle: 'Computer',
       badge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 810, '810 Qs'),
       image3d: iconComputer,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_6bd65727.png`,
+      fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_computer_science_icon_573cd928.png`,
       type: 'subject'
     }
   ], [liveTotalQuestionsNumber, liveSubjectCounts, cleanBase]);
@@ -794,9 +794,9 @@ export default function MockTestsHubPage() {
                     className="group relative flex-shrink-0 flex flex-col items-center justify-start w-[82px] sm:w-[94px] lg:w-full text-center transition-all duration-200 cursor-pointer active:scale-95"
                     title={item.title}
                   >
-                    {/* Circular Icon */}
+                    {/* Squircle Subject Icon */}
                     <div
-                      className={`w-[66px] h-[66px] sm:w-[74px] sm:h-[74px] lg:w-[72px] lg:h-[72px] xl:w-[78px] xl:h-[78px] rounded-full p-1 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center relative transition-all duration-200 shrink-0 ${
+                      className={`w-[66px] h-[66px] sm:w-[74px] sm:h-[74px] lg:w-[72px] lg:h-[72px] xl:w-[78px] xl:h-[78px] rounded-2xl sm:rounded-[22px] p-1 bg-white border-2 flex items-center justify-center relative transition-all duration-200 shrink-0 ${
                         isSelected
                           ? 'border-[#12345A] ring-3 ring-[#12345A]/25 scale-105 shadow-md bg-blue-50/50'
                           : 'border-slate-200/90 hover:border-[#12345A]/40 shadow-xs'
@@ -805,7 +805,7 @@ export default function MockTestsHubPage() {
                       <img
                         src={item.image3d}
                         alt={item.title}
-                        className="w-full h-full object-cover rounded-full drop-shadow-xs"
+                        className="w-full h-full object-cover rounded-xl sm:rounded-[18px] drop-shadow-xs"
                         loading="lazy"
                         onError={(e) => {
                           if (item.fallbackUrl && e.currentTarget.src !== item.fallbackUrl) {
@@ -814,7 +814,7 @@ export default function MockTestsHubPage() {
                         }}
                       />
                       {isSelected && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
+                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#12345A] text-[#F2BE4F] border-2 border-white flex items-center justify-center shadow-xs">
                           <Check className="w-3 h-3 stroke-[3]" />
                         </div>
                       )}

@@ -31,12 +31,19 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import { subscribeToUpdates, subscribeToCurrentAffairs, getDirectFirestoreMockStats } from '../firebase/firestoreService.js';
 import AgencyLogo from '../components/AgencyLogo.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import { INITIAL_UPDATES } from '../data/initialData.js';
+import {
+  getApplicationLastDate,
+  formatDisplayDate
+} from '../utils/notificationStatus.js';
+import useAutoStatusRefresh from '../hooks/useAutoStatusRefresh.js';
 
 export default function HomePage() {
   const { t, getLocalized } = useLanguage();
   const navigate = useNavigate();
+  useAutoStatusRefresh();
 
   const [updates, setUpdates] = useState([]);
   const [currentAffairs, setCurrentAffairs] = useState([]);
@@ -522,8 +529,8 @@ export default function HomePage() {
             ) : displayNotifications.slice(0, 5).map((item) => {
               const orgName = getLocalized(item.organization) || item.organization || 'Govt Department';
               const jobTitle = getLocalized(item.title) || item.title || 'Recruitment Notification';
-              const lastDate = item.deadline || item.lastDate || item.closingDate || 'Ongoing';
-              const isSuccessStatus = (item.status || '').toLowerCase().includes('open') || (item.status || '').toLowerCase().includes('verified');
+              const rawLastDate = getApplicationLastDate(item);
+              const displayLastDate = rawLastDate ? formatDisplayDate(rawLastDate) : (item.deadline || 'Ongoing');
 
               return (
                 <Link
@@ -549,15 +556,7 @@ export default function HomePage() {
                         <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-[10px] font-bold">
                           {item.region || 'All India'}
                         </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                            isSuccessStatus
-                              ? 'bg-[#ECFDF5] text-[#065F46]'
-                              : 'bg-[#EFF6FF] text-[#1E40AF]'
-                          }`}
-                        >
-                          {item.status || 'Active'}
-                        </span>
+                        <StatusBadge status={item.status} />
                         {item.vacancies && (
                           <span className="px-2 py-0.5 rounded-md bg-[#FFF7ED] text-[#C2410C] text-[10px] font-bold hidden sm:inline-block">
                             {item.vacancies}
@@ -567,7 +566,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Right: Last Date in Red & Chevron */}
+                  {/* Right: Last Date & Chevron */}
                   <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <div className="flex items-center gap-1.5 text-right">
                       <Calendar className="w-4 h-4 text-rose-500 shrink-0" />
@@ -576,7 +575,7 @@ export default function HomePage() {
                           Last Date
                         </span>
                         <span className="text-xs sm:text-sm font-black text-rose-600 leading-tight whitespace-nowrap">
-                          {lastDate}
+                          {displayLastDate}
                         </span>
                       </div>
                     </div>
