@@ -747,6 +747,21 @@ export async function getQuestionsForShift(shiftNumberOrId, subject = null) {
 function formatToEngineQuestions(questions) {
   return questions.map((q, idx) => {
     const c = classifyQuestion(q);
+    let sectionName = 'General Awareness';
+    if (c.subjectId === 'quantitative-aptitude') {
+      sectionName = 'Quantitative Aptitude';
+    } else if (c.subjectId === 'reasoning') {
+      sectionName = 'General Intelligence & Reasoning';
+    } else if (c.subjectId === 'english-language') {
+      sectionName = 'English Comprehension';
+    } else if (c.subjectId === 'computer-science') {
+      sectionName = 'Computer Awareness';
+    } else if (c.subjectId === 'general-science') {
+      sectionName = 'General Science';
+    } else {
+      sectionName = 'General Awareness';
+    }
+
     return {
       id: q.id,
       number: idx + 1,
@@ -776,6 +791,7 @@ function formatToEngineQuestions(questions) {
       shift: q.shiftNumber ? `Shift ${q.shiftNumber}` : 'Master PYQ Pool',
       examDate: q.examDate,
       shiftTiming: q.shiftTiming,
+      sectionName: q.sectionName || sectionName,
       subject: c.subjectName,
       subjectId: c.subjectId,
       topic: c.topicName,
@@ -849,8 +865,190 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     };
   }
 
-  // 2. Full Subject Mock Tests: e.g. "subject-general-knowledge-full-1", "subject-reasoning-full-1", "full-cbt-1", etc.
-  if (testId.startsWith('subject-') || testId.startsWith('unified-') || testId.startsWith('full-cbt-') || testId.startsWith('ca-mock-')) {
+  // 2. Full Mock Tests by Exam Pattern or Subject:
+  // e.g. "rrb-ntpc-cbt1-mock-01", "ssc-cgl-tier1-mock-01", "subject-general-knowledge-full-1", "sec-quant-01", etc.
+  const isRrbFullMock = testId.startsWith('rrb-ntpc-cbt1-mock-') || testId.startsWith('full-cbt-') || testId === 'rrb-ntpc-cbt1-full-01' || testId === 'rrb-ntpc-cbt1-full-02';
+  const isSscCglFullMock = testId.startsWith('ssc-cgl-tier1-mock-') || testId === 'ssc-cgl-full-mock-01';
+  const isSscChslFullMock = testId.startsWith('ssc-chsl-tier1-mock-');
+  const isSscMtsFullMock = testId.startsWith('ssc-mts-tier1-mock-');
+
+  if (
+    isRrbFullMock ||
+    isSscCglFullMock ||
+    isSscChslFullMock ||
+    isSscMtsFullMock ||
+    testId.startsWith('subject-') ||
+    testId.startsWith('sec-') ||
+    testId.startsWith('unified-') ||
+    testId.startsWith('ca-mock-')
+  ) {
+    let mockNum = 1;
+    const numMatch = testId.match(/-(\d+)$/);
+    if (numMatch) mockNum = parseInt(numMatch[1], 10);
+
+    // RRB NTPC CBT-1 Full Pattern: 30 Math, 30 Reasoning, 30 GK, 10 Science = 100 Qs | 90 Mins | 100 Marks | -0.33
+    if (isRrbFullMock) {
+      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
+      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
+      const qSciAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-science');
+      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
+
+      const quantOffset = ((mockNum - 1) * 30) % Math.max(1, qQuantAll.length - 30);
+      const gkOffset = ((mockNum - 1) * 30) % Math.max(1, qGkAll.length - 30);
+      const sciOffset = ((mockNum - 1) * 10) % Math.max(1, qSciAll.length - 10);
+      const reasOffset = ((mockNum - 1) * 30) % Math.max(1, qReasAll.length - 30);
+
+      const picked = [
+        ...qQuantAll.slice(quantOffset, quantOffset + 30).map((q) => ({ ...q, sectionName: 'Quantitative Aptitude' })),
+        ...qReasAll.slice(reasOffset, reasOffset + 30).map((q) => ({ ...q, sectionName: 'General Intelligence & Reasoning' })),
+        ...qGkAll.slice(gkOffset, gkOffset + 30).map((q) => ({ ...q, sectionName: 'General Awareness' })),
+        ...qSciAll.slice(sciOffset, sciOffset + 10).map((q) => ({ ...q, sectionName: 'General Awareness' }))
+      ];
+
+      const engineQuestions = formatToEngineQuestions(picked);
+
+      return {
+        meta: {
+          id: testId,
+          code: `RRB-NTPC-MOCK-${mockNum.toString().padStart(2, '0')}`,
+          title: `RRB NTPC CBT-1 Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
+          subtitle: `Official Pattern CBT: 30 Math · 30 Reasoning · 40 General Awareness`,
+          examName: 'RRB NTPC CBT-1',
+          examYear: '2025-26',
+          subjectLabel: 'All Sections (100 Qs)',
+          targetSubject: 'full',
+          questionsCount: engineQuestions.length,
+          timeMinutes: 90,
+          marks: 100,
+          negativeMarking: 0.33,
+          pdfUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+          pdfFileName: 'RRB-NTPC-UG-2025-EN-All-Papers.pdf',
+          subjectTest: false
+        },
+        questions: engineQuestions
+      };
+    }
+
+    // SSC CGL Tier-1 Full Pattern: 25 Reasoning, 25 GA, 25 Math, 25 English = 100 Qs | 60 Mins | 200 Marks | -0.50
+    if (isSscCglFullMock) {
+      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
+      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
+      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
+      const qEngAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'english-language');
+
+      const reasOffset = ((mockNum - 1) * 25) % Math.max(1, qReasAll.length - 25);
+      const gkOffset = ((mockNum - 1) * 25) % Math.max(1, qGkAll.length - 25);
+      const quantOffset = ((mockNum - 1) * 25) % Math.max(1, qQuantAll.length - 25);
+      const engOffset = ((mockNum - 1) * 25) % Math.max(1, (qEngAll.length || 25) - 25);
+
+      const picked = [
+        ...qReasAll.slice(reasOffset, reasOffset + 25).map((q) => ({ ...q, sectionName: 'General Intelligence & Reasoning' })),
+        ...qGkAll.slice(gkOffset, gkOffset + 25).map((q) => ({ ...q, sectionName: 'General Awareness' })),
+        ...qQuantAll.slice(quantOffset, quantOffset + 25).map((q) => ({ ...q, sectionName: 'Quantitative Aptitude' })),
+        ...qEngAll.slice(engOffset, engOffset + 25).map((q) => ({ ...q, sectionName: 'English Comprehension' }))
+      ];
+
+      const engineQuestions = formatToEngineQuestions(picked);
+
+      return {
+        meta: {
+          id: testId,
+          code: `SSC-CGL-MOCK-${mockNum.toString().padStart(2, '0')}`,
+          title: `SSC CGL Tier-1 Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
+          subtitle: `Tier-1 Pattern: 25 Reasoning · 25 GA · 25 Quant · 25 English`,
+          examName: 'SSC CGL Tier-1',
+          examYear: '2026',
+          subjectLabel: 'All Sections (100 Qs)',
+          targetSubject: 'full',
+          questionsCount: engineQuestions.length,
+          timeMinutes: 60,
+          marks: 200,
+          negativeMarking: 0.5,
+          pdfUrl: '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf',
+          pdfFileName: 'SSC_CGL_2020_All_21_Sets_English.pdf',
+          subjectTest: false
+        },
+        questions: engineQuestions
+      };
+    }
+
+    // SSC CHSL Full Mock Pattern
+    if (isSscChslFullMock) {
+      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
+      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
+      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
+      const qEngAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'english-language');
+
+      const picked = [
+        ...qReasAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'General Intelligence' })),
+        ...qGkAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'General Awareness' })),
+        ...qQuantAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'Quantitative Aptitude' })),
+        ...qEngAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'English Language' }))
+      ];
+
+      const engineQuestions = formatToEngineQuestions(picked);
+
+      return {
+        meta: {
+          id: testId,
+          code: `SSC-CHSL-MOCK-${mockNum.toString().padStart(2, '0')}`,
+          title: `SSC CHSL Tier-1 Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
+          subtitle: `Official Pattern: 100 Questions · 60 Minutes · 200 Marks`,
+          examName: 'SSC CHSL Tier-1',
+          examYear: '2026',
+          subjectLabel: 'All Sections (100 Qs)',
+          targetSubject: 'full',
+          questionsCount: engineQuestions.length,
+          timeMinutes: 60,
+          marks: 200,
+          negativeMarking: 0.5,
+          pdfUrl: '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf',
+          pdfFileName: 'SSC_CHSL_Sample_Paper.pdf',
+          subjectTest: false
+        },
+        questions: engineQuestions
+      };
+    }
+
+    // SSC MTS Full Mock Pattern (90 Qs | 90 Mins | 270 Marks)
+    if (isSscMtsFullMock) {
+      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
+      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
+      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
+      const qEngAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'english-language');
+
+      const picked = [
+        ...qQuantAll.slice(0, 20).map((q) => ({ ...q, sectionName: 'Session 1: Numerical Ability' })),
+        ...qReasAll.slice(0, 20).map((q) => ({ ...q, sectionName: 'Session 1: Reasoning Ability' })),
+        ...qGkAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'Session 2: General Awareness' })),
+        ...qEngAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'Session 2: English Language' }))
+      ];
+
+      const engineQuestions = formatToEngineQuestions(picked);
+
+      return {
+        meta: {
+          id: testId,
+          code: `SSC-MTS-MOCK-${mockNum.toString().padStart(2, '0')}`,
+          title: `SSC MTS Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
+          subtitle: `Session 1 (40 Qs, Qualifying) + Session 2 (50 Qs, Merit)`,
+          examName: 'SSC MTS',
+          examYear: '2026',
+          subjectLabel: 'Session 1 & 2 (90 Qs)',
+          targetSubject: 'full',
+          questionsCount: engineQuestions.length,
+          timeMinutes: 90,
+          marks: 270,
+          negativeMarking: 1.0,
+          pdfUrl: '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf',
+          pdfFileName: 'SSC_MTS_Sample_Paper.pdf',
+          subjectTest: false
+        },
+        questions: engineQuestions
+      };
+    }
+
+    // Subject Full Mocks & Sectionals
     let subject = subjectParam;
     let title = 'Subject Master Mock Test';
     let targetCount = 100;
@@ -860,6 +1058,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     if (
       testId.includes('general-knowledge') ||
       testId.includes('subject-gk') ||
+      testId.includes('sec-gk') ||
       subject === 'general-knowledge' ||
       subject === 'General Knowledge' ||
       subject === 'gk'
@@ -870,6 +1069,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     } else if (
       testId.includes('quantitative-aptitude') ||
       testId.includes('subject-quant') ||
+      testId.includes('sec-quant') ||
       subject === 'quantitative-aptitude' ||
       subject === 'Quantitative Aptitude' ||
       subject === 'quant'
@@ -880,6 +1080,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     } else if (
       testId.includes('reasoning') ||
       testId.includes('subject-reasoning') ||
+      testId.includes('sec-reasoning') ||
       subject === 'reasoning' ||
       subject === 'Reasoning'
     ) {
@@ -889,6 +1090,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     } else if (
       testId.includes('english-language') ||
       testId.includes('subject-english') ||
+      testId.includes('sec-english') ||
       subject === 'english-language' ||
       subject === 'English Language' ||
       subject === 'english'
@@ -899,6 +1101,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     } else if (
       testId.includes('computer-science') ||
       testId.includes('subject-computer') ||
+      testId.includes('sec-computer') ||
       subject === 'computer-science' ||
       subject === 'Computer Science' ||
       subject === 'computer' ||
@@ -910,6 +1113,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     } else if (
       testId.includes('general-science') ||
       testId.includes('subject-science') ||
+      testId.includes('sec-science') ||
       subject === 'general-science' ||
       subject === 'General Science' ||
       subject === 'science'
@@ -927,17 +1131,13 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       canonicalSub = 'current-affairs';
       subject = 'Current Affairs';
       title = 'Current Affairs 2025–2026 – Full Mega Mock';
-    } else if (testId.startsWith('full-cbt-') || testId === 'rrb-ntpc-cbt1-full-01' || testId === 'rrb-ntpc-cbt1-full-02') {
-      canonicalSub = 'all';
-      subject = 'full';
-      title = 'RRB NTPC CBT–1 Full Mock Test (100 Qs)';
     }
 
     if (testId.includes('speed') || testId.includes('25q') || testId.includes('quick')) {
       targetCount = 25;
       duration = 25;
       title = `${subject} – Speed Drill Practice (25 Qs)`;
-    } else if (testId.includes('sectional') || testId.includes('50q') || testId.includes('sec-1')) {
+    } else if (testId.includes('sectional') || testId.includes('50q') || testId.includes('sec-')) {
       targetCount = 50;
       duration = 45;
       title = `${subject} – Sectional CBT Drill (50 Qs)`;

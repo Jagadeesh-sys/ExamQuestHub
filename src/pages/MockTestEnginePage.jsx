@@ -227,18 +227,79 @@ export default function MockTestEnginePage() {
     }
   }, [modeParam]);
 
-  // Reset attempt-scoped values whenever a new test opens
+  const STORAGE_KEY_ACTIVE_TEST = mockMeta?.id ? `eqh_active_test_${mockMeta.id}` : null;
+
+  // Restore attempt-scoped values or initialize fresh
   useEffect(() => {
     if (!mockMeta) return;
-    setCurrentIndex(0);
-    setSelectedAnswers({});
-    setMarkedForReview({});
-    setVisitedQuestions(new Set([0]));
-    setTimeRemaining((mockMeta.timeMinutes || 60) * 60);
-    setIsSubmitted(false);
-    setSolutionFilter('all');
-    setPracticeSubset(null);
+
+    let restored = false;
+    if (STORAGE_KEY_ACTIVE_TEST) {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_TEST);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && !parsed.isSubmitted && Array.isArray(parsed.visitedQuestions)) {
+            setSelectedAnswers(parsed.selectedAnswers || {});
+            setMarkedForReview(parsed.markedForReview || {});
+            setVisitedQuestions(new Set(parsed.visitedQuestions));
+            if (typeof parsed.timeRemaining === 'number' && parsed.timeRemaining > 0) {
+              setTimeRemaining(parsed.timeRemaining);
+            }
+            if (typeof parsed.currentIndex === 'number') {
+              setCurrentIndex(parsed.currentIndex);
+            }
+            restored = true;
+          }
+        }
+      } catch {
+        // fallback to fresh
+      }
+    }
+
+    if (!restored) {
+      setCurrentIndex(0);
+      setSelectedAnswers({});
+      setMarkedForReview({});
+      setVisitedQuestions(new Set([0]));
+      setTimeRemaining((mockMeta.timeMinutes || 60) * 60);
+      setIsSubmitted(false);
+      setSolutionFilter('all');
+      setPracticeSubset(null);
+    }
   }, [mockMeta?.id]);
+
+  // Persist CBT progress to localStorage
+  useEffect(() => {
+    if (!STORAGE_KEY_ACTIVE_TEST || isSubmitted || activeMode !== 'cbt' || allQuestions.length === 0) return;
+    try {
+      localStorage.setItem(
+        STORAGE_KEY_ACTIVE_TEST,
+        JSON.stringify({
+          selectedAnswers,
+          markedForReview,
+          visitedQuestions: Array.from(visitedQuestions),
+          timeRemaining,
+          currentIndex,
+          isSubmitted: false,
+          timestamp: Date.now()
+        })
+      );
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [STORAGE_KEY_ACTIVE_TEST, selectedAnswers, markedForReview, visitedQuestions, timeRemaining, currentIndex, isSubmitted, activeMode, allQuestions.length]);
+
+  // Clear saved progress on submission
+  useEffect(() => {
+    if (isSubmitted && STORAGE_KEY_ACTIVE_TEST) {
+      try {
+        localStorage.removeItem(STORAGE_KEY_ACTIVE_TEST);
+      } catch {
+        // ignore
+      }
+    }
+  }, [isSubmitted, STORAGE_KEY_ACTIVE_TEST]);
 
   // Mark current question as visited
   useEffect(() => {
@@ -517,6 +578,22 @@ export default function MockTestEnginePage() {
       return true;
     });
   }, [allQuestions, selectedAnswers, solutionFilter]);
+
+  // Multi-section support (e.g. Quantitative Aptitude, General Awareness, Reasoning)
+  const sectionsList = useMemo(() => {
+    const map = {};
+    allQuestions.forEach((q, idx) => {
+      const sec = q.sectionName || q.subject || 'All Questions';
+      if (!map[sec]) {
+        map[sec] = { name: sec, firstIndex: idx, count: 0, indices: [] };
+      }
+      map[sec].count++;
+      map[sec].indices.push(idx);
+    });
+    return Object.values(map);
+  }, [allQuestions]);
+
+  const currentSectionName = currentQ?.sectionName || currentQ?.subject || 'All Questions';
 
   if ((isSubjectTest && subjectTest.loading) || (isRrbTest && rrbTestState.loading)) {
     return (
@@ -994,6 +1071,39 @@ export default function MockTestEnginePage() {
           <>
             {/* Left Question Box */}
             <div className="flex-1 flex flex-col justify-between space-y-4">
+              {/* Multi-Section Tabs Header (e.g. Quantitative Aptitude, Reasoning, General Awareness) */}
+              {sectionsList.length > 1 && (
+                <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-[#E3EAF2] shadow-2xs flex items-center gap-2 overflow-x-auto no-scrollbar">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1 pr-1 shrink-0">
+                    Sections:
+                  </span>
+                  {sectionsList.map((sec) => {
+                    const isCurrentSection = sec.name === currentSectionName;
+                    return (
+                      <button
+                        key={sec.name}
+                        type="button"
+                        onClick={() => handleJumpToQuestion(sec.firstIndex)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                          isCurrentSection
+                            ? 'bg-[#12345A] text-white shadow-xs scale-[1.02]'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        <span>{sec.name}</span>
+                        <span
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                            isCurrentSection ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
+                          }`}
+                        >
+                          {sec.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="bg-white rounded-3xl p-5 sm:p-8 border border-[#E3EAF2] shadow-xs space-y-5">
                 {/* Question Info Bar */}
                 <div className="flex items-center justify-between pb-3 border-b border-[#E3EAF2] gap-2">
@@ -1001,6 +1111,29 @@ export default function MockTestEnginePage() {
                     <span className="px-3 py-1 rounded-full bg-[#12345A] text-white text-xs font-bold">
                       Q {currentIndex + 1} of {allQuestions.length}
                     </span>
+
+                    {/* Quick mobile prev/next arrows */}
+                    <div className="flex sm:hidden items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={handlePrev}
+                        disabled={currentIndex === 0}
+                        className="p-1 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
+                        title="Previous Question"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveAndNext}
+                        disabled={isLastQuestion}
+                        className="p-1 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
+                        title="Next Question"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
                       {currentQ.topic || mockMeta.topicName || 'Authentic CBT'}
                     </span>
@@ -1175,6 +1308,48 @@ export default function MockTestEnginePage() {
                     )}
                   </div>
                 )}
+
+                {/* Dedicated Mobile In-Card Navigation Bar (Previous & Next Question) */}
+                <div className="lg:hidden pt-4 border-t border-slate-100 flex items-center justify-between gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    disabled={currentIndex === 0}
+                    className="flex-1 py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                  >
+                    <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+                    <span>Previous</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleClearResponse}
+                    disabled={!selectedAnswers[currentQ?.id]}
+                    className="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 disabled:opacity-30 transition cursor-pointer"
+                  >
+                    Clear
+                  </button>
+
+                  {isLastQuestion ? (
+                    <button
+                      type="button"
+                      onClick={() => setSubmitConfirmOpen(true)}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition flex items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Submit</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSaveAndNext}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                    >
+                      <span>Save &amp; Next</span>
+                      <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* =========================================================================
