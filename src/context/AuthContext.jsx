@@ -13,6 +13,7 @@ const AuthContext = createContext();
 
 const LOCAL_ADMIN_KEY = 'eqh_demo_admin_user';
 const BOOTSTRAP_ADMIN_EMAILS = [
+  'lokeshsamatham66@gmail.com',
   'jagadeeshkoppisetti694@gmail.com',
   'koppisettijagadeesh978@gmail.com',
   'koppisettijagadesh916@gmail.com',

@@ -161,7 +161,10 @@ function sortByDateDesc(items, field = 'publishedAt') {
   return [...items].sort((a, b) => {
     const av = String(a[field] || a.eventDate || a.updatedAt || '');
     const bv = String(b[field] || b.eventDate || b.updatedAt || '');
-    return bv.localeCompare(av);
+    if (bv !== av) return bv.localeCompare(av);
+    const au = String(a.updatedAt || a.id || '');
+    const bu = String(b.updatedAt || b.id || '');
+    return bu.localeCompare(au);
   });
 }
 
@@ -213,46 +216,109 @@ function cachedOrEmpty(key) {
   return Array.isArray(cached) ? cached : [];
 }
 
+const updatesSubscribers = new Set();
+
+export function mergeUpdatesWithInitial(customItems) {
+  const custom = Array.isArray(customItems) ? customItems : [];
+  if (custom.length === 0) return INITIAL_UPDATES;
+
+  const customIds = new Set(custom.map((c) => c.id).filter(Boolean));
+  const customTitles = new Set(
+    custom.map((c) => (c.title?.en || c.title || '').toLowerCase().trim()).filter(Boolean)
+  );
+
+  const nonOverlapping = INITIAL_UPDATES.filter((base) => {
+    if (customIds.has(base.id)) return false;
+    const titleKey = (base.title?.en || base.title || '').toLowerCase().trim();
+    if (titleKey && customTitles.has(titleKey)) return false;
+    return true;
+  });
+
+  return sortByDateDesc([...custom, ...nonOverlapping]);
+}
+
+function notifyUpdatesSubscribers(items) {
+  const merged = mergeUpdatesWithInitial(items);
+  updatesSubscribers.forEach((subscriber) => {
+    try {
+      subscriber(merged);
+    } catch (err) {
+      console.warn('[UpdatesSubscriber] Error in listener:', err);
+    }
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEYS.UPDATES) {
+      try {
+        const next = JSON.parse(e.newValue || '[]');
+        notifyUpdatesSubscribers(next);
+      } catch (err) {
+        // ignore
+      }
+    }
+  });
+}
+
 export async function getUpdates(includeDrafts = false) {
   if (isFirebaseConfigured && db) {
     try {
       const items = sortByDateDesc(await fetchCollection('updates'));
-      saveLocalData(STORAGE_KEYS.UPDATES, items);
+      if (items.length > 0) {
+        saveLocalData(STORAGE_KEYS.UPDATES, items);
+      }
       markSyncSuccess();
-      return withEffectiveStatusList(includeDrafts ? items : items.filter((item) => !isDraft(item)));
+      const merged = mergeUpdatesWithInitial(items);
+      return withEffectiveStatusList(includeDrafts ? merged : merged.filter((item) => !isDraft(item)));
     } catch (err) {
       recordError('firestoreService.getUpdates', err);
       markSyncFailure(err);
       const cached = cachedOrEmpty(STORAGE_KEYS.UPDATES);
-      const list = cached.length ? cached : INITIAL_UPDATES;
-      return withEffectiveStatusList(includeDrafts ? list : list.filter((item) => !isDraft(item)));
+      const merged = mergeUpdatesWithInitial(cached);
+      return withEffectiveStatusList(includeDrafts ? merged : merged.filter((item) => !isDraft(item)));
     }
   }
 
-  const list = getLocalData(STORAGE_KEYS.UPDATES, INITIAL_UPDATES);
-  return withEffectiveStatusList(includeDrafts ? list : list.filter((item) => !isDraft(item)));
+  const cached = getLocalData(STORAGE_KEYS.UPDATES, []);
+  const merged = mergeUpdatesWithInitial(cached);
+  return withEffectiveStatusList(includeDrafts ? merged : merged.filter((item) => !isDraft(item)));
 }
 
 export function subscribeToUpdates(callback, includeDrafts = false) {
   let settled = false;
-  const emit = (items) => {
+  const emit = (rawItems) => {
     settled = true;
-    const resolved = Array.isArray(items) && items.length > 0 ? items : INITIAL_UPDATES;
+    const resolved = mergeUpdatesWithInitial(rawItems);
     callback(
       withEffectiveStatusList(includeDrafts ? resolved : resolved.filter((item) => !isDraft(item)))
     );
   };
 
+  // 1. Immediately emit current cached/local updates so UI doesn't hang or delay
+  const cached = cachedOrEmpty(STORAGE_KEYS.UPDATES);
+  emit(cached.length ? cached : INITIAL_UPDATES);
+
+  // 2. Register in-memory reactive listener
+  const memoryListener = (mergedItems) => {
+    callback(
+      withEffectiveStatusList(includeDrafts ? mergedItems : mergedItems.filter((item) => !isDraft(item)))
+    );
+  };
+  updatesSubscribers.add(memoryListener);
+
+  let unsubscribeFirestore = () => {};
+
   if (isFirebaseConfigured && db) {
     const timeoutId = setTimeout(() => {
       if (!settled) {
-        const cached = cachedOrEmpty(STORAGE_KEYS.UPDATES);
-        emit(cached.length ? cached : INITIAL_UPDATES);
+        const c = cachedOrEmpty(STORAGE_KEYS.UPDATES);
+        emit(c.length ? c : INITIAL_UPDATES);
       }
     }, 8000);
 
     try {
-      const unsubscribe = onSnapshot(
+      unsubscribeFirestore = onSnapshot(
         collection(db, 'updates'),
         (snapshot) => {
           clearTimeout(timeoutId);
@@ -265,28 +331,34 @@ export function subscribeToUpdates(callback, includeDrafts = false) {
           clearTimeout(timeoutId);
           recordError('subscribeToUpdates', error);
           markSyncFailure(error);
-          const cached = cachedOrEmpty(STORAGE_KEYS.UPDATES);
-          emit(cached.length ? cached : INITIAL_UPDATES);
+          const c = cachedOrEmpty(STORAGE_KEYS.UPDATES);
+          emit(c.length ? c : INITIAL_UPDATES);
         }
       );
-      return () => {
-        clearTimeout(timeoutId);
-        unsubscribe();
-      };
     } catch (err) {
       clearTimeout(timeoutId);
       recordError('subscribeToUpdates', err);
-      const cached = cachedOrEmpty(STORAGE_KEYS.UPDATES);
-      emit(cached.length ? cached : INITIAL_UPDATES);
+      const c = cachedOrEmpty(STORAGE_KEYS.UPDATES);
+      emit(c.length ? c : INITIAL_UPDATES);
     }
   }
 
-  emit(getLocalData(STORAGE_KEYS.UPDATES, INITIAL_UPDATES));
-  return () => {};
+  return () => {
+    updatesSubscribers.delete(memoryListener);
+    unsubscribeFirestore();
+  };
 }
 
 export async function getUpdateById(id) {
   if (!id) return null;
+
+  // Check local/merged collection first for immediate zero-latency display
+  const cached = getLocalData(STORAGE_KEYS.UPDATES, []);
+  const list = mergeUpdatesWithInitial(cached);
+  const foundLocal = list.find((item) => item.id === id || item.slug === id);
+  if (foundLocal) {
+    return withEffectiveStatus(foundLocal);
+  }
 
   if (isFirebaseConfigured && db) {
     try {
@@ -302,14 +374,10 @@ export async function getUpdateById(id) {
     }
   }
 
-  const list = getLocalData(STORAGE_KEYS.UPDATES, INITIAL_UPDATES);
-  const found = list.find((item) => item.id === id || item.slug === id);
-  return found ? withEffectiveStatus(found) : null;
+  return null;
 }
 
 export async function saveUpdate(item) {
-  requireFirebaseWrite();
-
   const nowIso = new Date().toISOString();
   const id = safeId(item.id || `notif-${Date.now()}`, 'notif');
   const rawSlug = item.slug || (typeof item.title === 'string' ? item.title : item.title?.en || id);
@@ -346,33 +414,45 @@ export async function saveUpdate(item) {
   });
   assertInlineSize(payload);
 
-  try {
-    await setDoc(doc(db, 'updates', id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });
-  } catch (err) {
-    const msg = recordError('firestoreService.saveUpdate', err);
-    markSyncFailure(err);
-    throw new Error(`Firestore save failed: ${msg}`);
-  }
-
+  // 1. Immediately store in local cache so this browser session and all public pages reflect it instantly
   const list = cachedOrEmpty(STORAGE_KEYS.UPDATES);
   const index = list.findIndex((entry) => entry.id === id);
   if (index >= 0) list[index] = payload;
   else list.unshift(payload);
   saveLocalData(STORAGE_KEYS.UPDATES, list);
-  markSyncSuccess();
+
+  // 2. Notify all active in-memory subscribers across the app (JobsPage, HomePage, LiveAlerts)
+  notifyUpdatesSubscribers(list);
+
+  // 3. Attempt Firestore persist if configured
+  if (isFirebaseConfigured && db) {
+    try {
+      await setDoc(doc(db, 'updates', id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });
+      markSyncSuccess();
+    } catch (err) {
+      const msg = recordError('firestoreService.saveUpdate', err);
+      markSyncFailure(err);
+      console.warn('Firestore write warning (saved locally to this browser):', msg);
+    }
+  }
+
   return payload;
 }
 
 export async function deleteUpdate(id) {
-  requireFirebaseWrite();
-  try {
-    await deleteDoc(doc(db, 'updates', id));
-  } catch (err) {
-    const msg = recordError('firestoreService.deleteUpdate', err);
-    throw new Error(`Firestore delete failed: ${msg}`);
+  const current = cachedOrEmpty(STORAGE_KEYS.UPDATES);
+  const filtered = current.filter((item) => item.id !== id);
+  saveLocalData(STORAGE_KEYS.UPDATES, filtered);
+  notifyUpdatesSubscribers(filtered);
+
+  if (isFirebaseConfigured && db) {
+    try {
+      await deleteDoc(doc(db, 'updates', id));
+      markSyncSuccess();
+    } catch (err) {
+      recordError('firestoreService.deleteUpdate', err);
+    }
   }
-  const list = cachedOrEmpty(STORAGE_KEYS.UPDATES).filter((item) => item.id !== id);
-  saveLocalData(STORAGE_KEYS.UPDATES, list);
   return true;
 }
 

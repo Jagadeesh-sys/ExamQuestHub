@@ -258,7 +258,12 @@ export default function JobsPage() {
         const vB = parseInt(String(b.vacancies || '').replace(/\D/g, '') || '0', 10);
         return vB - vA;
       }
-      return (b.publishedAt || '').localeCompare(a.publishedAt || '');
+      const dateA = a.publishedAt || '';
+      const dateB = b.publishedAt || '';
+      if (dateA !== dateB) {
+        return dateB.localeCompare(dateA);
+      }
+      return String(b.updatedAt || b.id || '').localeCompare(String(a.updatedAt || a.id || ''));
     });
   }, [updates, searchFilter, categoryFilter, regionFilter, boardFilter, statusFilter, sortBy, getLocalized]);
 

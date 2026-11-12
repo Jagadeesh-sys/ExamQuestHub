@@ -7,6 +7,7 @@ service cloud.firestore {
 
     function bootstrapAdmin() {
       return signedIn() && request.auth.token.email in [
+        'lokeshsamatham66@gmail.com',
         'jagadeeshkoppisetti694@gmail.com',
         'koppisettijagadeesh978@gmail.com',
         'koppisettijagadesh916@gmail.com',
