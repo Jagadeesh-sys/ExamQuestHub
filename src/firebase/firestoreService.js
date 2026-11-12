@@ -334,10 +334,13 @@ export async function saveUpdate(item) {
     applicationLastDate: lastDate || undefined,
     openingDate: startDate || fields.openingDate || undefined,
     deadline: lastDate || fields.deadline || undefined,
+    publishedAt: normalizeDateIST(fields.publishedAt) || fields.publishedAt || publishedAt,
+    examDate: fields.examDate ? String(fields.examDate).trim() : undefined,
+    admitCardDate: fields.admitCardDate ? (normalizeDateIST(fields.admitCardDate) || fields.admitCardDate) : undefined,
+    resultDate: fields.resultDate ? (normalizeDateIST(fields.resultDate) || fields.resultDate) : undefined,
     status,
     id,
     slug,
-    publishedAt,
     updatedAt: nowIso,
     verifiedAt: isDraft(fields) ? fields.verifiedAt || null : fields.verifiedAt || nowIso
   });

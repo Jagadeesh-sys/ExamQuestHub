@@ -64,6 +64,64 @@ export const INITIAL_UPDATES = [
     isDemoRecord: true
   },
   {
+    id: 'rrb-ntpc-graduate-recruitment-2026-27',
+    slug: 'rrb-ntpc-graduate-recruitment-2026-27',
+    type: 'job',
+    title: {
+      en: 'RRB NTPC Graduate Level (Station Master, Goods Train Manager, Senior Clerk) 2026-27',
+      te: 'రైల్వే రిక్రూట్‌మెంట్ బోర్డు (RRB NTPC) గ్రాడ్యుయేట్ లెవెల్ నియామక ప్రక్రియ 2026-27'
+    },
+    organization: {
+      en: 'Railway Recruitment Boards (RRB)',
+      te: 'రైల్వే రిక్రూట్‌మెంట్ బోర్డులు (RRB)'
+    },
+    category: 'RRB and Railway',
+    region: 'All India',
+    notificationNo: 'CEN 05/2026-NTPC',
+    publishedAt: '2026-11-05',
+    applicationStartDate: '2026-11-20',
+    applicationLastDate: '2026-12-20',
+    openingDate: '2026-11-20',
+    deadline: '2026-12-20',
+    examDate: 'February - March 2027',
+    vacancies: '11,558',
+    qualification: {
+      en: 'University Degree in any discipline from a recognized University or its equivalent.',
+      te: 'గుర్తింపు పొందిన విశ్వవిద్యాలయం నుండి ఏదైనా డిగ్రీ లేదా తత్సమాన విద్యార్హత.'
+    },
+    ageLimit: {
+      en: '18 to 36 years as on 1st January 2027 (Statutory age relaxations for SC/ST/OBC/EWS/PwBD).',
+      te: '1 జనవరి 2027 నాటికి 18 నుండి 36 సంవత్సరాలు (నిబంధనల ప్రకారం వయోపరిమితి సడలింపు).'
+    },
+    applicationFee: {
+      en: '₹500 (₹400 refundable on appearing CBT-1); ₹250 for SC/ST/Ex-Servicemen/Female (Fully refundable).',
+      te: '₹500 (సీబీటీ-1 పరీక్షకు హాజరైన తర్వాత ₹400 రీఫండ్); ఎస్సీ, ఎస్టీ, మహిళలకు ₹250.'
+    },
+    selectionProcess: {
+      en: '1st Stage Computer Based Test (CBT-1) -> 2nd Stage CBT-2 -> CBAT (for Station Master) -> Document Verification & Medical.',
+      te: 'సీబీటీ-1 -> సీబీటీ-2 -> సైకో / కంప్యూటర్ బేస్డ్ ఆప్టిట్యూడ్ టెస్ట్ (స్టేషన్ మాస్టర్) -> ధ్రువపత్రాల పరిశీలన & వైద్య పరీక్ష.'
+    },
+    salary: {
+      en: 'Pay Level 5 & Level 6 of 7th CPC (Initial Basic ₹29,200 to ₹35,400 + DA, HRA, Transport Allowance).',
+      te: '7వ వేతన సంఘం లెవల్ 5 & లెవల్ 6 (బేసిక్ ₹29,200 నుండి ₹35,400 మరియు అలవెన్సులు).'
+    },
+    summary: {
+      en: 'Ministry of Railways invites applications across 21 Railway Recruitment Boards for 11,558 graduate non-technical popular categories vacancies.',
+      te: 'భారతీయ రైల్వేలోని 11,558 గ్రాడ్యుయేట్ ఎన్‌టీపీసీ ఉద్యోగాల భర్తీకి దరఖాస్తులు నవంబర్ 20 నుండి ప్రారంభం కానున్నాయి.'
+    },
+    description: {
+      en: 'Detailed zone-wise vacancy distribution, normalized marking parameters, and official bilingual syllabus available across all regional RRB portals.',
+      te: 'అభ్యర్థులు rrbapply.gov.in అధికారిక పోర్టల్ ద్వారా నవంబర్ 20 నుండి ఆన్‌లైన్‌లో దరఖాస్తు చేసుకోవచ్చు.'
+    },
+    officialUrl: 'https://rrbapply.gov.in',
+    pdfUrl: 'https://rrbapply.gov.in',
+    applyUrl: 'https://rrbapply.gov.in',
+    status: 'UPCOMING',
+    verifiedAt: '2026-11-06T10:00:00Z',
+    featured: true,
+    isDemoRecord: true
+  },
+  {
     id: 'upsc-civil-services-2025',
     slug: 'upsc-civil-services-2025',
     type: 'job', // 'job' | 'admit-card' | 'result'

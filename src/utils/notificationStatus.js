@@ -16,7 +16,8 @@
 export const STATUS_UPCOMING = 'UPCOMING';
 export const STATUS_OPEN = 'OPEN';
 export const STATUS_CLOSED = 'CLOSED';
-export const STATUS_DATE_NOT_AVAILABLE = 'DATE NOT AVAILABLE';
+export const STATUS_DATE_NOT_ANNOUNCED = 'DATE NOT ANNOUNCED';
+export const STATUS_DATE_NOT_AVAILABLE = 'DATE NOT ANNOUNCED';
 export const STATUS_NEEDS_VERIFICATION = 'NEEDS VERIFICATION';
 
 // Backward compatibility constants
@@ -214,14 +215,9 @@ export function calculateJobStatus(startRaw, lastRaw, now = new Date()) {
   const last = normalizeDateIST(lastRaw);
   const today = getTodayIST(now);
 
-  // Both missing
-  if (!start && !last) {
-    return STATUS_DATE_NOT_AVAILABLE;
-  }
-
-  // Either start or last is missing
+  // Missing either start date or deadline
   if (!start || !last) {
-    return STATUS_NEEDS_VERIFICATION;
+    return STATUS_DATE_NOT_ANNOUNCED;
   }
 
   // Invalid date range (start date occurs after deadline)
@@ -229,22 +225,20 @@ export function calculateJobStatus(startRaw, lastRaw, now = new Date()) {
     return STATUS_NEEDS_VERIFICATION;
   }
 
-  // Current date is before start date
+  // Exact requested priority:
+  // IF currentDate < applicationStartDate: status = UPCOMING
   if (today < start) {
     return STATUS_UPCOMING;
   }
 
-  // Current date is between start date and last date (inclusive)
-  if (today >= start && today <= last) {
+  // ELSE IF currentDate <= applicationLastDate: status = OPEN
+  // (Remains OPEN throughout the closing date until 23:59:59 IST)
+  if (today <= last) {
     return STATUS_OPEN;
   }
 
-  // Current date is after last date
-  if (today > last) {
-    return STATUS_CLOSED;
-  }
-
-  return STATUS_NEEDS_VERIFICATION;
+  // ELSE: status = CLOSED
+  return STATUS_CLOSED;
 }
 
 /**
@@ -269,34 +263,28 @@ export function getEffectiveStatus(item, now = new Date()) {
   const normalizedRaw = rawStatus.toLowerCase();
 
   // Explicit Draft items remain Draft in the admin view
-  if (normalizedRaw === 'draft' || item.published === false) {
+  if (normalizedRaw === 'draft' || item.isDraft || item.published === false) {
     return 'Draft';
+  }
+
+  // Items explicitly categorized as non-job updates (e.g. Admit Cards or Results)
+  if (item.type === 'admit-card' || normalizedRaw.includes('admit')) {
+    return 'Admit Card Released';
+  }
+  if (item.type === 'result' || normalizedRaw.includes('result')) {
+    return 'Result Released';
   }
 
   const startDateRaw = getApplicationStartDate(item);
   const lastDateRaw = getApplicationLastDate(item);
 
-  // If application start date or last date is present, calculate dynamically
-  if (startDateRaw || lastDateRaw) {
+  // If application start date and last date are present, calculate dynamically
+  if (startDateRaw && lastDateRaw) {
     return calculateJobStatus(startDateRaw, lastDateRaw, now);
   }
 
-  // Items without application dates (e.g. Admit Cards, Results, or legacy records)
-  if (normalizedRaw.includes('admit')) {
-    return 'Admit Card Released';
-  }
-  if (normalizedRaw.includes('result')) {
-    return 'Result Released';
-  }
-  if (item.type === 'admit-card') {
-    return 'Admit Card Released';
-  }
-  if (item.type === 'result') {
-    return 'Result Released';
-  }
-
-  // Date is missing on a job item
-  return STATUS_DATE_NOT_AVAILABLE;
+  // If either application start date or last date is missing, do NOT classify as OPEN:
+  return STATUS_DATE_NOT_ANNOUNCED;
 }
 
 /**
@@ -329,7 +317,7 @@ export function withEffectiveStatusList(items, now = new Date()) {
 export function isJobOpen(item, now = new Date()) {
   const status = typeof item === 'string' ? item : getEffectiveStatus(item, now);
   const s = String(status).trim().toLowerCase();
-  return s === 'open' || s === 'applications open';
+  return s === 'open' || s === 'application open' || s === 'applications open';
 }
 
 export function isJobUpcoming(item, now = new Date()) {
@@ -341,7 +329,7 @@ export function isJobUpcoming(item, now = new Date()) {
 export function isJobClosed(item, now = new Date()) {
   const status = typeof item === 'string' ? item : getEffectiveStatus(item, now);
   const s = String(status).trim().toLowerCase();
-  return s === 'closed';
+  return s === 'closed' || s === 'application closed';
 }
 
 /**

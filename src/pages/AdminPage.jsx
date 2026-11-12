@@ -62,9 +62,13 @@ import {
   normalizeDateIST,
   formatDisplayDate,
   getTodayIST,
+  isJobOpen,
+  isJobUpcoming,
+  isJobClosed,
   STATUS_CLOSED,
   STATUS_OPEN,
-  STATUS_UPCOMING
+  STATUS_UPCOMING,
+  STATUS_DATE_NOT_ANNOUNCED
 } from '../utils/notificationStatus.js';
 
 /**
@@ -101,6 +105,8 @@ export default function AdminPage() {
 
   // Filter & Search inside Admin
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifSearchQuery, setNotifSearchQuery] = useState('');
+  const [notifStatusFilter, setNotifStatusFilter] = useState('ALL'); // 'ALL' | 'OPEN' | 'UPCOMING' | 'CLOSED' | 'DRAFT'
   const [caTopicFilter, setCaTopicFilter] = useState('All');
   const [caSearchQuery, setCaSearchQuery] = useState('');
 
@@ -453,11 +459,13 @@ export default function AdminPage() {
     setLoginLoading(false);
   };
 
-  // Metric counts calculated from real data
+  // Metric counts calculated dynamically from real data
   const totalPublished = updates.filter(u => u.status !== 'Draft' && !u.isDraft).length;
   const totalDrafts = updates.filter(u => u.status === 'Draft' || u.isDraft).length;
+  const totalOpen = updates.filter(u => !u.isDraft && u.status !== 'Draft' && isJobOpen(u)).length;
+  const totalUpcoming = updates.filter(u => !u.isDraft && u.status !== 'Draft' && isJobUpcoming(u)).length;
+  const totalClosed = updates.filter(u => !u.isDraft && u.status !== 'Draft' && isJobClosed(u)).length;
   const needsVerification = updates.filter(u => !u.verifiedAt && u.status !== 'Draft' && !u.isDraft).length;
-  const totalClosed = updates.filter(u => getEffectiveStatus(u) === STATUS_CLOSED).length;
 
   // Delete handler
   const confirmDeleteAction = async () => {
@@ -861,254 +869,432 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* -------------------------------------------------------------
-          TAB 1: NOTIFICATIONS MANAGER
-         ------------------------------------------------------------- */}
       {activeTab === 'overview' && (
-        <div className="bg-white rounded-3xl p-4 sm:p-6 border border-[#E3EAF2] space-y-4">
+        <div className="bg-white rounded-3xl p-4 sm:p-6 border border-[#E3EAF2] space-y-5">
+          {/* Header & Primary Actions */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="font-heading font-bold text-base sm:text-lg text-[#182B45]">
                 Manage Exam Notifications
               </h2>
               <p className="text-xs text-slate-500">
-                Create, verify, publish, edit deadlines, or mark status as closed.
+                Application status is automatically calculated in Indian Standard Time (Asia/Kolkata) using Start Date & Deadline.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                const todayStr = getTodayIST();
-                setEditingItem({
-                  title: { en: '', te: '' },
-                  organization: { en: '', te: '' },
-                  category: 'State PSC',
-                  region: 'All India',
-                  notificationNo: '',
-                  publishedAt: todayStr,
-                  applicationStartDate: todayStr,
-                  applicationLastDate: '',
-                  openingDate: todayStr,
-                  deadline: '',
-                  examDate: '',
-                  vacancies: '',
-                  qualification: { en: '', te: '' },
-                  ageLimit: { en: '', te: '' },
-                  applicationFee: { en: '', te: '' },
-                  summary: { en: '', te: '' },
-                  officialUrl: '',
-                  applyUrl: '',
-                  pdfUrl: '',
-                  status: 'OPEN',
-                  isDraft: false,
-                  featured: false
-                });
-                setEditType('update');
-                setIsFormOpen(true);
-              }}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs w-full sm:w-auto active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{t('addNewUpdate')}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setImportJson('');
-                setImportSummary(null);
-                setImportOpen(true);
-              }}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-[#12345A] text-[#12345A] hover:bg-[#EAF3FF] text-xs font-bold rounded-xl transition-colors shadow-xs w-full sm:w-auto active:scale-95"
-            >
-              <Clipboard className="w-4 h-4" />
-              <span>Bulk Import</span>
-            </button>
-          </div>
-
-          {/* Mobile Card View (md:hidden) */}
-          <div className="space-y-3 md:hidden">
-            {updates.map((item) => (
-              <div
-                key={item.id}
-                className="p-3.5 rounded-2xl border border-slate-200 bg-[#F6F8FC] space-y-2.5"
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  const todayStr = getTodayIST();
+                  setEditingItem({
+                    title: { en: '', te: '' },
+                    organization: { en: '', te: '' },
+                    category: 'State PSC',
+                    region: 'All India',
+                    notificationNo: '',
+                    publishedAt: todayStr,
+                    applicationStartDate: todayStr,
+                    applicationLastDate: '',
+                    openingDate: todayStr,
+                    deadline: '',
+                    examDate: '',
+                    admitCardDate: '',
+                    resultDate: '',
+                    vacancies: '',
+                    qualification: { en: '', te: '' },
+                    ageLimit: { en: '', te: '' },
+                    applicationFee: { en: '', te: '' },
+                    selectionProcess: { en: '', te: '' },
+                    salary: { en: '', te: '' },
+                    summary: { en: '', te: '' },
+                    description: { en: '', te: '' },
+                    officialUrl: '',
+                    applyUrl: '',
+                    pdfUrl: '',
+                    status: 'OPEN',
+                    isDraft: false,
+                    featured: false
+                  });
+                  setEditType('update');
+                  setFormError('');
+                  setIsFormOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold rounded-xl transition-colors shadow-xs active:scale-95 cursor-pointer"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] font-semibold text-[#2468B4] uppercase tracking-wider block">
-                      {getLocalized(item.organization)}
-                    </span>
-                    <h4 className="font-heading font-bold text-xs text-[#182B45] line-clamp-2">
-                      {getLocalized(item.title)}
-                    </h4>
-                  </div>
-                  <StatusBadge status={getEffectiveStatus(item)} />
-                </div>
+                <Plus className="w-4 h-4" />
+                <span>{t('addNewUpdate')}</span>
+              </button>
 
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                  <span className="px-2 py-0.5 rounded bg-white border border-slate-200">
-                    {item.category}
-                  </span>
-                  <span>{item.region}</span>
-                  {getApplicationStartDate(item) && (
-                    <span className="text-slate-700">Start: {formatDisplayDate(getApplicationStartDate(item))}</span>
-                  )}
-                  {getApplicationLastDate(item) && (
-                    <span className="text-amber-800 font-medium">Last: {formatDisplayDate(getApplicationLastDate(item))}</span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60">
-                  <button
-                    type="button"
-                    onClick={() => handleTogglePublish(item, 'update')}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
-                      item.status === 'Draft'
-                        ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-                        : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                    }`}
-                  >
-                    {item.status === 'Draft' ? 'Draft • Publish' : 'Published'}
-                  </button>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingItem({
-                          ...item,
-                          applicationStartDate: getApplicationStartDate(item),
-                          applicationLastDate: getApplicationLastDate(item),
-                          publishedAt: item.publishedAt || '',
-                          examDate: item.examDate || '',
-                          vacancies: item.vacancies || '',
-                          isDraft: item.status === 'Draft'
-                        });
-                        setEditType('update');
-                        setFormError('');
-                        setIsFormOpen(true);
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1 active:bg-slate-100 cursor-pointer"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 text-[#12345A]" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteConfirm({
-                          isOpen: true,
-                          id: item.id,
-                          type: 'update',
-                          title: getLocalized(item.title)
-                        });
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-semibold flex items-center gap-1 active:bg-red-100 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setImportJson('');
+                  setImportSummary(null);
+                  setImportOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-[#12345A] text-[#12345A] hover:bg-[#EAF3FF] text-xs font-bold rounded-xl transition-colors shadow-xs active:scale-95 cursor-pointer"
+              >
+                <Clipboard className="w-4 h-4" />
+                <span>Bulk Import</span>
+              </button>
+            </div>
           </div>
 
-          {/* Desktop Table View (hidden md:block) */}
-          <div className="overflow-x-auto hidden md:block">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-400 font-semibold uppercase text-[10px]">
-                  <th className="py-3 px-3">Title & Organization</th>
-                  <th className="py-3 px-3">Category</th>
-                  <th className="py-3 px-3">Region</th>
-                  <th className="py-3 px-3">Dates (IST)</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {updates.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-3">
-                      <div className="font-bold text-[#182B45] line-clamp-1 max-w-[280px]">
-                        {getLocalized(item.title)}
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        {getLocalized(item.organization)}
-                      </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
-                        {item.category}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-slate-600">
-                      {item.region}
-                    </td>
-                    <td className="py-3 px-3 text-slate-500 text-[11px]">
-                      {getApplicationStartDate(item) && <div className="text-slate-800">Start: {formatDisplayDate(getApplicationStartDate(item))}</div>}
-                      {getApplicationLastDate(item) && <div className="text-amber-800 font-semibold">End: {formatDisplayDate(getApplicationLastDate(item))}</div>}
-                      {item.publishedAt && <div className="text-slate-400 text-[10px]">Pub: {item.publishedAt}</div>}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-2">
-                        <StatusBadge status={getEffectiveStatus(item)} />
-                        <button
-                          type="button"
-                          onClick={() => handleTogglePublish(item, 'update')}
-                          className="text-[10px] font-semibold text-slate-500 hover:text-[#12345A] underline cursor-pointer"
-                        >
-                          {item.status === 'Draft' ? 'Publish' : 'Unpublish'}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingItem({
-                              ...item,
-                              applicationStartDate: getApplicationStartDate(item),
-                              applicationLastDate: getApplicationLastDate(item),
-                              publishedAt: item.publishedAt || '',
-                              examDate: item.examDate || '',
-                              vacancies: item.vacancies || '',
-                              isDraft: item.status === 'Draft'
-                            });
-                            setEditType('update');
-                            setFormError('');
-                            setIsFormOpen(true);
-                          }}
-                          className="p-1.5 rounded-lg text-slate-600 hover:text-[#12345A] hover:bg-slate-100 cursor-pointer"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDeleteConfirm({
-                              isOpen: true,
-                              id: item.id,
-                              type: 'update',
-                              title: getLocalized(item.title)
-                            });
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Search Bar & Status Filter Tabs */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-1 border-t border-slate-100">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={notifSearchQuery}
+                onChange={(e) => setNotifSearchQuery(e.target.value)}
+                placeholder="Search by job title or organization..."
+                className="w-full pl-9 pr-8 py-2 text-xs bg-[#F6F8FC] border border-[#E3EAF2] rounded-xl focus:bg-white focus:outline-hidden focus:border-[#2468B4]"
+              />
+              {notifSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setNotifSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter Badges / Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+              <button
+                type="button"
+                onClick={() => setNotifStatusFilter('ALL')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  notifStatusFilter === 'ALL'
+                    ? 'bg-[#12345A] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All ({updates.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setNotifStatusFilter('OPEN')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                  notifStatusFilter === 'OPEN'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span>Open ({totalOpen})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setNotifStatusFilter('UPCOMING')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                  notifStatusFilter === 'UPCOMING'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span>Upcoming ({totalUpcoming})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setNotifStatusFilter('CLOSED')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                  notifStatusFilter === 'CLOSED'
+                    ? 'bg-slate-700 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                <span>Closed ({totalClosed})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setNotifStatusFilter('DRAFT')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                  notifStatusFilter === 'DRAFT'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
+                }`}
+              >
+                <span>Drafts ({totalDrafts})</span>
+              </button>
+            </div>
           </div>
+
+          {/* Filtered Dataset Calculation */}
+          {(() => {
+            const filteredUpdates = updates.filter((item) => {
+              const title = (getLocalized(item.title) || '').toLowerCase();
+              const org = (getLocalized(item.organization) || '').toLowerCase();
+              const q = notifSearchQuery.toLowerCase().trim();
+              if (q && !title.includes(q) && !org.includes(q)) return false;
+
+              const isDraftItem = item.status === 'Draft' || item.isDraft;
+              if (notifStatusFilter === 'DRAFT') return isDraftItem;
+              if (isDraftItem && notifStatusFilter !== 'ALL') return false;
+
+              if (notifStatusFilter === 'OPEN') return isJobOpen(item);
+              if (notifStatusFilter === 'UPCOMING') return isJobUpcoming(item);
+              if (notifStatusFilter === 'CLOSED') return isJobClosed(item);
+
+              return true;
+            });
+
+            if (filteredUpdates.length === 0) {
+              return (
+                <div className="py-12 text-center bg-[#F6F8FC] rounded-2xl border border-dashed border-slate-200">
+                  <Clock className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <p className="text-xs font-semibold text-slate-700">No job notifications found</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Try altering your search or status filter</p>
+                </div>
+              );
+            }
+
+            return (
+              <>
+                {/* Mobile Card View (md:hidden) with Status Highlighting */}
+                <div className="space-y-3 md:hidden">
+                  {filteredUpdates.map((item) => {
+                    const effectiveSt = getEffectiveStatus(item);
+                    const openNow = isJobOpen(item);
+                    const upcomingNow = isJobUpcoming(item);
+                    const closedNow = isJobClosed(item);
+                    const draftNow = item.status === 'Draft' || item.isDraft;
+
+                    const highlightClass = draftNow
+                      ? 'border-amber-200 bg-amber-50/20'
+                      : openNow
+                      ? 'border-emerald-200 bg-emerald-50/20'
+                      : upcomingNow
+                      ? 'border-blue-200 bg-blue-50/20'
+                      : 'border-slate-200 bg-[#F6F8FC]';
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-3.5 rounded-2xl border space-y-2.5 transition-all ${highlightClass}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-semibold text-[#2468B4] uppercase tracking-wider block truncate">
+                              {getLocalized(item.organization)}
+                            </span>
+                            <h4 className="font-heading font-bold text-xs text-[#182B45] line-clamp-2">
+                              {getLocalized(item.title)}
+                            </h4>
+                          </div>
+                          <StatusBadge status={effectiveSt} />
+                        </div>
+
+                        {/* Dates Breakdown */}
+                        <div className="grid grid-cols-2 gap-2 text-[11px] bg-white/80 p-2.5 rounded-xl border border-slate-200/60">
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-medium">Application Start</span>
+                            <span className="font-bold text-slate-800">
+                              {getApplicationStartDate(item) ? formatDisplayDate(getApplicationStartDate(item)) : 'Not Announced'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-medium">Application Deadline</span>
+                            <span className={`font-bold ${closedNow ? 'text-slate-500' : 'text-amber-900'}`}>
+                              {getApplicationLastDate(item) ? formatDisplayDate(getApplicationLastDate(item)) : 'Not Announced'}
+                            </span>
+                          </div>
+                          {item.publishedAt && (
+                            <div className="col-span-2 pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                              <span>Published: {formatDisplayDate(item.publishedAt)}</span>
+                              <span>{item.category} • {item.region}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePublish(item, 'update')}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                              item.status === 'Draft'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {item.status === 'Draft' ? 'Draft • Publish' : 'Published'}
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingItem({
+                                  ...item,
+                                  applicationStartDate: getApplicationStartDate(item),
+                                  applicationLastDate: getApplicationLastDate(item),
+                                  publishedAt: item.publishedAt || '',
+                                  examDate: item.examDate || '',
+                                  admitCardDate: item.admitCardDate || '',
+                                  resultDate: item.resultDate || '',
+                                  vacancies: item.vacancies || '',
+                                  isDraft: item.status === 'Draft' || item.isDraft
+                                });
+                                setEditType('update');
+                                setFormError('');
+                                setIsFormOpen(true);
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1 active:bg-slate-100 cursor-pointer shadow-2xs"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-[#12345A]" />
+                              <span>Edit Dates & Info</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteConfirm({
+                                  isOpen: true,
+                                  id: item.id,
+                                  type: 'update',
+                                  title: getLocalized(item.title)
+                                });
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-semibold flex items-center gap-1 active:bg-red-100 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Table View with Visual Highlighting */}
+                <div className="overflow-x-auto hidden md:block">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-400 font-semibold uppercase text-[10px]">
+                        <th className="py-3 px-3">Title & Organization</th>
+                        <th className="py-3 px-3">Category</th>
+                        <th className="py-3 px-3">Region</th>
+                        <th className="py-3 px-3">Application Dates (IST)</th>
+                        <th className="py-3 px-3">Calculated Status</th>
+                        <th className="py-3 px-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredUpdates.map((item) => {
+                        const effectiveSt = getEffectiveStatus(item);
+                        const openNow = isJobOpen(item);
+                        const upcomingNow = isJobUpcoming(item);
+                        const closedNow = isJobClosed(item);
+                        const draftNow = item.status === 'Draft' || item.isDraft;
+
+                        const rowBg = draftNow
+                          ? 'bg-amber-50/30'
+                          : openNow
+                          ? 'bg-emerald-50/20'
+                          : upcomingNow
+                          ? 'bg-blue-50/20'
+                          : 'hover:bg-slate-50/70';
+
+                        return (
+                          <tr key={item.id} className={`${rowBg} transition-colors`}>
+                            <td className="py-3 px-3">
+                              <div className="font-bold text-[#182B45] line-clamp-1 max-w-[280px]">
+                                {getLocalized(item.title)}
+                              </div>
+                              <div className="text-[11px] text-slate-400">
+                                {getLocalized(item.organization)}
+                              </div>
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
+                                {item.category}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-slate-600">
+                              {item.region}
+                            </td>
+                            <td className="py-3 px-3 text-slate-600 text-[11px]">
+                              <div className="font-medium text-[#12345A]">
+                                Start: {getApplicationStartDate(item) ? formatDisplayDate(getApplicationStartDate(item)) : <span className="text-slate-400 italic">Not Announced</span>}
+                              </div>
+                              <div className={`font-semibold ${closedNow ? 'text-slate-500' : 'text-amber-900'}`}>
+                                End: {getApplicationLastDate(item) ? formatDisplayDate(getApplicationLastDate(item)) : <span className="text-slate-400 italic">Not Announced</span>}
+                              </div>
+                              {item.publishedAt && (
+                                <div className="text-slate-400 text-[10px]">
+                                  Pub: {formatDisplayDate(item.publishedAt)}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 px-3">
+                              <div className="flex items-center gap-2">
+                                <StatusBadge status={effectiveSt} />
+                                <button
+                                  type="button"
+                                  onClick={() => handleTogglePublish(item, 'update')}
+                                  className="text-[10px] font-semibold text-slate-500 hover:text-[#12345A] underline cursor-pointer"
+                                >
+                                  {item.status === 'Draft' ? 'Publish' : 'Unpublish'}
+                                </button>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingItem({
+                                      ...item,
+                                      applicationStartDate: getApplicationStartDate(item),
+                                      applicationLastDate: getApplicationLastDate(item),
+                                      publishedAt: item.publishedAt || '',
+                                      examDate: item.examDate || '',
+                                      admitCardDate: item.admitCardDate || '',
+                                      resultDate: item.resultDate || '',
+                                      vacancies: item.vacancies || '',
+                                      isDraft: item.status === 'Draft' || item.isDraft
+                                    });
+                                    setEditType('update');
+                                    setFormError('');
+                                    setIsFormOpen(true);
+                                  }}
+                                  className="p-1.5 rounded-lg text-slate-600 hover:text-[#12345A] hover:bg-slate-100 cursor-pointer"
+                                  title="Edit Dates & Details"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDeleteConfirm({
+                                      isOpen: true,
+                                      id: item.id,
+                                      type: 'update',
+                                      title: getLocalized(item.title)
+                                    });
+                                  }}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -1684,6 +1870,8 @@ export default function AdminPage() {
                       deadline: normLast,     // Legacy compatibility
                       publishedAt: normalizeDateIST(editingItem.publishedAt) || normStart,
                       examDate: editingItem.examDate?.trim() || '',
+                      admitCardDate: normalizeDateIST(editingItem.admitCardDate) || '',
+                      resultDate: normalizeDateIST(editingItem.resultDate) || '',
                       vacancies: editingItem.vacancies?.trim() || '',
                       status: autoStatus
                     };
@@ -1714,6 +1902,7 @@ export default function AdminPage() {
                     <input
                       type="text"
                       required
+                      placeholder="e.g. AP DSC Teacher Recruitment 2026"
                       value={editingItem.title?.en || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, title: { ...editingItem.title, en: e.target.value } })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
@@ -1737,6 +1926,7 @@ export default function AdminPage() {
                     <input
                       type="text"
                       required
+                      placeholder="e.g. Department of School Education, AP"
                       value={editingItem.organization?.en || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, organization: { ...editingItem.organization, en: e.target.value } })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
@@ -1786,79 +1976,137 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Dates: Application Start Date, Application Last Date, Notification Published Date */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-blue-50/40 p-3 rounded-2xl border border-blue-100">
-                  <div>
-                    <label className="block font-bold text-[#12345A] mb-1">
-                      Application Start Date *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={editingItem.applicationStartDate || editingItem.openingDate || ''}
-                      onChange={(e) =>
-                        setEditingItem({
-                          ...editingItem,
-                          applicationStartDate: e.target.value,
-                          openingDate: e.target.value
-                        })
-                      }
-                      className="w-full p-2 bg-white border border-blue-200 rounded-lg focus:border-[#2468B4]"
-                    />
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Becomes OPEN in IST</span>
+                {/* Section: Required Job Application Dates with Proper Date Pickers */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[#12345A] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-[#2468B4]" />
+                      <span>Application & Notification Dates (IST)</span>
+                    </span>
+                    <span className="text-[10px] text-blue-700 font-medium">Auto-Status Driver</span>
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-amber-900 mb-1">
-                      Application Last Date *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={editingItem.applicationLastDate || editingItem.deadline || ''}
-                      onChange={(e) =>
-                        setEditingItem({
-                          ...editingItem,
-                          applicationLastDate: e.target.value,
-                          deadline: e.target.value
-                        })
-                      }
-                      className="w-full p-2 bg-white border border-amber-200 rounded-lg focus:border-[#2468B4]"
-                    />
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Closes 23:59 IST</span>
-                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* 1. Published Date */}
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        1. Published Date *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={editingItem.publishedAt || ''}
+                        onChange={(e) => setEditingItem({ ...editingItem, publishedAt: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg focus:border-[#2468B4]"
+                      />
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Gazette Notice Date</span>
+                    </div>
 
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Notification Published Date
-                    </label>
-                    <input
-                      type="date"
-                      value={editingItem.publishedAt || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, publishedAt: e.target.value })}
-                      className="w-full p-2 bg-white border rounded-lg focus:border-[#2468B4]"
-                    />
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Notice Gazette Date</span>
+                    {/* 2. Application Start Date */}
+                    <div>
+                      <label className="block font-bold text-[#12345A] mb-1">
+                        2. Application Start Date *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={editingItem.applicationStartDate || editingItem.openingDate || ''}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            applicationStartDate: e.target.value,
+                            openingDate: e.target.value
+                          })
+                        }
+                        className="w-full p-2 bg-white border-2 border-[#2468B4]/60 rounded-lg focus:border-[#12345A]"
+                      />
+                      <span className="text-[10px] text-[#2468B4] font-medium block mt-0.5">Turns OPEN at 00:00 IST</span>
+                    </div>
+
+                    {/* 3. Application Last Date / Closing Date */}
+                    <div>
+                      <label className="block font-bold text-amber-900 mb-1">
+                        3. Application Last Date *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={editingItem.applicationLastDate || editingItem.deadline || ''}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            applicationLastDate: e.target.value,
+                            deadline: e.target.value
+                          })
+                        }
+                        className="w-full p-2 bg-white border-2 border-amber-300 rounded-lg focus:border-amber-600"
+                      />
+                      <span className="text-[10px] text-amber-800 font-medium block mt-0.5">Remains OPEN till 23:59:59 IST</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Exam Date, Total Vacancies, and Notification No */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Exam Date</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 25 May 2026 or June 2026"
-                      value={editingItem.examDate || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, examDate: e.target.value })}
-                      className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
-                    />
+                {/* Section: Optional Examination, Admit Card & Result Dates */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Examination & Lifecycle Dates (Optional)
+                    </span>
+                    <span className="text-[10px] text-slate-400">Date picker supported</span>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* 4. Examination Date */}
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        4. Examination Date
+                      </label>
+                      <input
+                        type="date"
+                        value={normalizeDateIST(editingItem.examDate) || ''}
+                        onChange={(e) => setEditingItem({ ...editingItem, examDate: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg focus:border-[#2468B4]"
+                      />
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Scheduled exam start</span>
+                    </div>
+
+                    {/* 5. Admit Card Date */}
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        5. Admit Card Date
+                      </label>
+                      <input
+                        type="date"
+                        value={editingItem.admitCardDate || ''}
+                        onChange={(e) => setEditingItem({ ...editingItem, admitCardDate: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg focus:border-[#2468B4]"
+                      />
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Hall ticket release date</span>
+                    </div>
+
+                    {/* 6. Result Date */}
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        6. Result Date
+                      </label>
+                      <input
+                        type="date"
+                        value={editingItem.resultDate || ''}
+                        onChange={(e) => setEditingItem({ ...editingItem, resultDate: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg focus:border-[#2468B4]"
+                      />
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Merit list / result date</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total Vacancies and Notification No */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Total Vacancies</label>
                     <input
                       type="text"
-                      placeholder="e.g. 1056"
+                      placeholder="e.g. 16,347 or 1056"
                       value={editingItem.vacancies || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, vacancies: e.target.value })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
@@ -1868,7 +2116,7 @@ export default function AdminPage() {
                     <label className="block font-semibold text-slate-700 mb-1">Notification / Advt No.</label>
                     <input
                       type="text"
-                      placeholder="e.g. 05/2026-CSP"
+                      placeholder="e.g. 01/AP-DSC/2026 or 05/2026-CSP"
                       value={editingItem.notificationNo || ''}
                       onChange={(e) => setEditingItem({ ...editingItem, notificationNo: e.target.value })}
                       className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"

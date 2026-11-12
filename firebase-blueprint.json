@@ -28,10 +28,35 @@
           "maxLength": 30,
           "description": "ISO publication date"
         },
+        "applicationStartDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Application start date (YYYY-MM-DD) in IST"
+        },
+        "applicationLastDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Application last date / deadline (YYYY-MM-DD) in IST"
+        },
         "deadline": {
           "type": "string",
           "maxLength": 30,
           "description": "Application deadline or null"
+        },
+        "examDate": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Scheduled examination date"
+        },
+        "admitCardDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Hall ticket release date"
+        },
+        "resultDate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Result declaration date"
         },
         "officialUrl": {
           "type": "string",

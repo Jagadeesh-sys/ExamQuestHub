@@ -35,6 +35,8 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import { INITIAL_UPDATES } from '../data/initialData.js';
 import {
+  getEffectiveStatus,
+  withEffectiveStatusList,
   getApplicationLastDate,
   formatDisplayDate
 } from '../utils/notificationStatus.js';
@@ -150,7 +152,7 @@ export default function HomePage() {
   useEffect(() => {
     setLoading(true);
     const unsubUpdates = subscribeToUpdates((data) => {
-      const list = data && data.length > 0 ? data : INITIAL_UPDATES;
+      const list = data && data.length > 0 ? data : withEffectiveStatusList(INITIAL_UPDATES);
       setUpdates(list);
       setLoading(false);
     }, false);
@@ -556,7 +558,7 @@ export default function HomePage() {
                         <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-[10px] font-bold">
                           {item.region || 'All India'}
                         </span>
-                        <StatusBadge status={item.status} />
+                        <StatusBadge status={getEffectiveStatus(item)} />
                         {item.vacancies && (
                           <span className="px-2 py-0.5 rounded-md bg-[#FFF7ED] text-[#C2410C] text-[10px] font-bold hidden sm:inline-block">
                             {item.vacancies}

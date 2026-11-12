@@ -236,11 +236,11 @@ export default function JobsPage() {
         const itemStatus = (effectiveSt || item.status || '').toLowerCase();
         const targetStatus = statusFilter.toLowerCase();
         if (targetStatus === 'open') {
-          matchStatus = itemStatus === 'open' || itemStatus === 'applications open' || itemStatus.includes('open');
+          matchStatus = itemStatus === 'open' || itemStatus === 'application open' || itemStatus === 'applications open' || itemStatus.includes('open');
         } else if (targetStatus === 'upcoming') {
           matchStatus = itemStatus === 'upcoming' || itemStatus.includes('upcoming');
         } else if (targetStatus === 'closed') {
-          matchStatus = itemStatus === 'closed' || itemStatus.includes('closed');
+          matchStatus = itemStatus === 'closed' || itemStatus === 'application closed' || itemStatus.includes('closed');
         } else {
           matchStatus = itemStatus.includes(targetStatus);
         }

@@ -174,7 +174,7 @@ export default function LiveAlertsBar({ notifications = [] }) {
               </div>
 
               <div className="flex items-center gap-2">
-                <StatusBadge status={currentItem.status} />
+                <StatusBadge status={getEffectiveStatus(currentItem)} />
                 {currentItem.vacancies && (
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold">
                     {currentItem.vacancies}
