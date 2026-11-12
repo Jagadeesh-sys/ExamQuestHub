@@ -6,7 +6,7 @@
 
 import { RRB_NTPC_SHIFTS, RRB_CORE_SUBJECTS } from '../data/rrbNtpcMetadata.js';
 import { ALL_CBT_SHIFTS } from '../data/allShiftsMetadata.js';
-import { classifyQuestion, SUBJECT_TOPIC_TAXONOMY } from '../constants/mockTaxonomy.js';
+import { classifyQuestion, SUBJECT_TOPIC_TAXONOMY, MOCK_CATEGORIES } from '../constants/mockTaxonomy.js';
 import { MOCK_QUESTIONS_DATABASE } from '../data/mockTestsData.js';
 
 const STORAGE_KEY_CUSTOM_QUESTIONS = 'eqh_custom_mock_questions_v1';
@@ -329,9 +329,27 @@ export async function loadAllRRBQuestions() {
               // Check if exact document ID already registered
               if (dedupQuestionsMap.has(rawQ.id)) continue;
 
+              // Validate question text and options to reject malformed/empty questions
+              const rawText = typeof rawQ.question === 'string'
+                ? rawQ.question.trim()
+                : (typeof rawQ.question?.en === 'string'
+                    ? rawQ.question.en.trim()
+                    : (typeof rawQ.question?.te === 'string' ? rawQ.question.te.trim() : ''));
+
+              if (!rawText || rawText.length < 2) continue;
+
+              const optsArray = Array.isArray(rawQ.options?.en)
+                ? rawQ.options.en
+                : (rawQ.options && typeof rawQ.options === 'object'
+                    ? Object.values(rawQ.options)
+                    : []);
+
+              const validOpts = optsArray.filter((o) => typeof o === 'string' && o.trim().length > 0);
+              if (validOpts.length < 2) continue;
+
               // Check if question text is identical to prevent duplicate questions
-              const cleanText = String(rawQ.question?.en || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-              const cleanOpts = (rawQ.options?.en || []).map((o) => String(o || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join('|');
+              const cleanText = rawText.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const cleanOpts = optsArray.map((o) => String(o || '').toLowerCase().replace(/[^a-z0-9]/g, '')).join('|');
               const signature = cleanText.length > 20 ? `${cleanText}:::${cleanOpts}` : null;
               if (signature && textSignatures.has(signature)) {
                 continue; // Do not allow duplicate questions
@@ -573,13 +591,72 @@ export function normalizeSubjectId(raw) {
   if (!raw) return 'all';
   const s = String(raw).toLowerCase().trim();
   if (s === 'all' || s === 'all mock' || s === 'all-mock' || s === 'full') return 'all';
-  if (s.includes('current') || s === 'ca' || s === 'current-affairs') return 'current-affairs';
-  if (s.includes('english') || s === 'eng' || s === 'english-language') return 'english-language';
-  if (s.includes('quant') || s.includes('math') || s === 'quantitative-aptitude') return 'quantitative-aptitude';
-  if (s.includes('reason') || s === 'reasoning') return 'reasoning';
-  if (s.includes('computer') || s.includes('cse') || s === 'computer-science') return 'computer-science';
-  if (s.includes('science') || s === 'general-science' || s === 'sci') return 'general-science';
-  if (s.includes('gk') || s.includes('knowledge') || s.includes('general awareness') || s === 'general-knowledge') return 'general-knowledge';
+  if (s.includes('current') || s === 'ca' || s === 'current-affairs' || s === 'national-affairs') return 'current-affairs';
+  if (
+    s.includes('english') ||
+    s === 'eng' ||
+    s === 'english-language' ||
+    s === 'grammar-error-spotting' ||
+    s === 'vocabulary' ||
+    s === 'idioms-phrases' ||
+    s === 'reading-comprehension' ||
+    s === 'sentence-rearrangement' ||
+    s === 'one-word-substitution'
+  ) return 'english-language';
+  if (
+    s.includes('quant') ||
+    s.includes('math') ||
+    s === 'quantitative-aptitude' ||
+    s === 'number-system' ||
+    s === 'percentage-profit-loss' ||
+    s === 'time-speed-distance-work' ||
+    s === 'ratio-proportion-mixtures' ||
+    s === 'mensuration-geometry' ||
+    s === 'data-interpretation' ||
+    s === 'algebra-trigonometry'
+  ) return 'quantitative-aptitude';
+  if (
+    s.includes('reason') ||
+    s === 'reasoning' ||
+    s === 'analogies-classification' ||
+    s === 'series-coding-decoding' ||
+    s === 'blood-relations-directions' ||
+    s === 'syllogism-conclusions' ||
+    s === 'puzzles-seating' ||
+    s === 'non-verbal-reasoning'
+  ) return 'reasoning';
+  if (
+    s.includes('computer') ||
+    s.includes('cse') ||
+    s === 'computer-science' ||
+    s === 'computer-networks' ||
+    s === 'dbms' ||
+    s === 'operating-systems' ||
+    s === 'data-structures-algorithms' ||
+    s === 'programming-oop' ||
+    s === 'digital-logic' ||
+    s === 'software-engineering'
+  ) return 'computer-science';
+  if (
+    s === 'general-science' ||
+    s === 'science' ||
+    s === 'sci' ||
+    s === 'physics' ||
+    s === 'chemistry' ||
+    s === 'biology'
+  ) return 'general-science';
+  if (
+    s.includes('gk') ||
+    s.includes('knowledge') ||
+    s.includes('general awareness') ||
+    s === 'general-knowledge' ||
+    s === 'indian-polity' ||
+    s === 'indian-history' ||
+    s === 'geography' ||
+    s === 'indian-economy' ||
+    s === 'environment-ecology' ||
+    s === 'static-gk'
+  ) return 'general-knowledge';
   return 'general-knowledge';
 }
 
@@ -762,17 +839,55 @@ function formatToEngineQuestions(questions) {
       sectionName = 'General Awareness';
     }
 
+    const safeQEn = typeof q.question === 'string'
+      ? q.question.trim()
+      : (typeof q.question?.en === 'string'
+          ? q.question.en.trim()
+          : (typeof q.question?.te === 'string' ? q.question.te.trim() : ''));
+
+    const safeQTe = typeof q.question?.te === 'string'
+      ? q.question.te.trim()
+      : (typeof q.questionTe === 'string' ? q.questionTe.trim() : '');
+
+    const optA = typeof q.options?.en?.[0] === 'string'
+      ? q.options.en[0]
+      : (typeof q.options?.A === 'string' ? q.options.A : (typeof q.options?.[0] === 'string' ? q.options[0] : ''));
+    const optB = typeof q.options?.en?.[1] === 'string'
+      ? q.options.en[1]
+      : (typeof q.options?.B === 'string' ? q.options.B : (typeof q.options?.[1] === 'string' ? q.options[1] : ''));
+    const optC = typeof q.options?.en?.[2] === 'string'
+      ? q.options.en[2]
+      : (typeof q.options?.C === 'string' ? q.options.C : (typeof q.options?.[2] === 'string' ? q.options[2] : ''));
+    const optD = typeof q.options?.en?.[3] === 'string'
+      ? q.options.en[3]
+      : (typeof q.options?.D === 'string' ? q.options.D : (typeof q.options?.[3] === 'string' ? q.options[3] : ''));
+
+    let correctLetter = 'A';
+    if (q.correctAnswer === 0 || q.correctAnswer === 'A' || q.correctLetter === 'A') correctLetter = 'A';
+    else if (q.correctAnswer === 1 || q.correctAnswer === 'B' || q.correctLetter === 'B') correctLetter = 'B';
+    else if (q.correctAnswer === 2 || q.correctAnswer === 'C' || q.correctLetter === 'C') correctLetter = 'C';
+    else if (q.correctAnswer === 3 || q.correctAnswer === 'D' || q.correctLetter === 'D') correctLetter = 'D';
+    else if (['A', 'B', 'C', 'D'].includes(String(q.correctAnswer).toUpperCase())) {
+      correctLetter = String(q.correctAnswer).toUpperCase();
+    }
+
+    const safeExpEn = typeof q.explanation === 'string'
+      ? q.explanation.trim()
+      : (typeof q.explanation?.en === 'string'
+          ? q.explanation.en.trim()
+          : `Official answer is Option (${correctLetter}). Preserved from official examination key.`);
+
     return {
       id: q.id,
       number: idx + 1,
       originalNumber: q.questionNumber || idx + 1,
-      question: q.question?.en || q.question || '',
-      questionTe: q.question?.te || '',
+      question: safeQEn,
+      questionTe: safeQTe,
       options: {
-        A: q.options?.en?.[0] || q.options?.A || '',
-        B: q.options?.en?.[1] || q.options?.B || '',
-        C: q.options?.en?.[2] || q.options?.C || '',
-        D: q.options?.en?.[3] || q.options?.D || ''
+        A: optA,
+        B: optB,
+        C: optC,
+        D: optD
       },
       optionsTe: {
         A: q.options?.te?.[0] || q.optionsTe?.A || '',
@@ -780,11 +895,8 @@ function formatToEngineQuestions(questions) {
         C: q.options?.te?.[2] || q.optionsTe?.C || '',
         D: q.options?.te?.[3] || q.optionsTe?.D || ''
       },
-      correctAnswer: ['A', 'B', 'C', 'D'][q.correctAnswer] || q.correctLetter || q.correctAnswer || 'A',
-      explanation:
-        q.explanation?.en ||
-        q.explanation ||
-        `Official answer is Option (${q.correctLetter || ['A', 'B', 'C', 'D'][q.correctAnswer] || 'A'}). Preserved from official examination key.`,
+      correctAnswer: correctLetter,
+      explanation: safeExpEn,
       explanationTe: q.explanation?.te || '',
       examName: q.examName || 'Official CBT Paper',
       examYear: q.examYear || '2025',
@@ -1133,7 +1245,13 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       title = 'Current Affairs 2025–2026 – Full Mega Mock';
     }
 
-    if (testId.includes('speed') || testId.includes('25q') || testId.includes('quick')) {
+    if (limitParam && parseInt(limitParam, 10) > 0) {
+      targetCount = parseInt(limitParam, 10);
+    } else if (testId.includes('30q') || testId.includes('-30') || testId.includes('30-q')) {
+      targetCount = 30;
+      duration = 30;
+      title = `${subject} – 30 Questions Practice Test`;
+    } else if (testId.includes('speed') || testId.includes('25q') || testId.includes('quick')) {
       targetCount = 25;
       duration = 25;
       title = `${subject} – Speed Drill Practice (25 Qs)`;
@@ -1145,6 +1263,9 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       targetCount = 100;
       duration = 90;
       title = `${subject} – Previous Year Papers Master Test`;
+    } else {
+      targetCount = 30;
+      duration = 30;
     }
 
     let picked = [];
@@ -1184,7 +1305,78 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     };
   }
 
-  // 3. Shift / PYQ Resolution: e.g. "rrb-ntpc-ug-2024-shift-1", "ssc-cgl-2020-shift-1", etc.
+  // 3. Category & Subject Mock Tests: e.g. "cse--operating-systems--pyq", "quant--number-system--pyq"
+  if (testId.includes('--')) {
+    const parts = testId.split('--');
+    const knownCategories = ['cse', 'quant', 'reasoning', 'gk', 'english', 'ca', 'science'];
+    if (knownCategories.includes(parts[0].toLowerCase())) {
+      const categoryId = parts[0].toLowerCase();
+      const subSubjectId = parts[1] || '';
+      const testTypeId = (parts[2] || 'PYQ').toUpperCase();
+
+      const canonicalSub = normalizeSubjectId(subSubjectId || categoryId);
+      const categoryMeta = MOCK_CATEGORIES.find((c) => c.id === categoryId);
+      const subjectMeta = categoryMeta?.subjects?.find((s) => s.id === subSubjectId);
+      const subjectDisplayName = subjectMeta?.name || categoryMeta?.name || 'Subject Mock Test';
+
+      let targetCount = 30;
+      if (limitParam && parseInt(limitParam, 10) > 0) {
+        targetCount = parseInt(limitParam, 10);
+      } else if (testId.includes('25q')) {
+        targetCount = 25;
+      } else if (testId.includes('50q')) {
+        targetCount = 50;
+      }
+
+      // Fetch questions strictly belonging to this subject pool
+      const subjectQuestions = await getQuestionsForSubject(canonicalSub);
+
+      // Attempt subtopic/topic filtering first
+      let matched = subjectQuestions.filter((q) => {
+        const c = classifyQuestion(q);
+        const cleanSub = subSubjectId.replace(/[^a-z0-9]/g, '');
+        const qTopic = String(c.topicId || c.topicName || q.subtopic || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return qTopic.includes(cleanSub) || cleanSub.includes(qTopic);
+      });
+
+      // If matched questions are fewer than target count, fill remaining from same subject pool
+      if (matched.length < targetCount) {
+        const remainingNeeded = targetCount - matched.length;
+        const matchedIds = new Set(matched.map((q) => q.id));
+        const additional = subjectQuestions.filter((q) => !matchedIds.has(q.id)).slice(0, remainingNeeded);
+        matched = [...matched, ...additional];
+      } else if (matched.length > targetCount) {
+        matched = matched.slice(0, targetCount);
+      }
+
+      const finalQuestions = matched.length > 0 ? matched : subjectQuestions.slice(0, targetCount);
+      const engineQuestions = formatToEngineQuestions(finalQuestions);
+      const duration = Math.max(15, Math.min(120, engineQuestions.length));
+
+      return {
+        meta: {
+          id: testId,
+          code: `${categoryId.toUpperCase()}-${testTypeId}`,
+          title: `${subjectDisplayName} – ${testTypeId} Mock Test`,
+          subtitle: `${categoryMeta?.name || 'Subject'} Mastery · Strictly Isolated Question Pool`,
+          examName: 'ExamQuestHub Subject Mock',
+          examYear: '2026',
+          subjectLabel: subjectDisplayName,
+          targetSubject: canonicalSub,
+          questionsCount: engineQuestions.length,
+          timeMinutes: duration,
+          marks: engineQuestions.length,
+          negativeMarking: 0.33,
+          pdfUrl: '',
+          pdfFileName: '',
+          subjectTest: true
+        },
+        questions: engineQuestions
+      };
+    }
+  }
+
+  // 4. Shift / PYQ Resolution: e.g. "rrb-ntpc-ug-2024-shift-1", "ssc-cgl-2020-shift-1", etc.
   let shiftId = testId;
   let targetSubject = subjectParam;
 

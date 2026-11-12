@@ -59,7 +59,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|data/|favicon\\.ico|manifest\\.json|robots\\.txt|sitemap\\.xml|.*\\..*).*)",
+      "source": "/((?!assets/|data/|favicon\\.ico|favicon\\.png|apple-touch-icon\\.png|manifest\\.json|manifest\\.webmanifest|robots\\.txt|sitemap\\.xml|.*\\.(?:png|jpg|jpeg|svg|gif|webp|pdf|json|ico|css|js|map)$).*)",
       "destination": "/index.html"
     }
   ]

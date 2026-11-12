@@ -578,7 +578,13 @@ export async function deleteQuestion(id) {
 }
 
 export function mapRrbToMockQuestion(q) {
-  const text = ((q.question?.en || '') + ' ' + (q.subtopic || '') + ' ' + ((q.options?.en || []).join(' '))).toLowerCase();
+  const safeQText = typeof q.question === 'string'
+    ? q.question
+    : (typeof q.question?.en === 'string' ? q.question.en : (typeof q.question?.te === 'string' ? q.question.te : ''));
+  const safeOptsText = Array.isArray(q.options?.en)
+    ? q.options.en.join(' ')
+    : (q.options && typeof q.options === 'object' ? Object.values(q.options).filter(v => typeof v === 'string').join(' ') : '');
+  const text = (safeQText + ' ' + (q.subtopic || '') + ' ' + safeOptsText).toLowerCase();
   const rawSub = (q.subject || '').toLowerCase();
   const rawCat = (q.categoryId || '').toLowerCase();
 

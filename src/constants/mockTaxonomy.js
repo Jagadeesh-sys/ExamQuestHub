@@ -340,12 +340,43 @@ export function countQuestionsBySubject(questions) {
 /** Filters a question list down to a single test. */
 export function selectTestQuestions(questions, { categoryId, subjectId, questionType }) {
   const wanted = normalizeQuestionType(questionType);
-  return (questions || []).filter(
-    (question) =>
-      question.categoryId === categoryId &&
-      question.subjectId === subjectId &&
-      normalizeQuestionType(question.questionType) === wanted
-  );
+  return (questions || []).filter((question) => {
+    if (!question) return false;
+
+    // 1. Verify Category matches
+    const catMatch =
+      question.categoryId === categoryId ||
+      (categoryId === 'cse' && (question.categoryId === 'cse' || question.subjectId === 'computer-science' || question.subject === 'Computer Science')) ||
+      (categoryId === 'quant' && (question.categoryId === 'quant' || question.subjectId === 'quantitative-aptitude' || question.subject === 'Quantitative Aptitude')) ||
+      (categoryId === 'reasoning' && (question.categoryId === 'reasoning' || question.subjectId === 'reasoning' || question.subject === 'Reasoning')) ||
+      (categoryId === 'english' && (question.categoryId === 'english' || question.subjectId === 'english-language' || question.subject === 'English Language')) ||
+      (categoryId === 'gk' && (question.categoryId === 'gk' || question.subjectId === 'general-knowledge' || question.subjectId === 'general-science' || question.subjectId === 'current-affairs'));
+
+    if (!catMatch) return false;
+
+    // 2. Verify Subject / Topic matches
+    let subMatch = question.subjectId === subjectId || question.topicId === subjectId;
+    if (!subMatch && subjectId) {
+      const cleanSub = String(subjectId).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const qTopic = String(question.topicId || question.subtopic || question.subjectId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (qTopic.includes(cleanSub) || cleanSub.includes(qTopic)) {
+        subMatch = true;
+      }
+    }
+
+    // Allow category-wide questions if subject pool is being filtered within category
+    if (!subMatch && (categoryId === 'cse' || categoryId === 'quant' || categoryId === 'reasoning' || categoryId === 'english')) {
+      if (question.categoryId === categoryId || (categoryId === 'cse' && question.subjectId === 'computer-science')) {
+        subMatch = true;
+      }
+    }
+
+    if (!subMatch) return false;
+
+    // 3. Question Type verification
+    if (!wanted) return true;
+    return normalizeQuestionType(question.questionType) === wanted;
+  });
 }
 
 /**
@@ -1382,12 +1413,25 @@ export function classifyQuestion(question) {
   const rawSub = String(question.subject || question.subjectId || '').toLowerCase();
   const rawCat = String(question.categoryId || '').toLowerCase();
   const rawSubtopic = String(question.subtopic || '').toLowerCase();
+
+  const safeQText = typeof question.question === 'string'
+    ? question.question
+    : (typeof question.question?.en === 'string'
+        ? question.question.en
+        : (typeof question.question?.te === 'string' ? question.question.te : ''));
+
+  const safeOptsText = Array.isArray(question.options?.en)
+    ? question.options.en.join(' ')
+    : (question.options && typeof question.options === 'object'
+        ? Object.values(question.options).filter(v => typeof v === 'string').join(' ')
+        : '');
+
   const text = (
-    (question.question?.en || question.question || '') +
+    safeQText +
     ' ' +
     (question.subtopic || '') +
     ' ' +
-    (Array.isArray(question.options?.en) ? question.options.en.join(' ') : Object.values(question.options || {}).join(' '))
+    safeOptsText
   ).toLowerCase();
 
   // 1. Current Affairs
@@ -1591,7 +1635,58 @@ export function classifyQuestion(question) {
     };
   }
 
-  // 5. Computer Science (strictly isolated)
+  // 5. Computer Science (strictly isolated from GS/GK)
+  const isComputerKeywords =
+    text.includes('operating system') ||
+    text.includes('ms-dos') ||
+    text.includes('linux') ||
+    text.includes('windows') ||
+    text.includes('kernel') ||
+    text.includes('ip address') ||
+    text.includes('tcp/ip') ||
+    text.includes('osi model') ||
+    text.includes('lan ') ||
+    text.includes('wan ') ||
+    text.includes('ethernet') ||
+    text.includes('router') ||
+    text.includes('database') ||
+    text.includes('dbms') ||
+    text.includes('sql') ||
+    text.includes('rdbms') ||
+    text.includes('compiler') ||
+    text.includes('programming') ||
+    text.includes('algorithm') ||
+    text.includes('binary tree') ||
+    text.includes('data structure') ||
+    text.includes('motherboard') ||
+    text.includes('microprocessor') ||
+    text.includes('logic gate') ||
+    text.includes('truth table') ||
+    text.includes('ms excel') ||
+    text.includes('ms word') ||
+    text.includes('ms powerpoint') ||
+    text.includes('spreadsheet') ||
+    text.includes('malware') ||
+    text.includes('antivirus') ||
+    text.includes('phishing') ||
+    text.includes('firewall') ||
+    text.includes('cyber security') ||
+    text.includes('hard disk') ||
+    text.includes('cache memory') ||
+    text.includes('system bus') ||
+    text.includes('ascii') ||
+    text.includes('ebcdic') ||
+    text.includes('unicode') ||
+    text.includes('peripheral') ||
+    text.includes('supercomputer') ||
+    text.includes('full form of ram') ||
+    text.includes('full form of rom') ||
+    text.includes('full form of cpu') ||
+    text.includes('full form of url') ||
+    text.includes('full form of http') ||
+    text.includes('full form of html') ||
+    text.includes('shortcut key in');
+
   if (
     rawSub.includes('computer') ||
     rawCat === 'cse' ||
@@ -1601,7 +1696,8 @@ export function classifyQuestion(question) {
     rawSubtopic.includes('digital logic') ||
     rawSubtopic.includes('software engineering') ||
     rawSubtopic.includes('programming') ||
-    rawSubtopic.includes('data structures')
+    rawSubtopic.includes('data structures') ||
+    isComputerKeywords
   ) {
     let topicId = 'fundamentals';
     let topicName = 'Computer Fundamentals';
