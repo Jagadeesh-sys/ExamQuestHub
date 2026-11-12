@@ -140,26 +140,26 @@ export default function OfficialMockTestCard({
       </div>
 
       {/* =========================================================================
-          BOTTOM ROW: Difficulty + Negative Marking + "Start Test" (No fake attempts)
+          BOTTOM ROW: Difficulty + Negative Marking + "Practice" + "▶ Start Test"
           ========================================================================= */}
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-50">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
         {/* Left Pills: Difficulty & Negative Marking */}
         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold shadow-2xs ${diffBg}`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${diffBg}`}>
             {diff}
           </span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#475569] text-[10px] font-medium border border-slate-200/50 shadow-2xs">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F1F5F9] text-[#475569] text-[11px] font-medium border border-slate-200/60">
             {negMarking}
           </span>
         </div>
 
-        {/* Right Buttons: Optional Practice + Compact Start Test */}
+        {/* Right Buttons: Practice + Start Test matching Image 1 */}
         <div className="flex items-center gap-1.5 shrink-0">
           {onPractice && (
             <button
               type="button"
               onClick={() => onPractice(test)}
-              className="px-2.5 py-1 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              className="px-3 py-1 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer active:scale-95"
             >
               Practice
             </button>
@@ -168,9 +168,9 @@ export default function OfficialMockTestCard({
           <button
             type="button"
             onClick={() => onStartTest(test)}
-            className="px-3.5 py-1 rounded-md bg-[#0F2942] hover:bg-[#2468B4] text-white text-[11px] font-semibold transition flex items-center justify-center gap-1 shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
+            className="px-3.5 py-1 rounded-xl bg-[#0F223D] hover:bg-[#071324] text-white text-xs font-black transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
           >
-            <Play className="w-2.5 h-2.5 fill-white text-white" />
+            <Play className="w-3 h-3 fill-white text-white" />
             <span>Start Test</span>
           </button>
         </div>

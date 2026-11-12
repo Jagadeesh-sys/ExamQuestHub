@@ -176,7 +176,7 @@ export default function MockTestsHubPage() {
   const [shiftSearch, setShiftSearch] = useState('');
   const [pyqExamFilter, setPyqExamFilter] = useState('all');
   const [pyqCurrentPage, setPyqCurrentPage] = useState(1);
-  const SHIFTS_PER_PAGE = 24;
+  const SHIFTS_PER_PAGE = 10;
 
   // Load real data directly from the Firestore server on component mount
   useEffect(() => {
@@ -782,7 +782,7 @@ export default function MockTestsHubPage() {
           <div className="relative -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
             <div
               ref={subjectScrollRef}
-              className="flex items-start gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5"
+              className="flex items-start gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 lg:grid lg:grid-cols-8 lg:gap-3 xl:gap-4 lg:overflow-visible lg:w-full lg:justify-items-center"
             >
               {examCarouselCards.map((item) => {
                 const isSelected = selectedSubject === item.id;
@@ -791,12 +791,12 @@ export default function MockTestsHubPage() {
                     key={item.id}
                     type="button"
                     onClick={() => handleSelectSubject(item.id)}
-                    className="group relative flex-shrink-0 flex flex-col items-center justify-start w-[82px] sm:w-[94px] text-center transition-all duration-200 cursor-pointer active:scale-95"
+                    className="group relative flex-shrink-0 flex flex-col items-center justify-start w-[82px] sm:w-[94px] lg:w-full text-center transition-all duration-200 cursor-pointer active:scale-95"
                     title={item.title}
                   >
                     {/* Circular Icon */}
                     <div
-                      className={`w-[66px] h-[66px] sm:w-[74px] sm:h-[74px] rounded-full p-1 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center relative transition-all duration-200 shrink-0 ${
+                      className={`w-[66px] h-[66px] sm:w-[74px] sm:h-[74px] lg:w-[72px] lg:h-[72px] xl:w-[78px] xl:h-[78px] rounded-full p-1 bg-gradient-to-b from-white to-slate-50 border-2 flex items-center justify-center relative transition-all duration-200 shrink-0 ${
                         isSelected
                           ? 'border-[#12345A] ring-3 ring-[#12345A]/25 scale-105 shadow-md bg-blue-50/50'
                           : 'border-slate-200/90 hover:border-[#12345A]/40 shadow-xs'
@@ -821,9 +821,9 @@ export default function MockTestsHubPage() {
                     </div>
 
                     {/* Title */}
-                    <div className="w-full my-1 truncate px-1">
+                    <div className="w-full my-1 truncate px-1 text-center">
                       <span
-                        className={`text-xs sm:text-[13px] font-heading font-black tracking-tight leading-tight block truncate ${
+                        className={`text-xs sm:text-[13px] font-heading font-black tracking-tight leading-tight block truncate text-center ${
                           isSelected ? 'text-[#12345A]' : 'text-slate-800 group-hover:text-[#12345A]'
                         }`}
                       >
@@ -833,7 +833,7 @@ export default function MockTestsHubPage() {
 
                     {/* Badge */}
                     <span
-                      className={`text-[9.5px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full truncate leading-none ${
+                      className={`text-[9.5px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full truncate leading-none text-center ${
                         isSelected
                           ? 'bg-[#12345A] text-white'
                           : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
@@ -864,14 +864,7 @@ export default function MockTestsHubPage() {
               <div
                 key={series.id}
                 onClick={() => {
-                  if (series.examId && series.examId !== 'all') {
-                    setSelectedSubject(series.examId);
-                  }
-                  if (series.filterKey && series.targetTab === 'pyqs') {
-                    setPyqExamFilter(series.filterKey);
-                    setPyqCurrentPage(1);
-                  }
-                  setActiveCategoryTab(series.targetTab);
+                  navigate(`/mocks/series/${series.id}`);
                 }}
                 className="w-[76vw] sm:w-[280px] min-w-[225px] max-w-[280px] bg-white rounded-2xl p-2.5 sm:p-3.5 border border-slate-200/90 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex items-center gap-2.5 sm:gap-3.5 group shrink-0 active:scale-[0.98]"
               >
@@ -902,8 +895,9 @@ export default function MockTestsHubPage() {
                     <span className="text-slate-300">·</span>
                     <span className="text-slate-500 font-semibold">{series.questionsCount}</span>
                   </div>
-                  <div className="text-[11px] text-[#2468B4] font-semibold mt-0.5 truncate">
-                    {series.languages}
+                  <div className="text-[11px] text-[#2468B4] font-semibold mt-0.5 truncate flex items-center justify-between">
+                    <span>{series.languages}</span>
+                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-[#2468B4] group-hover:translate-x-0.5 transition-all">Explore &rarr;</span>
                   </div>
                 </div>
               </div>
