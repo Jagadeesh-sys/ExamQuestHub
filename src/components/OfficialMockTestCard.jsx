@@ -57,40 +57,47 @@ export default function OfficialMockTestCard({
   // Questions and Duration strings
   const qCount = test.questionsCount || test.totalQuestions || 100;
   const duration = test.timeMinutes || test.durationMinutes || (isSsc ? 60 : 90);
-  const attempts = test.attempts || '42.6K Attempts';
+  // Official emblem logo
+  const defaultLogo = isSsc ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png';
+  const logoUrl = test.logoUrl || defaultLogo;
 
   return (
-    <div className="bg-white rounded-[24px] sm:rounded-[26px] p-4 sm:p-5 shadow-xs border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3.5 relative group">
+    <div className="bg-white rounded-2xl sm:rounded-[20px] p-3.5 sm:p-4 shadow-xs border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-2.5 relative group">
       {/* =========================================================================
-          TOP ROW: Round Avatar + Title & Meta (Questions | Minutes) + Bookmark
+          TOP ROW: Round Official Logo + Title & Meta (Questions | Minutes) + Bookmark
           ========================================================================= */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 min-w-0">
-          {/* Circular Medallion */}
-          <div
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-xs sm:text-[13px] shrink-0 tracking-tight select-none shadow-2xs ${avatarBg}`}
-          >
-            {agency.slice(0, 4)}
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="flex items-start gap-2.5 min-w-0">
+          {/* Circular Official Medallion */}
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-white p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+            <img
+              src={logoUrl}
+              alt={agency}
+              className="w-full h-full object-contain rounded-full"
+              onError={(e) => {
+                e.currentTarget.src = defaultLogo;
+              }}
+            />
           </div>
 
           {/* Title & Metadata */}
           <div className="min-w-0">
-            <h3 className="font-heading font-black text-sm sm:text-base text-[#12345A] tracking-tight leading-snug line-clamp-1 group-hover:text-[#2468B4] transition-colors">
+            <h3 className="font-heading font-black text-xs sm:text-[13.5px] text-[#12345A] tracking-tight leading-snug line-clamp-1 group-hover:text-[#2468B4] transition-colors">
               {test.title}
             </h3>
 
-            {/* Questions | Duration Row with exact icons */}
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mt-1">
-              <span className="flex items-center gap-1.5">
-                <Monitor className="w-3.5 h-3.5 text-slate-400 stroke-[2.2]" />
+            {/* Questions | Duration Row */}
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 mt-0.5">
+              <span className="flex items-center gap-1">
+                <Monitor className="w-3 h-3 text-slate-400 stroke-[2.2]" />
                 <span>{qCount} Questions</span>
               </span>
 
               <span className="text-slate-300">|</span>
 
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-slate-400 stroke-[2.2]" />
-                <span>{duration} Minutes</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-slate-400 stroke-[2.2]" />
+                <span>{duration} Mins</span>
               </span>
 
               {test.pdfUrl && (
@@ -100,10 +107,10 @@ export default function OfficialMockTestCard({
                     href={test.pdfUrl}
                     download
                     onClick={(e) => e.stopPropagation()}
-                    className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-[#12345A]"
+                    className="hidden sm:inline-flex items-center gap-1 text-[10.5px] font-bold text-slate-500 hover:text-[#12345A]"
                     title="Download official PDF answer key"
                   >
-                    <Download className="w-3 h-3" />
+                    <Download className="w-2.5 h-2.5" />
                     <span>PDF</span>
                   </a>
                 </>
@@ -113,7 +120,7 @@ export default function OfficialMockTestCard({
         </div>
 
         {/* Top-Right Bookmark Button */}
-        <div className="flex items-center gap-1 shrink-0 pt-0.5">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={(e) => {
@@ -124,58 +131,35 @@ export default function OfficialMockTestCard({
             title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Test'}
           >
             {isBookmarked ? (
-              <BookmarkCheck className="w-5 h-5 text-amber-500 fill-amber-500" />
+              <BookmarkCheck className="w-4 h-4 text-amber-500 fill-amber-500" />
             ) : (
-              <Bookmark className="w-5 h-5 stroke-[1.8]" />
+              <Bookmark className="w-4 h-4 stroke-[1.8]" />
             )}
           </button>
         </div>
       </div>
 
       {/* =========================================================================
-          BOTTOM ROW: Flame Attempts Pill + Difficulty + Negative Marking + "Start Test"
+          BOTTOM ROW: Difficulty + Negative Marking + "Start Test" (No fake attempts)
           ========================================================================= */}
-      <div className="flex items-center justify-between gap-3 pt-1">
-        {/* Left Pills Stack */}
-        <div className="flex flex-col gap-1.5 min-w-0">
-          {/* Row 1: Flame attempts + Hard pill (if Hard) */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFEDD5] text-[#C2410C] text-xs font-bold shadow-2xs">
-              <Flame className="w-3.5 h-3.5 text-[#EA580C] fill-[#EA580C]" />
-              <span>{attempts}</span>
-            </span>
-
-            {diff === 'Hard' && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#F3E8FF] text-[#7E22CE] shadow-2xs">
-                Hard
-              </span>
-            )}
-          </div>
-
-          {/* Row 2: Medium/Easy pill (if not Hard) */}
-          {diff !== 'Hard' && (
-            <div>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-2xs ${diffBg}`}>
-                {diff}
-              </span>
-            </div>
-          )}
-
-          {/* Row 3: Negative marking pill */}
-          <div>
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#F1F5F9] text-[#475569] text-xs font-medium border border-slate-200/50 shadow-2xs">
-              {negMarking}
-            </span>
-          </div>
+      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-50">
+        {/* Left Pills: Difficulty & Negative Marking */}
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold shadow-2xs ${diffBg}`}>
+            {diff}
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#475569] text-[10px] font-medium border border-slate-200/50 shadow-2xs">
+            {negMarking}
+          </span>
         </div>
 
-        {/* Right Buttons: Optional Practice + Navy "Start Test" Pill Button */}
-        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+        {/* Right Buttons: Optional Practice + Compact Start Test */}
+        <div className="flex items-center gap-1.5 shrink-0">
           {onPractice && (
             <button
               type="button"
               onClick={() => onPractice(test)}
-              className="px-3.5 py-2 rounded-full border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              className="px-2.5 py-1 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
             >
               Practice
             </button>
@@ -184,9 +168,9 @@ export default function OfficialMockTestCard({
           <button
             type="button"
             onClick={() => onStartTest(test)}
-            className="px-5 sm:px-6 py-2.5 rounded-full bg-[#0F2942] hover:bg-[#071B2D] text-white text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95 whitespace-nowrap"
+            className="px-3.5 py-1 rounded-md bg-[#0F2942] hover:bg-[#2468B4] text-white text-[11px] font-semibold transition flex items-center justify-center gap-1 shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
           >
-            <Play className="w-3.5 h-3.5 fill-white text-white" />
+            <Play className="w-2.5 h-2.5 fill-white text-white" />
             <span>Start Test</span>
           </button>
         </div>

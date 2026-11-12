@@ -250,34 +250,16 @@ export default function MockTestsHubPage() {
   const liveTotalQuestionsNumber = firestoreStats.totalQuestions || 19121;
   const liveSubjectCounts = firestoreStats.subjectCounts || {};
 
-  // Circular Exam / Subject Carousel Items (Both Exams and Core Subjects)
+  // Circular Subject Carousel Items (Strictly Subjects + All Mock as requested)
   const examCarouselCards = useMemo(() => [
     {
       id: 'all',
-      title: 'All Exams',
-      shortTitle: 'All Exams',
+      title: 'All Mock',
+      shortTitle: 'All Mock',
       badge: `${(liveTotalQuestionsNumber / 1000).toFixed(1)}k Qs`,
       image3d: iconAllMock,
       fallbackUrl: `${cleanBase}assets/aistudio/image_a918d86e.png`,
-      type: 'exam'
-    },
-    {
-      id: 'rrb-ntpc',
-      title: 'RRB NTPC',
-      shortTitle: 'RRB NTPC',
-      badge: '128 Shifts',
-      image3d: `${cleanBase}assets/aistudio/image_cbd93505.png`,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_cbd93505.png`,
-      type: 'exam'
-    },
-    {
-      id: 'ssc-cgl',
-      title: 'SSC CGL',
-      shortTitle: 'SSC CGL',
-      badge: '35 Shifts',
-      image3d: `${cleanBase}assets/aistudio/image_445d7a66.png`,
-      fallbackUrl: `${cleanBase}assets/aistudio/image_445d7a66.png`,
-      type: 'exam'
+      type: 'all'
     },
     {
       id: 'current-affairs',
@@ -556,7 +538,7 @@ export default function MockTestsHubPage() {
         examId: 'all',
         filterKey: 'all',
         targetTab: 'full-mock',
-        logoUrl: '/assets/aistudio/examquesthub-logo.png',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
         badge: 'FULL CBT'
       }
     ];
@@ -566,6 +548,7 @@ export default function MockTestsHubPage() {
   const dynamicAvailableTests = useMemo(() => {
     const list = [];
     if (FULL_MOCK_SERIES[0]) {
+      const isRrb = FULL_MOCK_SERIES[0].agency === 'RRB' || FULL_MOCK_SERIES[0].examId === 'rrb-ntpc';
       list.push({
         id: FULL_MOCK_SERIES[0].id,
         title: FULL_MOCK_SERIES[0].title,
@@ -577,7 +560,7 @@ export default function MockTestsHubPage() {
         category: 'full-mock',
         badge: 'FULL CBT',
         badgeColor: 'bg-indigo-100 text-indigo-700',
-        logoUrl: '/assets/aistudio/examquesthub-logo.png',
+        logoUrl: isRrb ? '/assets/aistudio/image_cbd93505.png' : '/assets/aistudio/image_445d7a66.png',
         rawObj: FULL_MOCK_SERIES[0]
       });
     }
@@ -793,7 +776,7 @@ export default function MockTestsHubPage() {
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-5 bg-[#2468B4] rounded-full inline-block" />
               <h2 className="text-sm sm:text-base font-bold text-[#12345A]">
-                Select Exam or Subject
+                Select Subject
               </h2>
             </div>
             {selectedSubject !== 'all' && (
@@ -1054,7 +1037,7 @@ export default function MockTestsHubPage() {
           {[
             { id: 'all', label: 'All Tests', icon: LayoutGrid, count: '380+' },
             { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: '14 Series' },
-            { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: '163 Shifts' },
+            { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: 'Shift Sets' },
             { id: 'subject-wise', label: 'Subject-wise Tests', icon: Layers, count: '8 Core' },
             { id: 'topic-wise', label: 'Topic-wise Practice', icon: Sparkles, count: '64 Units' },
             { id: 'sectional', label: 'Sectional Tests', icon: Target, count: 'Speed Drills' }
@@ -1133,23 +1116,23 @@ export default function MockTestsHubPage() {
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block" />
                   <h3 className="text-base sm:text-lg font-black text-[#12345A] font-heading">
-                    Previous Year Papers (163 CBT Shift Papers)
+                    Previous Year Papers
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500 pl-3.5 mt-0.5">
-                  Every original shift paper is accessible as an independent test with authentic questions & official keys.
+                  Official shift papers with authentic answer keys, real exam timers, and detailed solutions.
                 </p>
               </div>
 
               {/* Sub-Filters for PYQs */}
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
                 {[
-                  { id: 'all', label: 'All 163 Shifts' },
-                  { id: 'rrb-ug', label: 'RRB UG (57 Shifts)' },
-                  { id: 'rrb-grad-2024', label: 'RRB Grad 2024 (47 Shifts)' },
-                  { id: 'rrb-grad-2026', label: 'RRB Grad 2025-26 (24 Shifts)' },
-                  { id: 'ssc-2020', label: 'SSC CGL 2020 (21 Shifts)' },
-                  { id: 'ssc-2026', label: 'SSC CGL 2026 (14 Shifts)' }
+                  { id: 'all', label: 'All Papers' },
+                  { id: 'rrb-ug', label: 'RRB UG' },
+                  { id: 'rrb-grad-2024', label: 'RRB Grad 2024' },
+                  { id: 'rrb-grad-2026', label: 'RRB Grad 2025-26' },
+                  { id: 'ssc-2020', label: 'SSC CGL 2020' },
+                  { id: 'ssc-2026', label: 'SSC CGL 2026' }
                 ].map((flt) => (
                   <button
                     key={flt.id}
@@ -1189,7 +1172,7 @@ export default function MockTestsHubPage() {
               {/* Page Navigator */}
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-slate-500 font-medium">
-                  Page <strong className="text-slate-800">{pyqCurrentPage}</strong> of {totalPages} ({matchingShifts.length} shifts)
+                  Page <strong className="text-slate-800">{pyqCurrentPage}</strong> of {totalPages} ({matchingShifts.length} papers)
                 </span>
                 <button
                   type="button"
@@ -1226,8 +1209,8 @@ export default function MockTestsHubPage() {
               </div>
             </div>
 
-            {/* PYQ Shift Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* PYQ Shift Tests Container (Compact list styled like Available Mock Tests, no fake attempts) */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs divide-y divide-slate-100">
               {paginatedShifts.map((shift) => {
                 const is2026Grad =
                   (shift.examLevel === 'Graduate' || String(shift.id).includes('grad')) &&
@@ -1245,31 +1228,91 @@ export default function MockTestsHubPage() {
                   ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf'
                   : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf';
 
-                const pyqTestObj = {
-                  id: shift.id,
-                  title: shift.title || (isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`),
-                  agency: isSsc ? 'SSC' : 'RRB',
-                  examType: isSsc ? 'SSC CGL' : 'RRB NTPC',
-                  examId: isSsc ? 'ssc-cgl' : 'rrb-ntpc',
-                  questionsCount: shift.questionsCount || 100,
-                  timeMinutes: shift.durationMinutes || (isSsc ? 60 : 90),
-                  negativeMarking: isSsc ? '-0.50 Negative Marking' : '-0.25 Negative Marking',
-                  attempts: `${(24 + (Number(shift.shiftNumber) || 1) * 1.4).toFixed(1)}K Attempts`,
-                  difficulty: (Number(shift.shiftNumber) || 1) % 3 === 0 ? 'Hard' : 'Medium',
-                  isFree: true,
-                  pdfUrl: pdfDownloadUrl
-                };
+                const testTitle = shift.title || (isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`);
+                const badgeText = isSsc
+                  ? (shift.examYear === '2026' ? '2026 CBT' : 'TIER-1')
+                  : (shift.examLevel === 'Graduate' ? (is2026Grad ? 'GRAD 25-26' : 'GRAD 2024') : 'UG SHIFT');
+                const badgeColor = isSsc
+                  ? (shift.examYear === '2026' ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800')
+                  : (shift.examLevel === 'Graduate' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800');
+                const logoUrl = isSsc ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png';
+                const examLabel = isSsc ? 'SSC CGL' : 'RRB NTPC';
+                const qCount = shift.questionsCount || 100;
+                const duration = shift.durationMinutes || (isSsc ? 60 : 90);
+                const negMarking = isSsc ? '-0.50 Negative' : '-0.25 Negative';
 
                 return (
-                  <OfficialMockTestCard
+                  <div
                     key={shift.id || shift.shiftNumber}
-                    test={pyqTestObj}
-                    isBookmarked={bookmarkedIds.includes(shift.id)}
-                    onToggleBookmark={toggleBookmark}
-                    onStartTest={() => navigate(`/mocks/${shift.id}?mode=cbt`)}
-                    onPractice={() => navigate(`/mocks/${shift.id}?mode=practice`)}
-                    hasProPass={hasProPass}
-                  />
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-2.5 sm:py-2.5 sm:px-3 rounded-xl hover:bg-slate-50/80 transition group"
+                  >
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      {/* Circular Official Emblem */}
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-slate-50 p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+                        <img
+                          src={logoUrl}
+                          alt={examLabel}
+                          className="w-full h-full object-contain rounded-full"
+                          onError={(e) => {
+                            e.currentTarget.src = logoUrl;
+                          }}
+                        />
+                      </div>
+
+                      {/* Title & Metadata */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider ${badgeColor}`}>
+                            {badgeText}
+                          </span>
+                          <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold truncate">{examLabel}</span>
+                          {pdfDownloadUrl && (
+                            <a
+                              href={pdfDownloadUrl}
+                              download
+                              onClick={(e) => e.stopPropagation()}
+                              className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-[#12345A] ml-1 bg-slate-100 hover:bg-slate-200 px-1.5 py-0.2 rounded transition"
+                              title="Download official PDF answer key"
+                            >
+                              <Download className="w-2.5 h-2.5" />
+                              <span>PDF</span>
+                            </a>
+                          )}
+                        </div>
+                        <h4 className="font-heading font-black text-xs sm:text-[13px] text-[#12345A] group-hover:text-[#2468B4] transition leading-tight line-clamp-1 mt-0.5">
+                          {testTitle}
+                        </h4>
+                        <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] text-slate-500 font-medium mt-0.5">
+                          <span>{qCount} Qs</span>
+                          <span>·</span>
+                          <span>{duration} Mins</span>
+                          <span>·</span>
+                          <span className="text-slate-600 font-semibold truncate">{negMarking}</span>
+                          <span>·</span>
+                          <span className="text-emerald-700 font-bold">Official Paper</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Direct Action Buttons */}
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-0.5 sm:pt-0">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/mocks/${shift.id}?mode=practice`)}
+                        className="px-2.5 py-1 rounded-md border border-slate-300 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#12345A] transition cursor-pointer"
+                      >
+                        Practice
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/mocks/${shift.id}?mode=cbt`)}
+                        className="px-3 py-1 rounded-md bg-[#12345A] text-white text-[11px] font-semibold hover:bg-[#2468B4] shadow-xs hover:shadow-md transition flex items-center gap-1 cursor-pointer"
+                      >
+                        <Play className="w-2.5 h-2.5 fill-current" />
+                        <span>Attempt CBT</span>
+                      </button>
+                    </div>
+                  </div>
                 );
               })}
             </div>
