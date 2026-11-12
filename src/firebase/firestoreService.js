@@ -456,6 +456,24 @@ export async function deleteUpdate(id) {
   return true;
 }
 
+export async function deleteAllUpdates() {
+  saveLocalData(STORAGE_KEYS.UPDATES, []);
+  notifyUpdatesSubscribers([]);
+
+  if (isFirebaseConfigured && db) {
+    try {
+      const snap = await getDocs(collection(db, 'updates'));
+      const deletePromises = snap.docs.map((d) => deleteDoc(doc(db, 'updates', d.id)));
+      await Promise.all(deletePromises);
+      markSyncSuccess();
+    } catch (err) {
+      recordError('firestoreService.deleteAllUpdates', err);
+      console.warn('Firestore deleteAllUpdates warning:', err);
+    }
+  }
+  return true;
+}
+
 export async function getCurrentAffairs(includeDrafts = false) {
   if (isFirebaseConfigured && db) {
     try {

@@ -528,6 +528,12 @@ export default function HomePage() {
               <div className="space-y-2.5">
                 <SkeletonLoader count={4} />
               </div>
+            ) : displayNotifications.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-[#E3EAF2] p-8 text-center text-slate-500 text-xs">
+                <Briefcase className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="font-semibold text-slate-700">No active job notifications</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Check back soon or visit the Admin dashboard to add notifications.</p>
+              </div>
             ) : displayNotifications.slice(0, 5).map((item) => {
               const orgName = getLocalized(item.organization) || item.organization || 'Govt Department';
               const jobTitle = getLocalized(item.title) || item.title || 'Recruitment Notification';

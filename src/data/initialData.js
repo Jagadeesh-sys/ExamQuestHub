@@ -4,7 +4,9 @@
  * explicit verification timestamps, and clearly documented official recruitment board targets.
  */
 
-export const INITIAL_UPDATES = [
+export const INITIAL_UPDATES = [];
+
+export const ARCHIVED_DEMO_UPDATES = [
   {
     id: 'ap-dsc-teacher-recruitment-2026',
     slug: 'ap-dsc-teacher-recruitment-2026',

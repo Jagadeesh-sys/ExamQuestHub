@@ -37,6 +37,7 @@ import {
   getUpdates,
   saveUpdate,
   deleteUpdate,
+  deleteAllUpdates,
   getCurrentAffairs,
   saveCurrentAffair,
   deleteCurrentAffair,
@@ -622,7 +623,11 @@ export default function AdminPage() {
     if (!id || !type) return;
 
     try {
-      if (type === 'update') {
+      if (type === 'all-updates') {
+        await deleteAllUpdates();
+        setUpdates([]);
+        triggerToast('All job notifications deleted from database.');
+      } else if (type === 'update') {
         await deleteUpdate(id);
         setUpdates(prev => prev.filter(i => i.id !== id));
         triggerToast('Notification deleted successfully.');
@@ -1087,6 +1092,25 @@ export default function AdminPage() {
                 <Clipboard className="w-4 h-4" />
                 <span>Bulk Import</span>
               </button>
+
+              {updates.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirm({
+                      isOpen: true,
+                      id: 'all',
+                      type: 'all-updates',
+                      title: `ALL (${updates.length}) job notifications`
+                    });
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-xl transition-colors shadow-2xs active:scale-95 cursor-pointer"
+                  title="Delete all job notifications from database"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete All</span>
+                </button>
+              )}
             </div>
           </div>
 
