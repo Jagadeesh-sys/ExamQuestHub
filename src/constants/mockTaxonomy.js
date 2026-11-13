@@ -1171,6 +1171,18 @@ export const SUBJECT_TOPIC_TAXONOMY = {
           'Biological Discoveries (Blood Circulation, Cell, DNA Double Helix)',
           'Indian Scientists and Their Contributions (Raman, Bose, Kalam)'
         ]
+      },
+      {
+        id: 'science-technology',
+        name: 'Science & Technology',
+        description: 'Space Missions, Defence Tech, Biotechnology, ICT, Robotics, Energy & Environment',
+        subtopics: [
+          'ISRO Missions, Launch Vehicles & Satellites',
+          'Defence Systems, Missiles & DRDO Innovations',
+          'Biotechnology, Health Missions & Vaccines',
+          'Renewable Energy, Climate Action & Ecology',
+          'Digital Public Infrastructure, AI & Cyber Security'
+        ]
       }
     ]
   },
@@ -1679,8 +1691,8 @@ export function classifyQuestion(question) {
     text.includes('ip address') ||
     text.includes('tcp/ip') ||
     text.includes('osi model') ||
-    text.includes('lan ') ||
-    text.includes('wan ') ||
+    text.includes(' lan ') ||
+    text.includes(' wan ') ||
     text.includes('ethernet') ||
     text.includes('router') ||
     text.includes('database') ||
@@ -1732,7 +1744,7 @@ export function classifyQuestion(question) {
     rawSubtopic.includes('software engineering') ||
     rawSubtopic.includes('programming') ||
     rawSubtopic.includes('data structures') ||
-    isComputerKeywords
+    (isComputerKeywords && explicitSubjectId !== 'general-science')
   ) {
     let topicId = 'fundamentals';
     let topicName = 'Computer Fundamentals';

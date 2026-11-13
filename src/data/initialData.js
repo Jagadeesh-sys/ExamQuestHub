@@ -1189,5 +1189,23 @@ export const INITIAL_RESOURCES = [
       en: 'Complete 48 official shift papers for RRB Group D (Level-1) covering General Science, Mathematics, Reasoning, and General Awareness & Current Affairs with verified answer keys.',
       te: 'RRB గ్రూప్ D (లెవెల్-1) 48 అధికారిక షిఫ్ట్ ప్రశ్నాపత్రాలు — జనరల్ సైన్స్, గణితం, రీజనింగ్ మరియు కరెంట్ అఫైర్స్ అధికారిక సమాధానాలతో (4,800 ప్రశ్నలు).'
     }
+  },
+  {
+    id: 'pyq-appsc-group2-2025-paper2',
+    title: {
+      en: 'APPSC Group-2 Paper-2 (2025) Official Bilingual Question Paper & Key (150 Questions)',
+      te: 'APPSC గ్రూప్-2 పేపర్-2 (2025) అధికారిక తెలుగు & ఇంగ్లీష్ ప్రశ్నాపత్రం (150 ప్రశ్నలు)'
+    },
+    category: 'Previous Year Question Papers',
+    examBoard: 'APPSC',
+    year: '2025',
+    type: 'Official Question Paper & Answer Key',
+    fileSize: '45 Pages PDF (Booklet 2G/202 · Series C)',
+    downloadUrl: '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-2-2025_copy_f6e37955.pdf',
+    officialSource: 'https://psc.ap.gov.in',
+    description: {
+      en: 'Complete bilingual (English + Telugu) APPSC Group-2 Paper-2 (2025) Booklet 2G/202 Series (C) covering Section A: Indian & AP Economy (Q1–75) and Section B: Science & Technology (Q76–150).',
+      te: 'భారత & ఆంధ్రప్రదేశ్ ఆర్థిక వ్యవస్థ (Q1–75) మరియు సైన్స్ & టెక్నాలజీ (Q76–150) విభాగాలతో APPSC గ్రూప్-2 పేపర్-2 (2025) పూర్తి ద్విభాషా ప్రశ్నాపత్రం.'
+    }
   }
 ];

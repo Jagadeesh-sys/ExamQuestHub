@@ -5743,5 +5743,32 @@ export const ALL_CBT_SHIFTS = [
     "pdfUrl": "/assets/aistudio/RRB-Group-D-2025-EN-All-Sections_dece0c81.pdf",
     "pdfFileName": "RRB-Group-D-2025-EN-All-Sections.pdf",
     "status": "Published"
+  },
+  {
+    "id": "appsc-group2-2025-paper2-shift-1",
+    "code": "APPSC-G2-2025-P2",
+    "examType": "APPSC Group II",
+    "examLevel": "Group II",
+    "examLevelLabel": "APPSC Group-II Paper-II (2025)",
+    "shiftNumber": 1,
+    "setNumber": 1,
+    "title": "APPSC Group-2 Paper-2 (2025) – Full Official Paper",
+    "subtitle": "23 Feb 2025 · 150 Qs (Indian & AP Economy + Science & Technology)",
+    "examName": "APPSC Group-2 Paper-2 (2025)",
+    "examYear": "2025",
+    "examDate": "23 Feb 2025",
+    "shiftTiming": "Paper-II · 150 Mins",
+    "durationMinutes": 150,
+    "totalMarks": 150,
+    "negativeMarking": 0.33,
+    "totalQuestions": 150,
+    "questionsCount": 150,
+    "subjectCounts": {
+      "General Knowledge": 75,
+      "General Science": 75
+    },
+    "pdfUrl": "/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-2-2025_copy_f6e37955.pdf",
+    "pdfFileName": "Group-2-_-Prelims-Exam-Question-Paper-2-2025.pdf",
+    "status": "Published"
   }
 ];

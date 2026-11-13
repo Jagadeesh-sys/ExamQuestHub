@@ -22,11 +22,14 @@ export default function OfficialMockTestCard({
   hasProPass = false
 }) {
   // Determine avatar colors based on agency or exam
-  const agency = test.agency || (test.examId === 'ssc-cgl' || test.examName?.includes('SSC') ? 'SSC' : 'RRB');
-  const isSsc = agency.includes('SSC') || test.examType === 'SSC CGL' || String(test.id).includes('ssc');
+  const agency = test.agency || (test.examId === 'ssc-cgl' || test.examName?.includes('SSC') ? 'SSC' : (test.examName?.includes('APPSC') || String(test.id || '').includes('appsc') ? 'APPSC' : 'RRB'));
+  const isAppsc = agency.includes('APPSC') || test.examType === 'APPSC Group II' || String(test.id || '').includes('appsc');
+  const isSsc = !isAppsc && (agency.includes('SSC') || test.examType === 'SSC CGL' || String(test.id || '').includes('ssc'));
 
   let avatarBg = 'bg-[#FFE4E6] text-[#E11D48]'; // RRB soft pink / red
-  if (isSsc) {
+  if (isAppsc) {
+    avatarBg = 'bg-[#ECFDF5] text-[#047857]'; // APPSC soft emerald
+  } else if (isSsc) {
     avatarBg = 'bg-[#DCFCE7] text-[#15803D]'; // SSC soft green
   } else if (agency === 'GA' || agency === 'GK') {
     avatarBg = 'bg-[#FEF9C3] text-[#A16207]';
@@ -58,7 +61,7 @@ export default function OfficialMockTestCard({
   const qCount = test.questionsCount || test.totalQuestions || 100;
   const duration = test.timeMinutes || test.durationMinutes || (isSsc ? 60 : 90);
   // Official emblem logo
-  const defaultLogo = isSsc ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png';
+  const defaultLogo = isAppsc ? '/assets/aistudio/image_3b1d93b9.png' : (isSsc ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png');
   const logoUrl = test.logoUrl || defaultLogo;
 
   return (

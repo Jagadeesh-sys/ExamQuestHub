@@ -189,6 +189,32 @@ export default function TestSeriesPage() {
       };
     }
 
+    if (id.includes('appsc')) {
+      const appscShifts = ALL_CBT_SHIFTS.filter(
+        (s) => s.examType === 'APPSC Group II' || String(s.id).includes('appsc')
+      );
+      return {
+        id: 'series-appsc-group2',
+        bannerTitle: 'APPSC Group-2 Paper-2 (2025) Official Question Paper Series',
+        title: 'APPSC Group-2 Paper-2 (2025) Official Bilingual Test Series',
+        totalTestsBadge: `${appscShifts.length || 1} Official Paper`,
+        freeTestsBadge: 'Free Test',
+        description:
+          'Complete 150-question bilingual (English & Telugu) official APPSC Group-2 Paper-2 (2025) examination covering Section A: Indian & AP Economy (75 Qs) and Section B: Science & Technology (75 Qs).',
+        agency: 'APPSC',
+        examLevel: 'Group II Paper-II (2025)',
+        totalTests: appscShifts.length || 1,
+        questionsPerTest: 150,
+        timeMinutes: 150,
+        totalMarks: 150,
+        negativeMarking: '0.33',
+        languages: 'English · Telugu',
+        logoUrl: '/assets/aistudio/image_3b1d93b9.png',
+        badge: 'PAPER-2 (150 Qs)',
+        shifts: appscShifts
+      };
+    }
+
     // Default: Full Mocks Series
     const fullMockShifts = FULL_MOCK_SERIES.map((m, idx) => ({
       id: m.id,
@@ -249,6 +275,9 @@ export default function TestSeriesPage() {
     }
     if (seriesConfig.id.includes('ssc') && seriesConfig.id.includes('2020')) {
       return `SSC CGL 2020 Tier–1 Set – ${num}`;
+    }
+    if (seriesConfig.id.includes('appsc')) {
+      return shift.title || `APPSC Group-2 Paper-2 (2025) – Set ${num}`;
     }
     return shift.title || `${seriesConfig.agency} CBT–1 Full Mock – ${num}`;
   };

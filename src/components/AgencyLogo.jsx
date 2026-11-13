@@ -168,8 +168,24 @@ export default function AgencyLogo({ org = '', size = 'md', className = '' }) {
     );
   }
 
-  // 5. APPSC (Andhra Pradesh Public Service Commission - Sacred Poornakumbham Emblem)
+  // 5. APPSC (Andhra Pradesh Public Service Commission - Official Emblem)
   if (normalized.includes('appsc') || normalized.includes('andhra pradesh') || normalized.includes('andhra')) {
+    if (!imgError) {
+      return (
+        <div
+          className={`${sizeClasses} shrink-0 rounded-full overflow-hidden shadow-xs border border-emerald-600/40 bg-white ${className}`}
+          title="Andhra Pradesh Public Service Commission (APPSC)"
+        >
+          <img
+            src="/assets/aistudio/image_3b1d93b9.png"
+            alt="Andhra Pradesh Public Service Commission (APPSC)"
+            className="w-full h-full object-contain rounded-full"
+            onError={() => setImgError(true)}
+            loading="lazy"
+          />
+        </div>
+      );
+    }
     return (
       <div
         className={`${sizeClasses} rounded-full bg-[#064E3B] text-[#FDE047] flex items-center justify-center shrink-0 shadow-xs border-2 border-[#F59E0B] overflow-hidden relative ${className}`}

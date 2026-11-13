@@ -38,7 +38,7 @@ const STORAGE_KEYS = {
   CURRENT_AFFAIRS: 'eqh_db_current_affairs_v1',
   QUESTIONS: 'eqh_db_questions_v1',
   MOCK_QUESTIONS: 'eqh_db_mock_questions_v1',
-  MOCK_STATS: 'eqh_db_mock_stats_v4',
+  MOCK_STATS: 'eqh_db_mock_stats_v5',
   RESOURCES: 'eqh_db_resources_v1',
   ADMINS: 'eqh_db_admins_v1'
 };
@@ -828,12 +828,17 @@ export function mapRrbToMockQuestion(q) {
     }
   }
 
+  const isAppsc =
+    q.examType === 'APPSC Group II' ||
+    String(q.id || '').includes('appsc');
   const isGroupD =
-    q.examType === 'RRB Group D' ||
-    String(q.id || '').includes('rrb-group-d') ||
-    String(q.examLevel || '').toLowerCase().includes('group d') ||
-    String(q.examLevel || '').toLowerCase().includes('level-1');
-  const isSsc = !isGroupD && (q.examType === 'SSC CGL' || String(q.id || '').startsWith('ssc-cgl'));
+    !isAppsc && (
+      q.examType === 'RRB Group D' ||
+      String(q.id || '').includes('rrb-group-d') ||
+      String(q.examLevel || '').toLowerCase().includes('group d') ||
+      String(q.examLevel || '').toLowerCase().includes('level-1')
+    );
+  const isSsc = !isAppsc && !isGroupD && (q.examType === 'SSC CGL' || String(q.id || '').startsWith('ssc-cgl'));
   const isUnverified =
     q.status === 'Needs Review' ||
     q.status === 'Draft' ||
@@ -844,17 +849,25 @@ export function mapRrbToMockQuestion(q) {
   const status = isUnverified ? (q.status || 'Needs Review') : (q.status || 'Published');
   const questionType = isUnverified ? 'IMPORTANT' : (q.questionType || 'PYQ');
 
-  // Graduate 2026 (March 16-27, 2026 CBT-1) vs Previous Graduate (05/06/2025 relabeled to 2024) vs Group D 2025
-  let examLevel = q.examLevel || (isGroupD ? 'Level-1 (Group D)' : (isSsc ? 'Graduate' : 'Under Graduate'));
-  let examLevelLabel = q.examLevelLabel || (isGroupD ? 'Level-1 (Group D · CEN 09/2025)' : (isSsc ? 'SSC CGL' : 'Under Graduate'));
+  // Graduate 2026 (March 16-27, 2026 CBT-1) vs Previous Graduate (05/06/2025 relabeled to 2024) vs Group D 2025 vs APPSC Group II
+  let examLevel = q.examLevel || (isAppsc ? 'Group II' : (isGroupD ? 'Level-1 (Group D)' : (isSsc ? 'Graduate' : 'Under Graduate')));
+  let examLevelLabel = q.examLevelLabel || (isAppsc ? 'APPSC Group-II Paper-II (2025)' : (isGroupD ? 'Level-1 (Group D · CEN 09/2025)' : (isSsc ? 'SSC CGL' : 'Under Graduate')));
   let examYear = q.examYear || (isSsc ? '2020' : '2025');
-  let examName = q.examName || (isGroupD ? 'RRB Group D 2025 (CEN 09/2025)' : (isSsc ? 'SSC CGL 2020 Tier-I' : 'RRB NTPC Under Graduate 2025 (CEN 07/2025)'));
+  let examName = q.examName || (isAppsc ? 'APPSC Group-2 Paper-2 (2025)' : (isGroupD ? 'RRB Group D 2025 (CEN 09/2025)' : (isSsc ? 'SSC CGL 2020 Tier-I' : 'RRB NTPC Under Graduate 2025 (CEN 07/2025)')));
   let source = q.source;
   let paperUrl = q.paperUrl;
   let paperFileName = q.paperFileName;
 
-  const isGrad = !isGroupD && (q.examLevel === 'Graduate' || String(q.id || '').includes('rrb-ntpc-grad'));
-  if (isGroupD) {
+  const isGrad = !isAppsc && !isGroupD && (q.examLevel === 'Graduate' || String(q.id || '').includes('rrb-ntpc-grad'));
+  if (isAppsc) {
+    examLevel = 'Group II';
+    examLevelLabel = 'APPSC Group-II Paper-II (2025)';
+    examYear = q.examYear || '2025';
+    examName = q.examName || 'APPSC Group-2 Paper-2 (2025)';
+    source = q.source || 'APPSC Group-2 Paper-2 (2025) Official Question Paper · Series (C)';
+    paperUrl = q.paperUrl || '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-2-2025_copy_f6e37955.pdf';
+    paperFileName = q.paperFileName || 'Group-2-_-Prelims-Exam-Question-Paper-2-2025.pdf';
+  } else if (isGroupD) {
     examLevel = 'Level-1 (Group D)';
     examLevelLabel = 'Level-1 (Group D · CEN 09/2025)';
     examYear = q.examYear || '2025';
@@ -929,7 +942,7 @@ export async function getDirectFirestoreMockStats() {
   // 1. Check cached stats in localStorage if already calculated
   try {
     const cached = getLocalData(STORAGE_KEYS.MOCK_STATS, null);
-    if (cached && typeof cached.totalQuestions === 'number' && cached.totalQuestions >= 22000) {
+    if (cached && typeof cached.totalQuestions === 'number' && cached.totalQuestions >= 24000) {
       return cached;
     }
   } catch {
@@ -942,25 +955,25 @@ export async function getDirectFirestoreMockStats() {
       const statsSnap = await getDoc(doc(db, 'mockQuestions', '_stats_'));
       if (statsSnap.exists()) {
         const serverStats = statsSnap.data();
-        if (serverStats && serverStats.totalQuestions && serverStats.totalQuestions >= 22000) {
+        if (serverStats && serverStats.totalQuestions && serverStats.totalQuestions >= 24000) {
           const formatted = {
             totalQuestions: serverStats.totalQuestions,
             verifiedQuestions: serverStats.verifiedQuestions || serverStats.totalQuestions,
             unverifiedQuestions: serverStats.unverifiedQuestions || 0,
-            totalShifts: serverStats.totalShifts || 211,
+            totalShifts: serverStats.totalShifts || 212,
             totalSubtopics: serverStats.totalSubtopics || 65,
-            totalMockTests: serverStats.totalMockTests || 428,
+            totalMockTests: serverStats.totalMockTests || 429,
             subjectCounts: serverStats.subjectCounts || {
               all: serverStats.totalQuestions,
-              'general-knowledge': 7428,
+              'general-knowledge': 7503,
               'quantitative-aptitude': 5610,
               reasoning: 5580,
-              'general-science': 2220,
+              'general-science': 2295,
               'computer-science': 810,
               'english-language': 680,
               'current-affairs': 1593
             },
-            source: `Official Question Bank (${serverStats.totalQuestions.toLocaleString()} Qs • ${serverStats.totalShifts || 211} CBT Shifts)`
+            source: `Official Question Bank (${serverStats.totalQuestions.toLocaleString()} Qs • ${serverStats.totalShifts || 212} CBT Shifts)`
           };
           saveLocalData(STORAGE_KEYS.MOCK_STATS, formatted);
           return formatted;
@@ -971,25 +984,25 @@ export async function getDirectFirestoreMockStats() {
     }
   }
 
-  // 3. Fallback: verified full bank including all 211 CBT shifts (23,921+)
+  // 3. Fallback: verified full bank including all 212 CBT shifts (24,071+)
   const fallbackStats = {
-    totalQuestions: 23921,
-    verifiedQuestions: 23921,
+    totalQuestions: 24071,
+    verifiedQuestions: 24071,
     unverifiedQuestions: 0,
-    totalShifts: 211,
+    totalShifts: 212,
     totalSubtopics: 65,
-    totalMockTests: 428,
+    totalMockTests: 429,
     subjectCounts: {
-      all: 23921,
-      'general-knowledge': 7428,
+      all: 24071,
+      'general-knowledge': 7503,
       'quantitative-aptitude': 5610,
       reasoning: 5580,
-      'general-science': 2220,
+      'general-science': 2295,
       'computer-science': 810,
       'english-language': 680,
       'current-affairs': 1593
     },
-    source: 'Official Question Bank (23,921 Qs • 211 CBT Shifts)'
+    source: 'Official Question Bank (24,071 Qs • 212 CBT Shifts)'
   };
 
   saveLocalData(STORAGE_KEYS.MOCK_STATS, fallbackStats);
@@ -1103,17 +1116,17 @@ export async function getMockQuestions() {
     }
   }
 
-  // Keep fast cached stats synchronized with exact count (23,921+)
+  // Keep fast cached stats synchronized with exact count (24,071+)
   try {
     saveLocalData(STORAGE_KEYS.MOCK_STATS, {
       totalQuestions: merged.length,
       verifiedQuestions: merged.length,
       unverifiedQuestions: 0,
-      totalShifts: 211,
+      totalShifts: 212,
       totalSubtopics: 65,
-      totalMockTests: 428,
+      totalMockTests: 429,
       subjectCounts: dynamicSubjectCounts,
-      source: `Official Question Bank (${merged.length.toLocaleString()} Qs • 211 CBT Shifts)`
+      source: `Official Question Bank (${merged.length.toLocaleString()} Qs • 212 CBT Shifts)`
     });
   } catch {
     // Ignore storage sync notice
@@ -1223,13 +1236,16 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
       let underGraduate = 0;
       let groupD2025 = 0;
       let sscCgl = 0;
+      let appscGroup2 = 0;
 
       list.forEach((q) => {
         if (q.shiftNumber) shiftsSet.add(q.shiftNumber);
         if (q.subtopic) subtopicsSet.add(q.subtopic);
         if (q.status === 'Published' || q.verificationStatus === 'VERIFIED') verified++;
 
-        if (q.examType === 'RRB Group D' || String(q.id || '').includes('rrb-group-d')) {
+        if (q.examType === 'APPSC Group II' || String(q.id || '').includes('appsc')) {
+          appscGroup2++;
+        } else if (q.examType === 'RRB Group D' || String(q.id || '').includes('rrb-group-d')) {
           groupD2025++;
         } else if (q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl')) {
           sscCgl++;
@@ -1259,14 +1275,15 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
         totalQuestions: list.length,
         verifiedQuestions: verified,
         unverifiedQuestions: list.length - verified,
-        totalShifts: Math.max(shiftsSet.size, 211),
+        totalShifts: Math.max(shiftsSet.size, 212),
         totalSubtopics: Math.max(subtopicsSet.size, 65),
-        totalMockTests: 428,
+        totalMockTests: 429,
         graduate2026,
         graduate2024,
         underGraduate,
         groupD2025,
         sscCgl,
+        appscGroup2,
         subjectCounts: {
           all: list.length,
           'general-knowledge': gk,

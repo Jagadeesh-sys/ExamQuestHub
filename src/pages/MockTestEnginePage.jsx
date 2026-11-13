@@ -147,6 +147,7 @@ export default function MockTestEnginePage() {
         mockId &&
           (mockId.startsWith('rrb-') ||
             mockId.startsWith('ssc-') ||
+            mockId.startsWith('appsc-') ||
             mockId.startsWith('subject-') ||
             mockId.startsWith('topic-') ||
             mockId.startsWith('full-') ||
