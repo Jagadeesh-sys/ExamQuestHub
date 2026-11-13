@@ -8,6 +8,7 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getUpdates } from '../firebase/firestoreService.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
@@ -15,6 +16,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import AgencyLogo from '../components/AgencyLogo.jsx';
+import { formatDisplayDate } from '../utils/notificationStatus.js';
 
 export default function ResultsPage() {
   const { t, getLocalized } = useLanguage();
@@ -30,7 +32,7 @@ export default function ResultsPage() {
         const resultList = data.filter(
           (d) => d.type === 'result' || (d.status && d.status.toLowerCase().includes('result'))
         );
-        setItems(resultList.length > 0 ? resultList : data.slice(0, 4));
+        setItems(resultList);
       } catch (e) {
         console.error('Failed to load results', e);
       } finally {
@@ -137,7 +139,9 @@ export default function ResultsPage() {
                   <div className="p-3 rounded-xl bg-[#F6F8FC] text-xs space-y-1">
                     <div className="flex justify-between text-slate-600">
                       <span>Announced Date:</span>
-                      <span className="font-bold text-[#182B45]">{item.publishedAt}</span>
+                      <span className="font-bold text-[#182B45]">
+                        {formatDisplayDate(item.resultDate || item.publishedAt) || item.resultDate || item.publishedAt || 'Official Notice'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-slate-600">
                       <span>Verification Status:</span>
@@ -164,15 +168,24 @@ export default function ResultsPage() {
                         <FileText className="w-4 h-4 text-red-500" />
                       </a>
                     )}
-                    <a
-                      href={item.applyUrl || item.officialUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold rounded-xl transition-colors shadow-xs active:scale-95"
-                    >
-                      <span>Check Result & Cut-off</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    {(item.applyUrl || item.officialUrl) ? (
+                      <a
+                        href={item.applyUrl || item.officialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold rounded-xl transition-colors shadow-xs active:scale-95"
+                      >
+                        <span>Check Result & Cut-off</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <Link
+                        to={`/jobs/${item.slug || item.id}`}
+                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold rounded-xl transition-colors shadow-xs active:scale-95"
+                      >
+                        <span>View Result Notice</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

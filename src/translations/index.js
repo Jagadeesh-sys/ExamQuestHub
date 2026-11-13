@@ -40,11 +40,13 @@ export const translations = {
 
     // Status Badges
     statusNew: 'New',
-    statusOpen: 'Applications Open',
+    statusOpen: 'Open',
+    statusUpcoming: 'Upcoming',
     statusClosingSoon: 'Closing Soon',
     statusAdmitCard: 'Admit Card Released',
     statusResult: 'Result Released',
     statusClosed: 'Closed',
+    statusDateNotAnnounced: 'Date Not Announced',
     statusDraft: 'Draft',
 
     // Actions & Buttons
@@ -189,10 +191,12 @@ export const translations = {
     // Status Badges
     statusNew: 'కొత్తది',
     statusOpen: 'దరఖాస్తులు ప్రారంభం',
+    statusUpcoming: 'త్వరలో రాబోతోంది',
     statusClosingSoon: 'త్వరలో ముగింపు',
     statusAdmitCard: 'అడ్మిట్ కార్డు విడుదలైంది',
     statusResult: 'ఫలితాలు విడుదలయ్యాయి',
     statusClosed: 'ముగిసింది',
+    statusDateNotAnnounced: 'తేదీలు ప్రకటించబడలేదు',
     statusDraft: 'డ్రాఫ్ట్',
 
     // Actions & Buttons

@@ -89,8 +89,10 @@ export default function JobDetailPage() {
   };
 
   const handleWhatsAppShare = () => {
+    const rawLast = getApplicationLastDate(job);
+    const formattedLast = rawLast ? formatDisplayDate(rawLast) : 'Refer Official Notice';
     const text = encodeURIComponent(
-      `*${getLocalized(job?.title)}*\nOrganization: ${getLocalized(job?.organization)}\nLast Date: ${job?.deadline || 'Refer Official Notice'}\nVerified Details: ${window.location.href}`
+      `*${getLocalized(job?.title)}*\nOrganization: ${getLocalized(job?.organization)}\nLast Date: ${formattedLast}\nVerified Details: ${window.location.href}`
     );
     const link = document.createElement('a');
     link.href = `https://api.whatsapp.com/send?text=${text}`;
@@ -135,6 +137,7 @@ export default function JobDetailPage() {
   const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
   const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
   const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
+  const applyHref = job.applyUrl || job.officialUrl || '';
 
   const title = getLocalized(job.title);
   const org = getLocalized(job.organization);
@@ -254,9 +257,9 @@ export default function JobDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             {/* Desktop-only Apply Online Button */}
-            {isOpen && job.applyUrl && (
+            {isOpen && applyHref && (
               <a
-                href={job.applyUrl}
+                href={applyHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden lg:inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95"
@@ -450,7 +453,7 @@ export default function JobDetailPage() {
                 Official Verification Log
               </span>
               <p className="leading-relaxed">
-                This notice was verified on <strong className="font-semibold">{new Date(job.verifiedAt || job.publishedAt).toLocaleDateString()}</strong> from {org} official communications. {t('disclaimerNotice')}
+                This notice was verified on <strong className="font-semibold">{formatDisplayDate(job.verifiedAt || job.publishedAt) || 'Official Release'}</strong> from {org} official communications. {t('disclaimerNotice')}
               </p>
             </div>
           </div>
@@ -468,9 +471,9 @@ export default function JobDetailPage() {
             
             <div className="space-y-2.5 text-xs">
               {/* Desktop-only sidebar apply button; on mobile, sticky bottom CTA is used to avoid duplicate inline button */}
-              {isOpen && job.applyUrl ? (
+              {isOpen && applyHref ? (
                 <a
-                  href={job.applyUrl}
+                  href={applyHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full hidden lg:flex items-center justify-between p-3 rounded-xl bg-[#12345A] text-white hover:bg-[#0B1F3A] font-semibold transition-colors shadow-xs"
@@ -568,10 +571,10 @@ export default function JobDetailPage() {
           - Desktop does not display a fixed bottom CTA.
           - Not displayed for UPCOMING or CLOSED jobs.
       */}
-      {isOpen && job.applyUrl && (
+      {isOpen && applyHref && (
         <div className="lg:hidden fixed bottom-[64px] sm:bottom-[68px] left-0 right-0 z-[65] bg-white/95 backdrop-blur-md px-4 py-2.5 border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] flex items-center gap-2">
           <a
-            href={job.applyUrl}
+            href={applyHref}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 py-3 px-4 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs sm:text-sm font-bold rounded-xl text-center shadow-xs flex items-center justify-center gap-1.5 active:scale-98"

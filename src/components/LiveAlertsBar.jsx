@@ -56,6 +56,9 @@ export default function LiveAlertsBar({ notifications = [] }) {
   const qual = getLocalized(currentItem.qualification);
   const summary = getLocalized(currentItem.summary);
   const detailSlug = currentItem.slug || currentItem.id;
+  const startD = getApplicationStartDate(currentItem);
+  const lastD = getApplicationLastDate(currentItem);
+  const applyHref = currentItem.applyUrl || currentItem.officialUrl || '';
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -101,10 +104,10 @@ export default function LiveAlertsBar({ notifications = [] }) {
               <span className="text-xs sm:text-sm text-white font-medium truncate group-hover:text-amber-200 transition-colors">
                 {title}
               </span>
-              {currentItem.deadline && (
+              {lastD && (
                 <span className="hidden md:inline-flex items-center gap-1 text-[11px] text-[#F2BE4F] font-bold shrink-0 ml-1">
                   <Clock className="w-3 h-3" />
-                  <span>Last Date: {currentItem.deadline}</span>
+                  <span>Last Date: {formatDisplayDate(lastD)}</span>
                 </span>
               )}
             </div>
@@ -199,9 +202,14 @@ export default function LiveAlertsBar({ notifications = [] }) {
               <div className="bg-white/5 p-3 rounded-xl border border-white/10">
                 <span className="text-slate-400 block font-semibold mb-0.5">Key Dates</span>
                 <div className="text-white font-medium space-y-0.5">
-                  <div>Published: {currentItem.publishedAt}</div>
-                  {currentItem.deadline && (
-                    <div className="text-[#F2BE4F] font-bold">Last Date: {currentItem.deadline}</div>
+                  {currentItem.publishedAt && (
+                    <div>Published: {formatDisplayDate(currentItem.publishedAt) || currentItem.publishedAt}</div>
+                  )}
+                  {startD && (
+                    <div>Start Date: {formatDisplayDate(startD)}</div>
+                  )}
+                  {lastD && (
+                    <div className="text-[#F2BE4F] font-bold">Last Date: {formatDisplayDate(lastD)}</div>
                   )}
                 </div>
               </div>
@@ -232,12 +240,10 @@ export default function LiveAlertsBar({ notifications = [] }) {
                   const isOpen = normSt === 'open' || normSt.includes('open');
                   const isUpcoming = normSt === 'upcoming' || normSt.includes('upcoming');
                   const isClosed = normSt === 'closed' || normSt.includes('closed');
-                  const startD = getApplicationStartDate(currentItem);
-
-                  if (isOpen && currentItem.applyUrl) {
+                  if (isOpen && applyHref) {
                     return (
                       <a
-                        href={currentItem.applyUrl}
+                        href={applyHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] rounded-xl text-xs font-bold transition-colors shadow-sm"

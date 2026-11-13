@@ -34,7 +34,7 @@ const MONTH_LOOKUP = {
   feb: '02', february: '02',
   mar: '03', march: '03',
   apr: '04', april: '04',
-  may: '05', may: '05',
+  may: '05',
   jun: '06', june: '06',
   jul: '07', july: '07',
   aug: '08', august: '08',
@@ -43,6 +43,16 @@ const MONTH_LOOKUP = {
   nov: '11', november: '11',
   dec: '12', december: '12'
 };
+
+function isValidCalendarDate(y, m, d) {
+  if (y < 1900 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31) return false;
+  const check = new Date(Date.UTC(y, m - 1, d));
+  return (
+    check.getUTCFullYear() === y &&
+    check.getUTCMonth() === m - 1 &&
+    check.getUTCDate() === d
+  );
+}
 
 /**
  * Format a Date object as `YYYY-MM-DD` in Indian Standard Time (Asia/Kolkata).
@@ -86,15 +96,28 @@ export function todayDateOnly(now = new Date()) {
 }
 
 /**
- * Normalizes any date value (string, Date, Firestore Timestamp) into a strict `YYYY-MM-DD`
- * string without any UTC timezone conversion shift.
+ * Normalizes any date value (string, Date, Firestore Timestamp, serialized Timestamp, epoch)
+ * into a strict `YYYY-MM-DD` string in Asia/Kolkata without UTC off-by-one shifts.
  */
 export function normalizeDateIST(value) {
-  if (!value) return '';
+  if (value === null || value === undefined || value === '') return '';
 
   // Firestore Timestamp with toDate()
   if (typeof value === 'object' && typeof value.toDate === 'function') {
     return formatDateIST(value.toDate());
+  }
+
+  // Serialized Firestore Timestamp ({ seconds, nanoseconds } or { _seconds, _nanoseconds })
+  if (typeof value === 'object' && !(value instanceof Date)) {
+    const secs =
+      typeof value.seconds === 'number'
+        ? value.seconds
+        : typeof value._seconds === 'number'
+          ? value._seconds
+          : null;
+    if (secs !== null && Number.isFinite(secs)) {
+      return formatDateIST(new Date(secs * 1000));
+    }
   }
 
   // Native Date instance
@@ -102,53 +125,71 @@ export function normalizeDateIST(value) {
     return formatDateIST(value);
   }
 
+  // Numeric epoch timestamp (ms or seconds)
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const ms = value < 1e12 ? value * 1000 : value;
+    return formatDateIST(new Date(ms));
+  }
+
   const raw = String(value).trim();
   if (!raw) return '';
 
-  // 1. Standard ISO format: YYYY-MM-DD (take calendar components directly to avoid timezone shift)
-  const ymdMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  // 0. Full ISO datetime with explicit timezone (Z or +/-HH:MM): convert exact instant into IST
+  if (/^\d{4}-\d{1,2}-\d{1,2}T.*(Z|[+-]\d{2}:?\d{2})$/i.test(raw)) {
+    const parsedIso = new Date(raw);
+    if (!Number.isNaN(parsedIso.getTime())) {
+      return formatDateIST(parsedIso);
+    }
+  }
+
+  // 1. Standard date format: YYYY-MM-DD (or YYYY/MM/DD, or YYYY-MM-DDTHH:mm:ss without timezone offset)
+  const ymdMatch = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:$|T|\s)/);
   if (ymdMatch) {
     const y = parseInt(ymdMatch[1], 10);
     const m = parseInt(ymdMatch[2], 10);
     const d = parseInt(ymdMatch[3], 10);
-    if (y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+    if (isValidCalendarDate(y, m, d)) {
       return `${ymdMatch[1]}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     }
+    return '';
   }
 
   // 2. Indian date format: DD-MM-YYYY or DD/MM/YYYY
-  const dmyMatch = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  const dmyMatch = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
   if (dmyMatch) {
     const d = parseInt(dmyMatch[1], 10);
     const m = parseInt(dmyMatch[2], 10);
     const y = parseInt(dmyMatch[3], 10);
-    if (y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+    if (isValidCalendarDate(y, m, d)) {
       return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     }
+    return '';
   }
 
   // 3. DD Month YYYY (e.g., 15 November 2026 or 15 Nov 2026)
-  const dMonthYMatch = raw.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+  const dMonthYMatch = raw.match(/^(\d{1,2})\s+([a-zA-Z]+),?\s+(\d{4})$/);
   if (dMonthYMatch) {
     const d = parseInt(dMonthYMatch[1], 10);
     const mKey = dMonthYMatch[2].toLowerCase();
-    const m = MONTH_LOOKUP[mKey];
+    const mStr = MONTH_LOOKUP[mKey];
     const y = parseInt(dMonthYMatch[3], 10);
-    if (m && y >= 1900 && y <= 2100 && d >= 1 && d <= 31) {
-      return `${y}-${m}-${String(d).padStart(2, '0')}`;
+    if (mStr && isValidCalendarDate(y, parseInt(mStr, 10), d)) {
+      return `${y}-${mStr}-${String(d).padStart(2, '0')}`;
     }
+    return '';
   }
 
   // 4. Month DD, YYYY (e.g., November 15, 2026 or Nov 15 2026)
-  const monthDYMatch = raw.match(/^([a-zA-Z]+)\s+(\d{1,2}),?\s+(\d{4})/);
+  const monthDYMatch = raw.match(/^([a-zA-Z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
   if (monthDYMatch) {
     const mKey = monthDYMatch[1].toLowerCase();
-    const m = MONTH_LOOKUP[mKey];
+    const mStr = MONTH_LOOKUP[mKey];
     const d = parseInt(monthDYMatch[2], 10);
     const y = parseInt(monthDYMatch[3], 10);
-    if (m && y >= 1900 && y <= 2100 && d >= 1 && d <= 31) {
-      return `${y}-${m}-${String(d).padStart(2, '0')}`;
+    if (mStr && isValidCalendarDate(y, parseInt(mStr, 10), d)) {
+      return `${y}-${mStr}-${String(d).padStart(2, '0')}`;
     }
+    return '';
   }
 
   // Fallback parser for standard Date strings
@@ -283,6 +324,11 @@ export function getEffectiveStatus(item, now = new Date()) {
     return calculateJobStatus(startDateRaw, lastDateRaw, now);
   }
 
+  // Preserve explicit Needs Verification when dates are missing/pending check
+  if (normalizedRaw.includes('verification')) {
+    return STATUS_NEEDS_VERIFICATION;
+  }
+
   // If either application start date or last date is missing, do NOT classify as OPEN:
   return STATUS_DATE_NOT_ANNOUNCED;
 }
@@ -330,6 +376,18 @@ export function isJobClosed(item, now = new Date()) {
   const status = typeof item === 'string' ? item : getEffectiveStatus(item, now);
   const s = String(status).trim().toLowerCase();
   return s === 'closed' || s === 'application closed';
+}
+
+export function isClosingSoon(item, withinDays = 7, now = new Date()) {
+  if (!item || typeof item !== 'object') return false;
+  if (!isJobOpen(item, now)) return false;
+  const last = normalizeDateIST(getApplicationLastDate(item));
+  const today = getTodayIST(now);
+  if (!last || !today || today > last) return false;
+  const [ty, tm, td] = today.split('-').map(Number);
+  const [ly, lm, ld] = last.split('-').map(Number);
+  const diffDays = (Date.UTC(ly, lm - 1, ld) - Date.UTC(ty, tm - 1, td)) / 86400000;
+  return diffDays >= 0 && diffDays <= withinDays;
 }
 
 /**

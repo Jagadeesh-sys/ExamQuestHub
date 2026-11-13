@@ -17,16 +17,17 @@ export default function Breadcrumbs({ items = [], className = '' }) {
         </li>
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
+          const target = item.to || item.path || item.href;
           return (
             <li key={index} className="flex items-center gap-1.5">
               <ChevronRight className="w-3 h-3 text-slate-400" />
-              {isLast || !item.to ? (
+              {isLast || !target ? (
                 <span className="font-semibold text-[#182B45] truncate max-w-[280px]">
                   {item.label}
                 </span>
               ) : (
                 <Link
-                  to={item.to}
+                  to={target}
                   className="hover:text-[#12345A] transition-colors truncate max-w-[200px]"
                 >
                   {item.label}

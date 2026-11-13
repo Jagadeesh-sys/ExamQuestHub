@@ -315,8 +315,7 @@ export default function TestSeriesPage() {
             <div className="h-4 w-[1px] bg-slate-200 hidden sm:block" />
             <Breadcrumbs
               items={[
-                { label: 'Home', href: '/' },
-                { label: 'Mock Tests Hub', href: '/mocks' },
+                { label: 'Mock Tests Hub', to: '/mocks' },
                 { label: seriesConfig.agency }
               ]}
             />

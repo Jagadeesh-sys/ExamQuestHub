@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Download,
   Share2,
+  Check,
   CheckCircle2,
   ArrowRight,
   Home
@@ -44,7 +45,12 @@ import {
   getEffectiveStatus,
   getApplicationStartDate,
   getApplicationLastDate,
-  formatDisplayDate
+  normalizeDateIST,
+  formatDisplayDate,
+  isJobOpen,
+  isJobUpcoming,
+  isJobClosed,
+  isClosingSoon
 } from '../utils/notificationStatus.js';
 import useAutoStatusRefresh from '../hooks/useAutoStatusRefresh.js';
 
@@ -59,6 +65,9 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isListening, setIsListening] = useState(false);
+  const [voiceHint, setVoiceHint] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
+  const searchInputRef = useRef(null);
 
   // Filters from URL or state
   const searchFilter = searchParams.get('search') || '';
@@ -102,14 +111,17 @@ export default function JobsPage() {
     setCurrentPage(1);
   };
 
-  // Voice Search affordance
+  // Voice Search affordance (non-blocking focus fallback when Web Speech API is unavailable)
   const handleVoiceSearch = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       try {
         const recognition = new SpeechRecognition();
         recognition.lang = 'en-IN';
-        recognition.onstart = () => setIsListening(true);
+        recognition.onstart = () => {
+          setIsListening(true);
+          setVoiceHint('');
+        };
         recognition.onend = () => setIsListening(false);
         recognition.onresult = (event) => {
           const transcript = event.results[0][0].transcript;
@@ -118,10 +130,14 @@ export default function JobsPage() {
         recognition.start();
       } catch (err) {
         console.warn('Speech recognition error:', err);
+        setVoiceHint('Voice search could not start — type keywords above.');
+        searchInputRef.current?.focus();
+        setTimeout(() => setVoiceHint(''), 3500);
       }
     } else {
-      const q = prompt('Search jobs by title or organization:');
-      if (q) updateParam('search', q);
+      setVoiceHint('Voice search is unavailable in this browser — type keywords above.');
+      searchInputRef.current?.focus();
+      setTimeout(() => setVoiceHint(''), 3500);
     }
   };
 
@@ -158,11 +174,12 @@ export default function JobsPage() {
     'OPEN',
     'UPCOMING',
     'CLOSED',
+    'DATE NOT ANNOUNCED',
     'Admit Card Released',
     'Result Released'
   ];
 
-  // Dynamic Metrics computed from updates dataset
+  // Dynamic Metrics computed from live updates dataset
   const stats = useMemo(() => {
     const pool = updates.length > 0 ? updates : INITIAL_UPDATES;
     let totalVacanciesNum = 0;
@@ -173,9 +190,7 @@ export default function JobsPage() {
       const orgStr = (typeof item.organization === 'string' ? item.organization : item.organization?.en || '').trim();
       if (orgStr) distinctOrgs.add(orgStr.toLowerCase());
 
-      const effectiveSt = getEffectiveStatus(item);
-      const st = (effectiveSt || item.status || '').toLowerCase();
-      if (st.includes('closing') || st.includes('soon')) {
+      if (isClosingSoon(item, 7)) {
         closingSoonCount++;
       }
 
@@ -187,15 +202,11 @@ export default function JobsPage() {
       }
     });
 
-    const displayVacancies = totalVacanciesNum > 0 ? totalVacanciesNum.toLocaleString() : '32,438';
-    const displayBoards = distinctOrgs.size > 0 ? Math.max(distinctOrgs.size, 25) : 25;
-    const displayClosingSoon = closingSoonCount > 0 ? closingSoonCount : 8;
-
     return {
-      totalNotifications: pool.length || 17,
-      totalVacanciesFormatted: displayVacancies,
-      totalBoards: displayBoards,
-      closingSoon: displayClosingSoon
+      totalNotifications: pool.length,
+      totalVacanciesFormatted: totalVacanciesNum > 0 ? totalVacanciesNum.toLocaleString() : '0',
+      totalBoards: distinctOrgs.size,
+      closingSoon: closingSoonCount
     };
   }, [updates]);
 
@@ -233,33 +244,35 @@ export default function JobsPage() {
       let matchStatus = true;
       if (statusFilter !== 'All') {
         const effectiveSt = getEffectiveStatus(item);
-        const itemStatus = (effectiveSt || item.status || '').toLowerCase();
-        const targetStatus = statusFilter.toLowerCase();
-        if (targetStatus === 'open') {
-          matchStatus = itemStatus === 'open' || itemStatus === 'application open' || itemStatus === 'applications open' || itemStatus.includes('open');
+        const itemStatus = (effectiveSt || '').toLowerCase();
+        const targetStatus = statusFilter.toLowerCase().trim();
+        if (targetStatus === 'open' || targetStatus === 'application open') {
+          matchStatus = isJobOpen(item);
         } else if (targetStatus === 'upcoming') {
-          matchStatus = itemStatus === 'upcoming' || itemStatus.includes('upcoming');
-        } else if (targetStatus === 'closed') {
-          matchStatus = itemStatus === 'closed' || itemStatus === 'application closed' || itemStatus.includes('closed');
+          matchStatus = isJobUpcoming(item);
+        } else if (targetStatus === 'closed' || targetStatus === 'application closed') {
+          matchStatus = isJobClosed(item);
         } else {
-          matchStatus = itemStatus.includes(targetStatus);
+          matchStatus = itemStatus === targetStatus || itemStatus.includes(targetStatus);
         }
       }
 
       return matchSearch && matchCat && matchReg && matchBoard && matchStatus;
     }).sort((a, b) => {
       if (sortBy === 'deadline') {
-        if (!a.deadline) return 1;
-        if (!b.deadline) return -1;
-        return a.deadline.localeCompare(b.deadline);
+        const lastA = normalizeDateIST(getApplicationLastDate(a));
+        const lastB = normalizeDateIST(getApplicationLastDate(b));
+        if (!lastA) return 1;
+        if (!lastB) return -1;
+        return lastA.localeCompare(lastB);
       }
       if (sortBy === 'vacancies') {
         const vA = parseInt(String(a.vacancies || '').replace(/\D/g, '') || '0', 10);
         const vB = parseInt(String(b.vacancies || '').replace(/\D/g, '') || '0', 10);
         return vB - vA;
       }
-      const dateA = a.publishedAt || '';
-      const dateB = b.publishedAt || '';
+      const dateA = normalizeDateIST(a.publishedAt) || a.publishedAt || '';
+      const dateB = normalizeDateIST(b.publishedAt) || b.publishedAt || '';
       if (dateA !== dateB) {
         return dateB.localeCompare(dateA);
       }
@@ -417,23 +430,29 @@ export default function JobsPage() {
           </div>
 
           {/* Search Bar with Mic Icon - Standalone Floating Input */}
-          <div className="relative shadow-xs rounded-xl sm:rounded-2xl">
-            <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchFilter}
-              onChange={(e) => updateParam('search', e.target.value)}
-              placeholder="Search by job title, organization or keyword..."
-              className="w-full pl-10 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl focus:outline-hidden focus:border-[#2468B4] focus:ring-2 focus:ring-[#2468B4]/10 text-slate-800 placeholder:text-slate-400 shadow-2xs transition-all"
-            />
-            <button
-              type="button"
-              onClick={handleVoiceSearch}
-              title="Voice search"
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#12345A] p-1 cursor-pointer transition-colors"
-            >
-              <Mic className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${isListening ? 'text-red-500 animate-pulse' : ''}`} />
-            </button>
+          <div className="space-y-1">
+            <div className="relative shadow-xs rounded-xl sm:rounded-2xl">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchFilter}
+                onChange={(e) => updateParam('search', e.target.value)}
+                placeholder="Search by job title, organization or keyword..."
+                className="w-full pl-10 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl focus:outline-hidden focus:border-[#2468B4] focus:ring-2 focus:ring-[#2468B4]/10 text-slate-800 placeholder:text-slate-400 shadow-2xs transition-all"
+              />
+              <button
+                type="button"
+                onClick={handleVoiceSearch}
+                title="Voice search"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#12345A] p-1 cursor-pointer transition-colors"
+              >
+                <Mic className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${isListening ? 'text-red-500 animate-pulse' : ''}`} />
+              </button>
+            </div>
+            {voiceHint && (
+              <p className="text-[11px] text-slate-500 px-1 font-medium">{voiceHint}</p>
+            )}
           </div>
 
           {/* 4 Dropdown Selectors (2x2 grid on mobile, 4 cols on desktop) */}
@@ -721,7 +740,7 @@ export default function JobsPage() {
                                 <span>
                                   {startDate ? `Start: ${formatDisplayDate(startDate)}` : ''}
                                   {startDate && lastDate ? ' • ' : ''}
-                                  {lastDate ? `Last Date: ${formatDisplayDate(lastDate)}` : (item.publishedAt || 'See Notice')}
+                                  {lastDate ? `Last Date: ${formatDisplayDate(lastDate)}` : (item.publishedAt ? `Published: ${formatDisplayDate(item.publishedAt)}` : 'See Notice')}
                                 </span>
                               </span>
                             </div>
@@ -819,9 +838,9 @@ export default function JobsPage() {
                                 </a>
                               )}
 
-                              {isOpen && item.applyUrl ? (
+                              {isOpen && (item.applyUrl || item.officialUrl) ? (
                                 <a
-                                  href={item.applyUrl}
+                                  href={item.applyUrl || item.officialUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] rounded-lg text-xs font-black transition-colors shadow-xs"
@@ -842,21 +861,33 @@ export default function JobsPage() {
                               <button
                                 type="button"
                                 onClick={() => {
+                                  const shareUrl = window.location.origin + `/jobs/${detailSlug}`;
                                   if (navigator.share) {
                                     navigator.share({
                                       title,
-                                      url: window.location.origin + `/jobs/${detailSlug}`
+                                      url: shareUrl
                                     }).catch(() => {});
-                                  } else {
-                                    navigator.clipboard.writeText(window.location.origin + `/jobs/${detailSlug}`);
-                                    alert('Link copied to clipboard!');
+                                  } else if (navigator.clipboard?.writeText) {
+                                    navigator.clipboard.writeText(shareUrl).then(() => {
+                                      setCopiedId(item.id);
+                                      setTimeout(() => setCopiedId((cur) => (cur === item.id ? null : cur)), 2000);
+                                    }).catch(() => {});
                                   }
                                 }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold border border-slate-200"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold border border-slate-200 cursor-pointer"
                                 title="Share"
                               >
-                                <Share2 className="w-3.5 h-3.5" />
-                                <span>Share</span>
+                                {copiedId === item.id ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span className="text-emerald-700">Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Share2 className="w-3.5 h-3.5" />
+                                    <span>Share</span>
+                                  </>
+                                )}
                               </button>
                             </div>
 

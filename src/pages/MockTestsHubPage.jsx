@@ -811,7 +811,6 @@ export default function MockTestsHubPage() {
         <div className="flex items-center justify-between gap-3 text-slate-200">
           <Breadcrumbs
             items={[
-              { label: t('navHome') || 'Home', path: '/' },
               { label: 'Mock Tests' }
             ]}
           />

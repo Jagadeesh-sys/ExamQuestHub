@@ -72,6 +72,7 @@ export default function StraightLineNotification({
   const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
   const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
   const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
+  const applyHref = item.applyUrl || item.officialUrl || '';
 
   // Navy theme (matches the user's screenshot straight-line banner)
   if (theme === 'navy') {
@@ -176,9 +177,9 @@ export default function StraightLineNotification({
                     <span>Download Official PDF</span>
                   </a>
                 )}
-                {isOpen && item.applyUrl ? (
+                {isOpen && applyHref ? (
                   <a
-                    href={item.applyUrl}
+                    href={applyHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] rounded-lg text-xs font-bold transition-colors shadow-sm"
@@ -275,7 +276,7 @@ export default function StraightLineNotification({
             </span>
           ) : (
             <span className="hidden lg:inline text-[11px] text-slate-400 shrink-0">
-              {item.publishedAt}
+              {formatDisplayDate(item.publishedAt) || item.publishedAt || 'See Notice'}
             </span>
           )}
         </div>
@@ -416,9 +417,9 @@ export default function StraightLineNotification({
                 </a>
               )}
 
-              {isOpen && item.applyUrl ? (
+              {isOpen && applyHref ? (
                 <a
-                  href={item.applyUrl}
+                  href={applyHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#12345A] hover:bg-[#0B1F3A] text-white rounded-xl text-xs font-bold transition-colors shadow-xs active:scale-95"

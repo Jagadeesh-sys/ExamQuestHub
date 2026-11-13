@@ -25,7 +25,8 @@ import {
   normalizeDateIST,
   getApplicationStartDate,
   getApplicationLastDate,
-  calculateJobStatus
+  calculateJobStatus,
+  formatDateIST
 } from '../utils/notificationStatus.js';
 import { getDefaultImageForTopic as defaultImageForTopic, DEFAULT_TOPIC_IMAGES } from './topicImages.js';
 import { loadAllRRBQuestions, getVerifiedMockStats } from '../services/rrbMockService.js';
@@ -382,7 +383,7 @@ export async function saveUpdate(item) {
   const id = safeId(item.id || `notif-${Date.now()}`, 'notif');
   const rawSlug = item.slug || (typeof item.title === 'string' ? item.title : item.title?.en || id);
   const slug = safeId(rawSlug, id);
-  const publishedAt = item.publishedAt || nowIso.split('T')[0];
+  const publishedAt = item.publishedAt || formatDateIST(new Date());
 
   const { [AUTO_CLOSED_FLAG]: _unused, ...fields } = item;
 
@@ -425,18 +426,22 @@ export async function saveUpdate(item) {
   notifyUpdatesSubscribers(list);
 
   // 3. Attempt Firestore persist if configured
+  let firestoreSynced = false;
+  let syncError = null;
   if (isFirebaseConfigured && db) {
     try {
       await setDoc(doc(db, 'updates', id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });
       markSyncSuccess();
+      firestoreSynced = true;
     } catch (err) {
       const msg = recordError('firestoreService.saveUpdate', err);
       markSyncFailure(err);
+      syncError = msg;
       console.warn('Firestore write warning (saved locally to this browser):', msg);
     }
   }
 
-  return payload;
+  return { ...payload, _firestoreSynced: firestoreSynced, _syncError: syncError };
 }
 
 export async function deleteUpdate(id) {
@@ -451,6 +456,7 @@ export async function deleteUpdate(id) {
       markSyncSuccess();
     } catch (err) {
       recordError('firestoreService.deleteUpdate', err);
+      markSyncFailure(err);
     }
   }
   return true;
@@ -468,6 +474,7 @@ export async function deleteAllUpdates() {
       markSyncSuccess();
     } catch (err) {
       recordError('firestoreService.deleteAllUpdates', err);
+      markSyncFailure(err);
       console.warn('Firestore deleteAllUpdates warning:', err);
     }
   }

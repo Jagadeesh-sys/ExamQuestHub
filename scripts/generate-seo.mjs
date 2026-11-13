@@ -161,7 +161,7 @@ function renderJobBody(job) {
     renderValueRow('Region', job.region),
     renderValueRow('Notification Number', job.notificationNo),
     renderValueRow('Published On', job.publishedAt),
-    renderValueRow('Last Date to Apply', job.deadline),
+    renderValueRow('Last Date to Apply', job.applicationLastDate || job.deadline),
     renderValueRow('Exam Date', job.examDate),
     renderValueRow('Total Vacancies', job.vacancies),
     renderValueRow('Status', getEffectiveStatus(job))

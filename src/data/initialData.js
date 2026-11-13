@@ -180,6 +180,58 @@ export const ARCHIVED_DEMO_UPDATES = [
     isDemoRecord: true
   },
   {
+    id: 'ap-dsc-teacher-recruitment-2026',
+    slug: 'ap-dsc-teacher-recruitment-2026',
+    type: 'job',
+    title: {
+      en: 'AP DSC Teacher Recruitment 2026 — 16,347 Posts',
+      te: 'ఏపీ డీఎస్సీ టీచర్ రిక్రూట్‌మెంట్ 2026 — 16,347 పోస్టులు'
+    },
+    organization: {
+      en: 'Department of School Education, Government of Andhra Pradesh',
+      te: 'పాఠశాల విద్యాశాఖ, ఆంధ్రప్రదేశ్ ప్రభుత్వం'
+    },
+    category: 'Teaching',
+    region: 'Andhra Pradesh',
+    notificationNo: 'AP-DSC/TRT-2026',
+    publishedAt: '2026-11-07',
+    startDate: '2026-11-11',
+    openingDate: '2026-11-11',
+    deadline: '2026-11-30',
+    examDate: 'December 2026',
+    vacancies: '16347',
+    qualification: {
+      en: 'D.Ed / B.Ed / Language Pandit and qualified in APTET / CTET in relevant papers.',
+      te: 'సంబంధిత విభాగంలో డీఎడ్ / బీఎడ్ మరియు ఏపీటెట్ / సీటెట్ ఉత్తీర్ణత.'
+    },
+    ageLimit: {
+      en: '18 to 44 years as on 1st July 2026 (Age relaxations for SC/ST/BC/EWS/PwD as per AP state rules).',
+      te: '1 జూలై 2026 నాటికి 18 నుండి 44 సంవత్సరాలు (నిబంధనల ప్రకారం వయోపరిమితి సడలింపు).'
+    },
+    applicationFee: {
+      en: '₹750 per paper / post applied.',
+      te: 'ఒక్కో పేపరు / పోస్టుకు ₹750.'
+    },
+    selectionProcess: {
+      en: 'Computer Based Test (TRT) with 80% weightage + 20% weightage for APTET/CTET score.',
+      te: 'కంప్యూటర్ ఆధారిత పరీక్ష (TRT - 80% వెయిటేజ్) + ఏపీటెట్ స్కోరు (20% వెయిటేజ్).'
+    },
+    summary: {
+      en: 'Government of Andhra Pradesh Department of School Education invites online applications for 16,347 Teacher posts (SGT, School Assistant, TGT, PGT, and Principals). Online applications are scheduled from 11 November to 30 November 2026.',
+      te: 'ఆంధ్రప్రదేశ్ పాఠశాల విద్యాశాఖ ద్వారా 16,347 ఉపాధ్యాయ (SGT, స్కూల్ అసిస్టెంట్, TGT, PGT) పోస్టుల భర్తీకి దరఖాస్తులు ఆహ్వానిస్తున్నారు. ఆన్‌లైన్ దరఖాస్తులు 11 నవంబర్ నుండి 30 నవంబర్ 2026 వరకు స్వీకరించబడతాయి.'
+    },
+    description: {
+      en: 'The Andhra Pradesh Mega DSC 2026 teacher recruitment is conducting Teacher Recruitment Tests (TRT) for Secondary Grade Teachers (SGT), School Assistants (SA), Trained Graduate Teachers (TGT), Post Graduate Teachers (PGT), and Principals across all districts of Andhra Pradesh. Online applications are open from 11 November to 30 November 2026.',
+      te: 'ఆంధ్రప్రదేశ్ మెగా డీఎస్సీ 2026 ద్వారా రాష్ట్రంలోని అన్ని జిల్లాల్లో ఎస్జీటీ, స్కూల్ అసిస్టెంట్, టీజీటీ, పీజీటీ ఉపాధ్యాయుల నియామకానికి దరఖాస్తులు స్వీకరించబడుతున్నాయి.'
+    },
+    officialUrl: 'https://apdsc.apcfss.in/',
+    pdfUrl: 'https://apdsc.apcfss.in/',
+    applyUrl: 'https://apdsc.apcfss.in/',
+    status: 'Open',
+    verifiedAt: '2026-11-07T10:00:00Z',
+    featured: true
+  },
+  {
     id: 'ssc-cgl-2025',
     slug: 'ssc-cgl-2025',
     type: 'job',

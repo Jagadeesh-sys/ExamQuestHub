@@ -44,7 +44,9 @@ export default function AdminDiagnosticsTab({ currentUser, lastSyncTime, onRefre
     const unsub = subscribeToErrorLogs((_, allLogs) => {
       setLogs([...allLogs]);
     });
-    return unsub;
+    return () => {
+      unsub();
+    };
   }, []);
 
   // Run initial diagnostic check upon tab load

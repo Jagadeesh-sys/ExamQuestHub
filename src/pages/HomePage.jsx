@@ -54,6 +54,8 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [isListening, setIsListening] = useState(false);
+  const [voiceHint, setVoiceHint] = useState('');
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     getDirectFirestoreMockStats().then((data) => {
@@ -181,7 +183,10 @@ export default function HomePage() {
       try {
         const recognition = new SpeechRecognition();
         recognition.lang = 'en-IN';
-        recognition.onstart = () => setIsListening(true);
+        recognition.onstart = () => {
+          setIsListening(true);
+          setVoiceHint('');
+        };
         recognition.onend = () => setIsListening(false);
         recognition.onresult = (event) => {
           const transcript = event.results[0][0].transcript;
@@ -191,12 +196,14 @@ export default function HomePage() {
         recognition.start();
       } catch (err) {
         console.warn('Speech recognition error:', err);
+        setVoiceHint('Voice search could not start — type keywords above.');
+        searchInputRef.current?.focus();
+        setTimeout(() => setVoiceHint(''), 3500);
       }
     } else {
-      const q = prompt('What exam or job are you looking for?');
-      if (q) {
-        navigate(`/jobs?search=${encodeURIComponent(q)}`);
-      }
+      setVoiceHint('Voice search is unavailable in this browser — type keywords above.');
+      searchInputRef.current?.focus();
+      setTimeout(() => setVoiceHint(''), 3500);
     }
   };
 
@@ -424,10 +431,11 @@ export default function HomePage() {
         </section>
 
         {/* 2. FLOATING SEARCH BAR - Compact proportions matching mobile reference design */}
-        <div className="relative w-full">
+        <div className="relative w-full space-y-1">
           <form onSubmit={handleSearchSubmit} className="relative flex items-center">
             <Search className="w-4 h-4 absolute left-3.5 text-slate-400 pointer-events-none" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -448,6 +456,9 @@ export default function HomePage() {
               <Mic className="w-3.5 h-3.5" />
             </button>
           </form>
+          {voiceHint && (
+            <p className="text-[11px] text-slate-500 px-3 font-medium">{voiceHint}</p>
+          )}
         </div>
 
         {/* 3. 10 QUICK ACCESS ACTION TILES (2 rows x 5 columns) */}
@@ -538,7 +549,7 @@ export default function HomePage() {
               const orgName = getLocalized(item.organization) || item.organization || 'Govt Department';
               const jobTitle = getLocalized(item.title) || item.title || 'Recruitment Notification';
               const rawLastDate = getApplicationLastDate(item);
-              const displayLastDate = rawLastDate ? formatDisplayDate(rawLastDate) : (item.deadline || 'Ongoing');
+              const displayLastDate = rawLastDate ? formatDisplayDate(rawLastDate) : 'See Notice';
 
               return (
                 <Link

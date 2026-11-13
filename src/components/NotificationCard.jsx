@@ -36,6 +36,7 @@ export default function NotificationCard({ item }) {
   const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
   const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
   const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
+  const applyHref = item.applyUrl || item.officialUrl || '';
 
   return (
     <article className="bg-white rounded-2xl border border-[#E3EAF2] hover:border-[#2468B4]/40 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
@@ -92,7 +93,7 @@ export default function NotificationCard({ item }) {
         <div className="flex items-center gap-1.5 truncate">
           <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="truncate">
-            {startDate ? `Start: ${formatDisplayDate(startDate)}` : (item.publishedAt || 'See Notice')}
+            {startDate ? `Start: ${formatDisplayDate(startDate)}` : (formatDisplayDate(item.publishedAt) || item.publishedAt || 'See Notice')}
           </span>
         </div>
 
@@ -133,9 +134,9 @@ export default function NotificationCard({ item }) {
           )}
 
           {/* Dynamic Apply button behavior */}
-          {isOpen && item.applyUrl ? (
+          {isOpen && applyHref ? (
             <a
-              href={item.applyUrl}
+              href={applyHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-3.5 py-2 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold rounded-xl transition-colors shadow-xs active:scale-95"

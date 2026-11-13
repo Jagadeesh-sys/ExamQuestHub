@@ -77,7 +77,6 @@ export default function CurrentAffairsPage() {
       <div className="hidden sm:flex items-center justify-between">
         <Breadcrumbs
           items={[
-            { label: t('navHome') || 'Home', path: '/' },
             { label: t('navCurrentAffairs') || 'Current Affairs' }
           ]}
         />

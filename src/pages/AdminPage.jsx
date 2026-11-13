@@ -185,10 +185,14 @@ export default function AdminPage() {
       if (type === 'update') {
         const isCurrentlyDraft = item.status === 'Draft' || item.isDraft;
         const newStatus = isCurrentlyDraft
-          ? calculateJobStatus(item.applicationStartDate || item.openingDate, item.applicationLastDate || item.deadline)
+          ? calculateJobStatus(getApplicationStartDate(item), getApplicationLastDate(item))
           : 'Draft';
-        await saveUpdate({ ...item, status: newStatus, isDraft: !isCurrentlyDraft });
-        triggerToast(`Notification marked as ${isCurrentlyDraft ? newStatus : 'Draft'}`);
+        const saved = await saveUpdate({ ...item, status: newStatus, isDraft: !isCurrentlyDraft });
+        triggerToast(
+          saved._firestoreSynced === false
+            ? `Notification marked as ${isCurrentlyDraft ? newStatus : 'Draft'} (saved locally — Firestore sync pending)`
+            : `Notification marked as ${isCurrentlyDraft ? newStatus : 'Draft'}`
+        );
       } else if (type === 'ca') {
         const newStatus = item.status === 'Draft' ? 'Published' : 'Draft';
         await saveCurrentAffair({ ...item, status: newStatus });
@@ -340,7 +344,8 @@ export default function AdminPage() {
           title: enTitle,
           status: saved.status,
           applicationStartDate: saved.applicationStartDate,
-          applicationLastDate: saved.applicationLastDate
+          applicationLastDate: saved.applicationLastDate,
+          firestoreSynced: saved._firestoreSynced
         });
       } catch (err) {
         errors.push(`${label} — ${err.message}`);
@@ -352,7 +357,12 @@ export default function AdminPage() {
 
     if (ok > 0) {
       await loadAllAdminData();
-      triggerToast(`Imported ${ok} notification${ok === 1 ? '' : 's'} with auto-calculated application status`);
+      const anyLocalOnly = savedItems.some((entry) => entry.firestoreSynced === false);
+      triggerToast(
+        anyLocalOnly
+          ? `Imported ${ok} notification${ok === 1 ? '' : 's'} locally (some failed Firestore sync)`
+          : `Imported ${ok} notification${ok === 1 ? '' : 's'} with auto-calculated application status`
+      );
     }
   };
 
@@ -2049,10 +2059,14 @@ export default function AdminPage() {
                       status: autoStatus
                     };
 
-                    await saveUpdate(payloadToSave);
+                    const saved = await saveUpdate(payloadToSave);
                     await loadAllAdminData();
                     setIsFormOpen(false);
-                    triggerToast('Notification saved and permanently synced to Firestore database.');
+                    triggerToast(
+                      saved._firestoreSynced === false
+                        ? 'Notification saved locally (Firestore sync failed — check connection/permissions).'
+                        : 'Notification saved and permanently synced to Firestore database.'
+                    );
                   } catch (err) {
                     setFormError(err.message || 'Failed to save to Firestore.');
                   } finally {
@@ -2168,7 +2182,7 @@ export default function AdminPage() {
                       <input
                         type="date"
                         required
-                        value={editingItem.publishedAt || ''}
+                        value={normalizeDateIST(editingItem.publishedAt) || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, publishedAt: e.target.value })}
                         className="w-full p-2 bg-white border border-slate-300 rounded-lg focus:border-[#2468B4]"
                       />
@@ -2183,7 +2197,7 @@ export default function AdminPage() {
                       <input
                         type="date"
                         required
-                        value={editingItem.applicationStartDate || editingItem.openingDate || ''}
+                        value={normalizeDateIST(editingItem.applicationStartDate || editingItem.openingDate) || ''}
                         onChange={(e) =>
                           setEditingItem({
                             ...editingItem,
@@ -2204,7 +2218,7 @@ export default function AdminPage() {
                       <input
                         type="date"
                         required
-                        value={editingItem.applicationLastDate || editingItem.deadline || ''}
+                        value={normalizeDateIST(editingItem.applicationLastDate || editingItem.deadline) || ''}
                         onChange={(e) =>
                           setEditingItem({
                             ...editingItem,
@@ -2250,7 +2264,7 @@ export default function AdminPage() {
                       </label>
                       <input
                         type="date"
-                        value={editingItem.admitCardDate || ''}
+                        value={normalizeDateIST(editingItem.admitCardDate) || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, admitCardDate: e.target.value })}
                         className="w-full p-2 bg-white border border-slate-300 rounded-lg focus:border-[#2468B4]"
                       />
@@ -2264,7 +2278,7 @@ export default function AdminPage() {
                       </label>
                       <input
                         type="date"
-                        value={editingItem.resultDate || ''}
+                        value={normalizeDateIST(editingItem.resultDate) || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, resultDate: e.target.value })}
                         className="w-full p-2 bg-white border border-slate-300 rounded-lg focus:border-[#2468B4]"
                       />

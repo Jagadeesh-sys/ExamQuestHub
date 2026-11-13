@@ -164,6 +164,9 @@ export function buildJobPostingSchema(job, url, siteUrl) {
     };
   }
 
+  const validThrough = toIsoDate(job.applicationLastDate || job.deadline);
+  const openings = Number(String(job.vacancies || '').replace(/[^\d]/g, ''));
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
@@ -189,14 +192,10 @@ export function buildJobPostingSchema(job, url, siteUrl) {
       '@type': 'PropertyValue',
       name: organization,
       value: job.notificationNo || job.slug || job.id || url
-    }
+    },
+    ...(validThrough ? { validThrough } : {}),
+    ...(Number.isFinite(openings) && openings > 0 ? { totalJobOpenings: openings } : {})
   };
-
-  const validThrough = toIsoDate(job.deadline);
-  if (validThrough) schema.validThrough = validThrough;
-
-  const openings = Number(String(job.vacancies || '').replace(/[^\d]/g, ''));
-  if (Number.isFinite(openings) && openings > 0) schema.totalJobOpenings = openings;
 
   return schema;
 }

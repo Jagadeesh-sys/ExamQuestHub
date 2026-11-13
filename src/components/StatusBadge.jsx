@@ -9,7 +9,7 @@ import React from 'react';
  *   - DATE NOT AVAILABLE / NEEDS VERIFICATION: Amber / slate badge
  *   - DRAFT / ADMIT CARD / RESULT: Domain specific badges
  */
-export default function StatusBadge({ status, subtext, className = '' }) {
+export default function StatusBadge({ status, subtext, size = 'sm', className = '' }) {
   if (!status) return null;
 
   const normalized = String(status).trim().toLowerCase();
@@ -36,12 +36,15 @@ export default function StatusBadge({ status, subtext, className = '' }) {
     colorClasses = 'bg-slate-100 text-slate-600 border-slate-300 font-bold';
     dotColor = 'bg-slate-500';
     label = 'Application Closed';
+  } else if (normalized.includes('verification') || normalized.includes('needs verification')) {
+    colorClasses = 'bg-amber-50 text-amber-800 border-amber-300 font-semibold';
+    dotColor = 'bg-amber-600';
+    label = 'Needs Verification';
   } else if (
     normalized.includes('date not announced') ||
     normalized.includes('date not available') ||
     normalized.includes('dates not announced') ||
-    normalized.includes('verification') ||
-    normalized.includes('needs verification')
+    normalized.includes('pending')
   ) {
     colorClasses = 'bg-slate-100 text-slate-600 border-slate-200 font-medium';
     dotColor = 'bg-slate-400';
@@ -68,9 +71,13 @@ export default function StatusBadge({ status, subtext, className = '' }) {
     label = 'NEW';
   }
 
+  const sizeClasses = size === 'xs'
+    ? 'px-2 py-0.5 text-[10px]'
+    : 'px-2.5 py-0.5 text-[10px] sm:text-xs';
+
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs border tracking-wide transition-colors shrink-0 ${colorClasses} ${className}`}
+      className={`inline-flex items-center rounded-full border tracking-wide transition-colors shrink-0 ${sizeClasses} ${colorClasses} ${className}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full mr-1.5 opacity-90 shrink-0 ${dotColor}`} />
       <span>{label}</span>
