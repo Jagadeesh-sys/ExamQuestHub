@@ -184,7 +184,7 @@ export function classifyComputerTopic(question) {
   return 'Computer Fundamentals & Awareness';
 }
 
-const STORAGE_KEY_CACHED_SHIFTS = 'eqh_cached_cbt_shifts_v5';
+const STORAGE_KEY_CACHED_SHIFTS = 'eqh_cached_cbt_shifts_v6';
 
 let cachedQuestions = null;
 let cachedShifts = null;
@@ -196,7 +196,7 @@ function getInitialShifts() {
     const raw = localStorage.getItem(STORAGE_KEY_CACHED_SHIFTS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length >= 212) {
+      if (Array.isArray(parsed) && parsed.length >= 213) {
         cachedShifts = parsed;
         return cachedShifts;
       }
@@ -214,8 +214,8 @@ function getInitialShifts() {
  * - RRB NTPC Graduate 2024 papers (47 shifts, 4,700 Qs · CEN 06/2024)
  * - SSC CGL 2020 & 2026 Tier-I papers (35 shifts, 3,600 Qs)
  * - RRB Group D 2025 Level-1 papers (48 shifts, 4,800 Qs · CEN 09/2025)
- * - APPSC Group-2 Paper-2 (2025) Official Bilingual Paper (1 shift, 150 Qs)
- * Total: 24,071+ official examination questions across 212 CBT shifts!
+ * - APPSC Group-2 Paper-1 & Paper-2 (2025) Official Bilingual Papers (2 shifts, 300 Qs)
+ * Total: 24,221+ official examination questions across 213 CBT shifts!
  */
 const RRB_DATA_FILES = [
   'rrbNtpcUg2024Full.json',
@@ -224,6 +224,7 @@ const RRB_DATA_FILES = [
   'sscCgl2020Full.json',
   'sscCgl2026Full.json',
   'rrbGroupD2025Full.json',
+  'appscGroup2Paper12025Full.json',
   'appscGroup2Paper22025Full.json'
 ];
 
@@ -549,7 +550,7 @@ export function deleteLocalQuestionOverride(questionId) {
 }
 
 export async function loadAllShifts() {
-  if (cachedShifts && cachedShifts.length >= 212) return getAllShifts();
+  if (cachedShifts && cachedShifts.length >= 213) return getAllShifts();
   await loadAllRRBQuestions();
   return getAllShifts();
 }
@@ -808,6 +809,13 @@ function getFallbackPaperInfo(q) {
   const examYear = String(q?.examYear || '');
 
   if (examType.includes('appsc') || id.includes('appsc')) {
+    const isPaper1 = q?.paperNumber === 1 || id.includes('-p1-') || id.includes('paper1') || examName.includes('paper-1');
+    if (isPaper1) {
+      return {
+        paperUrl: '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-1-2025_copy_0f4dabbf.pdf',
+        paperFileName: 'Group-2-_-Prelims-Exam-Question-Paper-1-2025.pdf'
+      };
+    }
     return {
       paperUrl: '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-2-2025_copy_f6e37955.pdf',
       paperFileName: 'Group-2-_-Prelims-Exam-Question-Paper-2-2025.pdf'
@@ -920,10 +928,10 @@ export async function getQuestionsByIds(ids) {
 export async function getVerifiedMockStats() {
   if (typeof window !== 'undefined') {
     try {
-      const cached = window.localStorage?.getItem('eqh_db_mock_stats_v5');
+      const cached = window.localStorage?.getItem('eqh_db_mock_stats_v6');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions >= 24000) {
+        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions >= 24200) {
           return parsed;
         }
       }
@@ -933,7 +941,7 @@ export async function getVerifiedMockStats() {
   }
 
   const all = await loadAllRRBQuestions();
-  const totalCount = all.length > 0 ? all.length : 24071;
+  const totalCount = all.length > 0 ? all.length : 24221;
   const subjectCounts = all.length > 0
     ? {
         'all': totalCount,
@@ -946,8 +954,8 @@ export async function getVerifiedMockStats() {
         'current-affairs': 0
       }
     : {
-        'all': 24071,
-        'general-knowledge': 7503,
+        'all': 24221,
+        'general-knowledge': 7653,
         'quantitative-aptitude': 5610,
         'reasoning': 5580,
         'general-science': 2295,
@@ -971,8 +979,8 @@ export async function getVerifiedMockStats() {
 
   const statsSnapshot = {
     totalQuestions: totalCount,
-    totalShifts: Math.max(getAllShifts().length, 212),
-    totalMockTests: 429,
+    totalShifts: Math.max(getAllShifts().length, 213),
+    totalMockTests: 430,
     totalSubtopics: 65,
     verifiedQuestions: totalCount,
     subjectCounts,
@@ -981,7 +989,7 @@ export async function getVerifiedMockStats() {
 
   if (typeof window !== 'undefined' && all.length > 0) {
     try {
-      window.localStorage?.setItem('eqh_db_mock_stats_v5', JSON.stringify(statsSnapshot));
+      window.localStorage?.setItem('eqh_db_mock_stats_v6', JSON.stringify(statsSnapshot));
     } catch {
       // ignore storage write failure
     }
@@ -1023,9 +1031,15 @@ export async function getQuestionsForShift(shiftNumberOrId, subject = null) {
     if (m) shiftNum = parseInt(m[1], 10);
   }
 
+  const requestedStr = typeof shiftNumberOrId === 'string' ? shiftNumberOrId.toLowerCase() : '';
   const shiftFiltered = all.filter((q) => {
     if (isAppsc) {
       if (q.examType !== 'APPSC Group II' && !String(q.id).includes('appsc')) return false;
+      const isP1Req = requestedStr.includes('paper1') || requestedStr.includes('paper-1') || requestedStr.includes('-p1');
+      const isP2Req = requestedStr.includes('paper2') || requestedStr.includes('paper-2') || requestedStr.includes('-p2');
+      const isQPaper1 = q.paperNumber === 1 || String(q.id).includes('-p1-') || String(q.examName || '').includes('Paper-1');
+      if (isP1Req) return isQPaper1;
+      if (isP2Req) return !isQPaper1;
     } else if (isGroupD) {
       if (q.examType !== 'RRB Group D' && !String(q.id).includes('rrb-group-d')) return false;
     } else if (isGrad2026) {
@@ -1812,10 +1826,19 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
   const isGrad2024 = !isAppsc && !isGroupD && (shift?.examLevel === 'Graduate' || String(shift?.id || '').includes('grad')) && !isGrad2026;
   const isSsc = !isAppsc && !isGroupD && (shift?.examType === 'SSC CGL' || String(shift?.id || '').includes('ssc'));
 
+  const isAppscPaper1 = isAppsc && (
+    shift?.paperNumber === 1 ||
+    String(shift?.id || '').toLowerCase().includes('paper1') ||
+    String(testId || '').toLowerCase().includes('paper1')
+  );
+
   let defaultPdfUrl = '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf';
   let defaultPdfFileName = 'RRB-NTPC-UG-2025-EN-All-Papers.pdf';
 
-  if (isAppsc) {
+  if (isAppscPaper1) {
+    defaultPdfUrl = '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-1-2025_copy_0f4dabbf.pdf';
+    defaultPdfFileName = 'Group-2-_-Prelims-Exam-Question-Paper-1-2025.pdf';
+  } else if (isAppsc) {
     defaultPdfUrl = '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-2-2025_copy_f6e37955.pdf';
     defaultPdfFileName = 'Group-2-_-Prelims-Exam-Question-Paper-2-2025.pdf';
   } else if (isGroupD) {
@@ -1842,7 +1865,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       code: `${shift?.code || 'CBT'}${targetSubject && targetSubject !== 'full' ? `-${targetSubject.slice(0, 4).toUpperCase()}` : ''}`,
       title: `${shift?.title || 'Official CBT Paper'} · ${subjectLabel}`,
       subtitle: `${shift?.examDate || ''} · ${shift?.shiftTiming || ''}`,
-      examName: shift?.examName || (isAppsc ? 'APPSC Group-2 Paper-2 (2025)' : (isGroupD ? 'RRB Group D 2025 (CEN 09/2025)' : (isGrad2026 ? 'RRB NTPC Graduate 2025-26' : (isGrad2024 ? 'RRB NTPC Graduate 2024' : (isSsc ? 'SSC CGL Tier-I' : 'RRB NTPC Under Graduate 2025'))))),
+      examName: shift?.examName || (isAppscPaper1 ? 'APPSC Group-2 Paper-1 (2025)' : isAppsc ? 'APPSC Group-2 Paper-2 (2025)' : (isGroupD ? 'RRB Group D 2025 (CEN 09/2025)' : (isGrad2026 ? 'RRB NTPC Graduate 2025-26' : (isGrad2024 ? 'RRB NTPC Graduate 2024' : (isSsc ? 'SSC CGL Tier-I' : 'RRB NTPC Under Graduate 2025'))))),
       examYear: shift?.examYear || (isGrad2026 ? '2026' : (isGrad2024 ? '2024' : '2025')),
       subjectLabel,
       targetSubject: targetSubject || 'full',

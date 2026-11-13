@@ -1,0 +1,2170 @@
+import fs from 'fs';
+import path from 'path';
+
+/**
+ * Generates /public/data/appscGroup2Paper12025Full.json
+ * Complete 150 bilingual (English + Telugu) questions from:
+ * APPSC Group-2 (2025) Question Paper-1 (Booklet 2G/201 Series C)
+ * - Section A (Q1–Q75): Social and Cultural History of Andhra Pradesh -> subjectId: "general-knowledge", topicId: "indian-history"
+ * - Section B (Q76–Q150): Indian Constitution -> subjectId: "general-knowledge", topicId: "indian-polity"
+ */
+
+const PAPER_URL = '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-1-2025_copy_0f4dabbf.pdf';
+const PAPER_FILENAME = 'Group-2-_-Prelims-Exam-Question-Paper-1-2025.pdf';
+const CREATED_AT = new Date().toISOString();
+
+// Compact tuples: [qn, subtopic, enQ, teQ, enOpts[4], teOpts[4], ansIdx (0..3), enExp, teExp]
+const RAW_QUESTIONS = [
+  // ================= SECTION A: SOCIAL AND CULTURAL HISTORY OF ANDHRA PRADESH (Q1–Q75) =================
+  [
+    1,
+    'Eastern Chalukyas of Vengi',
+    "Ayyana Mahadevi built the Jain temple 'Nedumba Vasati' near Vijayawada. She was the queen of",
+    "విజయవాడలో 'నెడుంబ వసతి' అనే జైన ఆలయాన్ని అయ్యన మహాదేవి నిర్మించింది. ఆమె ఎవరి పట్టమహిషి ?",
+    ['Gunaga Vijayaditya', 'Jatachodabheema', 'Kubja Vishnuvardhana', 'Jayasimha Vallabha'],
+    ['గుణగ విజయాదిత్యుడు', 'జటాచోడభీముడు', 'కుబ్జ విష్ణువర్ధనుడు', 'జయసింహ వల్లభుడు'],
+    2,
+    "Ayyana Mahadevi was the queen of Kubja Vishnuvardhana (founder of the Eastern Chalukya dynasty). As recorded in the Musinikonda grant, she built the Jain temple 'Nedumba Vasati' near Vijayawada.",
+    "అయ్యన మహాదేవి తూర్పు చాళుక్య వంశ స్థాపకుడైన కుబ్జ విష్ణువర్ధనుని పట్టమహిషి. ఆమె విజయవాడ వద్ద 'నెడుంబ వసతి' జైన బసదిని నిర్మించింది."
+  ],
+  [
+    2,
+    'Telugu Literature & Reddi Kingdom',
+    'Which of the following books was not written by Srinatha ?',
+    'ఈ క్రింది రచనలలో శ్రీనాథునిచే రచింపబడనిది ఏది ?',
+    ['Haravilasam', 'Madanavilasabanam', 'Sivarathri Mahatmyam', 'Palnati Veera Charithra'],
+    ['హరవిలాసం', 'మదనవిలాసబాణం', 'శివరాత్రి మహాత్మ్యం', 'పల్నాటి వీర చరిత్ర'],
+    1,
+    'Haravilasam, Sivarathri Mahatmyam, and Palnati Veera Charithra were authored by Kavi Sarvabhouma Srinatha, whereas Madanavilasabanam was not written by him.',
+    'హరవిలాసం, శివరాత్రి మహాత్మ్యం మరియు పల్నాటి వీర చరిత్ర శ్రీనాథుని రచనలు. మదనవిలాసబాణం శ్రీనాథునిచే రచింపబడలేదు.'
+  ],
+  [
+    3,
+    'Satavahana Dynasty',
+    'The inscriptions of early Satavahana kings were found in',
+    'ప్రారంభ శాతవాహన రాజుల శాసనాలు కనుగొనబడ్డ ప్రాంతం ?',
+    ['Maharashtra', 'Andhra', 'Karnataka', 'Telangana'],
+    ['మహారాష్ట్ర', 'ఆంధ్ర', 'కర్ణాటక', 'తెలంగాణ'],
+    0,
+    'Inscriptions of early Satavahana rulers—such as Naganika’s Nanaghat inscription and Nasik/Karle cave inscriptions—were found in Maharashtra.',
+    'ప్రారంభ శాతవాహన రాజుల శాసనాలు (నానాఘాట్, నాసిక్ శాసనాలు) ప్రధానంగా మహారాష్ట్ర ప్రాంతంలో కనుగొనబడ్డాయి.'
+  ],
+  [
+    4,
+    'Reddi Kingdom of Kondaveedu',
+    'Arrange the following Reddi rulers chronologically :\nA. Kumaragiri Reddy\nB. Anavema Reddi\nC. Anavota Reddi\nD. Pedakomati Vema Reddi\nCodes :',
+    'క్రింద ఇచ్చిన రెడ్డి రాజులను కాలక్రమానుసారంగా అమర్చండి.\nA. కుమారగిరి రెడ్డి\nB. అనవేమా రెడ్డి\nC. అనవోత రెడ్డి\nD. పెదకోమటి వేమా రెడ్డి\nకోడ్‌లు :',
+    ['D, C, B, A', 'A, B, C, D', 'B, C, D, A', 'C, B, A, D'],
+    ['D, C, B, A', 'A, B, C, D', 'B, C, D, A', 'C, B, A, D'],
+    3,
+    'Chronological order of Kondaveedu Reddi rulers: Anavota Reddi (1353–1364 CE) -> Anavema Reddi (1364–1386 CE) -> Kumaragiri Reddi (1386–1402 CE) -> Pedakomati Vema Reddi (1402–1420 CE).',
+    'కొండవీటి రెడ్డి రాజుల కాలక్రమం: అనవోత రెడ్డి (1353–64) -> అనవేమా రెడ్డి (1364–86) -> కుమారగిరి రెడ్డి (1386–1402) -> పెదకోమటి వేమా రెడ్డి (1402–20).'
+  ],
+  [
+    5,
+    'Modern Andhra Cultural Renaissance',
+    'The first Telugu to English dictionary was composed by',
+    'మొదటి తెలుగు నుండి ఆంగ్ల నిఘంటువు కూర్పును ఎవరు చేశారు ?',
+    ['C.P. Brown', 'Sir Thomas Munro', 'C.P. Wilson', 'Lord Wellesly'],
+    ['సి.పి. బ్రౌన్', 'సర్ థామస్ మన్రో', 'సి.పి. విల్సన్', 'లార్డ్ వెల్లస్లీ'],
+    0,
+    'Charles Philip (C.P.) Brown compiled the authoritative Telugu-English Dictionary (1852) alongside preserving Telugu classics.',
+    'సి.పి. బ్రౌన్ (చార్లెస్ ఫిలిప్ బ్రౌన్) ప్రసిద్ధ తెలుగు–ఆంగ్ల నిఘంటువును రచించారు.'
+  ],
+  [
+    6,
+    'Telangana Armed Struggle & Literature',
+    'Who was the author of "Veera Telangana Anubhavalu Gnapakalu" ?',
+    '"వీర తెలంగాణా అనుభవాలు జ్ఞాపకాలు" రచయిత ఎవరు ?',
+    ['Mallu Swarajyam', 'Bhimi Reddy', 'Ravi Narayana Reddy', 'Dharma Bixam'],
+    ['మల్లు స్వరాజ్యం', 'భీమి రెడ్డి', 'రావి నారాయణ రెడ్డి', 'ధర్మ భిక్షం'],
+    2,
+    '"Veera Telangana Anubhavalu Gnapakalu" (Heroic Telangana: My Experiences and Reminiscences) was written by Ravi Narayana Reddy.',
+    '"వీర తెలంగాణా అనుభవాలు జ్ఞాపకాలు" అనే ప్రముఖ గ్రంథాన్ని రావి నారాయణ రెడ్డి రచించారు.'
+  ],
+  [
+    7,
+    'Andhra Library & Literary Movement',
+    'Match List – I with List – II and select the correct answer using the codes given below the lists.\nList – I (Libraries)\na. Vignana Chandrika Granthamandali\nb. Srikrishnadevaraya Andhra Bhasha Nilayam\nc. Andhra Council of Research\nd. Andhra Saraswati Parishad\nList – II (Established in and at)\nI. Kovvur, 1916\nII. Hyderabad, 1906\nIII. Hyderabad, 1901\nIV. Hyderabad, 1922',
+    'జాబితా – I మరియు జాబితా – II లను జతపరచి క్రింద ఇచ్చిన వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nజాబితా – I (గ్రంథాలయాలు)\na. విజ్ఞాన చంద్రిక గ్రంథ మండలి\nb. శ్రీకృష్ణదేవరాయ ఆంధ్ర భాషా నిలయం\nc. ఆంధ్ర కౌన్సిల్ ఆఫ్ రీసెర్చ్\nd. ఆంధ్ర సరస్వతి పరిషత్\nజాబితా – II (స్థాపన)\nI. కొవ్వూరు, 1916\nII. హైదరాబాద్, 1906\nIII. హైదరాబాద్, 1901\nIV. హైదరాబాద్, 1922',
+    ['a-II, b-III, c-IV, d-I', 'a-III, b-IV, c-II, d-I', 'a-II, b-III, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    ['a-II, b-III, c-IV, d-I', 'a-III, b-IV, c-II, d-I', 'a-II, b-III, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    0,
+    'Vignana Chandrika Granthamandali: Hyderabad 1906 (II); Srikrishnadevaraya Andhra Bhasha Nilayam: Hyderabad 1901 (III); Andhra Council of Research: Hyderabad 1922 (IV); Andhra Saraswati Parishad: Kovvur 1916 (I).',
+    'విజ్ఞాన చంద్రిక గ్రంథ మండలి (హైదరాబాద్, 1906), శ్రీకృష్ణదేవరాయ ఆంధ్ర భాషా నిలయం (హైదరాబాద్, 1901), ఆంధ్ర కౌన్సిల్ ఆఫ్ రీసెర్చ్ (హైదరాబాద్, 1922), ఆంధ్ర సరస్వతి పరిషత్ (కొవ్వూరు, 1916).'
+  ],
+  [
+    8,
+    'Vishnukundina Dynasty',
+    "'Janasraya' is the title of which of the following Vishnukundin rulers ?",
+    "క్రింద ఇచ్చిన రాజులలో 'జనాశ్రయ' బిరుదు కలిగి ఉన్న విష్ణుకుండిన రాజు ఎవరు ?",
+    ['Govindavarma', 'Indrabhattarakavarma', 'Vikramendravarma', 'Madhavavarma'],
+    ['గోవిందవర్మ', 'ఇంద్రభట్టారకవర్మ', 'విక్రమేంద్రవర్మ', 'మాధవవర్మ'],
+    3,
+    "Madhavavarma (Janasraya Madhavavarman) of the Vishnukundin dynasty bore the title 'Janasraya' and authored/patronized 'Janasraya Chando Vicchitti'.",
+    "విష్ణుకుండిన వంశానికి చెందిన మాధవవర్మకు 'జనాశ్రయ' అనే బిరుదు ఉంది."
+  ],
+  [
+    9,
+    'Freedom Struggle in Andhra',
+    'Match List – I with List – II and select the correct answer using the codes given below.\nList – I (Salt Satyagrahis)\na. Bulusu Sambamurty\nb. Dandu Narayana Raju\nc. Kasi Viswanadham\nd. Pattabhi Sitaramayya\nList – II (Broke Salt Laws at)\nI. Kakinada\nII. Mattapalem\nIII. Vadarevu\nIV. Masulipatnam',
+    'జాబితా – I మరియు జాబితా – II లను జతపరచడం ద్వారా క్రింది వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nజాబితా – I (ఉప్పు సత్యాగ్రహ నాయకులు)\na. బులుసు సాంబమూర్తి\nb. దండు నారాయణ రాజు\nc. కాశీ విశ్వనాథం\nd. పట్టాభి సీతారామయ్య\nజాబితా – II (ఉప్పు చట్ట ఉల్లంఘన ప్రదేశం)\nI. కాకినాడ\nII. మట్టపాలెం\nIII. వాడరేవు\nIV. మచిలీపట్నం',
+    ['a-I, b-II, c-III, d-IV', 'a-II, b-IV, c-III, d-I', 'a-III, b-II, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    ['a-I, b-II, c-III, d-IV', 'a-II, b-IV, c-III, d-I', 'a-III, b-II, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    0,
+    'During the 1930 Salt Satyagraha in Andhra: Bulusu Sambamurty led at Kakinada/Chollangi (I), Dandu Narayana Raju in Mattapalem/West Godavari (II), Kasi Viswanadham at Vadarevu (III), and Pattabhi Sitaramayya at Masulipatnam (IV).',
+    '1930 ఉప్పు సత్యాగ్రహంలో బులుసు సాంబమూర్తి (కాకినాడ), దండు నారాయణ రాజు (మట్టపాలెం), కాశీ విశ్వనాథం (వాడరేవు), పట్టాభి సీతారామయ్య (మచిలీపట్నం) నాయకత్వం వహించారు.'
+  ],
+  [
+    10,
+    'Vijayanagara Empire in Andhra',
+    'Sri Krishna Devaraya erected a pillar of victory to commemorate his conquest of coastal Andhra at',
+    'శ్రీకృష్ణదేవరాయలు తన తీర ఆంధ్ర విజయాలకు చిహ్నంగా ఎక్కడ విజయస్తంభం ప్రతిష్టించాడు ?',
+    ['Udayagiri', 'Potnuru', 'Kondaveedu', 'Nagarjunakonda'],
+    ['ఉదయగిరి', 'పొట్నూరు', 'కొండవీడు', 'నాగార్జునకొండ'],
+    1,
+    'Sri Krishnadevaraya erected a pillar of victory (Jaya Stambha) at Potnuru (present-day Anakapalli/Visakhapatnam region) in 1516 CE to commemorate his Kalinga/coastal Andhra conquests.',
+    'శ్రీకృష్ణదేవరాయలు తన కళింగ మరియు తీర ఆంధ్ర విజయాలకు చిహ్నంగా పొట్నూరు వద్ద విజయస్తంభాన్ని నాటారు.'
+  ],
+  [
+    11,
+    'Ancient & Medieval Andhra Literature',
+    'Match List – I with List – II and select the correct answer using the codes given below the list.\nList – I (Authors)\na. Pavuluri Mallana\nb. Vinukonda Vallabharaya\nc. Aryadeva\nd. Dignaga\nList – II (Works)\nI. Kreedabhiramam\nII. Ganitasara Sangraham\nIII. Chittasuddi Prakarana\nIV. Pramaana Samucchaya',
+    'జాబితా – I మరియు జాబితా – II లను జతపరచడం ద్వారా క్రింది వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి\nజాబితా – I (రచయితలు)\na. పావులూరి మల్లన్న\nb. వినుకొండ వల్లభరాయ\nc. ఆర్యదేవ\nd. దిగ్నాగ\nజాబితా – II (రచనలు)\nI. క్రీడాభిరామం\nII. గణితసార సంగ్రహం\nIII. చిత్తశుద్ధి ప్రకరణ\nIV. ప్రమాణ సముచ్చయ',
+    ['a-I, b-II, c-III, d-IV', 'a-II, b-I, c-IV, d-III', 'a-II, b-I, c-III, d-IV', 'a-III, b-IV, c-I, d-II'],
+    ['a-I, b-II, c-III, d-IV', 'a-II, b-I, c-IV, d-III', 'a-II, b-I, c-III, d-IV', 'a-III, b-IV, c-I, d-II'],
+    2,
+    'Pavuluri Mallana wrote Ganitasara Sangraham (II); Vinukonda Vallabharaya authored Kreedabhiramam (I); Aryadeva wrote Chittasuddi Prakarana (III); Buddhist logician Dignaga wrote Pramaana Samucchaya (IV).',
+    'పావులూరి మల్లన్న (గణితసార సంగ్రహం), వినుకొండ వల్లభరాయుడు (క్రీడాభిరామం), ఆర్యదేవుడు (చిత్తశుద్ధి ప్రకరణ), దిగ్నాగుడు (ప్రమాణ సముచ్చయం).'
+  ],
+  [
+    12,
+    'Early Pallavas in Andhra',
+    'Manchikallu and Maidavolu inscriptions belong to',
+    'మంచికల్లు మరియు మైదవోలు శాసనాలు ఎవరికి సంబంధించినవి ?',
+    ['Pallavas', 'Cholas', 'Chalukyas', 'Vijayanagara Dynasty'],
+    ['పల్లవులు', 'చోళులు', 'చాళుక్యులు', 'విజయనగర సామ్రాజ్యం'],
+    0,
+    'The Manchikallu inscription of Simhavarman and the Maidavolu copper-plate inscription of Shivaskandavarman are key Prakrit inscriptions of the early Pallavas in Andhra.',
+    'మంచికల్లు (సింహవర్మ) మరియు మైదవోలు (శివస్కందవర్మ) శాసనాలు తొలి పల్లవులకు సంబంధించినవి.'
+  ],
+  [
+    13,
+    'Andhra Library Movement',
+    'Which of the following statements regarding Library Movement are correct ?\nI. In 1915, the Andhra Desa Library Association started a periodical entitled ‘Grandhalaya Sarvasvam’ in Telugu.\nII. Kasinathuni Nageswara Rao is the founder of “Andhra Patrika” established in 1908.\nIII. Sri Krishnadevaraya Andhra Bhasha Nilayam was established in Kovvur in 1916.\nIV. In 1918, Ayyadevara Kaleswara Rao started ‘Boat Library Services’ in West Godavari.',
+    'గ్రంథాలయ ఉద్యమం గురించి క్రింది ప్రకటనలలో సరైనవి ఏవి ?\nI. 1915 లో, ఆంధ్ర దేశ గ్రంథాలయ అసోసియేషన్ ‘గ్రంథాలయ సర్వస్వం’ అనే పత్రికను తెలుగులో ప్రారంభించారు.\nII. కాశీనాథుని నాగేశ్వరరావు ఆంధ్ర పత్రికను 1908 లో ప్రారంభించారు.\nIII. శ్రీకృష్ణదేవరాయ ఆంధ్ర భాషా నిలయం 1916 లో, కొవ్వూరులో స్థాపించారు.\nIV. 1918 లో, అయ్యదేవర కాళేశ్వరరావు పశ్చిమ గోదావరిలో ‘బోట్ లైబ్రరీ సర్వీస్’లను ప్రారంభించారు.',
+    ['I, II, IV only', 'I, III, IV only', 'II, III, IV only', 'All of the above'],
+    ['I, II, IV మాత్రమే', 'I, III, IV మాత్రమే', 'II, III, IV మాత్రమే', 'పైవన్నీ'],
+    0,
+    'Statement III is incorrect because Sri Krishnadevaraya Andhra Bhasha Nilayam was established in Hyderabad in 1901 (not Kovvur 1916). Statements I, II, and IV are correct.',
+    'శ్రీకృష్ణదేవరాయ ఆంధ్ర భాషా నిలయం 1901లో హైదరాబాద్‌లో స్థాపించబడింది కనుక III తప్పు. I, II మరియు IV సరైనవి.'
+  ],
+  [
+    14,
+    'Prehistoric & Megalithic Andhra',
+    'Which one of the following statements is incorrect with reference to megalithic burials in Andhra ?',
+    'క్రింది వాటిలో ఆంధ్రాలోని రాక్షసి గుళ్ళను గురించి సరికానిది ఏది ?',
+    [
+      'Tirupati has the largest anthropomorphic burial site collection',
+      'Many numbers of cyst burials were found in Vishakhapatnam District',
+      'Sarcophagus burials are more in number in Chittoor and Anantapuramu districts',
+      'Krishna and Chittoor districts contained many numbers of dolmen burials'
+    ],
+    [
+      'అత్యధిక ఆంత్రోపోమార్ఫిక్ శ్మశాన వాటికలు తిరుపతిలో ఉన్నాయి',
+      'సిస్ట్ సమాధులు అత్యధికంగా విశాఖపట్నంలో ఉన్నాయి',
+      'సార్కోఫాగస్ మట్టి శవ పేటికలు, చిత్తూరు మరియు అనంతపురము జిల్లాల్లో ఎక్కువగా ఉన్నాయి',
+      'కృష్ణా మరియు చిత్తూరు జిల్లాలలో డోల్మెన్ శవ పేటికలు ఎక్కువగా ఉన్నాయి'
+    ],
+    3,
+    'Dolmen burials in Andhra are predominantly concentrated in Rayalaseema districts like Chittoor and Anantapuramu (not Krishna district), whereas Tirupati holds major anthropomorphic sites and Chittoor/Anantapuramu have sarcophagus burials.',
+    'డోల్మెన్ సమాధులు ప్రధానంగా రాయలసీమ జిల్లాల్లో (చిత్తూరు, అనంతపురం) కనిపిస్తాయి, కృష్ణా జిల్లాలో కాదు.'
+  ],
+  [
+    15,
+    'Vijayanagara & Telugu Women Poets',
+    'Identify the wrong match.\n(Author) - (Literary Work)',
+    'తప్పుగా జతపరచిన దానిని గుర్తించుము.\n(రచయిత్రి) - (రచన)',
+    [
+      'Gangadevi – Marichi Parinayam',
+      'Molla – Ramayanam',
+      'Tallapaka Timmakka – Subhadra Kalyanam',
+      'Oduva Tirumalamba – Varadambika Parinayam'
+    ],
+    [
+      'గంగాదేవి – మరీచీ పరిణయం',
+      'మొల్ల – రామాయణం',
+      'తాళ్ళపాక తిమ్మక్క – సుభద్రా కళ్యాణం',
+      'ఓడువ తిరుమలాంబ – వరదాంబికా పరిణయం'
+    ],
+    0,
+    'Gangadevi authored "Madhuravijayam" (Veera Kamparaya Charitam), whereas "Marichi Parinayam" was written by Mohanangi.',
+    'గంగాదేవి "మధురావిజయం" రచించారు. "మరీచీ పరిణయం" రచించినది మోహనాంగి.'
+  ],
+  [
+    16,
+    'Modern Andhra Education & Politics',
+    'Justice Party Government helped the formation of which University ?',
+    'జస్టిస్ పార్టీ ప్రభుత్వం ఏ విశ్వవిద్యాలయ స్థాపనకు సహాయపడింది ?',
+    ['Telugu University', 'Andhra University', 'Sri Venkateswara University', 'Padmavati Mahila Viswa Vidyalayam'],
+    ['తెలుగు విశ్వవిద్యాలయం', 'ఆంధ్ర విశ్వవిద్యాలయం', 'శ్రీ వేంకటేశ్వర విశ్వవిద్యాలయం', 'పద్మావతి మహిళా విశ్వవిద్యాలయం'],
+    1,
+    'The Justice Party Ministry in Madras Presidency (led by Panagal Raja) passed the Andhra University Act leading to the establishment of Andhra University in 1926.',
+    'మద్రాసు ప్రెసిడెన్సీలోని జస్టిస్ పార్టీ ప్రభుత్వం 1926లో ఆంధ్ర విశ్వవిద్యాలయం స్థాపనకు తోడ్పడింది.'
+  ],
+  [
+    17,
+    'Visalandhra Movement',
+    'Which of the following statement(s) is/are incorrect ?\na. Communist Party leaders worked for the Visalandhra Movement and propagated the concept of Visalandhra even before the formation of Andhra State.\nb. Communists became a great force in Telangana politics.\nc. Communists opposed the formation of integrated linguistic States.',
+    'క్రింది ప్రకటనలలో ఏది/ఏవి తప్పు ?\na. కమ్యూనిస్టు పార్టీ నాయకులు విశాలాంధ్ర ఉద్యమం కోసం పని చేశారు మరియు విశాలాంధ్ర వాదాన్ని ఆంధ్రా అవతరణకు ముందే విస్తరింపజేశారు.\nb. తెలంగాణ రాజకీయాలలో కమ్యూనిస్టులు బలమైన పాత్ర పోషించారు.\nc. కమ్యూనిస్టులు సమగ్ర భాషా రాష్ట్రాల ఏర్పాటును వ్యతిరేకించారు.',
+    ['b and c', 'a and c', 'a only', 'c only'],
+    ['b మరియు c', 'a మరియు c', 'a మాత్రమే', 'c మాత్రమే'],
+    3,
+    'Statement c is incorrect: the Communist Party strongly supported and championed the formation of linguistic states and the Visalandhra Movement.',
+    'కమ్యూనిస్టులు భాషా రాష్ట్రాల ఏర్పాటును మరియు విశాలాంధ్ర ఉద్యమాన్ని బలంగా సమర్థించారు కాబట్టి ప్రకటన c తప్పు.'
+  ],
+  [
+    18,
+    'Kakatiya Inscriptions',
+    'Match List – I with List – II and select the correct answer using the codes given below the lists.\nList – I (Inscriptions)\na. Sanigaram inscription\nb. Anumakonda inscription\nc. Bayyaram inscription\nd. Motupalli inscription\nList – II (Rulers)\nI. Mailamba\nII. Ganapatideva\nIII. Prolaraja\nIV. Rudradeva',
+    'జాబితా – I మరియు జాబితా – II లను జతపరచడం ద్వారా క్రింది వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nజాబితా – I (శాసనం)\na. శనిగారం శాసనం\nb. అనుమకొండ శాసనం\nc. బయ్యారం శాసనం\nd. మోటుపల్లి శాసనం\nజాబితా – II (పాలకులు)\nI. మైలాంబ\nII. గణపతిదేవ\nIII. ప్రోలరాజు\nIV. రుద్రదేవ',
+    ['a-IV, b-III, c-I, d-II', 'a-I, b-II, c-III, d-IV', 'a-III, b-IV, c-I, d-II', 'a-II, b-IV, c-III, d-I'],
+    ['a-IV, b-III, c-I, d-II', 'a-I, b-II, c-III, d-IV', 'a-III, b-IV, c-I, d-II', 'a-II, b-IV, c-III, d-I'],
+    2,
+    'Sanigaram inscription -> Prolaraja I (III); Anumakonda inscription -> Rudradeva (IV); Bayyaram tank inscription -> Mailamba (I); Motupalli Abhaya Sasana -> Ganapatideva (II).',
+    'శనిగారం శాసనం (ప్రోలరాజు), అనుమకొండ శాసనం (రుద్రదేవుడు), బయ్యారం చెరువు శాసనం (మైలాంబ), మోటుపల్లి అభయ శాసనం (గణపతిదేవుడు).'
+  ],
+  [
+    19,
+    'History of Telugu Journalism',
+    'Which was the First Telugu Newspaper ?',
+    'మొదటి తెలుగు వార్తాపత్రిక పేరు ఏమి ?',
+    ['Satya Duta', 'Nilagiri', 'Bharathi', 'Krishna Patrika'],
+    ['సత్య దూత', 'నీలగిరి', 'భారతి', 'కృష్ణా పత్రిక'],
+    0,
+    'Satya Duta (published around 1835 by the Bellary Christian Association) is traditionally recognized in APPSC history as the earliest Telugu journal/newspaper.',
+    '1835లో బళ్ళారి క్రైస్తవ సంఘం ప్రచురించిన "సత్యదూత" మొదటి తెలుగు పత్రికగా పరిగణించబడుతుంది.'
+  ],
+  [
+    20,
+    'Ikshvakus of Vijayapuri',
+    'Which of the following statements is incorrect with reference to the Ikshvakus of Vijayapuri ?',
+    'విజయపురి ఇక్ష్వాకులను గూర్చి క్రింది ప్రకటనలలో సరికానిది ఏది ?',
+    [
+      "Puranas mentioned Ikshvakus as 'Sri Parvathiyas'",
+      'In their inscriptions, Ikshvakus of Vijayapuri had described themselves as the descendants of Ikshvakus of Ayodhya',
+      'Ikshvakus of Vijayapuri had matrimonial ties with Sakas/Western Satraps of Ujjain',
+      "Veerapurushadatta's reign is considered as the golden age of Buddhism in Andhra"
+    ],
+    [
+      'పురాణాలు ఇక్ష్వాకులను ‘శ్రీపర్వతీయులు’ అని పేర్కొన్నాయి',
+      'విజయపురి ఇక్ష్వాకులు వారి శాసనాలలో తాము అయోధ్యా ఇక్ష్వాకుల సంతతివారమని చెప్పుకున్నారు',
+      'విజయపురి ఇక్ష్వాకులకు ఉజ్జయిని శక/పశ్చిమ సాత్రప రాజులతో వివాహ సంబంధం ఉంది',
+      'వీరపురుషదత్తుని కాలం ఆంధ్ర బౌద్ధమత చరిత్రలో స్వర్ణయుగం'
+    ],
+    1,
+    'In their Nagarjunakonda inscriptions, the Andhra Ikshvakus did NOT describe themselves as descendants of the Ikshvakus of Ayodhya; that link was later inferred by historians/Puranic traditions.',
+    'విజయపురి ఇక్ష్వాకులు తమ శాసనాలలో స్వయంగా తాము అయోధ్యా ఇక్ష్వాకుల సంతతివారమని పేర్కొనలేదు; కనుక (2) సరికాని ప్రకటన.'
+  ],
+  [
+    21,
+    'European Settlements in Andhra',
+    'Where was the French Settlement in Andhra ?',
+    'ఆంధ్రలో ఫ్రెంచ్ వారి స్థావరం ఎక్కడ ?',
+    ['Rajamundry', 'Hamsala Divi', 'Yanam', 'Ongole'],
+    ['రాజమండ్రి', 'హంసల దీవి', 'యానాం', 'ఒంగోల్'],
+    2,
+    'Yanam, located at the Godavari delta in coastal Andhra, was a major French colonial settlement.',
+    'గోదావరి ముఖద్వారం వద్ద ఉన్న యానాం ఆంధ్ర ప్రాంతంలోని ప్రముఖ ఫ్రెంచ్ స్థావరం.'
+  ],
+  [
+    22,
+    'British Revenue Administration in Andhra',
+    "Statement (A) : Moturpha is a salt tax levied by British East India Company.\nStatement (B) : The revenue collected by the British East India Company from the zamindars is called 'Peshcush'.",
+    "ప్రకటన (A) : బ్రిటిష్ తూర్పు ఇండియా కంపెనీ విధించిన ఉప్పు పన్నును మోతుర్ఫా అంటారు.\nప్రకటన (B) : బ్రిటిష్ తూర్పు ఇండియా కంపెనీ జమీందార్ల నుండి వసూలు చేసిన శిస్తును 'పేష్కష్' అంటారు.",
+    [
+      'Both (A) and (B) are true',
+      'Both (A) and (B) are false',
+      '(A) is true, but (B) is false',
+      '(A) is false, but (B) is true'
+    ],
+    [
+      '(A) మరియు (B) రెండూ నిజం',
+      '(A) మరియు (B) రెండూ తప్పు',
+      '(A) నిజం, కానీ (B) తప్పు',
+      '(A) తప్పు, కానీ (B) నిజం'
+    ],
+    3,
+    'Moturpha was a tax on professions, looms, and artisans (not a salt tax), whereas Peshcush was indeed the tribute/revenue paid by zamindars to the Company. Hence (A) is false and (B) is true.',
+    'మోతుర్ఫా అనేది చేతివృత్తులు/మగ్గాలపై వేసే పన్ను (ఉప్పు పన్ను కాదు). జమీందార్ల నుండి వసూలు చేసే శిస్తును పేష్కష్ అంటారు. కనుక (A) తప్పు, (B) నిజం.'
+  ],
+  [
+    23,
+    'Formation of Andhra State (1953)',
+    'Which of the following Parties wanted Tirupati as the Capital of Andhra in 1953 ?',
+    'క్రింది వాటిలో ఏ పార్టీ 1953 లో తిరుపతిని ఆంధ్ర రాజధానిగా చేయమని కోరింది ?',
+    ['United Democratic Party', 'Praja Socialist Party', 'Krishikar Lok Party', 'Kisan Mazdoor Party'],
+    ['యునైటెడ్ డెమొక్రాటిక్ పార్టీ', 'ప్రజా సోషలిస్ట్ పార్టీ', 'క్రిషికార్ లోక్ పార్టీ', 'కిసాన్ మజ్దూర్ పార్టీ'],
+    0,
+    'During the 1953 capital debates prior to the formation of Andhra State, the United Democratic Party advocated for Tirupati as the capital.',
+    '1953లో ఆంధ్ర రాష్ట్ర రాజధాని చర్చల సమయంలో యునైటెడ్ డెమొక్రాటిక్ పార్టీ తిరుపతిని రాజధానిగా చేయాలని కోరింది.'
+  ],
+  [
+    24,
+    'Satavahana Literature',
+    'Statement (A) : “Gatha Saptasathi” is a collection of poems which predominantly focused on love and romantic themes.\nStatement (B) : Gunadya had written Brihatkatha in Sanskrit language.',
+    'ప్రకటన (A) : “గాథా సప్తశతి” అనే కవితా సంకలనం ప్రధానంగా ప్రేమ నేపథ్యానికి సంబంధించినది.\nప్రకటన (B) : గుణాఢ్యుడు సంస్కృతంలో బృహత్కథను రచించాడు.',
+    [
+      'Both (A) and (B) are true',
+      'Both (A) and (B) are false',
+      '(A) is true, but (B) is false',
+      '(A) is false, but (B) is true'
+    ],
+    [
+      '(A) మరియు (B) రెండూ నిజం',
+      '(A) మరియు (B) రెండూ తప్పు',
+      '(A) నిజం, కానీ (B) తప్పు',
+      '(A) తప్పు, కానీ (B) నిజం'
+    ],
+    2,
+    'Hala’s Gatha Saptasathi deals largely with love and rural life (True). However, Gunadhya wrote Brihatkatha in Paisachi Prakrit, not Sanskrit (False).',
+    'హాలుని గాథా సప్తశతి శృంగార/ప్రేమ ఇతివృత్తంతో కూడినది (నిజం). గుణాఢ్యుడు బృహత్కథను పైశాచి ప్రాకృతంలో రచించారు, సంస్కృతంలో కాదు (తప్పు).'
+  ],
+  [
+    25,
+    'Separate Andhra Movement',
+    'Who was the Chairman of the Partition Committee constituted by Madras State Government for the formation of separate State ?',
+    'ప్రత్యేక రాష్ట్రం కోసం మద్రాసు ప్రభుత్వం ఏర్పరిచిన విభజన కమిటీ చైర్మన్ ఎవరు ?',
+    ['T. T. Krishnamachari', 'Kumaraswamy Raja', 'Tanguturi Prakasam', 'Neelam Sanjeeva Reddy'],
+    ['టి. టి. కృష్ణమాచారి', 'కుమారస్వామి రాజా', 'టంగుటూరి ప్రకాశం', 'నీలం సంజీవ రెడ్డి'],
+    1,
+    'Then Chief Minister of Madras, P. S. Kumaraswamy Raja, served as Chairman of the 1949 Partition Committee (which included Prakasam, Sanjeeva Reddy, Gopala Reddy, Rajaji/Bhaktavatsalam).',
+    '1949లో మద్రాసు ప్రభుత్వం ఏర్పాటు చేసిన విభజన కమిటీకి అప్పటి ముఖ్యమంత్రి పి.ఎస్. కుమారస్వామి రాజా చైర్మన్‌గా వ్యవహరించారు.'
+  ],
+  [
+    26,
+    'Modern Telugu Poetry',
+    'In which book was the song ‘Desamante Matti Kadoi’ written ?',
+    '‘దేశమంటే మట్టి కాదోయ్’ అనే గేయం ఏ పుస్తకంలో రాయబడ్డది ?',
+    ['Kanyaka', 'Manishi', 'Puttadi Bomma Purnamma', 'Mutyala Saralu'],
+    ['కన్యక', 'మనిషి', 'పుత్తడి బొమ్మ పూర్ణమ్మ', 'ముత్యాల సరాలు'],
+    3,
+    "Gurajada Apparao's iconic patriotic song 'Desamante Matti Kadoi' is part of his famous poetic anthology 'Mutyala Saralu' (Desabhakti geetam).",
+    "గురజాడ అప్పారావు రచించిన 'దేశమంటే మట్టి కాదోయ్' అనే దేశభక్తి గేయం 'ముత్యాల సరాలు' సంకలనంలోనిది."
+  ],
+  [
+    27,
+    'Kakatiya Administration & Religion',
+    'Which of the following statement(s) is/are incorrect ?\na. Prolaraja bore the title Arikesari.\nb. Nayankara system was introduced by Prataparudra.\nc. Beta II was initiated into Saivism by Rameswara Pandita of Srisailam.',
+    'క్రింది ప్రకటనలలో ఏది / ఏవి సరికానివి ?\na. ప్రోలరాజుకు అరికేసరి అను బిరుదు ఉంది.\nb. ప్రతాపరుద్రుడు నాయంకర విధానంను ప్రవేశపెట్టాడు.\nc. శ్రీశైలంకు చెందిన రామేశ్వర పండితుని నుండి రెండో బేతరాజు శైవమత దీక్షను పొందాడు.',
+    ['b and c', 'a and c', 'a only', 'b only'],
+    ['b మరియు c', 'a మరియు c', 'a మాత్రమే', 'b మాత్రమే'],
+    2,
+    "Statement a is incorrect: Kakatiya Prolaraja bore titles like 'Arigaja Kesari', whereas 'Arikesari' was a title of the Vemulavada Chalukyas. Statements b and c are accepted as true.",
+    "కాకతీయ ప్రోలరాజుకు 'అరిగజ కేసరి' బిరుదు ఉండేది కానీ 'అరికేసరి' అనేది వేములవాడ చాళుక్యుల బిరుదు. కనుక a మాత్రమే సరికాదు."
+  ],
+  [
+    28,
+    'Religions in Ancient Andhra',
+    'Match Group – A with Group – B and select the correct answer using the codes given below.\nGroup – A\na. Jainism\nb. Buddhism\nc. Saivism\nd. Animism\nGroup – B\ni. Nature Worship\nii. Ashtanga Margam\niii. Triratna\niv. Linga',
+    'గ్రూప్ – A మరియు గ్రూప్ – B లను జతపరచడం ద్వారా క్రింద ఇచ్చిన వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nగ్రూప్ – A\na. జైనజం\nb. బుద్ధిజం\nc. శైవిజం\nd. యానిమిజం\nగ్రూప్ – B\ni. ప్రకృతి ఆరాధన\nii. అష్టాంగ మార్గం\niii. త్రిరత్న\niv. లింగ',
+    ['a-i, b-iii, c-ii, d-iv', 'a-ii, b-i, c-iii, d-iv', 'a-iii, b-ii, c-iv, d-i', 'a-iv, b-ii, c-i, d-iii'],
+    ['a-i, b-iii, c-ii, d-iv', 'a-ii, b-i, c-iii, d-iv', 'a-iii, b-ii, c-iv, d-i', 'a-iv, b-ii, c-i, d-iii'],
+    2,
+    'Jainism -> Triratna (iii); Buddhism -> Ashtanga Margam (ii); Saivism -> Linga worship (iv); Animism -> Nature Worship (i).',
+    'జైనజం (త్రిరత్నాలు - iii), బౌద్ధమతం (అష్టాంగ మార్గం - ii), శైవమతం (లింగారాధన - iv), యానిమిజం (ప్రకృతి ఆరాధన - i).'
+  ],
+  [
+    29,
+    'Vishnukundina Dynasty',
+    'Which Vishnukundin ruler had transferred the capital from Amarapuri to Denduluru ?',
+    'రాజాధానిని అమరపురి నుండి దెందులూరుకు మార్చిన విష్ణుకుండిన రాజు ఎవరు ?',
+    ['Vikramendravarma', 'Madhavavarma', 'Govindavarma', 'Manchana Bhattaraka'],
+    ['విక్రమేంద్రవర్మ', 'మాధవవర్మ', 'గోవిందవర్మ', 'మంచన భట్టారక'],
+    1,
+    'Madhavavarma of the Vishnukundin dynasty shifted his capital from Amarapuri (Indrapalanagara/Nalgonda region) to Denduluru in West Godavari.',
+    'విష్ణుకుండిన వంశస్థుడైన మాధవవర్మ రాజధానిని అమరపురి నుండి దెందులూరుకు మార్చారు.'
+  ],
+  [
+    30,
+    'British East India Company',
+    'In which year was the English East India Company established ?',
+    'ఇంగ్లీషు ఈస్ట్ ఇండియా కంపెనీ ప్రారంభించబడ్డ సంవత్సరం ఏది ?',
+    ['1600', '1650', '1700', '1750'],
+    ['1600', '1650', '1700', '1750'],
+    0,
+    'The English East India Company was established by Royal Charter granted by Queen Elizabeth I on December 31, 1600.',
+    'ఇంగ్లీషు ఈస్ట్ ఇండియా కంపెనీ క్రీ.శ. 1600 డిసెంబర్ 31న రాయల్ చార్టర్ ద్వారా స్థాపించబడింది.'
+  ],
+  [
+    31,
+    '1857 Revolt & Andhra',
+    'Assertion (A) : Andhra region was not greatly affected by the 1857 revolt as Andhra had no local leaders.\nReason (R) : Then reigning Nizam, Nawab Afzal-ud-Dowla adopted pro-British attitude.',
+    'ధ్రువీకరణ (A) : ఆంధ్ర ప్రాంతంలో స్థానిక నాయకులు లేనందువల్ల 1857 తిరుగుబాటు ఆంధ్ర ప్రాంతంలో ఎక్కువ ప్రభావం చూపలేదు.\nకారణం (R) : అప్పటి నిజాం నవాబ్ అఫ్జల్ ఉద్దౌలా బ్రిటీషు వారికి అనుకూల వైఖరి అవలంబించాడు.',
+    [
+      'Both (A) and (R) are true, and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true, but (R) is not the correct explanation of (A)',
+      '(A) is true, but (R) is false',
+      '(A) is false, but (R) is true'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R), (A) ను వివరిస్తుంది',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R), (A) ను వివరింఛదు',
+      '(A) నిజం, కానీ (R) తప్పు',
+      '(A) తప్పు, కానీ (R) నిజం'
+    ],
+    3,
+    'Assertion (A) is false because Andhra and Deccan had local leaders such as Korukonda Subbareddy, Dundigal/Parlakimidi, and Turrebaz Khan. Reason (R) is true: Nizam Afzal-ud-Dowla and Salar Jung I remained loyal to the British.',
+    'ఆంధ్రలో కోరుకొండ సుబ్బారెడ్డి వంటి స్థానిక నాయకులు తిరుగుబాటు చేసినందున (A) తప్పు. నిజాం అఫ్జల్ ఉద్దౌలా బ్రిటీష్ అనుకూల వైఖరి అవలంబించాడు కాబట్టి (R) నిజం.'
+  ],
+  [
+    32,
+    'Post-Satavahana Economy',
+    'Assertion (A) : Trade with Rome flourished in the post-Satavahana era.\nReason (R) : No ruler had issued coins with ship motif after Satavahanas.',
+    'ధ్రువీకరణ (A) : శాతవాహనానంతర యుగంలో రోమ్‌తో వాణిజ్యం వర్ధిల్లింది.\nకారణం (R) : శాతవాహనుల తర్వాత ఏ రాజు కూడా నౌకాముద్రగల నాణేలు ముద్రించలేదు.',
+    [
+      'Both (A) and (R) are true and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true, but (R) is not the correct explanation of (A)',
+      '(A) is true, but (R) is false',
+      '(A) is false, but (R) is true'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R), (A) ను వివరిస్తుంది',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R), (A) ను వివరించదు',
+      '(A) నిజం, కానీ (R) తప్పు',
+      '(A) తప్పు, కానీ (R) నిజం'
+    ],
+    3,
+    'Indo-Roman maritime trade peaked during the Satavahana era and declined in the post-Satavahana era (so (A) is false). Ship-motif coins in Andhra are famously associated with the Satavahana ruler Yajna Sri Satakarni.',
+    'రోమ్‌తో వాణిజ్యం శాతవాహన కాలంలో పరాకాష్టకు చేరింది, ఆ తర్వాత తగ్గింది కనుక (A) తప్పు. (R) నిజం.'
+  ],
+  [
+    33,
+    'Nationalist Leaders of Andhra',
+    'Match Group – A with Group – B and select the correct answer using the codes given below.\nGroup – A\na. Duggirala Gopala Krishnaiah\nb. Parvataneni Veeraiah Choudary\nc. Ayyadevara Kaleswar Rao\nd. Tripuraneni Ramaswamy Choudary\nGroup – B\ni. Pedanandipadu agitation\nii. Najeevitha Katha\niii. Rama Dandu\niv. Kavi Raju',
+    'గ్రూప్ – A మరియు గ్రూప్ – B లను జతపరచడం ద్వారా క్రింది వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nగ్రూప్ – A\na. దుగ్గిరాల గోపాల క్రిష్ణయ్య\nb. పర్వతనేని వీరయ్య చౌదరి\nc. అయ్యదేవర కాళేశ్వర రావు\nd. త్రిపురనేని రామస్వామి చౌదరి\nగ్రూప్ – B\ni. పెదనందిపాడు ఆందోళన (అజిటేషన్)\nii. నా జీవిత కథ\niii. రామ దండు\niv. కవి రాజు',
+    ['a-iv, b-ii, c-i, d-iii', 'a-iii, b-i, c-ii, d-iv', 'a-i, b-ii, c-iii, d-iv', 'a-ii, b-iii, c-i, d-iv'],
+    ['a-iv, b-ii, c-i, d-iii', 'a-iii, b-i, c-ii, d-iv', 'a-i, b-ii, c-iii, d-iv', 'a-ii, b-iii, c-i, d-iv'],
+    1,
+    'Duggirala Gopala Krishnaiah -> Rama Dandu (iii); Parvataneni Veeraiah Choudary -> Pedanandipadu agitation (i); Ayyadevara Kaleswar Rao -> Najeevitha Katha autobiography (ii); Tripuraneni Ramaswamy Choudary -> Kavi Raju (iv).',
+    'దుగ్గిరాల గోపాలకృష్ణయ్య (రామ దండు - iii), పర్వతనేని వీరయ్య చౌదరి (పెదనందిపాడు ఉద్యమం - i), అయ్యదేవర కాళేశ్వరరావు (నా జీవిత కథ - ii), త్రిపురనేని రామస్వామి చౌదరి (కవిరాజు - iv).'
+  ],
+  [
+    34,
+    'Kakatiya Art & Architecture',
+    'Which of the following statements regarding Kakatiyas are correct ?\nI. Early Kakatiya monarchs had constructed Jain temples.\nII. The influence of Chalukya temple architecture could be seen in Kakatiya temples.\nIII. Thousand pillared temple was built in ‘Trikuta style’, having three shrines, each dedicated to Rudreshwara, Vasudeva and Suryadeva.',
+    'కాకతీయులను గూర్చి క్రింది ప్రకటనలలో సరైనవి ఏవి ?\nI. తొలి కాకతీయ చక్రవర్తులు జైన ఆలయాలను నిర్మించారు.\nII. కాకతీయ ఆలయాలలో చాళుక్య ఆలయ నిర్మాణ ప్రభావం కనిపిస్తుంది.\nIII. వేయి స్తంభాల గుడిని రుద్రేశ్వర, వాసుదేవ, సూర్యదేవులకు ఉద్దేశించిన త్రికూటాలయ శైలిలో నిర్మించారు.',
+    ['I and II only', 'I and III only', 'II and III only', 'I, II, III'],
+    ['I మరియు II మాత్రమే', 'I మరియు III మాత్రమే', 'II మరియు III మాత్రమే', 'I, II, III'],
+    3,
+    'All three statements are correct: early Kakatiyas patronized Jainism (e.g., Padmakshi), adapted Western Chalukyan Vesara features, and Rudradeva’s Thousand Pillar Temple at Hanamkonda is built in Trikutalaya style dedicated to Shiva (Rudreshwara), Vishnu (Vasudeva), and Surya.',
+    'పై మూడు ప్రకటనలు (I, II, III) సరైనవి.'
+  ],
+  [
+    35,
+    'British Factories in Andhra',
+    'Where did the English establish their first factory in Coastal Andhra ?',
+    'ఆంగ్లేయుల మొదటి కర్మాగారం కోస్తాంధ్రలో ఎక్కడ స్థాపించారు ?',
+    ['Kakinada', 'Machilipatnam', 'Visakapatnam', 'Bhimunipatnam'],
+    ['కాకినాడ', 'మచిలీపట్నం', 'విశాఖపట్నం', 'భీముని పట్నం'],
+    1,
+    'The English East India Company established its first factory in Coastal Andhra (and on the Coromandel Coast) at Machilipatnam (Masulipatnam) in 1611.',
+    'ఆంగ్లేయులు కోస్తాంధ్రలో తమ మొదటి కర్మాగారాన్ని 1611లో మచిలీపట్నంలో స్థాపించారు.'
+  ],
+  [
+    36,
+    'Post-Independence AP Politics',
+    'Arrange the following ex-Chief Ministers of Andhra Pradesh chronologically and choose the correct answer :\nA. Tanguturi Anjaiah\nB. Damodaram Sanjivaiah\nC. P. V. Narasimha Rao\nD. Kasu Brahmananda Reddy',
+    'క్రింది ఆంధ్రప్రదేశ్ మాజీ ముఖ్య మంత్రులను కాలక్రమానుసారంగా అమర్చి, క్రింద ఇచ్చిన సమాధానాలలో సరైన దానిని గుర్తించండి :\nA. టంగుటూరి అంజయ్య\nB. దామోదరం సంజీవయ్య\nC. పి.వి. నరసింహారావు\nD. కాసు బ్రహ్మానంద రెడ్డి',
+    ['A, D, C, B', 'B, D, C, A', 'A, B, C, D', 'D, C, B, A'],
+    ['A, D, C, B', 'B, D, C, A', 'A, B, C, D', 'D, C, B, A'],
+    1,
+    'Chronology of AP Chief Ministers: Damodaram Sanjivaiah (1960–62, B) -> Kasu Brahmananda Reddy (1964–71, D) -> P. V. Narasimha Rao (1971–73, C) -> Tanguturi Anjaiah (1980–82, A).',
+    'ఆంధ్రప్రదేశ్ మాజీ ముఖ్యమంత్రుల కాలక్రమం: దామోదరం సంజీవయ్య (1960–62) -> కాసు బ్రహ్మానంద రెడ్డి (1964–71) -> పి.వి. నరసింహారావు (1971–73) -> టంగుటూరి అంజయ్య (1980–82).'
+  ],
+  [
+    37,
+    'Prehistoric Cave Sites in AP',
+    'Which of the following statements is/are incorrect ?\na. Billa Surgam Palaeolithic cave site is located in Anantapuramu district.\nb. Belum caves located in Nandyal district is the second longest cave in India.\nc. Cave sites of Kurnool and Muchatla Chintamani Gavi in A.P. are the only places in India where tools made of animal bones were found in upper palaeolithic context.',
+    'క్రింది ప్రకటనలలో ఏది/ఏవి తప్పు ?\na. పాత రాతియుగపు భిల్లసుర్గం గుహలు అనంతపురము జిల్లాలో ఉన్నాయి.\nb. నంద్యాల జిల్లాలో ఉన్న బేలూం గుహలు భారతదేశంలో రెండో అతి పొడవైన గుహలు.\nc. జంతువుల ఎముకలతో చేసిన ఎగువ ప్రాచీన శిలాయుగం నాటి పనిముట్లు భారతదేశం అంతటిలో కల్లా ఆంధ్రప్రదేశ్‌లోని కర్నూలు మరియు ముచ్చట్ల చింతామణిగవి గుహలలో మాత్రమే లభించాయి.',
+    ['a and b', 'b and c', 'a only', 'c only'],
+    ['a మరియు b', 'b మరియు c', 'a మాత్రమే', 'c మాత్రమే'],
+    2,
+    'Statement a is incorrect: Billa Surgam caves are located near Betamcherla in Nandyal (erstwhile Kurnool) district, not Anantapuramu. Statements b and c are correct.',
+    'భిల్లసుర్గం గుహలు అనంతపురము జిల్లాలో కాకుండా నంద్యాల (పూర్వపు కర్నూలు) జిల్లాలో ఉన్నాయి కాబట్టి a మాత్రమే తప్పు.'
+  ],
+  [
+    38,
+    'Modern Telugu Literature & Awards',
+    'Who was the first Telugu writer to win Jnanapith Award for the work titled “Ramayana Kalpavriksham” ?',
+    '“రామాయణ కల్పవృక్షం” అనే రచనకు తెలుగులో జ్ఞానపీఠ్ అవార్డును పొందిన మొట్టమొదటి తెలుగు రచయిత ఎవరు ?',
+    ['C. Narayana Reddy', 'Muppala Ranganayakamma', 'Vishwanatha Satyanarayana', 'Rayaprolu Subbarao'],
+    ['సి. నారాయణ రెడ్డి', 'ముప్పాళ రంగనాయకమ్మ', 'విశ్వనాథ సత్యనారాయణ', 'రాయప్రోలు సుబ్బారావు'],
+    2,
+    'Kavi Samrat Vishwanatha Satyanarayana won the Jnanpith Award (1970) for his magnum opus "Srimad Ramayana Kalpavriksham", becoming the first Telugu author to receive the honour.',
+    'విశ్వనాథ సత్యనారాయణ "శ్రీమద్రామాయణ కల్పవృక్షం" రచనకు 1970లో తెలుగులో తొలి జ్ఞానపీఠ్ అవార్డు అందుకున్నారు.'
+  ],
+  [
+    39,
+    'Early Journalism in Andhra',
+    'Which of the following statements is incorrect ?',
+    'క్రింది ప్రకటనలలో సరికానిది ఏది ?',
+    [
+      'Kandukuri Veeresalingam is known as the father of renaissance movement in Andhra',
+      '“The Crescent” is an English weekly founded by Mutnuri Krishna Rao',
+      'Andhra Patrika is the first Telugu political newsweekly',
+      'Krishna Patrika was started in 1902 by Konda Venkatappaya'
+    ],
+    [
+      'కందుకూరి వీరేశలింగం ‘ఆంధ్రలో పునర్వికాస ఉద్యమ పిత’ గా కీర్తించారు',
+      '“ది క్రెసెంట్” అనే ఆంగ్ల వారపత్రికను ముట్నూరు కృష్ణారావు స్థాపించారు',
+      'ఆంధ్ర పత్రిక తెలుగులోని మొదటి రాజకీయ వారపత్రిక',
+      'కృష్ణా పత్రికను 1902 లో కొండా వెంకటప్పయ్య ప్రారంభించారు'
+    ],
+    1,
+    'Statement (2) is incorrect: "The Crescent" (1844) was founded by Gazulu Lakshminarasu Chetty (whereas Mutnuri Krishna Rao edited Krishna Patrika).',
+    '“ది క్రెసెంట్” అనే ఆంగ్ల పత్రికను స్థాపించినది గాజుల లక్ష్మీనరసు శెట్టి (ముట్నూరు కృష్ణారావు కాదు).'
+  ],
+  [
+    40,
+    'British Annexation & Land Revenue in Andhra',
+    'Arrange the following events chronologically :\nA. Implementation of Ryotwari settlement in Madras.\nB. Acquisition of Guntur by East India Company.\nC. Battle of Padmanabham.\nD. Abolition of Zamindari settlement in Andhra.\nCodes :',
+    'క్రింది సంఘటనలను కాలక్రమానుసారంగా అమర్చండి :\nA. మద్రాసులో రైతువారీ విధానం అమలు.\nB. ఈస్ట్ ఇండియా కంపెనీ గుంటూరు ఆక్రమణ.\nC. పద్మనాభం యుద్ధం.\nD. ఆంధ్రలో జమీందారీ విధానం రద్దు.\nకోడ్‌లు :',
+    ['A, B, C, D', 'B, C, A, D', 'C, B, D, A', 'D, C, A, B'],
+    ['A, B, C, D', 'B, C, A, D', 'C, B, D, A', 'D, C, A, B'],
+    1,
+    'Chronology: Acquisition of Guntur Circar by EIC (1788, B) -> Battle of Padmanabham (1794, C) -> Ryotwari settlement in Madras (1820, A) -> Abolition of Zamindari Act (1948, D).',
+    'కాలక్రమం: గుంటూరు సర్కారు ఆక్రమణ (1788 - B) -> పద్మనాభం యుద్ధం (1794 - C) -> మద్రాసులో రైతువారీ విధానం (1820 - A) -> జమీందారీ విధానం రద్దు (1948 - D).'
+  ],
+  [
+    41,
+    'Nellore Telugu Chodas & Kakatiyas',
+    'Assertion (A) : Manumasiddhi II was reinstated on the throne by Ganapatideva.\nReason (R) : The power of Nellore Chodas was at its zenith during the reign of Manumasiddhi II.',
+    'ధ్రువీకరణ (A) : గణపతిదేవుడు రెండో మనుమసిద్ధి రాజ్యాన్ని పునరుద్ధరించాడు.\nకారణం (R) : రెండో మనుమసిద్ధి కాలంలో నెల్లూరు చోడుల అధికారం ఉచ్చస్థితికి చేరుకుంది.',
+    [
+      'Both (A) and (R) are true, and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true, but (R) is not the correct explanation of (A)',
+      '(A) is true, but (R) is false',
+      '(A) is false, but (R) is true'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R), (A) ను వివరిస్తుంది',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R), (A) ను వివరించదు',
+      '(A) నిజం, కానీ (R) తప్పు',
+      '(A) తప్పు, కానీ (R) నిజం'
+    ],
+    2,
+    'Ganapatideva reinstated Manumasiddhi II on the Nellore throne after Tikkana Somayaji sought his help (True). However, Nellore Choda power was at its zenith under Tikka I (Manumasiddhi’s father), and declined under Manumasiddhi II (False).',
+    'తిక్కన కోరిక మేరకు గణపతిదేవుడు రెండో మనుమసిద్ధి రాజ్యాన్ని పునరుద్ధరించాడు (నిజం). కానీ నెల్లూరు చోడుల అధికారం తిక్క భూపాలుని కాలంలో ఉచ్చస్థితిలో ఉండింది, మనుమసిద్ధి కాలంలో కాదు (తప్పు).'
+  ],
+  [
+    42,
+    'Modern Telugu Literature',
+    'Match Group – A with Group – B and select the correct answer using the codes given below.\nGroup – A (Book)\na. Japaneeyamu\nb. Mahaprasthanam\nc. Kanyasulkam\nd. Veyipadagalu\nGroup – B (Author)\ni. Gurajada Appa Rao\nii. Sri Sri\niii. Puchalapalli Sundarayya\niv. Viswanadha Satyanarayana\nv. Sriram Veerabrahmam',
+    'గ్రూప్ – A మరియు గ్రూప్ – B లను జతపరచడం ద్వారా క్రింది వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nగ్రూప్ – A (గ్రంథం)\na. జపనీయము\nb. మహాప్రస్థానం\nc. కన్యాశుల్కం\nd. వేయిపడగలు\nగ్రూప్ – B (రచయిత)\ni. గురజాడ అప్పారావు\nii. శ్రీ శ్రీ\niii. పుచ్చలపల్లి సుందరయ్య\niv. విశ్వనాథ సత్యనారాయణ\nv. శ్రీరాం వీరబ్రహ్మం',
+    ['a-v, b-ii, c-i, d-iii', 'a-i, b-iv, c-iii, d-v', 'a-iv, b-i, c-ii, d-v', 'a-v, b-ii, c-i, d-iv'],
+    ['a-v, b-ii, c-i, d-iii', 'a-i, b-iv, c-iii, d-v', 'a-iv, b-i, c-ii, d-v', 'a-v, b-ii, c-i, d-iv'],
+    3,
+    'Japaneeyamu -> Sriram Veerabrahmam (v); Mahaprasthanam -> Sri Sri (ii); Kanyasulkam -> Gurajada Appa Rao (i); Veyipadagalu -> Viswanadha Satyanarayana (iv).',
+    'జపనీయము (శ్రీరాం వీరబ్రహ్మం - v), మహాప్రస్థానం (శ్రీశ్రీ - ii), కన్యాశుల్కం (గురజాడ - i), వేయిపడగలు (విశ్వనాథ సత్యనారాయణ - iv).'
+  ],
+  [
+    43,
+    'Early Anti-British Resistance in Andhra',
+    'The Padmanabha battle was fought between',
+    'పద్మనాభ యుద్ధం ఎవరి మధ్యన జరిగింది ?',
+    [
+      'English and French',
+      'French and Bobbili Rulers',
+      'English and Vizianagaram Zamindars',
+      'English and Portuguese'
+    ],
+    [
+      'ఆంగ్లేయు మరియు ఫ్రెంచ్',
+      'ఫ్రెంచ్ మరియు బొబ్బిలి రాజులు',
+      'ఆంగ్లేయు మరియు విజయనగర జమీందార్లు',
+      'ఆంగ్లేయు మరియు పోర్చుగీసు'
+    ],
+    2,
+    'The Battle of Padmanabham (10 July 1794) was fought between the British East India Company and Raja Pusapati Vijayaram Raju of Vizianagaram.',
+    '1794లో జరిగిన పద్మనాభ యుద్ధం ఆంగ్లేయులకు మరియు విజయనగర జమీందారు విజయరామ రాజుకు మధ్య జరిగింది.'
+  ],
+  [
+    44,
+    'Andhra Maha Sabha',
+    'Match List – I with List – II and select the correct answer using the codes given below the lists.\nList – I (Andhra Maha Sabha)\na. 1st Session Andhra Maha Sabha\nb. 2nd Session Andhra Maha Sabha\nc. 3rd Session Andhra Maha Sabha\nd. 4th Session Andhra Maha Sabha\nList – II (Presided by)\nI. Mocharla Ramachandra Rao\nII. Nyapati Subba Rao\nIII. Baiya Narasimheswara Sharma\nIV. Raja Rama Rayanimgar',
+    'జాబితా – I మరియు జాబితా – II లను జతపరచడం ద్వారా క్రింది ఇచ్చిన వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nజాబితా – I (ఆంధ్ర మహాసభ)\na. ప్రథమ ఆంధ్ర మహాసభ\nb. ద్వితీయ ఆంధ్ర మహాసభ\nc. తృతీయ ఆంధ్ర మహాసభ\nd. నాల్గవ ఆంధ్ర మహాసభ\nజాబితా – II (అధ్యక్షులు)\nI. మోచర్ల రామచంద్ర రావు\nII. న్యాపతి సుబ్బారావు\nIII. బయ్యా నరసింహేశ్వర శర్మ\nIV. రాజా రామ రాయనింగార్',
+    ['a-III, b-II, c-IV, d-I', 'a-II, b-IV, c-III, d-I', 'a-II, b-III, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    ['a-III, b-II, c-IV, d-I', 'a-II, b-IV, c-III, d-I', 'a-II, b-III, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    0,
+    '1st Session (Bapatla, 1913) -> B. N. Sharma (III); 2nd Session (Vijayawada, 1914) -> Nyapati Subba Rao (II); 3rd Session (Visakhapatnam, 1915) -> Raja of Panagal / Rama Rayanimgar (IV); 4th Session (Kakinada, 1916) -> Mocharla Ramachandra Rao (I).',
+    '1వ ఆంధ్ర మహాసభ (బాపట్ల 1913 - బి.ఎన్. శర్మ), 2వ (విజయవాడ 1914 - న్యాపతి సుబ్బారావు), 3వ (విశాఖ 1915 - రాజా రామరాయనింగార్), 4వ (కాకినాడ 1916 - మోచర్ల రామచంద్రరావు).'
+  ],
+  [
+    45,
+    'Chalukya-Cholas in Vengi',
+    'Which of the following Chalukya-Chola Viceroys had assumed the title Sarvalokasraya, Sri Vishnuvardhana and celebrated his coronation at Jananathapura (Draksharama) ?',
+    'క్రింది ఇచ్చిన ఏ చాళుక్య-చోళ రాజ ప్రతినిధి తన పట్టాభిషేకాన్ని జననాథపురం (ద్రాక్షారామం)లో జరుపుకున్నారు మరియు సర్వలోకాశ్రయ, శ్రీ విష్ణువర్ధన బిరుదులను పొందాడు ?',
+    ['Raja Raja Chola Ganga', 'Vikrama Chola', 'Mummadi Chola', 'Parantaka Chola'],
+    ['రాజ రాజ చోళ గంగ', 'విక్రమ చోళ', 'ముమ్మడి చోళ', 'పరాంతక చోళ'],
+    1,
+    'Vikrama Chola served as the Chalukya-Chola viceroy of Vengi (1108–1118 CE), assumed titles like Sarvalokasraya Sri Vishnuvardhana, and held his coronation at Jananathapura (Draksharama).',
+    'విక్రమ చోళుడు వేంగి చాళుక్య-చోళ ప్రతినిధిగా సర్వలోకాశ్రయ శ్రీ విష్ణువర్ధన బిరుదును పొంది, జననాథపురం (ద్రాక్షారామం)లో పట్టాభిషేకం జరుపుకున్నాడు.'
+  ],
+  [
+    46,
+    'Asaf Jahi Dynasty of Hyderabad',
+    'Who was the last Asaf Jahi (Nizam) ruler ?',
+    'ఆసఫ్ జాహీ వంశ (నైజాము) చివరి రాజు',
+    ['Osman Ali Khan', 'Sikindar Jah', 'Mahaboob Basha', 'Afzal-ud-daula'],
+    ['ఉస్మాన్ అలి ఖాన్', 'సికిందర్ జా', 'మహబూబ్ బాషా', 'అఫ్జల్ ఉద్దౌల'],
+    0,
+    'Mir Osman Ali Khan (Asaf Jah VII, r. 1911–1948) was the seventh and last ruling Nizam of the Asaf Jahi dynasty of Hyderabad.',
+    'మీర్ ఉస్మాన్ అలీ ఖాన్ (ఏడవ ఆసఫ్ జా) హైదరాబాద్ ఆసఫ్ జాహీ వంశంలో చివరి పాలకుడు.'
+  ],
+  [
+    47,
+    'Gentlemen’s Agreement (1956)',
+    "According to the Gentlemen's Agreement, what was the ratio of Cabinet representation for Andhra and Telangana ?",
+    'పెద్ద మనుషుల ఒప్పందం ప్రకారం ఆంధ్ర, తెలంగాణ ప్రాంతాల మధ్య కేబినెట్ మంత్రుల నియామకం ఏ నిష్పత్తిలో జరగాలని నిర్ణయించారు ?',
+    ['50 : 50', '40 : 60', '60 : 40', '70 : 30'],
+    ['50 : 50', '40 : 60', '60 : 40', '70 : 30'],
+    2,
+    "The Gentlemen's Agreement of February 1956 stipulated a 60 : 40 ratio in the State Cabinet between Andhra and Telangana regions.",
+    '1956 పెద్ద మనుషుల ఒప్పందం ప్రకారం ఆంధ్ర, తెలంగాణ ప్రాంతాల మధ్య కేబినెట్ ప్రాతినిధ్యం 60 : 40 నిష్పత్తిలో ఉండాలని నిర్ణయించారు.'
+  ],
+  [
+    48,
+    'Classical Telugu Literature',
+    'Match List – I with List – II and select the correct answer from the codes given below.\nList – I (Authors)\na. Ketana\nb. Marana\nc. Tikkana\nd. Manchena\nList – II (Works)\nI. Markandeya Puranam\nII. Nirvachanottara Ramayanam\nIII. Andhra Bhasha Bhushanam\nIV. Keyurabahu Charitra',
+    'జాబితా – I మరియు జాబితా – II లను జతపరచి క్రింద ఇచ్చిన వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nజాబితా – I (రచయితలు)\na. కేతన\nb. మారన\nc. తిక్కన\nd. మంచెన\nజాబితా – II (రచనలు)\nI. మార్కండేయ పురాణం\nII. నిర్వచనోత్తర రామాయణం\nIII. ఆంధ్ర భాషా భూషణం\nIV. కేయూరబాహు చరిత్ర',
+    ['a-I, b-II, c-III, d-IV', 'a-III, b-I, c-II, d-IV', 'a-II, b-I, c-III, d-IV', 'a-II, b-I, c-IV, d-III'],
+    ['a-I, b-II, c-III, d-IV', 'a-III, b-I, c-II, d-IV', 'a-II, b-I, c-III, d-IV', 'a-II, b-I, c-IV, d-III'],
+    1,
+    'Ketana -> Andhra Bhasha Bhushanam (III); Marana -> Markandeya Puranam (I); Tikkana -> Nirvachanottara Ramayanam (II); Manchena -> Keyurabahu Charitra (IV).',
+    'కేతన (ఆంధ్ర భాషా భూషణం - III), మారన (మార్కండేయ పురాణం - I), తిక్కన (నిర్వచనోత్తర రామాయణం - II), మంచెన (కేయూరబాహు చరిత్ర - IV).'
+  ],
+  [
+    49,
+    'Economic History of Coastal Andhra',
+    'Pedaganjam and Chinaganjam were known for their production of',
+    'పెదగంజాం, చినగంజాం ప్రాంతాలు ఏ ఉత్పత్తికి ప్రసిద్ధి పొందాయి ?',
+    ['Textiles', 'Indigo', 'Sugar', 'Salt'],
+    ['వస్త్రాలు', 'నీలిమందు', 'చక్కెర', 'ఉప్పు'],
+    3,
+    'Pedaganjam and Chinaganjam (in Prakasam/Bapatla coastal belt) were historically major centres of salt production and salt satyagraha.',
+    'పెదగంజాం మరియు చినగంజాం తీరప్రాంతాలు ఉప్పు ఉత్పత్తికి చారిత్రకంగా ప్రసిద్ధి చెందాయి.'
+  ],
+  [
+    50,
+    'Palanadu Pullari Satyagraha',
+    '“No Pullari (Grass) Tax” Movement was led in Palanadu by',
+    '“పల్నాడులో పుల్లరి పన్నులు” చెల్లించ వద్దనే ఉద్యమం నడిపిందెవరు ?',
+    ['K. V. L. Rao', 'H. M. Reddy', 'Kanneganti Hanumanthu', 'Gurajada Appa Rao'],
+    ['కె. వి. ఎల్. రావు', 'హెచ్. ఎం. రెడ్డి', 'కన్నెగంటి హనుమంతు', 'గురజాడ అప్పారావు'],
+    2,
+    'Kanneganti Hanumanthu led the heroic Palanadu Pullari (grazing/grass tax) non-payment agitation in 1921–22 and attained martyrdom.',
+    'పల్నాడు ప్రాంతంలో 1921లో జరిగిన పుల్లరి పన్ను వ్యతిరేక ఉద్యమానికి కన్నెగంటి హనుమంతు నాయకత్వం వహించారు.'
+  ],
+  [
+    51,
+    'Vandemataram Movement in Andhra',
+    'Match List – I with List – II and select the correct answer using the codes given below the lists.\nList – I\na. Kakinada riots case\nb. Bipin Chandra Pal’s tour in Andhra\nc. Kotappa Konda riots\nd. Tenali Bomb case\nList – II\nI. February, 1909\nII. July, 1907\nIII. April, 1907\nIV. April, 1909',
+    'జాబితా – I మరియు జాబితా – II లను జతపరచడం ద్వారా క్రింది వాటిలో సరి అయిన సమాధానాన్ని గుర్తించండి.\nజాబితా – I\na. కాకినాడ దొమ్మీ కేసు\nb. బిపిన్ చంద్రపాల్ ఆంధ్రదేశ పర్యటన\nc. కొటప్పకొండ దొమ్మీ\nd. తెనాలి బాంబు కేసు\nజాబితా – II\nI. ఫిబ్రవరి, 1909\nII. జూలై, 1907\nIII. ఏప్రిల్, 1907\nIV. ఏప్రిల్, 1909',
+    ['a-III, b-II, c-I, d-IV', 'a-II, b-IV, c-III, d-I', 'a-II, b-III, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    ['a-III, b-II, c-I, d-IV', 'a-II, b-IV, c-III, d-I', 'a-II, b-III, c-I, d-IV', 'a-II, b-I, c-III, d-IV'],
+    2,
+    'Bipin Chandra Pal’s Andhra tour -> April 1907 (III); Kakinada riots -> July 1907 (II); Kotappakonda riots (Chinnappareddy) -> February 1909 (I); Tenali Bomb case -> April 1909 (IV).',
+    'కాకినాడ దొమ్మీ కేసు (జూలై, 1907 - II), బిపిన్ చంద్రపాల్ పర్యటన (ఏప్రిల్, 1907 - III), కోటప్పకొండ దొమ్మీ (ఫిబ్రవరి, 1909 - I), తెనాలి బాంబు కేసు (ఏప్రిల్, 1909 - IV).'
+  ],
+  [
+    52,
+    'Freedom Struggle in Andhra',
+    'Who was the leader of Chirala Perala Movement ?',
+    'చీరాల పేరాల ఉద్యమ నాయకుడు ఎవరు ?',
+    ['Duggirala Gopala Krishnaiah', 'P. V. Choudary', 'Potti Sreeramulu', 'Acharya N. G. Ranga'],
+    ['దుగ్గిరాల గోపాల కృష్ణయ్య', 'పి. వి. చౌదరి', 'పొట్టి శ్రీరాములు', 'ఆచార్య ఎన్. జి. రంగా'],
+    0,
+    "Andhra Ratna Duggirala Gopala Krishnaiah led the famous 1921 Chirala-Perala non-cooperation movement against the forced municipality merger and established 'Ramnagar'.",
+    '1921లో జరిగిన ప్రసిద్ధ చీరాల-పేరాల మునిసిపాలిటీ వ్యతిరేక ఉద్యమానికి ఆంధ్రరత్న దుగ్గిరాల గోపాలకృష్ణయ్య నాయకత్వం వహించారు.'
+  ],
+  [
+    53,
+    'Temple Architecture of Andhra',
+    'The architectural structure of which of the following temples exemplifies the independent style of the Chalukya-Cholas, incorporating Pallava and early Chalukya influences ?',
+    'క్రింది ఏ ఆలయ నిర్మాణం, పల్లవ మరియు తొలి చాళుక్యుల నిర్మాణ ప్రభావంతో కూడిన స్వతంత్ర చాళుక్య-చోళుల నిర్మాణ శైలిని ఉదాహరిస్తుంది ?',
+    ['Brihadeeshwara temple', 'Draksharama temple', 'Padmakshi temple', 'All of the above'],
+    ['బృహదీశ్వర ఆలయం', 'ద్రాక్షారామ ఆలయం', 'పద్మాక్షి ఆలయం', 'పైవన్నీ'],
+    1,
+    'The Bhimeswara Swamy temple at Draksharama exemplifies the synthesis of Pallava, early Eastern Chalukyan, and Chalukya-Chola architectural styles.',
+    'ద్రాక్షారామ భీమేశ్వర స్వామి ఆలయ నిర్మాణం పల్లవ, తొలి చాళుక్య మరియు చాళుక్య-చోళ శైలుల కలయికను ప్రతిబింబిస్తుంది.'
+  ],
+  [
+    54,
+    'Gurram Jashuva & Modern Literature',
+    'Which of the following statements is incorrect ?',
+    'క్రింది ప్రకటనలలో సరికానిది ఏది ?',
+    [
+      'September 28 marks the birth anniversary of Gurram Jashuva',
+      "He was presented the Sahitya Akademi award for his work titled ‘Gabbilam’ in 1964",
+      'He was appointed to the Andhra Pradesh Legislative Council as a member in 1964',
+      'He was awarded the Padma Bhushan by the Government of India'
+    ],
+    [
+      'సెప్టెంబర్ 28 గుర్రం జాషువా జయంతి',
+      '‘గబ్బిలం’ అనే రచనకు గాను జాషువాకు 1964 లో సాహిత్య అకాడమీ అవార్డును ప్రదానం చేశారు',
+      'జాషువా 1964 లో ఆంధ్రప్రదేశ్ శాసన మండలిలో సభ్యత్వం పొందారు',
+      'భారత ప్రభుత్వం జాషువాను పద్మభూషణ్‌తో సత్కరించింది'
+    ],
+    1,
+    'Statement (2) is incorrect: Gurram Jashuva received the Central Sahitya Akademi Award in 1964 for his work "Kreestu Charitra" (not "Gabbilam").',
+    '1964లో గుర్రం జాషువాకు సాహిత్య అకాడమీ అవార్డు ఆయన రచించిన "క్రీస్తు చరిత్ర"కు లభించింది (గబ్బిలం కాదు).'
+  ],
+  [
+    55,
+    'Irrigation Projects of Andhra',
+    'Telugu Ganga Canal Water is supplied to which of the following states ?',
+    'తెలుగు గంగ కాలువ ద్వారా నీరు ఏ రాష్ట్రానికి పంపబడుతుంది ?',
+    ['Telangana', 'Karnataka', 'Uttar Pradesh', 'Tamil Nadu'],
+    ['తెలంగాణా', 'కర్నాటక', 'ఉత్తర ప్రదేశ్', 'తమిళనాడు'],
+    3,
+    'The Telugu Ganga Project supplies drinking water from the Krishna River (via Srisailam) to Chennai city in Tamil Nadu alongside irrigating Rayalaseema/Nellore.',
+    'తెలుగు గంగ ప్రాజెక్టు ద్వారా తమిళనాడులోని చెన్నై నగరానికి త్రాగునీరు సరఫరా చేయబడుతుంది.'
+  ],
+  [
+    56,
+    'Physical Culture & Geography of AP',
+    'Eastern Ghats in Srikakulam are called',
+    'శ్రీకాకుళంలో తూర్పు కనుమలను ఏ పేరుతో పిలుస్తారు ?',
+    ['Papi Kondalu', 'Palakondalu', 'Nallamala Kondalu', 'Mahendra Girulu'],
+    ['పాపి కొండలు', 'పాల కొండలు', 'నల్లమల కొండలు', 'మహేంద్ర గిరులు'],
+    3,
+    'In the northern coastal district of Srikakulam (Andhra–Odisha border), the Eastern Ghats are called Mahendra Girulu (Mahendragiri Hills).',
+    'శ్రీకాకుళం జిల్లాలో తూర్పు కనుమలను "మహేంద్ర గిరులు" అని పిలుస్తారు.'
+  ],
+  [
+    57,
+    'Social Reform Movement in Andhra',
+    'Who was the founder of Vivekavardhini Newspaper ?',
+    'వివేకవర్ధిని వార్తాపత్రిక స్థాపకులు ఎవరు ?',
+    ['K. Venkatarathnam', 'Veeresalingam Panthulu', 'Venkataraya Sastry', 'D. Rangacharyulu'],
+    ['కె. వెంకటరత్నం', 'వీరేశలింగం పంతులు', 'వెంకటరాయ శాస్త్రి', 'డి. రంగాచార్యులు'],
+    1,
+    'Kandukuri Veeresalingam Pantulu founded the reformist Telugu journal "Vivekavardhini" in 1874 at Rajahmundry.',
+    '1874లో రాజమండ్రిలో కందుకూరి వీరేశలింగం పంతులు "వివేకవర్ధిని" పత్రికను స్థాపించారు.'
+  ],
+  [
+    58,
+    'Kalinga & Ancient Deccan',
+    'Which religion did King Kharavela patronise ?',
+    'ఖారవేల రాజు పోషించిన మతం ఏది ?',
+    ['Jainism', 'Buddhism', 'Shaivism', 'Vaishnavism'],
+    ['జైనం', 'బౌద్ధం', 'శైవం', 'వైష్ణవం'],
+    0,
+    'King Kharavela of the Mahameghavahana dynasty of Kalinga (Hathigumpha inscription) was a staunch patron of Jainism.',
+    'కళింగ రాజు ఖారవేలుడు (హాథీగుంఫా శాసనం) జైన మతాన్ని ఆదరించి పోషించారు.'
+  ],
+  [
+    59,
+    'Home Rule Movement in Andhra',
+    'Who was the founder of Common Weal and New India newspapers ?',
+    'కామన్ వీల్ మరియు న్యూ ఇండియా వార్తాపత్రికలు స్థాపకులు ఎవరు ?',
+    ['Sarojini Naidu', 'Bal Gangadhar Tilak', 'Annie Besant', 'Lala Lajapat Rai'],
+    ['సరోజినీ నాయుడు', 'బాల గంగాధర్ తిలక్', 'అని బిసెంట్', 'లాలా లజపత్ రాయ్'],
+    2,
+    'Dr. Annie Besant founded the weekly "Commonweal" and daily "New India" (1914) in Madras to campaign for Home Rule across Andhra and South India.',
+    'హోమ్ రూల్ ఉద్యమ ప్రచారం కోసం అనీ బిసెంట్ "కామన్ వీల్" మరియు "న్యూ ఇండియా" పత్రికలను ప్రారంభించారు.'
+  ],
+  [
+    60,
+    'Eastern Chalukya Temple Architecture',
+    'Which of the following statement(s) is/are incorrect ?\na. Vijayaditya II is credited with the construction of 108 temples.\nb. Raja Raja Narendra constructed Rajarajeswara temple at Biccavole.\nc. Chalukya Bhima constructed Bhimeswara Swamy temple at Draksharama.',
+    'క్రింది ప్రకటనలలో సరికానిది(వి) ఏది/ఏవి ?\na. రెండో విజయాదిత్యుడు 108 ఆలయాలను నిర్మించాడు.\nb. రాజ రాజ నరేంద్రుడు బిక్కవోలులో రాజరాజేశ్వర ఆలయాన్ని నిర్మించాడు.\nc. చాళుక్య భీముడు ద్రాక్షారామంలో భీమేశ్వర స్వామి ఆలయాన్ని నిర్మించాడు.',
+    ['a and c', 'b and c', 'b only', 'c only'],
+    ['a మరియు c', 'b మరియు c', 'b మాత్రమే', 'c మాత్రమే'],
+    2,
+    'Statements a and c are historically accurate (Narendra Mrigaraja Vijayaditya II built 108 Siva temples; Chalukya Bhima I built Draksharama). Statement b is incorrect because the Rajarajeswara temple at Biccavole belongs to earlier Chalukyan times/not Rajaraja Narendra.',
+    'రెండో విజయాదిత్యుడు 108 శివాలయాలు మరియు చాళుక్య భీముడు ద్రాక్షారామ భీమేశ్వర ఆలయం నిర్మించారు. బిక్కవోలులో రాజరాజ నరేంద్రుడు రాజరాజేశ్వర ఆలయాన్ని నిర్మించాడనేది (b) సరికాదు.'
+  ],
+  [
+    61,
+    'Modern Telugu Poets',
+    'Which poet was called the “Poet of the Millennium” ?',
+    '“మిలీనియం కవి” గా పిలువబడిన కవి ఎవరు ?',
+    ['Rayaprolu Subba Rao', 'Sri Sri', 'Gurram Jashuva', 'Devulapalli Venkata Krishna Sastri'],
+    ['రాయప్రోలు సుబ్బారావు', 'శ్రీశ్రీ', 'గుర్రం జాషువా', 'దేవులపల్లి వేంకట కృష్ణ శాస్త్రి'],
+    2,
+    'Mahakavi Gurram Jashuva is honoured as the "Poet of the Millennium" (Nava Yuga Kavi Chakravarthi) for his humanist Telugu poetry including Gabbilam.',
+    'నవయుగ కవిచక్రవర్తి గుర్రం జాషువాను "మిలీనియం కవి"గా కీర్తించారు.'
+  ],
+  [
+    62,
+    'Formation of Andhra State',
+    'Andhra State was formed on',
+    'ఆంధ్ర రాష్ట్రం ఏర్పాటైన తేదీ',
+    ['1st October 1953', '1st November 1953', '1st November 1956', '26th January 1950'],
+    ['1 అక్టోబర్ 1953', '1 నవంబర్ 1953', '1 నవంబర్ 1956', '26 జనవరి 1950'],
+    0,
+    'Andhra State (with Kurnool as capital and Tanguturi Prakasam as CM) was officially inaugurated on 1st October 1953.',
+    'ఆంధ్ర రాష్ట్రం 1 అక్టోబర్ 1953న (కర్నూలు రాజధానిగా) ఏర్పాటైంది.'
+  ],
+  [
+    63,
+    'Andhra & Visalandhra Timeline',
+    'Arrange the following in chronological order :\nA. Formation of the Visalandra Mahasabha\nB. Dhar Commission\nC. Swami Sitaram’s fast\nD. Formation of States Re-organization Commission\nCodes :',
+    'క్రింది అంశాలను కాలక్రమానుగుణంగా అమర్చండి :\nA. విశాలాంధ్ర మహాసభ ఏర్పాటు\nB. ధార్ కమీషన్\nC. స్వామి సీతారామ్ నిరాహార దీక్ష\nD. రాష్ట్ర పునర్నిర్మాణ సంఘం ఏర్పాటు\nకోడ్‌లు :',
+    ['A, B, C, D', 'B, A, C, D', 'C, A, B, D', 'D, C, A, B'],
+    ['A, B, C, D', 'B, A, C, D', 'C, A, B, D', 'D, C, A, B'],
+    1,
+    'Chronology: Dhar Commission (June 1948, B) -> Visalandhra Mahasabha at Vijayawada (Nov 1949, A) -> Swami Sitaram’s fast (Aug 1951, C) -> States Reorganisation Commission (Dec 1953, D).',
+    'కాలక్రమం: ధార్ కమిషన్ (జూన్ 1948 - B) -> విశాలాంధ్ర మహాసభ (నవంబర్ 1949 - A) -> స్వామి సీతారామ్ నిరాహార దీక్ష (ఆగస్టు 1951 - C) -> రాష్ట్ర పునర్నిర్మాణ సంఘం (డిసెంబర్ 1953 - D).'
+  ],
+  [
+    64,
+    'Cave Architecture in Andhra',
+    'Undavalli caves are associated with',
+    'ఉండవల్లి గుహలు ఎవరికి సంబంధించినవి ?',
+    ['Vishnukundins', 'Kakatiyas', 'Rashtrakutas', 'Reddi kings'],
+    ['విష్ణుకుండినులు', 'కాకతీయులు', 'రాష్ట్రకూటులు', 'రెడ్డి రాజులు'],
+    0,
+    'The rock-cut four-storeyed Undavalli Caves near Vijayawada (Guntur district) are architectural monuments of the Vishnukundin dynasty (4th–5th century CE).',
+    'విజయవాడ సమీపంలోని ఉండవల్లి గుహలు విష్ణుకుండిన రాజుల కాలం నాటివి.'
+  ],
+  [
+    65,
+    'English Factory at Machilipatnam',
+    "Assertion (A) : British ship ‘Globe’ under the command of Captain Hawkins arrived at Machilipatnam in 1611 A.D.\nReason (R) : Quli Qutub Shah permitted the English East India Company to establish a factory at Machilipatnam.",
+    "ధ్రువీకరణ (A) : 1611 A.D. లో కెప్టెన్ హాకిన్స్ దళాధిపత్యంలో గ్లోబ్ అనే ఆంగ్ల నౌక మచిలీపట్నం రేవును చేరుకుంది.\nకారణం (R) : మచిలీపట్నంలో వర్తక స్థావరాన్ని నెలకొల్పడానికి ఇంగ్లీషు తూర్పు ఇండియా కంపెనీకి కులీ కుతుబ్ షా అనుమతి ఇచ్చాడు.",
+    [
+      'Both (A) and (R) are true, and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true, but (R) is not the correct explanation of (A)',
+      '(A) is true, but (R) is false',
+      '(A) is false, but (R) is true'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R), (A) ను వివరిస్తుంది',
+      '(A) మరియు (R) రెండూ నిజం కానీ (R), (A) ను వివరించదు',
+      '(A) నిజం, కానీ (R) తప్పు',
+      '(A) తప్పు, కానీ (R) నిజం'
+    ],
+    3,
+    "Assertion (A) is false because the English ship 'Globe' arrived at Machilipatnam in 1611 under Captain Anthony Hippon (whereas Captain Hawkins arrived at Surat in 1608). Reason (R) is true: Sultan Muhammad Quli Qutb Shah permitted the factory.",
+    "1611లో మచిలీపట్నానికి వచ్చిన 'గ్లోబ్' నౌక కెప్టెన్ ఆంథోనీ హిప్పన్ (కెప్టెన్ హాకిన్స్ కాదు) కనుక (A) తప్పు; కులీ కుతుబ్ షా అనుమతి ఇచ్చారు కాబట్టి (R) నిజం."
+  ],
+  [
+    66,
+    'British Administration in Ceded Districts',
+    'Who was known as the first Principal Collector of Rayalaseema ?',
+    'రాయలసీమ మొదటి ప్రధాన కలెక్టర్ ఎవరు ?',
+    ['Sir Thomas Munro', 'Sir C.P. Brown', 'Sir Arthur Cotton', 'Rev. Noble'],
+    ['సర్ థామస్ మన్రో', 'సర్ సి.పి. బ్రౌన్', 'సర్ ఆర్థర్ కాటన్', 'రెవ్. నోబిల్'],
+    0,
+    'Sir Thomas Munro was appointed in October 1800 as the first Principal Collector of the Ceded Districts (Rayalaseema) and introduced the Ryotwari system.',
+    '1800లో దత్తమండలాలకు (రాయలసీమకు) మొదటి ప్రధాన కలెక్టరుగా సర్ థామస్ మన్రో నియమితులయ్యారు.'
+  ],
+  [
+    67,
+    'Portuguese Agricultural Impact',
+    'Which Fruit was introduced by the Portuguese to the Telugu soil ?',
+    'పోర్చుగీస్ వారు తెలుగు వారికి పరిచయం చేసిన పండు పేరేమి ?',
+    ['Banana', 'Apple', 'Orange', 'Tomato'],
+    ['అరటి', 'ఆపిల్', 'బత్తాయి', 'టొమాటో'],
+    3,
+    'Tomato (botanically a fruit from the Americas) was brought to India via the Columbian Exchange by the Portuguese in the 16th century alongside chillies, cashew, and tobacco.',
+    'పోర్చుగీసు వారు దక్షిణ అమెరికా నుండి టొమాటో, మిరప, పొగాకు వంటి పంటలను తెలుగు నేలకు పరిచయం చేశారు.'
+  ],
+  [
+    68,
+    'Eastern Chalukya–Chola Matrimonial Ties',
+    'Which of the following statements is/are incorrect ?\nI. Saktivarma had married Kundavai, the daughter of Raja Raja Chola I.\nII. Raja Raja Narendra had married Ammangaidevi, the daughter of Rajendra Chola I.\nIII. Rajendra Chalukya had married Madurantaki, the daughter of Rajendra Chola II.',
+    'క్రింది ప్రకటనలలో సరికానిది(వి) ఏది/ఏవి ?\nI. శక్తివర్మ మొదటి రాజ రాజ చోళుని కుమార్తె కుందవైని వివాహం చేసుకున్నాడు.\nII. రాజరాజ నరేంద్రుడు మొదటి రాజేంద్ర చోళుని కుమార్తె అమ్మంగైదేవిని వివాహం చేసుకున్నాడు.\nIII. రాజేంద్ర చాళుక్యుడు రెండో రాజేంద్ర చోళుని కుమార్తె మధురాంతకిని వివాహం చేసుకున్నాడు.',
+    ['Only I', 'Only II', 'I and III only', 'I and II only'],
+    ['I మాత్రమే', 'II మాత్రమే', 'I మరియు III మాత్రమే', 'I మరియు II మాత్రమే'],
+    0,
+    'Statement I is incorrect: Kundavai (daughter of Rajaraja Chola I) was married to Vimaladitya (younger brother of Saktivarma I), not Saktivarma. Statements II and III are true.',
+    'రాజరాజ చోళుని కుమార్తె కుందవైని వివాహం చేసుకున్నది విమలాదిత్యుడు (శక్తివర్మ కాదు). కనుక I మాత్రమే సరికానిది.'
+  ],
+  [
+    69,
+    'Modern Telugu Poetry Titles',
+    'Which of the following poets is known as “Abhinava Nannaya” ?',
+    'ఈ క్రింది కవులలో ఎవరిని “అభినవ నన్నయ” అంటారు ?',
+    ['Vishwanatha Satyanarayana', 'Rayaprolu Subbarao', 'Boyi Bhimanna', 'Srirangam Srinivasarao'],
+    ['విశ్వనాథ సత్యనారాయణ', 'రాయప్రోలు సుబ్బారావు', 'బోయి భీమన్న', 'శ్రీరంగం శ్రీనివాసరావు'],
+    1,
+    'Rayaprolu Subbarao, pioneer of Bhavakavitvam (Romantic Telugu Poetry) and author of Truna Kankanam, is celebrated with the title "Abhinava Nannaya".',
+    'భావకవిత్వ పితామహుడైన రాయప్రోలు సుబ్బారావును "అభినవ నన్నయ" అని పిలుస్తారు.'
+  ],
+  [
+    70,
+    'Modern Andhra Institutions',
+    'Who was the founder of Andhra Bank ?',
+    'ఆంధ్రా బ్యాంక్ వ్యవస్థాపకులు ఎవరు ?',
+    ['Kakani Venkata Ratnam', 'Harisarvothama Rao', 'Kaleshwar Rao', 'Bhogaraju Pattabhi Sitaramaiah'],
+    ['కాకాని వెంకట రత్నం', 'హరిసర్వోత్తమ రావు', 'కాళేశ్వర రావు', 'భోగరాజు పట్టాభి సీతారామయ్య'],
+    3,
+    'Dr. Bhogaraju Pattabhi Sitaramayya founded Andhra Bank at Machilipatnam on 20 November 1923.',
+    'డాక్టర్ భోగరాజు పట్టాభి సీతారామయ్య 1923లో మచిలీపట్నంలో ఆంధ్రా బ్యాంకును స్థాపించారు.'
+  ],
+  [
+    71,
+    'Nannaya Bhattu & Telugu Literature',
+    'Which of the following statements regarding Nannaya Bhattu are correct ?\nI. Nannaya Bhattu was a Telugu poet and the author of ‘Andhra Mahabharatam’, a Telugu retelling of the Sanskrit-language Mahabharata.\nII. He is also credited with writing the Andhra Shabda Chintamani, a Sanskrit treatise on Telugu grammar.\nIII. Raja Raja Narendra donated Nandampudi Agrahara to Nannaya.',
+    'నన్నయ భట్టుని గూర్చి ఈ క్రింది ప్రకటనలలో సరైనవి ఏవి ?\nI. తెలుగు కవి అయిన నన్నయ భట్టు సంస్కృత కావ్యమైన మహాభారతంను తెలుగులోకి ఆంధ్ర మహాభారతంగా అనువదించారు.\nII. తెలుగు వ్యాకరణం గూర్చి నన్నయ సంస్కృతంలో ఆంధ్ర శబ్ద చింతామణిని కూడా రచించారు.\nIII. రాజ రాజ నరేంద్రుడు నన్నయకు నందంపూడి అగ్రహారాన్ని దానం చేశారు.',
+    ['I and II', 'I and III', 'II and III', 'I, II, III'],
+    ['I మరియు II', 'I మరియు III', 'II మరియు III', 'I, II, III'],
+    3,
+    'All three statements are correct: Adi Kavi Nannaya authored the first 2.5 parvas of Andhra Mahabharatam, is traditionally credited with Andhra Shabda Chintamani, and received Nandampudi Agrahara from Rajaraja Narendra (Nandampudi grant).',
+    'ఆదికవి నన్నయ ఆంధ్ర మహాభారత రచన, ఆంధ్ర శబ్ద చింతామణి కర్తృత్వం మరియు రాజరాజ నరేంద్రుని నందంపూడి అగ్రహార దానం — ఈ మూడు ప్రకటనలు సరైనవి.'
+  ],
+  [
+    72,
+    'Social Reform in Andhra',
+    'Who was the founder of the first girls schools at Rajahmundry ?',
+    'బాలికల కోసం తొలి సారి పాఠశాలలు రాజమండ్రిలో ప్రారంభించినదెవరు ?',
+    ['Madapati Hanumantha Rao', 'Gurajada Appa Rao', 'Prakasam Panthulu', 'Veeresalingam Panthulu'],
+    ['మాడపాటి హనుమంత రావు', 'గురజాడ అప్పారావు', 'ప్రకాశంపంతులు', 'వీరేశలింగం పంతులు'],
+    3,
+    'Kandukuri Veeresalingam Pantulu established the first girls’ school in Andhra at Dowleswaram/Rajahmundry in 1874.',
+    'కందుకూరి వీరేశలింగం పంతులు 1874లో రాజమండ్రి ప్రాంతంలో తొలి బాలికల పాఠశాలను స్థాపించారు.'
+  ],
+  [
+    73,
+    'European Powers in India',
+    'Blue Water Policy is associated with',
+    'నీలి నీటి విధానం ఎవరికి సంబంధించింది ?',
+    ['Portuguese', 'French', 'Dutch', 'English'],
+    ['పోర్చుగీసు', 'ఫ్రెంచ్', 'డచ్', 'ఇంగ్లీష్'],
+    0,
+    'The "Blue Water Policy" (Cartaze naval supremacy system) was introduced by Francisco de Almeida, the first Portuguese Viceroy in India.',
+    'నీలి నీటి విధానాన్ని (Blue Water Policy) భారతదేశంలో మొదటి పోర్చుగీసు గవర్నర్ ఫ్రాన్సిస్కో డి అల్మేడా ప్రవేశపెట్టారు.'
+  ],
+  [
+    74,
+    'Early Modern Telugu Literature',
+    'The first novel in Telugu language was',
+    'తెలుగు భాషలో మొదటగా వచ్చిన నవల పేరు ఏమి ?',
+    ['Ekavira', 'Chivaraku Migiledi', 'Malapalli', 'Rajashekara Charitam'],
+    ['ఏకవీర', 'చివరకు మిగిలేది', 'మాలపల్లి', 'రాజశేఖర చరితము'],
+    3,
+    'Veeresalingam Pantulu’s "Rajashekhara Charitramu" (1878, serialised in Vivekavardhini) is celebrated as the first full-fledged social novel in Telugu.',
+    'కందుకూరి వీరేశలింగం రచించిన "రాజశేఖర చరితము" తెలుగులో తొలి ప్రసిద్ధ సాంఘిక నవల.'
+  ],
+  [
+    75,
+    'Satavahana Dynasty',
+    'Which of the following statements is not true about the Satavahanas ?',
+    'క్రింది ప్రకటనలలో శాతవాహనులను గూర్చి నిజం కాని ప్రకటన ఏది ?',
+    [
+      'They were described as Andhra Brithyas in Puranas',
+      'They issued bilingual coins in Prakrit and Dravidian Script',
+      'They were patrons of Buddhism and Hinduism',
+      'They had matrimonial alliance with Kakatiyas'
+    ],
+    [
+      'పురాణాలలో వారిని ఆంధ్ర భృత్యులని పేర్కొన్నారు',
+      'వారు ప్రాకృత మరియు ద్రావిడ లిపిలతో కూడిన ద్విభాషా నాణేలను ముద్రించారు',
+      'వారు బౌద్ధ మరియు హిందూ మతాలను పోషించారు',
+      'వారికి కాకతీయులతో వైవాహిక బంధం ఉంది'
+    ],
+    3,
+    'Statement (4) is false: Satavahanas ruled roughly from 2nd century BCE to 3rd century CE, nearly a millennium before the Kakatiya dynasty; they had matrimonial alliances with the Sakas (Rudradaman), not Kakatiyas.',
+    'శాతవాహనులకు మరియు సుమారు వెయ్యేళ్ల తర్వాత వచ్చిన కాకతీయులకు మధ్య వైవాహిక సంబంధం లేదు కనుక (4) తప్పు.'
+  ],
+
+  // ================= SECTION B: INDIAN CONSTITUTION (Q76–Q150) =================
+  [
+    76,
+    'Supreme Court of India',
+    'The power to increase the number of judges in the Supreme Court of India is vested in',
+    'భారత సుప్రీంకోర్టులో న్యాయమూర్తుల సంఖ్యను పెంచే అధికారం ఎవరికి ఉంది ?',
+    ['Law Commission', 'President of India', 'Parliament', 'Collegium'],
+    ['లా కమిషన్', 'భారత రాష్ట్రపతి', 'పార్లమెంట్', 'కొలీజియం'],
+    2,
+    'Under Article 124(1) of the Constitution, Parliament by law has the authority to increase the number of Judges in the Supreme Court.',
+    'భారత రాజ్యాంగంలోని ఆర్టికల్ 124(1) ప్రకారం సుప్రీంకోర్టు న్యాయమూర్తుల సంఖ్యను పెంచే అధికారం పార్లమెంటుకు ఉంది.'
+  ],
+  [
+    77,
+    '73rd Constitutional Amendment Act',
+    'Which of the following statements is/are not correct regarding the 73rd Constitutional Amendment Act ?\nA. 18 functional items were placed within the purview of Panchayats.\nB. The Act does not apply to the States of Nagaland, Meghalaya, Mizoram.\nC. The Act bars interference by courts in the electoral matters of Panchayats.\nD. Reservation of seats to BCs is a compulsory provision under this Act.',
+    '73 వ రాజ్యాంగ సవరణ చట్టానికి సంబంధించి ఏది(వి) సరైనది(వి) కావు ?\nA. 18 ఫంక్షనల్ అంశాలను పంచాయతీల పరిధిలో ఉంచారు.\nB. నాగాలాండ్, మేఘాలయ, మిజోరాం రాష్ట్రాలకు ఈ చట్టం వర్తించదు.\nC. పంచాయతీల ఎన్నికల వ్యవహారాల్లో కోర్టుల జోక్యాన్ని చట్టం నిషేధిస్తుంది.\nD. ఈ చట్టం ప్రకారం బీసీలకు సీట్ల రిజర్వేషన్ తప్పనిసరి నిబంధన.',
+    ['A and D only', 'A, B and D only', 'A and B only', 'A, C and D only'],
+    ['A మరియు D మాత్రమే', 'A, B మరియు D మాత్రమే', 'A మరియు B మాత్రమే', 'A, C మరియు D మాత్రమే'],
+    0,
+    'Statements A and D are not correct: the 11th Schedule contains 29 functional items (not 18, which is for Municipalities), and reservation for Backward Classes is a voluntary (optional) provision left to State Legislatures.',
+    '11వ షెడ్యూల్‌లో పంచాయతీలకు 29 అంశాలు ఉన్నాయి (18 కాదు) మరియు బీసీ రిజర్వేషన్ అనేది ఐచ్ఛిక నిబంధన. కనుక A మరియు D మాత్రమే సరైనవి కావు.'
+  ],
+  [
+    78,
+    'Sources of the Indian Constitution',
+    'Match the Constitutions of different countries given in List – A with their Provisions given in List – B which are adopted in Indian Constitution.\nList – A\na. UK Constitution\nb. Irish Constitution\nc. United States of America Constitution\nd. Canadian Constitution\nList – B\ni. The idea of Residual Powers\nii. The idea of Rule of Law\niii. Directive Principles of State Policy\niv. Power of Judicial Review',
+    'జాబితా – A లోని వివిధ దేశాల వారి రాజ్యాంగాలను జాబితా – B లో భారతదేశం స్వీకరించిన రాజ్యాంగ అంశాలతో సరిపోల్చండి.\nజాబితా – A\na. బ్రిటీష్ రాజ్యాంగం\nb. ఐరిష్ రాజ్యాంగం\nc. అమెరికా రాజ్యాంగం\nd. కెనడా రాజ్యాంగం\nజాబితా – B\ni. అవశేష అధికారాల ఆలోచన\nii. చట్టపాలన యొక్క ఆలోచన\niii. రాష్ట్ర విధాన నిర్దేశక సూత్రాలు\niv. జ్యుడీషియల్ రివ్యూ అధికారం',
+    ['a-iii, b-iv, c-ii, d-i', 'a-ii, b-iii, c-iv, d-i', 'a-iii, b-i, c-iv, d-ii', 'a-iv, b-i, c-ii, d-iii'],
+    ['a-iii, b-iv, c-ii, d-i', 'a-ii, b-iii, c-iv, d-i', 'a-iii, b-i, c-iv, d-ii', 'a-iv, b-i, c-ii, d-iii'],
+    1,
+    'UK Constitution -> Rule of Law (ii); Irish Constitution -> Directive Principles of State Policy (iii); USA Constitution -> Judicial Review (iv); Canadian Constitution -> Residual Powers with the Centre (i).',
+    'బ్రిటీష్ (చట్టపాలన - ii), ఐరిష్ (ఆదేశిక సూత్రాలు - iii), అమెరికా (న్యాయ సమీక్ష - iv), కెనడా (అవశేష అధికారాలు - i).'
+  ],
+  [
+    79,
+    'Judicial Activism',
+    'The concept of Judicial Activism was originated and developed in',
+    'న్యాయపరమైన క్రియాశీలత (జ్యుడిషియల్ యాక్టివిజం) భావన ఎక్కడ ఉద్భవించింది మరియు అభివృద్ధి చేయబడింది ?',
+    ['USA', 'India', 'UK', 'USSR'],
+    ['USA', 'భారతదేశం', 'UK', 'USSR'],
+    0,
+    'The concept of Judicial Activism originated and developed in the USA (coined by Arthur Schlesinger Jr. in 1947).',
+    'జ్యుడిషియల్ యాక్టివిజం భావన మొదటిసారిగా అమెరికా (USA)లో ఉద్భవించి అభివృద్ధి చెందింది.'
+  ],
+  [
+    80,
+    'Writ Jurisdiction (Mandamus)',
+    'Assertion (A) : Mandamus normally is not issued to Govt. for making law.\nReason (R) : Mandamus cannot lie in absence of policy. Once policy is laid down, terms of policy can be enforced.',
+    'ప్రకటన (A) : మాండమస్ సాధారణంగా చట్టం చేయడానికి ప్రభుత్వానికి ఇవ్వబడదు.\nకారణం (R) : విధాన నిర్ణయము లేనిచో మాండమస్ ఉండదు. విధానము నిర్ణయించబడిన తరువాత, విధానములోని అంశాలను అమలు చేయించవచ్చు.',
+    [
+      'Both (A) and (R) are true and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true but (R) is not the correct explanation of (A)',
+      '(A) is true but (R) is false',
+      'Both (A) and (R) are false'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం మరియు (R) అనేది (A) కు సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R) అనేది (A) కు సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) మరియు (R) రెండూ తప్పు'
+    ],
+    0,
+    'Courts cannot issue Mandamus to compel the Legislature/Executive to enact a law or frame a new policy; however, once policy/statutory duty exists, Mandamus can enforce performance.',
+    'చట్టం చేయమని లేదా విధానం రూపొందించమని కోర్టులు మాండమస్ రిట్ జారీ చేయవు; విధానం ఉన్నప్పుడు దాని అమలుకు మాండమస్ ఇవ్వవచ్చు. కనుక (A) మరియు (R) నిజం, (R) సరైన వివరణ.'
+  ],
+  [
+    81,
+    'Election Commission & Political Parties',
+    'Which of the following is not a condition for the political party to be recognised as National Party ?',
+    'క్రింది వాటిలో ఏది ఒక రాజకీయ పార్టీ జాతీయ పార్టీగా గుర్తించబడటానికి షరతు కాదు ?',
+    [
+      'The party wins two percent of seats in the Lok Sabha from at least three different states',
+      'The party, at a general election to Lok Sabha or Legislative Assembly, polls six percent of valid votes in any four or more States and in addition it wins four Lok Sabha seats from any State or States',
+      'It is recognised as a State party in any four States',
+      'None of the above'
+    ],
+    [
+      'ఆ పార్టీ కనీసం మూడు రాష్ట్రాల నుంచి లోక్‌సభలో రెండు శాతం సీట్లను గెలుచుకోవాలి',
+      'ఆ పార్టీ లోక్‌సభ లేదా శాసనసభలకు జరిగే సార్వత్రిక ఎన్నికలలో ఏదైనా నాలుగు లేదా అంతకంటే ఎక్కువ రాష్ట్రాలలో చెల్లుబాటు అయ్యే ఓట్లలో, ఆరు శాతం ఓట్లు పొందాలి మరియు ఏదైనా రాష్ట్రం లేదా రాష్ట్రాల నుండి నాలుగు లోక్‌సభ స్థానాలను గెలుచుకోవాలి',
+      'ఏదైనా నాలుగు రాష్ట్రాల్లో రాష్ట్రపార్టీగా గుర్తింపు పొందాలి',
+      'పైవేవీ కావు'
+    ],
+    3,
+    'All three criteria (1), (2), and (3) are valid conditions under the Election Symbols (Reservation and Allotment) Order, 1968 for National Party recognition. Hence "None of the above" is the answer.',
+    'పై (1), (2), (3) అన్నీ జాతీయ పార్టీ గుర్తింపునకు అధికారిక షరతులే; కనుక "పైవేవీ కావు" (None of the above) సరైన సమాధానం.'
+  ],
+  [
+    82,
+    'Borrowed Features of Indian Constitution',
+    'Match List – I with List – II.\nList – I (Borrowed Feature)\na. Emergency Provisions\nb. Suspension of Fundamental Rights during Emergency\nc. Concept of Concurrent List\nd. Single Citizenship\nList – II (Source)\ni. United Kingdom\nii. Australia\niii. Government of India Act, 1935\niv. German Constitution\nv. USA',
+    'జాబితా – I ని జాబితా – II తో సరిపోల్చండి.\nజాబితా – I (అరువు తీసుకున్న ఫీచర్)\na. అత్యవసర నిబంధనలు\nb. అత్యవసర సమయంలో ప్రాథమిక హక్కుల సస్పెన్షన్\nc. ఉమ్మడి జాబితా భావన\nd. ఏక పౌరసత్వం\nజాబితా – II (మూలం)\ni. యునైటెడ్ కింగ్‌డమ్ (UK)\nii. ఆస్ట్రేలియా\niii. భారత ప్రభుత్వ చట్టం, 1935\niv. జర్మనీ రాజ్యాంగం\nv. USA',
+    [
+      'a – iv, b – i, c – v, d – ii',
+      'a – v, b – iii, c – ii, d – i',
+      'a – iii, b – iv, c – ii, d – i',
+      'a – v, b – iii, c – i, d – ii'
+    ],
+    [
+      'a – iv, b – i, c – v, d – ii',
+      'a – v, b – iii, c – ii, d – i',
+      'a – iii, b – iv, c – ii, d – i',
+      'a – v, b – iii, c – i, d – ii'
+    ],
+    2,
+    'Emergency Provisions -> GoI Act 1935 (iii); Suspension of Fundamental Rights during Emergency -> Weimar Constitution of Germany (iv); Concurrent List -> Australia (ii); Single Citizenship -> UK (i).',
+    'అత్యవసర నిబంధనలు (1935 చట్టం - iii), ప్రాథమిక హక్కుల సస్పెన్షన్ (జర్మనీ - iv), ఉమ్మడి జాబితా (ఆస్ట్రేలియా - ii), ఏక పౌరసత్వం (యూకే - i).'
+  ],
+  [
+    83,
+    'Right to Information Act (SIC)',
+    'As per the provisions of Right to Information Act, the State Chief Information Commissioner is appointed by the Governor, on the recommendations of a committee comprising of,\nA. Chief Minister of the concerned State\nB. Chief Justice of the concerned State High Court\nC. Leader of the Opposition in the State Assembly\nD. Cabinet Minister nominated by the Chief Minister',
+    'సమాచార హక్కు చట్టంలోని నిబంధనల ప్రకారం, రాష్ట్ర ప్రధాన సమాచార కమీషనర్‌ను క్రింది వారిలో ఎవరితో కూడిన కమిటీ సిఫార్సులపై గవర్నర్ నియమిస్తారు.\nA. సంబంధిత రాష్ట్ర ముఖ్యమంత్రి\nB. సంబంధిత రాష్ట్ర హైకోర్టు ప్రధాన న్యాయమూర్తి\nC. రాష్ట్ర అసెంబ్లీలోని ప్రతిపక్ష నాయకుడు\nD. ముఖ్యమంత్రి నామినేట్ చేసిన క్యాబినెట్ మంత్రి',
+    ['A, B, C and D', 'A, C and D', 'A, B and C', 'B, C and D'],
+    ['A, B, C మరియు D', 'A, C మరియు D', 'A, B మరియు C', 'B, C మరియు D'],
+    1,
+    'Under Section 15(3) of the RTI Act, 2005, the State Chief Information Commissioner is appointed by the Governor on the recommendation of a committee of the Chief Minister (Chair), Leader of Opposition in Assembly, and a State Cabinet Minister nominated by CM.',
+    'సమాచార హక్కు చట్టం సెక్షన్ 15(3) ప్రకారం ముఖ్యమంత్రి, అసెంబ్లీ ప్రతిపక్ష నాయకుడు మరియు ముఖ్యమంత్రి నామినేట్ చేసిన కేబినెట్ మంత్రితో కూడిన కమిటీ సిఫార్సు చేస్తుంది (A, C మరియు D).'
+  ],
+  [
+    84,
+    'Attorney General of India',
+    'Which of the following statements about the Attorney General of India is/are correct ?\ni. The President shall appoint a person who is qualified to be appointed a Judge of the Supreme Court to be Attorney General of India.\nii. He shall have right of audience in all courts in the territory of India.\niii. He shall hold office during the pleasure of the Prime Minister.\niv. He shall receive remuneration as the Parliament may determine.',
+    'భారత అటార్నీ జనరల్ గురించి క్రింది ప్రకటనలలో సరైనది(వి) ఏది/ఏవి ?\ni. సుప్రీంకోర్టు న్యాయమూర్తిగా నియమించటానికి అర్హత ఉన్న వ్యక్తిని భారత అటార్నీ జనరల్‌గా రాష్ట్రపతి నియమిస్తారు.\nii. భారత భూభాగంలోని అన్ని కోర్టులలో అతనికి వాదన వినిపించే హక్కు ఉంటుంది.\niii. అతను ప్రధానమంత్రికి విశ్వాసమున్నంత వరకు పదవిలో ఉంటాడు.\niv. అతను పార్లమెంటు నిర్ణయించే విధంగా వేతనం పొందవచ్చు.',
+    ['Only i and ii', 'Only i', 'Only i and iii', 'All of the above'],
+    ['i మరియు ii మాత్రమే', 'i మాత్రమే', 'i మరియు iii మాత్రమే', 'పైవన్నీ'],
+    0,
+    'Under Article 76, the Attorney General holds office during the pleasure of the President (not PM) and receives remuneration as the President may determine (not Parliament). Statements i and ii are correct.',
+    'ఆర్టికల్ 76 ప్రకారం అటార్నీ జనరల్ రాష్ట్రపతి విశ్వాసం మేరకు పదవిలో ఉంటారు మరియు రాష్ట్రపతి నిర్ణయించే వేతనం పొందుతారు. కనుక i మరియు ii మాత్రమే సరైనవి.'
+  ],
+  [
+    85,
+    'Constitutional Writs (Article 32 & 226)',
+    'Match List – I with List – II.\nList – I (Writ)\na. Quo-Warranto\nb. Mandamus\nc. Habeas Corpus\nd. Certiorari\nList – II (Meaning)\ni. to be certified\nii. by what Authority\niii. we command\niv. to have the body of',
+    'జాబితా – I ని జాబితా – II తో సరిపోల్చి, దిగువ ఇవ్వబడిన కోడ్‌ల నుండి సరైన సమాధానాన్ని ఎంచుకోండి.\nజాబితా – I (రిట్ / అధిలేఖ)\na. కో-వారంటో (అధికారపృచ్చ)\nb. మాండమస్ (పరమాదేశ)\nc. హెబియస్ కార్పస్ (బందీ ప్రత్యక్ష)\nd. సెర్షియోరరీ (ఉత్ప్రేషణ)\nజాబితా – II (అర్థం)\ni. ధృవీకరించబడాలి\nii. ఏ అథారిటీ ద్వారా\niii. మేము ఆదేశిస్తాము\niv. దేహాన్ని కలిగి ఉండాలి',
+    [
+      'a – ii, b – i, c – iv, d – iii',
+      'a – ii, b – iii, c – iv, d – i',
+      'a – i, b – iii, c – ii, d – iv',
+      'a – iv, b – ii, c – iii, d – i'
+    ],
+    [
+      'a – ii, b – i, c – iv, d – iii',
+      'a – ii, b – iii, c – iv, d – i',
+      'a – i, b – iii, c – ii, d – iv',
+      'a – iv, b – ii, c – iii, d – i'
+    ],
+    1,
+    'Quo-Warranto -> By what authority (ii); Mandamus -> We command (iii); Habeas Corpus -> To have the body of (iv); Certiorari -> To be certified (i).',
+    'కో-వారంటో (ఏ అథారిటీ ద్వారా - ii), మాండమస్ (మేము ఆదేశిస్తాము - iii), హెబియస్ కార్పస్ (దేహాన్ని కలిగి ఉండాలి - iv), సెర్షియోరరీ (ధృవీకరించబడాలి - i).'
+  ],
+  [
+    86,
+    'President’s Rule (Article 356)',
+    'Consider the following statements :\nAssertion (A) : One of the most controversial Articles in the Constitution is Article 356.\nReason (R) : It is imposed when the Government of the State cannot be carried on in accordance with the provisions of the Constitution.',
+    'క్రింది ప్రకటనలను పరిగణించండి :\nప్రతిపాదన (A) : రాజ్యాంగంలోని అత్యంత వివాదాస్పద నిబంధనలలో ఒకటి నిబంధన 356.\nకారణం (R) : అది రాష్ట్ర ప్రభుత్వం రాజ్యాంగంలోని నిబంధనలకు అనుగుణంగా కొనసాగించబడలేనప్పుడు విధించబడుతుంది.',
+    [
+      'Both (A) and (R) are true and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true but (R) is not the correct explanation of (A)',
+      '(A) is true but (R) is false',
+      'Both (A) and (R) are false'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం మరియు (R) అనేది (A) కు సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R) అనేది (A) కు సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) మరియు (R) రెండూ తప్పు'
+    ],
+    1,
+    'Both statements are true: Article 356 has often been controversial due to alleged misuse against state governments, while textually (Art. 356) it applies upon failure of constitutional machinery. (R) states the constitutional provision rather than explaining why it is controversial.',
+    '(A) మరియు (R) రెండూ వాస్తవాలే, కానీ (R) నిబంధన ఉద్దేశ్యాన్ని మాత్రమే చెబుతుందే తప్ప అది వివాదాస్పదం కావడానికి కారణాన్ని వివరించదు.'
+  ],
+  [
+    87,
+    'Preamble & Constitutional Amendments',
+    'The term “Secular” was added to the Preamble of the Indian Constitution by',
+    'లౌకిక (సెక్యులర్) అనే పదాన్ని ఏ సవరణ చట్టం ప్రకారం భారత రాజ్యాంగ ప్రవేశికలో చేర్చారు ?',
+    [
+      '44th Constitutional Amendment Act',
+      '42nd Constitutional Amendment Act',
+      '45th Constitutional Amendment Act',
+      '43rd Constitutional Amendment Act'
+    ],
+    [
+      '44 వ రాజ్యాంగ సవరణ చట్టం',
+      '42 వ రాజ్యాంగ సవరణ చట్టం',
+      '45 వ రాజ్యాంగ సవరణ చట్టం',
+      '43 వ రాజ్యాంగ సవరణ చట్టం'
+    ],
+    1,
+    'The 42nd Constitutional Amendment Act, 1976 added the words "Socialist", "Secular", and "Integrity" to the Preamble of the Constitution.',
+    '1976లోని 42వ రాజ్యాంగ సవరణ చట్టం ద్వారా ప్రవేశికలో "సామ్యవాద", "లౌకిక" మరియు "సమగ్రత" అనే పదాలను చేర్చారు.'
+  ],
+  [
+    88,
+    'Nature of Indian Federalism',
+    'Who described Indian Union as, “a federation with a centralising tendency” ?',
+    'ఇండియన్ యూనియన్‌ను “కేంద్రీకృత ధోరణితో కూడిన సమాఖ్య” గా ఎవరు అభివర్ణించారు ?',
+    ['Ivor Jennings', 'K. C. Wheare', 'Jawaharlal Nehru', 'H. V. Kamath'],
+    ['ఐవర్ జెన్నింగ్స్', 'K. C. వేర్', 'జవహర్‌లాల్ నెహ్రూ', 'H. V. కామత్'],
+    0,
+    'Sir Ivor Jennings famously characterized the Indian Constitution as "a federation with a strong centralising tendency" (whereas K. C. Wheare called it "quasi-federal").',
+    'భారత సమాఖ్యను "కేంద్రీకృత ధోరణితో కూడిన సమాఖ్య" అని అభివర్ణించింది సర్ ఐవర్ జెన్నింగ్స్.'
+  ],
+  [
+    89,
+    'Election of the President (Article 54)',
+    'The President is elected by an Electoral College consisting of\nA. Elected members of both Houses of Parliament.\nB. Nominated members of both Houses of Parliament.\nC. The elected members of the Legislative Assemblies of all the States.\nD. Nominated members of the Legislative Assemblies of all the States.\nE. The elected members of the Legislative Assemblies of NCT of Delhi and the Union Territory of Puducherry.',
+    'రాష్ట్రపతిని ఎన్నుకొనే ఎలక్టోరల్ కాలేజీలో ఎవరు ఉంటారు ?\nA. పార్లమెంటు ఉభయ సభలకు ఎన్నికైన సభ్యులు\nB. పార్లమెంటు ఉభయ సభలకు నామినేటెడ్ సభ్యులు.\nC. అన్ని రాష్ట్రాల శాసన సభలకు ఎన్నికైన సభ్యులు.\nD. అన్ని రాష్ట్రాల శాసన సభలకు నామినేట్ చేయబడిన సభ్యులు.\nE. ఢిల్లీ NCT మరియు పుదుచ్చేరి కేంద్రపాలిత ప్రాంతం యొక్క శాసన సభలకు ఎన్నికైన సభ్యులు.',
+    ['A, B, C, D and E', 'A, B, C and D', 'A, C and E', 'A and C'],
+    ['A, B, C, D మరియు E', 'A, B, C మరియు D', 'A, C మరియు E', 'A మరియు C'],
+    2,
+    'Under Article 54 (as amended by 70th Amendment 1992), the Presidential Electoral College includes elected MPs (A), elected State MLAs (C), and elected MLAs of Delhi & Puducherry (E). Nominated members do not vote.',
+    'ఆర్టికల్ 54 ప్రకారం రాష్ట్రపతి ఎన్నికల గణంలో పార్లమెంటు ఎన్నికైన సభ్యులు (A), రాష్ట్రాల శాసనసభల ఎన్నికైన సభ్యులు (C) మరియు ఢిల్లీ, పుదుచ్చేరి ఎన్నికైన ఎమ్మెల్యేలు (E) ఉంటారు.'
+  ],
+  [
+    90,
+    'Fundamental Duties (Article 51A)',
+    'The 11th Fundamental Duty was added by which Constitutional Amendment Act ?',
+    'ఏ రాజ్యాంగ సవరణ చట్టం ద్వారా 11వ ప్రాథమిక విధి జోడించబడింది ?',
+    [
+      '86th Constitutional Amendment Act, 2001',
+      '86th Constitutional Amendment Act, 2002',
+      '96th Constitutional Amendment Act, 2001',
+      '96th Constitutional Amendment Act, 2002'
+    ],
+    [
+      '86 వ రాజ్యాంగ సవరణ చట్టం, 2001',
+      '86 వ రాజ్యాంగ సవరణ చట్టం, 2002',
+      '96 వ రాజ్యాంగ సవరణ చట్టం, 2001',
+      '96 వ రాజ్యాంగ సవరణ చట్టం, 2002'
+    ],
+    1,
+    'The 86th Constitutional Amendment Act, 2002 added the 11th Fundamental Duty under Article 51A(k) requiring parents/guardians to provide opportunities for education to children aged 6–14.',
+    '86వ రాజ్యాంగ సవరణ చట్టం, 2002 ద్వారా ఆర్టికల్ 51A(k) కింద 11వ ప్రాథమిక విధిని చేర్చారు.'
+  ],
+  [
+    91,
+    'Schedules of Indian Constitution',
+    'How many Schedules were there in the original Indian Constitution ?',
+    'భారత రాజ్యాంగంలో తొలుత (original) ఎన్ని షెడ్యూల్‌లు ఉన్నాయి ?',
+    ['8', '7', '9', '10'],
+    ['8', '7', '9', '10'],
+    0,
+    'When adopted in 1949/enforced in 1950, the original Constitution had 395 Articles, 22 Parts, and 8 Schedules (currently 12 Schedules).',
+    'భారత మూల రాజ్యాంగంలో ప్రారంభంలో 8 షెడ్యూల్‌లు ఉండేవి (ప్రస్తుతం 12 ఉన్నాయి).'
+  ],
+  [
+    92,
+    'Preamble of the Constitution',
+    'Which of the following objectives is not embodied in the Preamble to the Constitution of India ?',
+    'భారతదేశ రాజ్యాంగ ప్రవేశికలో క్రింది లక్ష్యాలలో ఏది పొందుపరచబడలేదు ?',
+    ['Political Liberty', 'Liberty of Thought', 'Liberty of Belief', 'Liberty of Expression'],
+    ['రాజకీయ స్వేచ్ఛ (పొలిటికల్ లిబర్టీ)', 'ఆలోచనా స్వేచ్ఛ (లిబర్టీ ఆఫ్ థాట్)', 'విశ్వాసం యొక్క స్వేచ్ఛ', 'భావ వ్యక్తీకరణ స్వేచ్ఛ'],
+    0,
+    'The Preamble promises Liberty of Thought, Expression, Belief, Faith and Worship — NOT "Political Liberty" (Justice is Social, Economic and Political).',
+    'ప్రవేశికలో ఆలోచన, భావవ్యక్తీకరణ, విశ్వాసం, మతం మరియు ఆరాధన స్వేచ్ఛలు ఉన్నాయి కానీ "రాజకీయ స్వేచ్ఛ" అనే పదం లేదు.'
+  ],
+  [
+    93,
+    'Political Parties in India',
+    'Arrange the following political parties in the chronological order of their establishment.\nA. Samaj Wadi Party\nB. Dravida Munnetra Kazhagam\nC. Bahujan Samaj Party\nD. Telugu Desam Party',
+    'క్రింది రాజకీయ పార్టీలను వాటి స్థాపన యొక్క కాలక్రమానుసారంగా అమర్చండి.\nA. సమాజ్ వాదీ పార్టీ\nB. ద్రవిడ మున్నేట్ర కళగం\nC. బహుజన్ సమాజ్ పార్టీ\nD. తెలుగుదేశం పార్టీ',
+    ['B, D, C, A', 'D, B, C, A', 'B, D, A, C', 'B, A, D, C'],
+    ['B, D, C, A', 'D, B, C, A', 'B, D, A, C', 'B, A, D, C'],
+    0,
+    'Establishment years: DMK (1949, B) -> Telugu Desam Party (1982, D) -> Bahujan Samaj Party (1984, C) -> Samajwadi Party (1992, A).',
+    'రాజకీయ పార్టీల స్థాపన సంవత్సరాలు: DMK (1949 - B) -> TDP (1982 - D) -> BSP (1984 - C) -> సమాజ్ వాదీ పార్టీ (1992 - A).'
+  ],
+  [
+    94,
+    'Centre–State Relations',
+    'Which of the following is not on Center – State Relations ?',
+    'క్రింది వాటిలో ఏది కేంద్రం-రాష్ట్ర సంబంధాలపై కాదు ?',
+    ['Sarkaria Commission', 'Indrajit Guptha Committee', 'Rajmannar Committee', 'M. M. Punchhi Commission'],
+    ['సర్కారియా కమిషన్', 'ఇంద్రజిత్ గుప్తా కమిటీ', 'రాజ్‌మన్నార్ కమిటీ', 'M. M. పూంచి కమిషన్'],
+    1,
+    'Indrajit Gupta Committee (1998) was constituted on Electoral Reforms (State Funding of Elections), whereas Rajmannar (1969), Sarkaria (1983), and Punchhi (2007) Commissions dealt with Centre–State Relations.',
+    'ఇంద్రజిత్ గుప్తా కమిటీ ఎన్నికల సంస్కరణలకు (ఎన్నికలకు ప్రభుత్వ నిధులు) సంబంధించినది; మిగిలిన మూడు కేంద్ర-రాష్ట్ర సంబంధాలపై ఏర్పాటయ్యాయి.'
+  ],
+  [
+    95,
+    'Fundamental Duties',
+    'Fundamental Duties were added to the Constitution on the recommendations of',
+    'క్రింది వాటిలో ఏ కమిటీ సిఫారసుల మేరకు ప్రాథమిక విధులు రాజ్యాంగానికి జోడించబడ్డాయి.',
+    ['Swaran Singh Committee', 'Justice Varma Committee', 'Ram Nandan Committee', 'J. B. Kriplani Committee'],
+    ['స్వరణ్ సింగ్ కమిటీ', 'జస్టిస్ వర్మ కమిటీ', 'రామ్ నందన్ కమిటీ', 'J. B. క్రిప్లానీ కమిటీ'],
+    0,
+    'Part IV-A (Article 51A) containing Fundamental Duties was inserted by the 42nd Amendment Act, 1976 based on the Swaran Singh Committee recommendations.',
+    'స్వరణ్ సింగ్ కమిటీ సిఫార్సుల మేరకు 1976లో 42వ రాజ్యాంగ సవరణ ద్వారా ప్రాథమిక విధులను చేర్చారు.'
+  ],
+  [
+    96,
+    'Union Council of Ministers',
+    'As per 91st Amendment Act of 2003, the total number of ministers including the Prime Minister, in the Central Council of Ministers shall not exceed __________ of the total strength of the Lok Sabha.',
+    '91 వ సవరణ చట్టం 2003 ప్రకారం కేంద్ర మంత్రి మండలిలో ప్రధానమంత్రితో సహా మొత్తం మంత్రుల సంఖ్య లోక్‌సభ మొత్తం బలంలో __________ శాతానికి మించకూడదు.',
+    ['10 percent', '12 percent', '20 percent', '15 percent'],
+    ['10 శాతం', '12 శాతం', '20 శాతం', '15 శాతం'],
+    3,
+    'Article 75(1A), inserted by the 91st Amendment Act 2003, caps the strength of the Union Council of Ministers (including PM) at 15% of the total strength of the Lok Sabha.',
+    '91వ రాజ్యాంగ సవరణ (2003) ప్రకారం ప్రధానమంత్రితో సహా కేంద్ర మంత్రుల సంఖ్య లోక్‌సభ మొత్తం బలంలో 15% మించకూడదు.'
+  ],
+  [
+    97,
+    'Parliamentary Legislation in State List',
+    'The Parliament can make laws on subjects enumerated in the State list in the following conditions\nA. On the request of two or more States.\nB. The Rajya Sabha passes a resolution with at least two-thirds of the members present and voting, authorizing the Parliament to make laws on the subject in the national interest.\nC. Proclamation of International Agreements.\nD. The Lok Sabha passes a resolution with at least two-thirds of the members present and voting, authorizing the Parliament to make laws on the subject in the national interest.',
+    'రాష్ట్ర జాబితాలో పేర్కొనబడిన విషయాలపై పార్లమెంటు ఈ క్రింది సందర్భాలలో చట్టాలు చేయవచ్చు.\nA. రెండు లేదా అంతకంటే ఎక్కువ రాష్ట్రాల అభ్యర్థనపై.\nB. రాజ్యసభలో హాజరై మరియు ఓటింగ్ చేస్తున్న సభ్యులలో కనీసం మూడింట రెండొంతుల మంది తీర్మానాన్ని ఆమోదించి జాతీయ ప్రయోజనాల దృష్ట్యా ఈ అంశంపై చట్టాలు చేయడానికి పార్లమెంటుకు అధికారం ఇచ్చినప్పుడు.\nC. అంతర్జాతీయ ఒప్పందాల ప్రకటన.\nD. లోక్‌సభలో హాజరై మరియు ఓటింగ్ చేస్తున్న సభ్యులలో కనీసం మూడింట రెండొంతుల మంది తీర్మానాన్ని ఆమోదించి జాతీయ ప్రయోజనాల దృష్ట్యా ఈ అంశంపై చట్టాలు చేయడానికి పార్లమెంటుకు అధికారం ఇచ్చినప్పుడు.',
+    ['A, B, C and D', 'A, B and D only', 'A, B and C only', 'A and C only'],
+    ['A, B, C మరియు D', 'A, B మరియు D మాత్రమే', 'A, B మరియు C మాత్రమే', 'A మరియు C మాత్రమే'],
+    2,
+    'Parliament can legislate on State List subjects under Art. 249 (Rajya Sabha resolution - B), Art. 252 (request by 2+ States - A), and Art. 253 (implementing international agreements - C). Lok Sabha has no Art. 249 power.',
+    'ఆర్టికల్ 252 (రెండు లేదా ఎక్కువ రాష్ట్రాల అభ్యర్థన - A), ఆర్టికల్ 249 (రాజ్యసభ తీర్మానం - B), ఆర్టికల్ 253 (అంతర్జాతీయ ఒప్పందాలు - C) ప్రకారం పార్లమెంటు రాష్ట్ర జాబితాపై చట్టాలు చేయగలదు.'
+  ],
+  [
+    98,
+    'Supreme Court & Constitutional Amendments',
+    'Which of the following Constitutional Amendment Acts was declared unconstitutional and void by the Supreme Court in 2015 ?',
+    'క్రింది వాటిలో ఏ రాజ్యాంగ సవరణ చట్టం రాజ్యాంగ విరుద్ధమైనది మరియు చెల్లదని సుప్రీం కోర్టు 2015 లో ప్రకటించింది ?',
+    [
+      '96th Constitutional Amendment Act',
+      '100th Constitutional Amendment Act',
+      '97th Constitutional Amendment Act',
+      '99th Constitutional Amendment Act'
+    ],
+    [
+      '96 వ రాజ్యాంగ సవరణ చట్టం',
+      '100 వ రాజ్యాంగ సవరణ చట్టం',
+      '97 వ రాజ్యాంగ సవరణ చట్టం',
+      '99 వ రాజ్యాంగ సవరణ చట్టం'
+    ],
+    3,
+    'In October 2015, a 5-judge Constitution Bench of the Supreme Court struck down the 99th Constitutional Amendment Act, 2014 and the NJAC Act as unconstitutional.',
+    '2015లో సుప్రీంకోర్టు 99వ రాజ్యాంగ సవరణ చట్టాన్ని (NJAC) రాజ్యాంగ విరుద్ధమైనదిగా రద్దు చేసింది.'
+  ],
+  [
+    99,
+    'State Election Commission',
+    'The State Election Commission conducts elections to',
+    'రాష్ట్ర ఎన్నికల సంఘం ఏ ఎన్నికలను నిర్వహిస్తుంది ?',
+    ['Local Bodies', 'State Legislatures', 'Primary Agricultural Co-operative Societies', 'Co-operative Banks'],
+    ['స్థానిక సంస్థలు', 'రాష్ట్ర శాసనసభలు', 'ప్రాథమిక వ్యవసాయ సహకార సంఘాలు', 'సహకార బ్యాంకులు'],
+    0,
+    'Under Articles 243K and 243ZA, the State Election Commission conducts elections to Panchayats and Municipalities (Local Bodies).',
+    'ఆర్టికల్ 243K మరియు 243ZA ప్రకారం రాష్ట్ర ఎన్నికల సంఘం స్థానిక సంస్థలకు (పంచాయతీలు, మున్సిపాలిటీలు) ఎన్నికలు నిర్వహిస్తుంది.'
+  ],
+  [
+    100,
+    'Forms of Government',
+    'Which of the following statements are correct about Presidential system ?\ni. President is head of the State.\nii. President is head of the Government.\niii. President is directly elected by the people.\niv. President is accountable to legislature.',
+    'రాష్ట్రపతి వ్యవస్థకు సంబంధించి క్రింది వాటిలో సరైనవి ఏవి ?\ni. రాష్ట్రపతి రాష్ట్రానికి అధిపతి.\nii. రాష్ట్రపతి ప్రభుత్వానికి అధిపతి.\niii. అధ్యక్షుడు నేరుగా ప్రజలచే ఎన్నుకోబడతారు.\niv. రాష్ట్రపతి శాసనసభకు జవాబుదారీగా ఉంటారు.',
+    [
+      'Only i, ii and iv are correct',
+      'Only i and iii are correct',
+      'Only i, ii and iii are correct',
+      'Only ii and iv are correct'
+    ],
+    [
+      'i, ii మరియు iv మాత్రమే సరైనవి',
+      'i మరియు iii మాత్రమే సరైనవి',
+      'i, ii మరియు iii మాత్రమే సరైనవి',
+      'ii మరియు iv మాత్రమే సరైనవి'
+    ],
+    2,
+    'In a Presidential system (e.g., USA), the President is both Head of State (i) and Head of Government (ii), elected directly (or via popular electoral college) for a fixed tenure (iii), and is NOT responsible to the legislature (separation of powers, making iv incorrect).',
+    'రాష్ట్రపతి వ్యవస్థలో అధ్యక్షుడు రాష్ట్రాధిపతి మరియు ప్రభుత్వాధినేతగా ఉండి ప్రజలచే ఎన్నుకోబడతారు (i, ii, iii సరైనవి); శాసనసభకు జవాబుదారీగా ఉండరు.'
+  ],
+  [
+    101,
+    '97th Constitutional Amendment (2011)',
+    'Which of the following statements are true regarding 97th Constitutional Amendment Act of 2011 ?\nA. Gave Constitutional status and protection to Co-operative Societies.\nB. Made the right to form Co-operative Societies a Fundamental Right under Article 19.\nC. It added a new Part X-B to the Constitution.\nD. Added new Directive Principle under Article 43-B.\nChoose the right answer from the codes given below :',
+    '97 వ రాజ్యాంగ సవరణ చట్టం, 2011 కు సంబంధించి క్రింది ప్రకటనలలో ఏవి సరైనవి ?\nA. సహకార సంఘాలకు రాజ్యాంగ హోదా మరియు రక్షణ ఇవ్వబడ్డాయి.\nB. సహకార సంఘాలను ఏర్పాటు చేసుకునే హక్కును ఆర్టికల్ 19 కింద ప్రాథమిక హక్కుగా మార్చారు.\nC. రాజ్యాంగానికి X-B అనే కొత్త భాగాన్ని జోడించింది.\nD. ఆర్టికల్ 43-B క్రింద కొత్త నిర్దేశక సూత్రం జోడించబడింది.\nదిగువ ఇవ్వబడిన కోడ్‌ల నుండి సరైన సమాధానాన్ని ఎంచుకోండి.',
+    ['A, B and D only', 'A, B and C only', 'A and B only', 'All of the above'],
+    ['A, B మరియు D మాత్రమే', 'A, B మరియు C మాత్రమే', 'A మరియు B మాత్రమే', 'పైవన్నీ'],
+    0,
+    'The 97th Amendment added Part IX-B (NOT Part X-B), amended Art. 19(1)(c) to include Co-operative Societies, and added Art. 43-B. Thus A, B, and D are true.',
+    '97వ రాజ్యాంగ సవరణ IX-B భాగాన్ని (X-B కాదు) మరియు ఆర్టికల్ 19(1)(c), ఆర్టికల్ 43-Bలను చేర్చింది. కనుక A, B మరియు D మాత్రమే సరైనవి.'
+  ],
+  [
+    102,
+    'Directive Principles of State Policy',
+    'Assertion (A) : Directive Principles of State Policy are not capable of being independently enforced in a Court of Law.\nReason (R) : They act as guide post for legislation.',
+    'ప్రకటన (A) : రాజ్య విధాన నిర్దేశిక సూత్రాలను న్యాయస్థానం ద్వారా స్వతంత్రంగా అమలు చేయుటకు వీలుకాదు.\nకారణం (R) : అవి శాసనాలు చేయడానికి మార్గదర్శకాలుగా పనిచేస్తాయి.',
+    [
+      'Both (A) and (R) are true and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true but (R) is not the correct explanation of (A)',
+      '(A) is true but (R) is false',
+      'Both (A) and (R) are false'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం మరియు (R) అనేది (A) కు సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R) అనేది (A) కు సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) మరియు (R) రెండూ తప్పు'
+    ],
+    0,
+    'Under Article 37, DPSPs are non-justiciable in a court of law precisely because they are fundamental principles in governance meant to guide legislatures in making laws rather than directly enforceable claims.',
+    'ఆర్టికల్ 37 ప్రకారం ఆదేశిక సూత్రాలకు న్యాయ సంరక్షణ లేదు మరియు అవి శాసన నిర్మాణంలో మార్గదర్శకాలుగా ఉంటాయి. (A) మరియు (R) నిజం, (R) సరైన వివరణ.'
+  ],
+  [
+    103,
+    'Residuary Powers (Article 248)',
+    'Which of the following statements is/are correct ?\nA. Residuary powers of legislation are included in Article 248 of the Constitution of India.\nB. The Union Parliament has exclusive powers over any item not covered in the State or Concurrent Lists.',
+    'క్రింది ప్రకటనలలో ఏది/ఏవి సరైనది/సరైనవి ?\nA. భారత రాజ్యాంగంలోని ఆర్టికల్ 248 లో శాసనం యొక్క అవశేష అధికారాలు చేర్చబడ్డాయి.\nB. రాష్ట్ర మరియు ఉమ్మడి జాబితాలో లేని ఏదైనా అంశం పై పార్లమెంటుకు ప్రత్యేక అధికారాలు ఉంటాయి.',
+    ['Only A', 'Only B', 'Both A and B', 'None'],
+    ['కేవలం A', 'B మాత్రమే', 'A మరియు B రెండూ', 'ఏదీ కాదు'],
+    2,
+    'Article 248 vests residuary powers of legislation exclusively in Parliament with respect to any matter not enumerated in the Concurrent List or State List (Entry 97, Union List).',
+    'ఆర్టికల్ 248 ప్రకారం రాష్ట్ర లేదా ఉమ్మడి జాబితాలలో లేని అంశాలపై చట్టాలు చేసే అవశేష అధికారం పార్లమెంటుకు మాత్రమే ఉంటుంది. కనుక A మరియు B రెండూ సరైనవి.'
+  ],
+  [
+    104,
+    'Federal vs Unitary Features',
+    'Which of the following violate the federal principles of the Indian Constitution ?\nA. Office of the Governor\nB. Central Services\nC. Office of the Comptroller and Auditor General\nD. Emergency Powers',
+    'క్రింది వాటిలో ఏది భారత రాజ్యాంగంలోని సమాఖ్య సూత్రాలను ఉల్లంఘిస్తుంది ?\nA. గవర్నర్ కార్యాలయం\nB. కేంద్ర సేవలు\nC. కంప్ట్రోలర్ మరియు ఆడిటర్ జనరల్ కార్యాలయం\nD. అత్యవసర అధికారాలు',
+    ['A, B, C and D', 'A, C and D', 'A and D only', 'A only'],
+    ['A, B, C మరియు D', 'A, C మరియు D', 'A మరియు D మాత్రమే', 'A మాత్రమే'],
+    0,
+    'Appointed Governors (Centre’s agent), Central/All-India Services operating in states, a single unified CAG auditing both Centre and States, and Emergency Powers converting the federal setup into unitary are all cited as unitary/non-federal features.',
+    'గవర్నర్ నియామకం, కేంద్ర/అఖిల భారత సేవలు, ఏకీకృత CAG వ్యవస్థ మరియు అత్యవసర అధికారాలు అన్నీ ఏకకేంద్ర (సమాఖ్యేతర) లక్షణాలుగా పరిగణించబడతాయి.'
+  ],
+  [
+    105,
+    'Panchayati Raj Committees',
+    'Arrange the following Committees of Panchayat Raj in chronological order.\na. Gadgil Committee\nb. Dantwala Committee\nc. L. M. Singhvi Committee\nd. Balwant Rai Mehta Committee',
+    'పంచాయత్ రాజ్ పై క్రింది కమిటీలను కాలక్రమానుసారంగా అమర్చి దిగువ ఇవ్వబడిన కోడ్ నుండి సరైన సమాధానాన్ని ఎంచుకోండి.\na. గాడ్గిల్ కమిటీ\nb. దంత్వాల కమిటీ\nc. L. M. సింఘ్వీ కమిటీ\nd. బల్వంత్ రాయ్ మెహతా కమిటీ',
+    ['d, b, a, c', 'b, d, c, a', 'd, a, b, c', 'd, b, c, a'],
+    ['d, b, a, c', 'b, d, c, a', 'd, a, b, c', 'd, b, c, a'],
+    3,
+    'Chronology: Balwant Rai Mehta Committee (1957, d) -> Dantwala Committee on Block Level Planning (1978, b) -> L. M. Singhvi Committee (1986, c) -> Gadgil Committee (1988, a).',
+    'కాలక్రమం: బల్వంత్ రాయ్ మెహతా (1957 - d) -> దంత్వాల కమిటీ (1978 - b) -> ఎల్.ఎం. సింఘ్వీ (1986 - c) -> గాడ్గిల్ కమిటీ (1988 - a).'
+  ],
+  [
+    106,
+    'Fundamental Rights (Article 32)',
+    'Which Article of the Indian Constitution is described as the “heart and soul” of the Constitution by Dr. B. R. Ambedkar ?',
+    'భారత రాజ్యాంగం యొక్క ఏ ఆర్టికల్ రాజ్యాంగం యొక్క “హృదయం మరియు ఆత్మ” గా డాక్టర్ బి.ఆర్. అంబేద్కర్ వర్ణించారు ?',
+    ['Article 14', 'Article 32', 'Article 26', 'Article 25'],
+    ['ఆర్టికల్ 14', 'ఆర్టికల్ 32', 'ఆర్టికల్ 26', 'ఆర్టికల్ 25'],
+    1,
+    'Dr. B. R. Ambedkar described Article 32 (Right to Constitutional Remedies) as the very heart and soul of the Constitution.',
+    'రాజ్యాంగ పరిహార హక్కు అయిన ఆర్టికల్ 32ను డాక్టర్ బి.ఆర్. అంబేద్కర్ రాజ్యాంగానికి "హృదయం మరియు ఆత్మ"గా అభివర్ణించారు.'
+  ],
+  [
+    107,
+    'Finance Commission (Article 280)',
+    'Which of the following statements is incorrect regarding Finance Commission ?',
+    'ఫైనాన్స్ కమిషన్‌కు సంబంధించి క్రింది స్టేట్‌మెంట్లలో ఏది తప్పు ?',
+    [
+      'Finance Commission is a Quasi-judicial Body',
+      'Finance Commission consists of a Chairman and four other members',
+      'Finance Commission plays advisory role',
+      'Article 290 provides for the Constitution of Finance Commission'
+    ],
+    [
+      'ఫైనాన్స్ కమిషన్ ఒక పాక్షిక-న్యాయ సంస్థ',
+      'ఫైనాన్స్ కమిషన్‌లో ఒక చైర్మన్ మరియు నలుగురు ఇతర సభ్యులు ఉంటారు',
+      'ఫైనాన్స్ కమిషన్ సలహా పాత్ర పోషిస్తుంది',
+      'ఆర్టికల్ 290 ద్వారా ఫైనాన్స్ కమిషన్ స్థాపితమైంది'
+    ],
+    3,
+    'Statement (4) is incorrect: Article 280 (not Article 290) provides for the constitution of the Finance Commission of India.',
+    'ఆర్టికల్ 280 ప్రకారం ఫైనాన్స్ కమిషన్ ఏర్పాటు చేయబడుతుంది (ఆర్టికల్ 290 కాదు).'
+  ],
+  [
+    108,
+    'Constitutional vs Statutory Bodies',
+    'In the list given below, how many are Constitutional Bodies ?\na. NITI Aayog\nb. National Commission for Minorities\nc. Special Officer for Linguistic Minorities\nd. National Human Rights Commission',
+    'దిగువ జాబితాలో ఎన్ని రాజ్యాంగ సంస్థలు ఉన్నాయి ?\na. నీతి ఆయోగ్\nb. మైనారిటీల జాతీయ కమిషన్\nc. భాషా మైనారిటీలకు ప్రత్యేక అధికారి\nd. జాతీయ మానవ హక్కుల కమిషన్',
+    ['4', '1', '3', '2'],
+    ['4', '1', '3', '2'],
+    1,
+    'Only 1 body in the list—Special Officer for Linguistic Minorities (Article 350B, 7th Amendment 1956)—is a Constitutional Body. NITI Aayog is an executive body, while NCM and NHRC are statutory bodies.',
+    'భాషా మైనారిటీల ప్రత్యేక అధికారి (ఆర్టికల్ 350B) మాత్రమే రాజ్యాంగ సంస్థ (1). నీతి ఆయోగ్ కార్యనిర్వాహక సంస్థ కాగా, NCM మరియు NHRC చట్టబద్ధమైన సంస్థలు.'
+  ],
+  [
+    109,
+    'Fundamental Rights (Article 21)',
+    'Statement (A) : There is no fundamental right to marry.\nStatement (B) : Right to travel abroad comes under the purview of Fundamental Rights.',
+    'ప్రకటన (A) : వివాహం చేసుకోవడానికి ప్రాథమిక హక్కు లేదు.\nప్రకటన (B) : విదేశాలకు ప్రయాణించడం ప్రాథమిక హక్కుల పరిధి క్రిందకు వస్తుంది.',
+    [
+      'Both Statements (A) and (B) are wrong',
+      'Both Statements (A) and (B) are right',
+      'Statement (A) is right and Statement (B) is wrong',
+      'Statement (A) is wrong and Statement (B) is right'
+    ],
+    [
+      'రెండు ప్రకటనలు (A) మరియు (B) తప్పు',
+      'రెండు ప్రకటనలు (A) మరియు (B) సరైనవి',
+      'ప్రకటన (A) సరైనది మరియు ప్రకటన (B) తప్పు',
+      'ప్రకటన (A) తప్పు మరియు ప్రకటన (B) సరైనది'
+    ],
+    3,
+    'In Shafin Jahan (Hadiya) and Lata Singh cases, the Supreme Court affirmed that the right to marry a person of one’s choice is part of Article 21 (making (A) wrong), and in Satwant Singh / Maneka Gandhi cases held that the right to travel abroad is a Fundamental Right under Article 21 ((B) right).',
+    'ఇష్టమైన వారిని వివాహం చేసుకునే హక్కు మరియు విదేశాలకు ప్రయాణించే హక్కు రెండూ ఆర్టికల్ 21 కింద ప్రాథమిక హక్కులే. కనుక (A) తప్పు, (B) సరైనది.'
+  ],
+  [
+    110,
+    'Seventh Schedule Lists',
+    'Match List – I with List – II.\nList – I (Subject)\na. Organisation of High Courts\nb. Taxes on Mineral Rights\nc. Education\nList – II (List)\ni. Concurrent List\nii. Union List\niii. State List',
+    'జాబితా – I ని జాబితా – II తో సరిపోల్చండి.\nజాబితా – I (విషయం)\na. హైకోర్టుల వ్యవస్థ\nb. ఖనిజ హక్కులపై పన్నులు\nc. విద్య\nజాబితా – II (జాబితా)\ni. ఉమ్మడి జాబితా\nii. యూనియన్ జాబితా\niii. రాష్ట్ర జాబితా',
+    [
+      'a – ii, b – iii, c – i',
+      'a – iii, b – ii, c – i',
+      'a – ii, b – i, c – iii',
+      'a – i, b – ii, c – iii'
+    ],
+    [
+      'a – ii, b – iii, c – i',
+      'a – iii, b – ii, c – i',
+      'a – ii, b – i, c – iii',
+      'a – i, b – ii, c – iii'
+    ],
+    0,
+    'Constitution and organisation of High Courts -> Union List Entry 78 (ii); Taxes on Mineral Rights -> State List Entry 50 (iii); Education -> Concurrent List Entry 25 (i).',
+    'హైకోర్టుల వ్యవస్థ (యూనియన్ జాబితా - ii), ఖనిజ హక్కులపై పన్నులు (రాష్ట్ర జాబితా - iii), విద్య (ఉమ్మడి జాబితా - i).'
+  ],
+  [
+    111,
+    'Making of the Constitution',
+    'Indian Constitution was adopted by the Constituent Assembly of India on',
+    'భారత రాజ్యాంగాన్ని భారత రాజ్యాంగ సభ ఎప్పుడు ఆమోదించింది ?',
+    ['January 26th, 1949', 'January 26th, 1950', 'November 26th, 1949', 'November 26th, 1950'],
+    ['జనవరి 26, 1949', 'జనవరి 26, 1950', 'నవంబర్ 26, 1949', 'నవంబర్ 26, 1950'],
+    2,
+    'The Constituent Assembly adopted and enacted the Constitution of India on 26th November 1949, and it came fully into force on 26th January 1950.',
+    'భారత రాజ్యాంగ సభ 1949 నవంబర్ 26న రాజ్యాంగాన్ని ఆమోదించింది.'
+  ],
+  [
+    112,
+    'DPSP (Article 39)',
+    'Are the statements given below in the Indian Constitution ?\nStatement (A) : Ownership and control of the material resources of the community are so distributed as best to subserve the common good.\nStatement (B) : Operation of the economic system does not result in the concentration of wealth and means of production to the common detriment.',
+    'భారత రాజ్యాంగంలో ఈ క్రింది ప్రకటనలు ఉన్నాయా ?\nప్రకటన (A) : సమాజపు వస్తు వనరుల యాజమాన్యం మరియు నియంత్రణ ప్రజలందరి ఉమ్మడి మేలుకు దోహదపడునట్లు పంపిణీ చేయవలెను.\nప్రకటన (B) : ఆర్థిక వ్యవస్థ యొక్క నిర్వహణ, సంపద మరియు ఉత్పత్తి సాధనాల కేంద్రీకరణకు దారితీసి, ప్రజల ఉమ్మడి మేలుకు హానికరం కారాదు.',
+    [
+      'Both Statements (A) and (B) are not there',
+      'Both Statements (A) and (B) are present',
+      'Only Statement (A) is there',
+      'Only Statement (B) is there'
+    ],
+    [
+      'రెండు ప్రకటనలు (A) మరియు (B) లేవు',
+      'రెండు ప్రకటనలు (A) మరియు (B) ఉన్నవి',
+      'ప్రకటన (A) మాత్రమే ఉన్నది',
+      'ప్రకటన (B) మాత్రమే ఉన్నది'
+    ],
+    1,
+    'Statements (A) and (B) are verbatim clauses of Article 39(b) and Article 39(c) respectively under the Directive Principles of State Policy.',
+    'ప్రకటనలు (A) మరియు (B) భారత రాజ్యాంగంలోని ఆర్టికల్ 39(b) మరియు ఆర్టికల్ 39(c)లలో యథాతథంగా ఉన్నాయి.'
+  ],
+  [
+    113,
+    'Historical Constitutional Acts',
+    'By which of the following Acts, the Governor General of Bengal was designated as the Governor General of India ?',
+    'క్రింది ఏ చట్టం ద్వారా బెంగాల్ గవర్నర్ జనరల్ భారత గవర్నర్ జనరల్‌గా నియమించబడ్డారు.',
+    ['Charter Act of 1853', 'Charter Act of 1793', 'Charter Act of 1833', 'Government of India Act 1858'],
+    ['1853 చార్టర్ చట్టం', '1793 చార్టర్ చట్టం', '1833 చార్టర్ చట్టం', '1858 భారత ప్రభుత్వ చట్టం'],
+    2,
+    'The Charter Act of 1833 centralized legislative power and designated the Governor-General of Bengal as the Governor-General of India (first being Lord William Bentinck).',
+    '1833 చార్టర్ చట్టం ద్వారా బెంగాల్ గవర్నర్ జనరల్‌ను భారతదేశ గవర్నర్ జనరల్‌గా మార్చారు (మొదటి వారు లార్డ్ విలియం బెంటింక్).'
+  ],
+  [
+    114,
+    'Eleventh Schedule (Panchayats)',
+    'Panchayats have responsibilities in respect of which of the following as per the Eleventh Schedule ?',
+    '11 వ షెడ్యూలు ప్రకారం, క్రింద ఇవ్వబడిన వాటిలో పంచాయతీలకు ఉన్న రాజ్యాంగ బాధ్యతలలో ఒకటి ఏది ?',
+    ['Libraries', 'Regulation of slaughter houses', 'Regulation of land use', 'Burials and burial grounds'],
+    ['గ్రంథాలయాలు', 'పశు వధ గృహముల క్రమబద్ధీకరణ', 'భూవినియోగ క్రమబద్ధీకరణ', 'ఖననాలు మరియు ఖనన మైదానములు'],
+    0,
+    'Libraries (Entry 20) are listed in the Eleventh Schedule for Panchayats. Regulation of slaughterhouses, regulation of land use, and burials/burial grounds belong to the Twelfth Schedule (Municipalities).',
+    '11వ షెడ్యూల్‌లోని 29 అంశాలలో "గ్రంథాలయాలు" పంచాయతీల పరిధిలో ఉన్నాయి; మిగిలినవి 12వ షెడ్యూల్ (మున్సిపాలిటీలు)కు చెందినవి.'
+  ],
+  [
+    115,
+    'Parts of the Constitution',
+    'Which part of the Indian Constitution deals with the Union Executive ?',
+    'భారత రాజ్యాంగంలోని ఏ భాగం యూనియన్ ఎగ్జిక్యూటివ్‌తో వ్యవహరిస్తుంది ?',
+    ['Part IV', 'Part VII', 'Part VI', 'Part V'],
+    ['పార్ట్ IV', 'పార్ట్ VII', 'పార్ట్ VI', 'పార్ట్ V'],
+    3,
+    'Part V (Articles 52–78 for the Union Executive) of the Indian Constitution deals with the Union government.',
+    'భారత రాజ్యాంగంలోని పార్ట్ V (ఆర్టికల్ 52–78) కేంద్ర కార్యనిర్వాహక వర్గం (Union Executive) గురించి తెలుపుతుంది.'
+  ],
+  [
+    116,
+    'British India Constitutional Acts',
+    'Match List – I with List – II and choose the right answer from the codes given below.\nList – I\na. Separate representation of the Muslim Community\nb. Dyarchy in the provinces\nc. Prescribed Federation\nd. Discussion of Annual Statement\nList – II\ni. Government of India Act, 1935\nii. Indian Councils Act, 1892\niii. Indian Councils Act, 1909\niv. Indian Councils Act, 1861\nv. Government of India Act, 1919',
+    'జాబితా – I ని జాబితా – II తో సరిపోల్చండి. దిగువ ఇవ్వబడిన కోడ్‌ల నుండి సరైన సమాధానాన్ని ఎంచుకోండి.\nజాబితా – I\na. ముస్లిం కమ్యూనిటీకి ప్రత్యేక ప్రాతినిధ్యం\nb. ప్రావిన్సులలో డైయార్కీ\nc. సూచించబడిన ఫెడరేషన్\nd. వార్షిక ప్రకటన చర్చ\nజాబితా – II\ni. భారత ప్రభుత్వ చట్టం, 1935\nii. ఇండియన్ కౌన్సిల్స్ యాక్ట్, 1892\niii. ఇండియన్ కౌన్సిల్స్ యాక్ట్, 1909\niv. ఇండియన్ కౌన్సిల్స్ యాక్ట్, 1861\nv. భారత ప్రభుత్వ చట్టం, 1919',
+    [
+      'a – iii, b – v, c – i, d – ii',
+      'a – iii, b – v, c – i, d – iv',
+      'a – iv, b – v, c – i, d – ii',
+      'a – iii, b – v, c – ii, d – i'
+    ],
+    [
+      'a – iii, b – v, c – i, d – ii',
+      'a – iii, b – v, c – i, d – iv',
+      'a – iv, b – v, c – i, d – ii',
+      'a – iii, b – v, c – ii, d – i'
+    ],
+    0,
+    'Separate electorate for Muslims -> Act of 1909 (iii); Provincial Dyarchy -> GoI Act 1919 (v); All-India Federation -> GoI Act 1935 (i); Budget/Annual Statement discussion -> Indian Councils Act 1892 (ii).',
+    'ముస్లింలకు ప్రత్యేక ప్రాతినిధ్యం (1909 - iii), ప్రావిన్సులలో ద్వంద్వ పాలన (1919 - v), అఖిల భారత సమాఖ్య (1935 - i), బడ్జెట్ చర్చాధికారం (1892 - ii).'
+  ],
+  [
+    117,
+    'Lokpal & Lokayuktas Act',
+    'When did The Lokpal and Lokayuktas Act, 2013 come into force ?',
+    'లోక్‌పాల్ మరియు లోకాయుక్త చట్టం, 2013 ఎప్పుడు అమలులోకి వచ్చింది ?',
+    ['1st January 2014', '16th January 2014', '17th December 2013', '1st December 2013'],
+    ['1 జనవరి 2014', '16 జనవరి 2014', '17 డిసెంబర్ 2013', '1 డిసెంబర్ 2013'],
+    1,
+    'The Lokpal and Lokayuktas Act, 2013 received Presidential assent on 1st January 2014 and came into force on 16th January 2014.',
+    'లోక్‌పాల్ మరియు లోకాయుక్త చట్టం, 2013 జనవరి 16, 2014 నుండి అమలులోకి వచ్చింది.'
+  ],
+  [
+    118,
+    '74th Constitutional Amendment Act',
+    'The 74th Constitutional Amendment Act of 1992 came into force on',
+    '74 వ రాజ్యాంగ సవరణ చట్టం 1992 ఎప్పుడు అమలులోకి వచ్చింది ?',
+    ['24th April, 1993', '1st June, 1992', '1st June, 1993', '24th April, 1992'],
+    ['24 వ ఏప్రిల్, 1993', '1 వ జూన్, 1992', '1 వ జూన్, 1993', '24 వ ఏప్రిల్, 1992'],
+    2,
+    'The 73rd Amendment came into force on 24th April 1993, whereas the 74th Constitutional Amendment Act (Municipalities) came into force on 1st June 1993.',
+    '74వ రాజ్యాంగ సవరణ చట్టం (మున్సిపాలిటీలు) 1993 జూన్ 1వ తేదీన అమలులోకి వచ్చింది.'
+  ],
+  [
+    119,
+    'Directive Principles (Part IV)',
+    'Directive Principles of State Policy contain which of the following ?\na. Free Legal Aid\nb. Maternity Relief\nc. Living Wage\nd. Safeguarding of Forests\ne. Protection of Monuments',
+    'క్రింది వాటిలో ఏవి రాజ్య విధాన నిర్దేశిక సూత్రాలలో ఉన్నాయి ?\na. ఉచిత న్యాయ సహాయం (లీగల్ ఎయిడ్)\nb. ప్రసూతి సహాయం\nc. జీవన భృతి\nd. అటవీ సంరక్షణ\ne. స్మారక చిహ్నముల సంరక్షణ',
+    ['a only', 'a and c only', 'a, b and c only', 'a, b, c, d and e'],
+    ['a మాత్రమే', 'a మరియు c మాత్రమే', 'a, b మరియు c మాత్రమే', 'a, b, c, d మరియు e'],
+    3,
+    'All five are in Part IV DPSPs: Free Legal Aid (Art. 39A), Maternity Relief (Art. 42), Living Wage (Art. 43), Safeguarding Forests (Art. 48A), and Protection of Monuments (Art. 49).',
+    'ఉచిత న్యాయ సహాయం (39A), ప్రసూతి సహాయం (42), జీవన భృతి (43), అటవీ సంరక్షణ (48A), స్మారక చిహ్నాల సంరక్షణ (49) అన్నీ ఆదేశిక సూత్రాలలో ఉన్నాయి.'
+  ],
+  [
+    120,
+    'Election Commission of India',
+    'Which of the following statement(s) is/are true relating to Election Commission of India ?\nA. The Election Commission of India is a three member Body.\nB. The Chief Election Commissioner is appointed by the Chief Justice of the Supreme Court of India.\nC. Election Commission of India is a Constitutional Body.',
+    'భారత ఎన్నికల కమీషన్‌కు సంబంధించి క్రింది ప్రకటనలలో ఏది(వి) సరైనది(వి) ?\nA. భారత ఎన్నికల సంఘం ముగ్గురు సభ్యుల సంఘం.\nB. ప్రధాన ఎన్నికల కమీషనర్‌ను భారత సుప్రీంకోర్టు ప్రధాన న్యాయమూర్తి నియమిస్తారు.\nC. భారత ఎన్నికల సంఘం ఒక రాజ్యాంగ సంస్థ.',
+    ['A and B', 'A and C', 'B and C', 'A, B and C'],
+    ['A మరియు B', 'A మరియు C', 'B మరియు C', 'A, B మరియు C'],
+    1,
+    'Statements A and C are true (since 1993 ECI is a 3-member Constitutional Body under Art. 324). Statement B is false because the CEC is appointed by the President of India, not CJI.',
+    'ఎన్నికల సంఘం త్రిసభ్య రాజ్యాంగ సంస్థ (A, C సరైనవి). ప్రధాన ఎన్నికల కమీషనర్‌ను రాష్ట్రపతి నియమిస్తారు (సుప్రీంకోర్టు ప్రధాన న్యాయమూర్తి కాదు).'
+  ],
+  [
+    121,
+    'Public Interest Litigation (PIL)',
+    'Which of the following statements are correct ?\nA. Public Interest Litigation (PIL) is also known as Social Action Litigation.\nB. PIL is an outcome of Judicial Restraint.\nC. Justice V. R. Krishna Iyer and Justice P. N. Bhagawathi were pioneers of the concept of PIL.',
+    'క్రింది ప్రకటనలలో ఏది(వి) సరైనది(వి) ?\nA. పబ్లిక్ ఇంట్రెస్ట్ లిటిగేషన్ (PIL) ని సోషల్ యాక్షన్ లిటిగేషన్ అని కూడా అంటారు.\nB. PIL అనేది న్యాయపరమైన నియంత్రణ యొక్క ఫలితం.\nC. జస్టిస్ V. R. కృష్ణయ్యర్ మరియు P. N. భగవతి PIL అనే భావనకు మార్గదర్శకులు.',
+    ['A and C only', 'A, B and C', 'A and B only', 'B and C only'],
+    ['A మరియు C మాత్రమే', 'A, B మరియు C', 'A మరియు B మాత్రమే', 'B మరియు C మాత్రమే'],
+    0,
+    'PIL is also known as Social Action Litigation (Upendra Baxi) and was pioneered by Justice V.R. Krishna Iyer and Justice P.N. Bhagwati (A & C). It is an outcome of Judicial Activism, not Judicial Restraint (B is wrong).',
+    'PILను సోషల్ యాక్షన్ లిటిగేషన్ అంటారు మరియు దీనిని జస్టిస్ కృష్ణయ్యర్, పి.ఎన్. భగవతి ప్రవేశపెట్టారు (A, C సరైనవి). ఇది న్యాయ క్రియాశీలత ఫలితం.'
+  ],
+  [
+    122,
+    'Ashok Mehta Committee (1977)',
+    'Regarding the Panchayat Raj System, in 1978 Ashok Mehta Committee recommended for',
+    'పంచాయతీ రాజ్ వ్యవస్థకు సంబంధించి, 1978 లో అశోక్ మెహతా కమిటీ ఏమి సిఫార్సు చేసింది ?',
+    [
+      'two tier system with four years of term',
+      'three tier system with four years of term',
+      'two tier system with five years of term',
+      'three tier system with six years of term'
+    ],
+    [
+      'నాలుగు సంవత్సరాల కాలవ్యవధితో రెండు అంచెల వ్యవస్థ',
+      'నాలుగు సంవత్సరాల కాలవ్యవధితో మూడు అంచెల వ్యవస్థ',
+      'ఐదేళ్ల కాల వ్యవధితో రెండు అంచెల వ్యవస్థ',
+      'ఆరు సంవత్సరాల కాల వ్యవధితో మూడు అంచెల వ్యవస్థ'
+    ],
+    0,
+    'The Ashok Mehta Committee (submitted report in August 1978) recommended a two-tier Panchayati Raj system (Zilla Parishad & Mandal Panchayat) with a 4-year term.',
+    '1978లో అశోక్ మెహతా కమిటీ 4 సంవత్సరాల పదవీకాలంతో కూడిన రెండు అంచెల పంచాయతీరాజ్ వ్యవస్థను సిఫార్సు చేసింది.'
+  ],
+  [
+    123,
+    'National Human Rights Commission',
+    'When was the Human Rights Commission of India constituted ?',
+    'భారత మానవ హక్కుల కమిషన్ ఎప్పుడు ఏర్పాటు చేయబడింది ?',
+    ['1992', '1994', '1993', '1990'],
+    ['1992', '1994', '1993', '1990'],
+    2,
+    'The National Human Rights Commission (NHRC) of India was constituted on 12 October 1993 under the Protection of Human Rights Act, 1993.',
+    'జాతీయ మానవ హక్కుల కమిషన్ (NHRC) 1993 అక్టోబర్ 12న స్థాపించబడింది.'
+  ],
+  [
+    124,
+    'Twelfth Schedule (Municipalities)',
+    'Municipalities have Constitutional responsibilities in respect of which of the following as per the Twelfth Schedule ?',
+    '12 వ షెడ్యూలు ప్రకారం, మునిసిపాలిటీలకు ఉన్న రాజ్యాంగ బాధ్యతలలో క్రింద ఇవ్వబడిన వాటిలో ఒకటి ఏది ?',
+    [
+      'Non-conventional Energy Sources',
+      'Cattle Pounds',
+      'Small scale industries',
+      'Technical Training and Vocational Education'
+    ],
+    [
+      'సంప్రదాయేతర ఇంధన వనరులు',
+      'బందెల దొడ్లు',
+      'చిన్న తరహా పరిశ్రమలు',
+      'సాంకేతిక శిక్షణ మరియు వృత్తి విద్య'
+    ],
+    1,
+    'Cattle pounds (prevention of cruelty to animals, Entry 16) is included in the Twelfth Schedule for Municipalities, whereas Non-conventional energy sources, Small scale industries, and Technical training/vocational education are in the Eleventh Schedule (Panchayats).',
+    'బందెల దొడ్లు (Cattle pounds) 12వ షెడ్యూల్ ప్రకారం మున్సిపాలిటీల పరిధిలో ఉండగా, మిగిలిన మూడు 11వ షెడ్యూల్‌లో ఉన్నాయి.'
+  ],
+  [
+    125,
+    'History of Local Self-Government',
+    'Which of the following statement(s) is/are correct ?\nA. The Cantonments Act was passed by the Central Legislature in 1924.\nB. The first municipal corporation came into existence at Madras in 1688.\nC. Lord Rippon is regarded as the Father of Local Self Government in India.',
+    'క్రింది ప్రకటనలలో ఏది/ఏవి సరైనది/సరైనవి ?\nA. కంటోన్మెంట్స్ చట్టాన్ని 1924 లో సెంట్రల్ లెజిస్లేచర్ ఆమోదించింది.\nB. 1688 లో మద్రాసులో మొదటి మున్సిపల్ కార్పొరేషన్ ఏర్పాటు చేయబడింది.\nC. లార్డ్ రిప్పన్ భారతదేశంలో స్థానిక స్వపరిపాలన యొక్క తండ్రిగా పరిగణించబడ్డాడు.',
+    ['A and C only', 'A, B and C', 'B and C only', 'Only C'],
+    ['A మరియు C మాత్రమే', 'A, B మరియు C', 'B మరియు C మాత్రమే', 'C మాత్రమే'],
+    1,
+    'All three statements are correct: the Cantonments Act was passed in 1924 (A), the first Municipal Corporation in India was set up in Madras in 1688 (B), and Lord Ripon (1882 resolution) is called the Father of Local Self-Government in India (C).',
+    '1924 కంటోన్మెంట్స్ చట్టం, 1688లో మద్రాసులో తొలి మున్సిపల్ కార్పొరేషన్, మరియు లార్డ్ రిప్పన్ స్థానిక స్వపరిపాలన పితామహుడు — అన్నీ (A, B, C) సరైనవి.'
+  ],
+  [
+    126,
+    'Right to Property (44th Amendment)',
+    'Assertion (A) : Right to Property is made a legal right under Article 300-A in Part XII of the Constitution.\nReason (R) : 44th Amendment Act of 1978 eliminated the Right to Property from the list of Fundamental Rights.',
+    'ప్రకటన (A) : ఆస్తి హక్కు రాజ్యాంగంలో XII భాగంలో నిబంధన 300-A ప్రకారం చట్టబద్ధమైన హక్కుగా చేయబడింది.\nకారణం (R) : 44 వ సవరణ చట్టం 1978 ప్రాథమిక హక్కుల జాబితా నుండి ఆస్తి హక్కును తొలగించింది.',
+    [
+      'Both (A) and (R) are true and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true but (R) is not the correct explanation of (A)',
+      '(A) is true but (R) is false',
+      'Both (A) and (R) are false'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం మరియు (R), (A) కు సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం కానీ (R), (A) కు సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) మరియు (R) రెండూ తప్పు'
+    ],
+    0,
+    'The 44th Amendment Act, 1978 deleted Right to Property from Fundamental Rights (Art. 19(1)(f) & Art. 31) and placed it as a legal/constitutional right under Article 300-A in Part XII.',
+    '1978లోని 44వ రాజ్యాంగ సవరణ ఆస్తి హక్కును ప్రాథమిక హక్కుల నుండి తొలగించి ఆర్టికల్ 300-A కింద చట్టబద్ధమైన హక్కుగా మార్చింది. (A) మరియు (R) నిజం, (R) సరైన వివరణ.'
+  ],
+  [
+    127,
+    'Union Public Service Commission (UPSC)',
+    'Assertion (A) : The UPSC is the Central recruiting agency in India.\nReason (R) : It is an independent recruiting constitutional body.',
+    'వాదన (A) : UPSC భారతదేశంలో సెంట్రల్ రిక్రూటింగ్ ఏజెన్సీ.\nకారణం (R) : ఇది స్వతంత్ర నియామక రాజ్యాంగ సంస్థ.',
+    [
+      'Both (A) and (R) are True and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are True and (R) is not a correct explanation of (A)',
+      '(A) is True but (R) is False',
+      '(A) is False but (R) is True'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) తప్పు కానీ (R) నిజం'
+    ],
+    0,
+    'UPSC (Articles 315–323) is India’s central recruiting agency for All India and Central Group A/B services, functioning as an independent constitutional body to ensure merit-based recruitment.',
+    'UPSC భారతదేశంలో కేంద్ర నియామక సంస్థ మరియు ఆర్టికల్ 315 ప్రకారం స్వతంత్ర రాజ్యాంగ సంస్థ; (A), (R) నిజం మరియు (R) సరైన వివరణ.'
+  ],
+  [
+    128,
+    'National Commissions',
+    'Match List – I with List – II.\nList – I (National Commission)\na. National Commission for STs\nb. National Commission for Minorities\nc. National Commission for SCs\nd. National Commission for BCs\nList – II (Name of First Chairperson)\ni. Justice R. N. Prasad\nii. Kunwar Singh\niii. Justice Mohammad Sardar Ali Khan\niv. Suraj Bhan',
+    'జాబితా – I ని జాబితా – II తో సరిపోల్చి, దిగువ ఇవ్వబడిన కోడ్‌ల నుండి సరైన సమాధానాన్ని ఎంచుకోండి.\nజాబితా – I (నేషనల్ కమిషన్)\na. ఎస్టీల జాతీయ కమిషన్\nb. మైనారిటీల జాతీయ కమిషన్\nc. ఎస్సీల జాతీయ కమిషన్\nd. బీసీల జాతీయ కమిషన్\nజాబితా – II (మొదటి అధ్యక్షుడి పేరు)\ni. జస్టిస్ R. N. ప్రసాద్\nii. కున్వర్ సింగ్\niii. జస్టిస్ మొహమ్మద్ సర్దార్ అలీ ఖాన్\niv. సూరజ్ భాన్',
+    [
+      'a – iv, b – iii, c – ii, d – i',
+      'a – ii, b – iii, c – i, d – iv',
+      'a – i, b – iii, c – ii, d – iv',
+      'a – ii, b – iii, c – iv, d – i'
+    ],
+    [
+      'a – iv, b – iii, c – ii, d – i',
+      'a – ii, b – iii, c – i, d – iv',
+      'a – i, b – iii, c – ii, d – iv',
+      'a – ii, b – iii, c – iv, d – i'
+    ],
+    3,
+    'First Chairpersons: NCST -> Kunwar Singh (ii); NCM -> Justice Mohammad Sardar Ali Khan (iii); NCSC (2004 bifurcation) -> Suraj Bhan (iv); NCBC (1993) -> Justice R. N. Prasad (i).',
+    'మొదటి అధ్యక్షులు: NCST (కున్వర్ సింగ్ - ii), మైనారిటీ కమిషన్ (జస్టిస్ సర్దార్ అలీ ఖాన్ - iii), NCSC (సూరజ్ భాన్ - iv), NCBC (జస్టిస్ ఆర్.ఎన్. ప్రసాద్ - i).'
+  ],
+  [
+    129,
+    '73rd Constitutional Amendment Act',
+    'Which of the following provisions of 73rd Constitutional Amendment Act related to Panchayat Raj Institutions is/are correct ?\ni. The members of these bodies are directly elected by the people.\nii. Elections shall be held within a period of 3 months from the dissolution of the body.\niii. Women have been given 1/3rd reservation in Panchayats.\niv. The minimum age required to become member is 21 years.',
+    'పంచాయితీ రాజ్ సంస్థలకు సంబంధించిన 73 వ రాజ్యాంగ సవరణ చట్టంలోని ఈ క్రింది నిబంధనలలో సరైనవి ఏవి ?\ni. ఈ సంస్థల సభ్యులు నేరుగా ప్రజలచే ఎన్నుకోబడతారు.\nii. ఈ సంస్థను రద్దు చేయబడినప్పటి నుండి 3 నెలల వ్యవధిలో ఎన్నికలు నిర్వహించాలి.\niii. పంచాయితీలలో మహిళలకు 1/3 వ వంతు రిజర్వేషన్లు కల్పించబడతాయి.\niv. సభ్యుడు కావడానికి కనీస వయస్సు 21 సంవత్సరాలు.',
+    ['i, ii and iii only', 'ii, iii and iv only', 'i, iii and iv only', 'All of the above'],
+    ['i, ii మరియు iii మాత్రమే', 'ii, iii మరియు iv మాత్రమే', 'i, iii మరియు iv మాత్రమే', 'పైవన్నీ'],
+    2,
+    'Under Article 243E(3), fresh elections must be completed within 6 months (not 3 months) from dissolution. Statements i, iii, and iv are correct.',
+    'పంచాయతీ రద్దు అయిన 6 నెలలలోపు ఎన్నికలు నిర్వహించాలి (3 నెలలు కాదు). కనుక i, iii మరియు iv మాత్రమే సరైనవి.'
+  ],
+  [
+    130,
+    'State Finance Commission',
+    'Which of the following statements about State Finance Commission is/are correct ?\ni. This Commission examines the financial position of the local governments in the State.\nii. It also reviews the distribution of revenues between the State and Local governments on the one hand and between rural and urban local governments on the other.',
+    'రాష్ట్ర ఆర్థిక సంఘం గురించిన క్రింది ప్రకటనలలో సరైనది(వి) ఏది(వి) ?\ni. ఈ కమీషన్ రాష్ట్రంలోని స్థానిక ప్రభుత్వాల ఆర్థిక స్థితిగతులను పరిశీలిస్తుంది.\nii. ఇది ఒక వైపు రాష్ట్ర మరియు స్థానిక ప్రభుత్వాల మధ్య మరియు మరోవైపు గ్రామీణ మరియు పట్టణ స్థానిక ప్రభుత్వాల మధ్య ఆదాయాల పంపిణీని కూడా సమీక్షిస్తుంది.',
+    ['Only i', 'Only ii', 'Both i and ii', 'None of the above'],
+    ['i మాత్రమే', 'ii మాత్రమే', 'i మరియు ii రెండూ', 'పైవేవీ కావు'],
+    2,
+    'Under Articles 243-I and 243-Y, the State Finance Commission reviews the financial position of Panchayats and Municipalities and makes recommendations on resource distribution between the State and rural/urban local bodies.',
+    'ఆర్టికల్ 243-I మరియు 243-Y ప్రకారం రాష్ట్ర ఆర్థిక సంఘం స్థానిక సంస్థల ఆర్థిక స్థితిని మరియు రాష్ట్ర-స్థానిక సంస్థల మధ్య ఆదాయ పంపిణీని సమీక్షిస్తుంది. (i మరియు ii రెండూ సరైనవి).'
+  ],
+  [
+    131,
+    'Electoral Reforms & EVMs',
+    'Which of the following statements is/are not true regarding Electronic Voting Machines (EVM) ?\nA. EVMs were used for the first time in the entire State of Goa in the general elections to the Assembly in 1999.\nB. EVMs were used for the first time on experimental basis in the selected constituencies in the Assembly elections to the States of Rajasthan, Madhya Pradesh and Gujarat in 1998.',
+    'ఎలక్ట్రానిక్ ఓటింగ్ మేషీన్లకు (EVM) సంబంధించి క్రింది ప్రకటనలలో ఏది(వి) నిజం కాదు ?\nA. 1999 లో జరిగిన సార్వత్రిక ఎన్నికల్లో గోవా రాష్ట్రం మొత్తంలో తొలిసారిగా ఈవీఎంలను వినియోగించారు.\nB. 1998 లో రాజస్థాన్, మధ్యప్రదేశ్, గుజరాత్ రాష్ట్రాలకు జరిగిన అసెంబ్లీ ఎన్నికల్లో ఎంపిక చేసిన నియోజకవర్గాల్లో తొలిసారిగా ఈవీఎంలను ప్రయోగాత్మకంగా ఉపయోగించారు.',
+    ['Only A', 'Both A and B', 'Only B', 'Both A and B are true'],
+    ['A మాత్రమే', 'A మరియు B రెండూ', 'B మాత్రమే', 'A మరియు B రెండూ నిజం'],
+    2,
+    'Statement A is true (Goa 1999 Assembly election used EVMs statewide). Statement B is not true: in 1998, EVMs were tested in Madhya Pradesh, Rajasthan, and NCT of Delhi (NOT Gujarat), and earlier first piloted in Paravur, Kerala in 1982.',
+    '1998లో EVMs ప్రయోగాత్మకంగా మధ్యప్రదేశ్, రాజస్థాన్ మరియు ఢిల్లీలలో ఉపయోగించారు (గుజరాత్‌లో కాదు). కనుక B మాత్రమే నిజం కాదు.'
+  ],
+  [
+    132,
+    'NITI Aayog',
+    'Assertion (A) : NITI Aayog is a Non-Constitutional Advisory Body.\nReason (R) : One of the objectives of NITI Aayog is to develop mechanisms to formulate credible plans at the village level and aggregate these progressively at higher levels of government.',
+    'వాదన (A) : నీతి ఆయోగ్ రాజ్యాంగేతరమైన సలహా సంస్థ.\nకారణం (R) : గ్రామ స్థాయిలో విశ్వసనీయమైన ప్రణాళికలను రూపొందించడానికి యంత్రాంగాలను అభివృద్ధి చేయడం మరియు ప్రభుత్వ ఉన్నత స్థాయిలలో వీటిని క్రమంగా సమీకరించడం నీతి ఆయోగ్ యొక్క లక్ష్యాలలో ఒకటి.',
+    [
+      'Both (A) and (R) are True and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are True but (R) is not the correct explanation of (A)',
+      '(A) is True but (R) is False',
+      '(A) is False but (R) is True'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R) (A) యొక్క సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) తప్పు కానీ (R) నిజం'
+    ],
+    1,
+    'NITI Aayog (formed 1 Jan 2015 via Cabinet resolution) is an extra-constitutional advisory think-tank (A is True), and bottom-up village-level planning is one of its key objectives (R is True), though (R) does not explain why it is non-constitutional.',
+    'నీతి ఆయోగ్ రాజ్యాంగేతర సలహా సంస్థ (నిజం) మరియు గ్రామ స్థాయి ప్రణాళికలు దాని లక్ష్యం (నిజం), కానీ (R) అనేది (A)కు సరైన వివరణ కాదు.'
+  ],
+  [
+    133,
+    'Indian Judiciary (Articles 128 & 226)',
+    'With reference to the Indian Judiciary, which of the following statement(s) is/are correct ?\ni. Any retired judge of the Supreme Court of India can be called back to sit and act as a Supreme Court Judge by the Chief Justice of India with the prior permission of the President of India.\nii. A High Court in India has the power to review its own Judgement as the Supreme Court does although there has been no specific power of review conferred on it by the Constitution.',
+    'భారతీయ న్యాయవ్యవస్థకు సంబంధించి, ఈ క్రింది ప్రకటనలలో సరైనది(వి) ఏది(వి) ?\ni. భారత సర్వోన్నత న్యాయస్థానంలో పదవీ విరమణ పొందిన ఏ న్యాయమూర్తినైనా భారత రాష్ట్రపతి ముందస్తు అనుమతితో భారత ప్రధాన న్యాయమూర్తి సుప్రీంకోర్టు న్యాయమూర్తిగా కూర్చోవడానికి తిరిగి పిలవవచ్చు.\nii. భారతదేశంలో సుప్రీంకోర్టులాగ రాజ్యాంగం ద్వారా నిర్దిష్ట సమీక్ష అధికారం లేనప్పటికీ హైకోర్టు దాని స్వంత తీర్పును సమీక్షించుకునే అధికారం కలిగి ఉంది.',
+    ['Only i', 'Only ii', 'Both i and ii', 'Neither i nor ii'],
+    ['i మాత్రమే', 'ii మాత్రమే', 'i మరియు ii రెండూ', 'i మరియు ii రెండూ కాదు'],
+    2,
+    'Both statements are correct: Article 128 enables the CJI (with President’s previous consent) to request a retired SC Judge to sit and act as an SC Judge, and High Courts as Courts of Record (Art. 215 / Shivdeo Singh case) possess inherent power to review their own orders.',
+    'ఆర్టికల్ 128 ప్రకారం విరమణ పొందిన సుప్రీంకోర్టు న్యాయమూర్తిని తిరిగి పిలవవచ్చు (i), మరియు కోర్ట్ ఆఫ్ రికార్డ్‌గా హైకోర్టుకు తన తీర్పును సమీక్షించే అంతర్గత అధికారం ఉంది (ii). రెండూ సరైనవి.'
+  ],
+  [
+    134,
+    'Reorganisation of Jammu & Kashmir',
+    'The Jammu and Kashmir Reorganisation Act came into effect on',
+    'జమ్ము కాశ్మీర్ పునర్వ్యవస్థీకరణ చట్టం అమలులోకి వచ్చినది ఎప్పుడు ?',
+    ['31st October 2019', '31st October 2018', '31st October 2017', '31st October 2020'],
+    ['31 అక్టోబర్ 2019', '31 అక్టోబర్ 2018', '31 అక్టోబర్ 2017', '31 అక్టోబర్ 2020'],
+    0,
+    'The Jammu and Kashmir Reorganisation Act, 2019 came into effect on 31st October 2019 (National Unity Day), creating the Union Territories of J&K and Ladakh.',
+    'జమ్మూ కాశ్మీర్ పునర్వ్యవస్థీకరణ చట్టం 2019 అక్టోబర్ 31న అమలులోకి వచ్చింది.'
+  ],
+  [
+    135,
+    '73rd Constitutional Amendment Act',
+    'Assertion (A) : The 73rd Constitutional Amendment Act is a significant landmark in the evolution of grassroots democratic institutions in the country.\nReason (R) : This Act has brought the Panchayath Raj institutions under the purview of justiciable part of the Constitution.',
+    'వాదన (A) : 73 వ రాజ్యాంగ సవరణ చట్టం దేశంలో అట్టడుగు ప్రజాస్వామిక సంస్థల పరిణామంలో ఒక ముఖ్యమైన మైలురాయి.\nకారణం (R) : ఈ చట్టం పంచాయతీ రాజ్ సంస్థలను రాజ్యాంగంలోని న్యాయ పరిధిలోకి తీసుకువచ్చింది.',
+    [
+      'Both (A) and (R) are True and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are True and (R) is not the correct explanation of (A)',
+      '(A) is True but (R) is False',
+      '(A) is False but (R) is True'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) తప్పు కానీ (R) నిజం'
+    ],
+    0,
+    'The 73rd Amendment Act (1992) shifted Panchayati Raj from non-justiciable Article 40 (DPSP) into Part IX of the Constitution as mandatory, legally enforceable grassroots governance institutions.',
+    '73వ రాజ్యాంగ సవరణ ఆర్టికల్ 40 నుండి పంచాయతీ రాజ్ సంస్థలకు భాగము IX ద్వారా రాజ్యాంగబద్ధమైన న్యాయబద్ధతను కల్పించింది. (A), (R) నిజం మరియు (R) సరైన వివరణ.'
+  ],
+  [
+    136,
+    'Election Petitions (RPA 1951)',
+    'Which of the following statement(s) is/are correct ?\ni. Under Section 81 of the Representation of the People Act (RPA) 1951, no election can be called in question except by an election petition presented in accordance with the provisions of this part.\nii. Only the High Courts have original jurisdiction on deciding on election petitions.\niii. An election petition calling in question an election shall be filed within the time period of 30 days from the date of declaration of results.',
+    'క్రింది ప్రకటనలలో సరైనది(వి) ఏది(వి) ?\ni. ప్రజాప్రాతినిధ్య చట్టం (RPA) 1951లోని సెక్షన్ 81 ప్రకారం, ఈ భాగం యొక్క నిబంధనలకు అనుగుణంగా సమర్పించబడిన ఎన్నికల పిటిషన్‌తో మినహా ఎన్నికలను వేరే ఏ విధంగాను ప్రశ్నించకూడదు.\nii. ఎన్నికల పిటిషన్‌పై నిర్ణయం తీసుకునే అసలు అధికార పరిధి హైకోర్టులకు మాత్రమే ఉంది.\niii. ఎన్నికలను ప్రశ్నించే ఎన్నికల పిటిషన్‌ను ఫలితాల ప్రకటన తేదీ నుండి 30 రోజుల వ్యవధిలోపు దాఖలు చేయాలి.',
+    ['Only i', 'Only ii', 'i, iii only', 'ii, iii only'],
+    ['i మాత్రమే', 'ii మాత్రమే', 'i, iii మాత్రమే', 'ii, iii మాత్రమే'],
+    0,
+    'Wait: Under Article 329(b) & RPA 1951, Section 80 bars questioning an election except by an election petition, while Section 81 specifies a 45-day filing limit (NOT 30 days) and original jurisdiction for Presidential/VP elections lies with Supreme Court (not High Courts alone). Note also Sec 80A gives HC jurisdiction for MP/MLA petitions, while SC hears Pres/VP under Art 71 -> statement i corresponds to the text of Art 329(b)/Sec 80-81; Wait: both i and ii or only ii? Note Section 81 specifically covers presentation of petitions within 45 days!',
+    'ప్రజాప్రాతినిధ్య చట్టం 1951 ప్రకారం ఎన్నికల పిటిషన్ దాఖలు గడువు 45 రోజులు (30 రోజులు కాదు) మరియు రాష్ట్రపతి/ఉపరాష్ట్రపతి ఎన్నికల వివాదాలు సుప్రీంకోర్టు పరిధిలో ఉంటాయి. కనుక i మాత్రమే సరైనది.'
+  ],
+  [
+    137,
+    'Vice President of India',
+    'Which of the following statements about the Vice President of India are correct ?\ni. The Vice President is elected for five years.\nii. The Vice President acts as the ex-officio Chairman of the Rajya Sabha.\niii. The Vice President acts as the President only until a new President is elected.',
+    'భారత ఉపరాష్ట్రపతి గురించి ఈ క్రింది ప్రకటనలలో సరైనది(వి) ఏది(వి) ?\ni. ఉపరాష్ట్రపతి ఐదు సంవత్సరాలకు ఒకసారి ఎన్నుకోబడతారు.\nii. ఉపరాష్ట్రపతి రాజ్యసభకు ఎక్స్-అఫీషియో చైర్మన్‌గా వ్యవహరిస్తారు.\niii. కొత్త అధ్యక్షుడిని ఎన్నుకునే వరకు మాత్రమే ఉపరాష్ట్రపతి అధ్యక్షుడిగా వ్యవహరిస్తారు.',
+    ['Only i and ii', 'Only i and iii', 'Only ii and iii', 'All i, ii and iii'],
+    ['i మరియు ii మాత్రమే', 'i మరియు iii మాత్రమే', 'ii మరియు iii మాత్రమే', 'i, ii, iii అన్నీ'],
+    3,
+    'All three statements are correct: the Vice-President holds a 5-year term (Art. 67), acts as ex-officio Chairman of Rajya Sabha (Art. 64), and acts as President during a vacancy only until a new President is elected within 6 months (Art. 65).',
+    'ఉపరాష్ట్రపతి పదవీకాలం 5 ఏళ్లు (i), రాజ్యసభ ఎక్స్-అఫీషియో చైర్మన్ (ii), మరియు నూతన రాష్ట్రపతి ఎన్నికయ్యే వరకు తాత్కాలిక రాష్ట్రపతిగా వ్యవహరిస్తారు (iii) — అన్నీ సరైనవి.'
+  ],
+  [
+    138,
+    '42nd Constitutional Amendment (1976)',
+    'Assertion (A) : The 42nd Constitutional Amendment Act (1976) is known as ‘Mini-Constitution’.\nReason (R) : The 42nd Constitutional Amendment Act (1976) made changes to the Preamble, the Seventh Schedule and to 54 Articles of the Constitution.',
+    'ప్రకటన (A) : 42 వ రాజ్యాంగ సవరణ చట్టం (1976) ను ‘మినీ - రాజ్యాంగం’ అంటారు.\nకారణం (R) : 42 వ రాజ్యాంగ సవరణ చట్టం (1976) రాజ్యాంగ ప్రవేశిక, ఏడవ షెడ్యూల్ మరియు 54 ఆర్టికల్‌లకు మార్పులు చేసింది.',
+    [
+      'Both (A) and (R) are true and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are true but (R) is not the correct explanation of (A)',
+      '(A) is true, while (R) is false',
+      '(A) is false, while (R) is true'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజమైనవి మరియు (A) కి (R) సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజమైనవి కానీ (A) కి (R) సరైన వివరణ కాదు',
+      '(A) నిజం, కానీ (R) తప్పు',
+      '(A) తప్పు, కానీ (R) నిజం'
+    ],
+    0,
+    'Because the 42nd Amendment Act, 1976 brought sweeping changes across the Preamble, Seventh Schedule, new Parts (IV-A, XIV-A), and dozens of Articles (59 clauses/articles), it is termed the "Mini-Constitution".',
+    '1976లోని 42వ రాజ్యాంగ సవరణ ప్రవేశిక, 7వ షెడ్యూల్ మరియు అనేక ఆర్టికల్స్‌లో విస్తృత మార్పులు చేసినందున దీనిని "మినీ రాజ్యాంగం" అంటారు.'
+  ],
+  [
+    139,
+    'All India Services & Federalism',
+    'Assertion (A) : The All India Services violate the federal principle of the Constitution as well as the autonomy of States.\nReason (R) : The All India Service officers are governed by Central Government rules and the State Governments do not have full control over them.',
+    'వాదన (A) : అఖిల భారత సర్వీసులు రాజ్యాంగంలోని సమాఖ్య సూత్రాన్ని మరియు రాష్ట్రాల స్వయం ప్రతిపత్తిని ఉల్లంఘిస్తాయి.\nకారణం (R) : అఖిల భారత సర్వీసు అధికారులు కేంద్ర ప్రభుత్వ నిబంధనల ప్రకారం నిర్వహించబడతారు మరియు రాష్ట్ర ప్రభుత్వాలకు వారిపై పూర్తి నియంత్రణ ఉండదు.',
+    [
+      'Both (A) and (R) are True and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are True and (R) is not the correct explanation of (A)',
+      '(A) is True but (R) is False',
+      '(A) is False but (R) is True'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) తప్పు కానీ (R) నిజం'
+    ],
+    0,
+    'Critics of Indian federalism note that All India Services (IAS, IPS, IFoS under Art. 312) restrict State autonomy precisely because ultimate disciplinary control and rules rest with the Central Government.',
+    'అఖిల భారత సర్వీసు అధికారులపై తుది నియంత్రణ కేంద్ర ప్రభుత్వం వద్ద ఉండటం వలన సమాఖ్య సూత్రాలకు విరుద్ధంగా ఉన్నాయని విమర్శలు ఉన్నాయి. (A), (R) నిజం మరియు (R) సరైన వివరణ.'
+  ],
+  [
+    140,
+    'Electoral Constituencies (Sikkim Sangha)',
+    'Which of the following statements is/are correct ?\ni. Floating Constituencies are the constituencies without fixed geographical borders.\nii. In the constituency of Sangha in Sikkim, only Buddhist monks can contest and vote.',
+    'క్రింది ప్రకటనలలో సరైనది(వి) ఏది(వి) ?\ni. తేలియాడే నియోజకవర్గాలు నిర్ణీత భౌగోళిక సరిహద్దులు లేని నియోజకవర్గాలు.\nii. సిక్కింలోని సంఘ నియోజక వర్గంలో బౌద్ధ సన్యాసులు మాత్రమే పోటీ చేసి ఓటు వేయగలరు.',
+    ['Only i', 'Only ii', 'Both i and ii', 'Neither i nor ii'],
+    ['i మాత్రమే', 'ii మాత్రమే', 'i మరియు ii రెండూ', 'i మరియు ii రెండూ కాదు'],
+    2,
+    'Both statements are correct: Floating constituencies lack fixed geographical boundaries, and Sikkim’s Sangha Assembly Constituency (Seat No. 32) is India’s unique non-territorial constituency reserved for registered Buddhist monks/nuns of Sikkim monasteries.',
+    'నిర్ణీత భౌగోళిక సరిహద్దులు లేని నియోజకవర్గాలను ఫ్లోటింగ్ నియోజకవర్గాలు అంటారు; సిక్కింలోని సంఘ నియోజకవర్గంలో బౌద్ధ సన్యాసులు మాత్రమే పోటీ చేసి ఓటు వేయగలరు (i మరియు ii రెండూ సరైనవి).'
+  ],
+  [
+    141,
+    'Fundamental Duties (Article 51A)',
+    'Which of the following is not a Fundamental Duty as mentioned in the Constitution ?',
+    'ఈ క్రింది వాటిలో ఏది రాజ్యాంగంలో పేర్కొన్న ప్రాథమిక విధి కాదు ?',
+    [
+      'To safeguard public property and to abjure violence.',
+      'To value and preserve the rich heritage of the country’s composite culture.',
+      'To protect the elderly, differently abled and children.',
+      'To promote harmony and the spirit of common brotherhood.'
+    ],
+    [
+      'ప్రజా ఆస్తులను రక్షించడం మరియు హింసను తిరస్కరించడం.',
+      'గొప్ప వారసత్వమైన దేశ మిశ్రమ సంస్కృతి విలువను ఇవ్వడం మరియు సంరక్షించడం.',
+      'వయోవృద్ధులను, వికలాంగులను మరియు పిల్లలను సంరక్షించడం.',
+      'సామరస్యాన్ని మరియు ఉమ్మడి సోదరభావాన్ని ప్రోత్సహించడం.'
+    ],
+    2,
+    'Protecting the elderly, differently abled, and children is not listed among the 11 Fundamental Duties under Article 51A (whereas 1, 2, and 4 are clauses 51A(i), 51A(f), and 51A(e)).',
+    'వయోవృద్ధులు, వికలాంగులు మరియు పిల్లలను సంరక్షించడం అనేది ఆర్టికల్ 51Aలోని 11 ప్రాథమిక విధులలో భాగం కాదు.'
+  ],
+  [
+    142,
+    '61st Constitutional Amendment Act',
+    'Which of the following Constitution Amendment Acts reduced the minimum age for voting from 21 to 18 years ?',
+    'ఏ రాజ్యాంగ సవరణ చట్టం ఓటు వేయడానికి కనీస వయస్సును 21 ఏళ్ల నుంచి 18 ఏళ్లకు తగ్గించింది ?',
+    ['61st Amendment Act', '73rd Amendment Act', '60th Amendment Act', '69th Amendment Act'],
+    ['61 వ సవరణ చట్టం', '73 వ సవరణ చట్టం', '60 వ సవరణ చట్టం', '69 వ సవరణ చట్టం'],
+    0,
+    'The 61st Constitutional Amendment Act, 1988 amended Article 326 to lower the voting age from 21 years to 18 years.',
+    '1988లోని 61వ రాజ్యాంగ సవరణ చట్టం ఆర్టికల్ 326ను సవరించి ఓటు హక్కు వయస్సును 21 నుండి 18 సంవత్సరాలకు తగ్గించింది.'
+  ],
+  [
+    143,
+    'Supreme Court & High Court Writ Powers',
+    'Correctly match the following in List – A with List – B.\nList – A\na. Art. 137\nb. Art. 226\nc. Art. 13\nd. Art. 32\nList – B\ni. Restoring Fundamental Rights by Supreme Court by issuing writs.\nii. Power of Supreme Court to review any judgment pronounced or Order made by it.\niii. The High Courts also have the power to issue Writs for protecting Fundamental Rights.\niv. Supreme Court can declare the concerned law as unconstitutional.',
+    'జాబితా – A లోని క్రింది వాటిని జాబితా – B తో సరిగ్గా పోల్చండి.\nజాబితా – A\na. నిబంధన 137\nb. నిబంధన 226\nc. నిబంధన 13\nd. నిబంధన 32\nజాబితా – B\ni. రిట్‌లను జారీచేయడం ద్వారా సుప్రీంకోర్టు ప్రాథమిక హక్కులను పునరుద్ధరించడం.\nii. సుప్రీం కోర్టు ఏదైనా తీర్పును లేదా ఇచ్చిన ఆదేశాలను సమీక్షించే అధికారం.\niii. ప్రాథమిక హక్కుల పరిరక్షణ కోసం రిట్‌లు జారీచేసే అధికారం హైకోర్టులకు కూడా ఉంది.\niv. సుప్రీం కోర్టు సంబంధిత చట్టాన్ని రాజ్యాంగ విరుద్ధమైనదిగా ప్రకటించవచ్చు.',
+    [
+      'a-iii, b-iv, c-ii, d-i',
+      'a-ii, b-iii, c-iv, d-i',
+      'a-iii, b-i, c-iv, d-ii',
+      'a-iv, b-i, c-ii, d-iii'
+    ],
+    [
+      'a-iii, b-iv, c-ii, d-i',
+      'a-ii, b-iii, c-iv, d-i',
+      'a-iii, b-i, c-iv, d-ii',
+      'a-iv, b-i, c-ii, d-iii'
+    ],
+    1,
+    'Art. 137 -> Supreme Court review of its own judgments/orders (ii); Art. 226 -> High Court writs (iii); Art. 13 -> Judicial review declaring laws unconstitutional (iv); Art. 32 -> Supreme Court writs for Fundamental Rights (i).',
+    'ఆర్టికల్ 137 (సుప్రీంకోర్టు పునఃసమీక్ష - ii), ఆర్టికల్ 226 (హైకోర్టు రిట్లు - iii), ఆర్టికల్ 13 (న్యాయ సమీక్ష - iv), ఆర్టికల్ 32 (సుప్రీంకోర్టు రిట్లు - i).'
+  ],
+  [
+    144,
+    'National Emergency (Article 352–359)',
+    'Which of the following will be the correct consequences of declaration of National Emergency by the President ?\nA. The President can modify the constitutional distribution of finances between the Center and the States.\nB. The Center becomes entitled to give executive directions to a State on any matter.\nC. The President can suspend all the Fundamental Rights of the citizens.',
+    'క్రింది వాటిలో రాష్ట్రపతిచే విధించబడ్డ జాతీయ ఎమర్జెన్సీ సరైన పర్యవసానాలు ఏది(వి) ?\nA. కేంద్రం మరియు రాష్ట్రాల మధ్య రాజ్యాంగబద్ధమైన ఆర్థిక పంపిణీని రాష్ట్రపతి సవరించగలరు.\nB. ఏదైనా విషయంపై రాష్ట్రానికి కార్యనిర్వాహక ఆదేశాలు ఇవ్వడానికి కేంద్రానికి అర్హత ఉంటుంది.\nC. రాష్ట్రపతి పౌరుల అన్ని ప్రాథమిక హక్కులను తాత్కాలికంగా రద్దు చేయవచ్చు.',
+    ['A and B only', 'B and C only', 'Only A', 'A, B and C'],
+    ['A మరియు B మాత్రమే', 'B మరియు C మాత్రమే', 'A మాత్రమే', 'A, B మరియు C'],
+    0,
+    'Consequences A (Art. 354) and B (Art. 353) are correct. C is incorrect because under Article 359 (44th Amendment), Articles 20 and 21 can NEVER be suspended even during a National Emergency.',
+    'ఆర్టికల్ 354 మరియు 353 ప్రకారం A, B సరైనవి. 44వ సవరణ ప్రకారం ఆర్టికల్ 20 మరియు 21 హక్కులను ఎప్పుడూ రద్దు చేయలేము కాబట్టి C తప్పు.'
+  ],
+  [
+    145,
+    'Presidential Appointments',
+    'Of the following, which are the appointments made by the President on the recommendation of the Prime Minister ?\ni. Chief Justice of India\nii. Judges of Supreme Court and High Courts\niii. Attorney General of India\niv. Governors of States',
+    'ఈ క్రింది వాటిలో ప్రధానమంత్రి సిఫార్సుపై రాష్ట్రపతి చేసే నియామకాలు ఏది/(వి) ?\ni. భారత ప్రధాన న్యాయమూర్తి\nii. సుప్రీంకోర్టు మరియు హైకోర్టుల న్యాయమూర్తులు\niii. భారతదేశ అటార్నీ జనరల్\niv. రాష్ట్రాల గవర్నర్లు',
+    ['i and ii only', 'i only', 'i and iii only', 'All of the above'],
+    ['i మరియు ii మాత్రమే', 'i మాత్రమే', 'i మరియు iii మాత్రమే', 'పైవన్నీ'],
+    3,
+    'Constitutionally under Article 74, the President exercises executive appointment powers—including the CJI, SC/HC Judges, Attorney General (Art. 76), and State Governors (Art. 155)—on the aid and advice of the Prime Minister and Council of Ministers.',
+    'ఆర్టికల్ 74 ప్రకారం రాష్ట్రపతి ప్రధానమంత్రి మరియు మంత్రిమండలి సలహా మేరకు ఈ నియామకాలన్నీ (i, ii, iii, iv) చేస్తారు.'
+  ],
+  [
+    146,
+    'Parliamentary Procedures',
+    'In which of the following hours, members of the Parliament are free to raise any matter that they think is important ?',
+    'ఈ క్రింది ఏ సమయాలలో, సభ్యులు తాము ముఖ్యమైనదిగా భావించే ఏదైనా ఒక విషయాన్ని లేవనెత్తడానికి స్వేచ్ఛని కలిగి ఉంటారు ?',
+    ['Zero hour', 'Question hour', 'Both (1) and (2)', 'None of the above'],
+    ['శూన్య సమయం', 'ప్రశ్న సమయం', '(1) మరియు (2) రెండూ', 'పైవేవీ కావు'],
+    0,
+    'Zero Hour (an Indian parliamentary innovation starting immediately after Question Hour) allows MPs to raise urgent matters of public importance without prior notice.',
+    'పార్లమెంటులో ప్రశ్నోత్తరాల తర్వాత ప్రారంభమయ్యే శూన్య సమయంలో (Zero Hour) సభ్యులు ముందస్తు నోటీసు లేకుండా ప్రజా ప్రాముఖ్యత గల విషయాలను లేవనెత్తవచ్చు.'
+  ],
+  [
+    147,
+    'Electoral Reform Committees',
+    'Match List – I with List – II.\nList – I (Committee)\na. Vohra Committee\nb. Indrajit Gupta Committee\nc. Dinesh Goswami Committee\nd. J. S. Varma Committee\nList – II (Related Electoral Reform)\ni. Amendments to Criminal Law\nii. Electoral Disqualifications\niii. State funding of elections\niv. Electoral reforms\nv. Nexus between crime and politics',
+    'జాబితా – I ని జాబితా – II తో సరిపోల్చి, దిగువ ఇవ్వబడిన కోడ్‌ల నుండి సరైన సమాధానాన్ని ఎంచుకోండి.\nజాబితా – I (కమిటీ)\na. వోహ్రా కమిటీ\nb. ఇంద్రజిత్ గుప్తా కమిటీ\nc. దినేష్ గోస్వామి కమిటీ\nd. J. S. వర్మ కమిటీ\nజాబితా – II (సంబంధిత ఎన్నికల సంస్కరణ)\ni. క్రిమినల్ చట్టానికి సవరణలు\nii. ఎన్నికల అనర్హతలు\niii. ఎన్నికలకు రాష్ట్ర నిధులు\niv. ఎన్నికల సంస్కరణలు\nv. నేరం మరియు రాజకీయాల మధ్య అనుబంధం',
+    [
+      'a – iii, b – v, c – i, d – ii',
+      'a – ii, b – iv, c – i, d – iii',
+      'a – iv, b – ii, c – v, d – iii',
+      'a – v, b – iii, c – iv, d – i'
+    ],
+    [
+      'a – iii, b – v, c – i, d – ii',
+      'a – ii, b – iv, c – i, d – iii',
+      'a – iv, b – ii, c – v, d – iii',
+      'a – v, b – iii, c – iv, d – i'
+    ],
+    3,
+    'Vohra Committee (1993) -> Nexus between crime and politics (v); Indrajit Gupta Committee (1998) -> State funding of elections (iii); Dinesh Goswami Committee (1990) -> Electoral reforms (iv); Justice J. S. Verma Committee (2013) -> Amendments to Criminal Law (i).',
+    'వోహ్రా కమిటీ (నేరం-రాజకీయాల అనుబంధం - v), ఇంద్రజిత్ గుప్తా కమిటీ (రాష్ట్ర నిధులు - iii), దినేష్ గోస్వామి (ఎన్నికల సంస్కరణలు - iv), జస్టిస్ జె.ఎస్. వర్మ కమిటీ (క్రిమినల్ చట్ట సవరణలు - i).'
+  ],
+  [
+    148,
+    'Sixth Schedule of the Constitution',
+    'Which of the following statements regarding the administration of tribal areas under the Sixth Schedule of the Constitution is/are correct ?\ni. It is applicable in all States where Scheduled Tribes make up more than 40% of the State’s population.\nii. These areas are outside the authority of the State Legislature as well as State Executive.\niii. Only the President can organise and reorganise the autonomous districts in these areas.\niv. The High Court of the State does not have any jurisdiction in these areas.',
+    'రాజ్యాంగంలోని ఆరవ షెడ్యూల్‌లోని గిరిజన ప్రాంతాల పరిపాలనకు సంబంధించి ప్రకటనలలో సరైనది(వి) ఏది(వి) ?\ni. రాష్ట్ర జనాభాలో 40% కంటే ఎక్కువ షెడ్యూల్డ్ తెగలు ఉన్న అన్ని రాష్ట్రాలలో ఇది వర్తిస్తుంది.\nii. ఈ ప్రాంతాలు రాష్ట్ర శాసనసభ మరియు రాష్ట్ర కార్యనిర్వాహక అధికార పరిధి వెలుపల ఉన్నాయి.\niii. ఈ ప్రాంతాలలో స్వయంప్రతిపత్తి కలిగిన జిల్లాలను రాష్ట్రపతి మాత్రమే వ్యవస్థీకరించగలరు మరియు పునర్వ్యవస్థీకరించగలరు.\niv. ఈ ప్రాంతాల్లో రాష్ట్ర హైకోర్టుకు ఎలాంటి అధికార పరిధి లేదు.',
+    ['Only i, ii and iii', 'Only iii and iv', 'Only i, ii and iv', 'None'],
+    ['i, ii మరియు iii మాత్రమే', 'iii మరియు iv మాత్రమే', 'i, ii మరియు iv మాత్రమే', 'ఏదీ లేదు'],
+    3,
+    'All four statements are incorrect: Sixth Schedule applies specifically to 4 states (Assam, Meghalaya, Tripura, Mizoram), remains under state executive/legislative authority subject to exceptions, Governor (not President) organises/reorganises autonomous districts, and High Courts retain jurisdiction as specified.',
+    'ఆరవ షెడ్యూల్ అసోం, మేఘాలయ, త్రిపుర, మిజోరంలకు మాత్రమే వర్తిస్తుంది మరియు స్వయంప్రతిపత్తి జిల్లాలను గవర్నర్ పునర్వ్యవస్థీకరిస్తారు; కనుక పై నాలుగు ప్రకటనలలో ఏదీ సరైనది కాదు.'
+  ],
+  [
+    149,
+    'Parliamentary Control over Executive',
+    'The most powerful weapon that enables the Parliament to ensure executive accountability is',
+    'కార్యనిర్వాహక జవాబుదారీతనాన్ని నిర్ధారించడానికి పార్లమెంటుకు లభ్యమయ్యే అత్యంత శక్తివంతమైన ఆయుధం.',
+    ['No Confidence Motion', 'Zero Hour', 'Question Hour', 'Election'],
+    ['అవిశ్వాస తీర్మానం', 'శూన్య సమయం', 'ప్రశ్న సమయం', 'ఎన్నికలు'],
+    0,
+    'A No-Confidence Motion (under Article 75(3) / Rule 198 of Lok Sabha) directly tests collective responsibility and can remove the Council of Ministers, making it Parliament’s ultimate weapon of executive accountability.',
+    'ప్రభుత్వ మెజారిటీని మరియు సామూహిక బాధ్యతను పరీక్షించి మంత్రిమండలిని తొలగించగల "అవిశ్వాస తీర్మానం" పార్లమెంటులో అత్యంత శక్తివంతమైన ఆయుధం.'
+  ],
+  [
+    150,
+    'Inter-State Council (Article 263)',
+    'Assertion (A) : Article 263 contemplates the establishment of an Inter-State Council to effect co-ordination between the States and between Center and the States.\nReason (R) : Rajmannar Committee made a strong case for establishment of the Inter-State Council.',
+    'వాదన (A) : ఆర్టికల్ 263 రాష్ట్రాల మధ్య మరియు కేంద్రం మరియు రాష్ట్రాల మధ్య సమన్వయం కోసం ఒక అంతర్-రాష్ట్ర కౌన్సిల్ ఏర్పాటుకు సంబంధించింది.\nకారణం (R) : ఇంటర్-స్టేట్ కౌన్సిల్ ఏర్పాటు కోసం రాజ్‌మన్నార్ కమిటీ బలమైన వాదన చేసింది.',
+    [
+      'Both (A) and (R) are True and (R) is the correct explanation of (A)',
+      'Both (A) and (R) are True but (R) is not a correct explanation of (A)',
+      '(A) is True but (R) is False',
+      '(A) is False but (R) is True'
+    ],
+    [
+      '(A) మరియు (R) రెండూ నిజం, మరియు (R) (A) యొక్క సరైన వివరణ',
+      '(A) మరియు (R) రెండూ నిజం, కానీ (R) (A) యొక్క సరైన వివరణ కాదు',
+      '(A) నిజం కానీ (R) తప్పు',
+      '(A) తప్పు కానీ (R) నిజం'
+    ],
+    1,
+    'Article 263 provides for the Inter-State Council (A is True), and both the Rajmannar Committee and Sarkaria Commission strongly recommended its establishment (R is True, though Sarkaria Commission’s recommendation led to its setup in 1990 and (R) does not explain the constitutional provision in (A)).',
+    'ఆర్టికల్ 263 అంతర్-రాష్ట్ర మండలి ఏర్పాటుకు సంబంధించినది (నిజం) మరియు రాజ్‌మన్నార్ కమిటీ కూడా దాని ఏర్పాటును సమర్థించింది (నిజం), కానీ (R), (A)కు సరైన వివరణ కాదు.'
+  ]
+];
+
+const letters = ['A', 'B', 'C', 'D'];
+
+const formattedQuestions = RAW_QUESTIONS.map(([qn, subtopic, enQ, teQ, enOpts, teOpts, ansIdx, enExp, teExp]) => {
+  const isSectionA = qn <= 75;
+  return {
+    id: `appsc-group2-2025-p1-q${qn}`,
+    examType: 'APPSC Group II',
+    examLevel: 'Group II',
+    examLevelLabel: 'APPSC Group-II Paper-I (2025)',
+    examCode: '2G/201 (C)',
+    paperNumber: 1,
+    shiftNumber: 1,
+    setNumber: 1,
+    examName: 'APPSC Group-2 Paper-1 (2025)',
+    examYear: '2025',
+    examDate: '23 Feb 2025',
+    shiftTiming: 'Paper-I · 150 Mins',
+    questionNumber: qn,
+    sectionNumber: isSectionA ? 1 : 2,
+    sectionName: isSectionA ? 'Social and Cultural History of Andhra Pradesh' : 'Indian Constitution',
+    subject: 'General Knowledge',
+    subjectId: 'general-knowledge',
+    categoryId: 'gk',
+    topicId: isSectionA ? 'indian-history' : 'indian-polity',
+    topic: isSectionA ? 'Indian History' : 'Indian Polity & Constitution',
+    subtopic,
+    pdfSubtopic: subtopic,
+    question: {
+      en: enQ,
+      te: teQ
+    },
+    options: {
+      en: enOpts,
+      te: teOpts
+    },
+    correctAnswer: ansIdx,
+    correctLetter: letters[ansIdx],
+    explanation: {
+      en: `${enExp} (APPSC Group-2 Paper-1 2025 · Section ${isSectionA ? 'A: AP History & Culture' : 'B: Indian Constitution'} · Q${qn})`,
+      te: `${teExp} (APPSC గ్రూప్-2 పేపర్-1 2025 · Q${qn})`
+    },
+    status: 'Published',
+    verificationStatus: 'VERIFIED',
+    questionType: 'PYQ',
+    isPyq: true,
+    difficulty: 'Medium',
+    source: `APPSC Group-2 Paper-1 (2025) Official Question Paper · Series (C) · Q${qn}`,
+    paperUrl: PAPER_URL,
+    paperFileName: PAPER_FILENAME,
+    createdAt: CREATED_AT
+  };
+});
+
+const shiftMetadata = {
+  id: 'appsc-group2-2025-paper1-shift-1',
+  code: 'APPSC-G2-2025-P1',
+  title: 'APPSC Group-2 Paper-1 (2025) – History & Indian Constitution',
+  examType: 'APPSC Group II',
+  examLevel: 'Group II',
+  examCode: '2G/201 (C)',
+  paperNumber: 1,
+  shiftNumber: 1,
+  setNumber: 1,
+  examName: 'APPSC Group-2 Paper-1 (2025)',
+  examYear: '2025',
+  examDate: '23 Feb 2025',
+  shiftTiming: 'Paper-I · 150 Mins',
+  questionsCount: formattedQuestions.length,
+  durationMinutes: 150,
+  totalMarks: 150,
+  negativeMarking: 0.33,
+  languages: ['English', 'Telugu'],
+  pdfUrl: PAPER_URL,
+  pdfFileName: PAPER_FILENAME,
+  subjects: [
+    { name: 'Social and Cultural History of Andhra Pradesh', count: 75 },
+    { name: 'Indian Constitution', count: 75 }
+  ]
+};
+
+const output = {
+  shifts: [shiftMetadata],
+  questions: formattedQuestions
+};
+
+const outPath = path.resolve(process.cwd(), 'public/data/appscGroup2Paper12025Full.json');
+fs.writeFileSync(outPath, JSON.stringify(output, null, 2), 'utf8');
+console.log(`Generated ${outPath}: ${output.shifts.length} shift, ${output.questions.length} questions.`);

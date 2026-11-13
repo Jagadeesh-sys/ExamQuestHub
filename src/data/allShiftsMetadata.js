@@ -1,4 +1,4 @@
-// Auto-generated 211 CBT Exam Shifts Metadata
+// Auto-generated 213 CBT Exam Shifts Metadata
 export const ALL_CBT_SHIFTS = [
   {
     "id": "rrb-ntpc-ug-2024-shift-1",
@@ -5769,6 +5769,33 @@ export const ALL_CBT_SHIFTS = [
     },
     "pdfUrl": "/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-2-2025_copy_f6e37955.pdf",
     "pdfFileName": "Group-2-_-Prelims-Exam-Question-Paper-2-2025.pdf",
+    "status": "Published"
+  },
+  {
+    "id": "appsc-group2-2025-paper1-shift-1",
+    "code": "APPSC-G2-2025-P1",
+    "examType": "APPSC Group II",
+    "examLevel": "Group II",
+    "examLevelLabel": "APPSC Group-II Paper-I (2025)",
+    "paperNumber": 1,
+    "shiftNumber": 1,
+    "setNumber": 1,
+    "title": "APPSC Group-2 Paper-1 (2025) – History & Indian Constitution",
+    "subtitle": "23 Feb 2025 · 150 Qs (Social & Cultural History of AP + Indian Constitution)",
+    "examName": "APPSC Group-2 Paper-1 (2025)",
+    "examYear": "2025",
+    "examDate": "23 Feb 2025",
+    "shiftTiming": "Paper-I · 150 Mins",
+    "durationMinutes": 150,
+    "totalMarks": 150,
+    "negativeMarking": 0.33,
+    "totalQuestions": 150,
+    "questionsCount": 150,
+    "subjectCounts": {
+      "General Knowledge": 150
+    },
+    "pdfUrl": "/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-1-2025_copy_0f4dabbf.pdf",
+    "pdfFileName": "Group-2-_-Prelims-Exam-Question-Paper-1-2025.pdf",
     "status": "Published"
   }
 ];

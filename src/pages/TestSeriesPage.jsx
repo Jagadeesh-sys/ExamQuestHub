@@ -195,22 +195,22 @@ export default function TestSeriesPage() {
       );
       return {
         id: 'series-appsc-group2',
-        bannerTitle: 'APPSC Group-2 Paper-2 (2025) Official Question Paper Series',
-        title: 'APPSC Group-2 Paper-2 (2025) Official Bilingual Test Series',
-        totalTestsBadge: `${appscShifts.length || 1} Official Paper`,
+        bannerTitle: 'APPSC Group-2 (2025) Official Question Paper Series (Paper-1 & Paper-2)',
+        title: 'APPSC Group-2 (2025) Official Bilingual Test Series',
+        totalTestsBadge: `${appscShifts.length || 2} Official Papers`,
         freeTestsBadge: 'Free Test',
         description:
-          'Complete 150-question bilingual (English & Telugu) official APPSC Group-2 Paper-2 (2025) examination covering Section A: Indian & AP Economy (75 Qs) and Section B: Science & Technology (75 Qs).',
+          'Complete bilingual (English & Telugu) official APPSC Group-2 (2025) question papers: Paper-1 covers Social & Cultural History of Andhra Pradesh (75 Qs) & Indian Constitution (75 Qs); Paper-2 covers Indian & AP Economy (75 Qs) & Science & Technology (75 Qs).',
         agency: 'APPSC',
-        examLevel: 'Group II Paper-II (2025)',
-        totalTests: appscShifts.length || 1,
+        examLevel: 'Group II Prelims (2025 · P1 & P2)',
+        totalTests: appscShifts.length || 2,
         questionsPerTest: 150,
         timeMinutes: 150,
         totalMarks: 150,
         negativeMarking: '0.33',
         languages: 'English · Telugu',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
-        badge: 'PAPER-2 (150 Qs)',
+        badge: 'P1 & P2 (300 Qs)',
         shifts: appscShifts
       };
     }
@@ -277,7 +277,8 @@ export default function TestSeriesPage() {
       return `SSC CGL 2020 Tier–1 Set – ${num}`;
     }
     if (seriesConfig.id.includes('appsc')) {
-      return shift.title || `APPSC Group-2 Paper-2 (2025) – Set ${num}`;
+      const paperNum = shift.paperNumber || (String(shift.id || '').includes('paper1') ? 1 : 2);
+      return shift.title || `APPSC Group-2 Paper-${paperNum} (2025) – Set ${num}`;
     }
     return shift.title || `${seriesConfig.agency} CBT–1 Full Mock – ${num}`;
   };
@@ -542,9 +543,9 @@ export default function TestSeriesPage() {
 
                       {/* Right Buttons matching Image 1: [Practice] [▶ Start Test] */}
                       <div className="flex items-center gap-2 shrink-0">
-                        {shift.paperUrl && (
+                        {(shift.paperUrl || shift.pdfUrl) && (
                           <a
-                            href={shift.paperUrl}
+                            href={shift.paperUrl || shift.pdfUrl}
                             target="_blank"
                             rel="noreferrer"
                             download={shift.pdfFileName || undefined}
