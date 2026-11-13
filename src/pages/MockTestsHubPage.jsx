@@ -135,29 +135,29 @@ export default function MockTestsHubPage() {
   // Chosen question count for topic practice: 10 | 20 | 25 | 50 | 'all'
   const [chosenTopicQuestionCount, setChosenTopicQuestionCount] = useState(25);
 
-  // Unified Bank Stats (Stable verified ground truth: 19,121 Questions • 163 CBT Shifts)
+  // Unified Bank Stats (Stable verified ground truth: 23,921 Questions • 211 CBT Shifts)
   const [firestoreStats, setFirestoreStats] = useState(() => {
     const defaultStats = {
-      totalQuestions: 19121,
-      verifiedQuestions: 19121,
+      totalQuestions: 23921,
+      verifiedQuestions: 23921,
       unverifiedQuestions: 0,
-      totalShifts: 163,
+      totalShifts: 211,
       totalSubtopics: 64,
-      totalMockTests: 380,
+      totalMockTests: 428,
       subjectCounts: {
-        all: 19121,
-        'general-knowledge': 7420,
-        'quantitative-aptitude': 4410,
-        reasoning: 4140,
-        'general-science': 1020,
+        all: 23921,
+        'general-knowledge': 7428,
+        'quantitative-aptitude': 5610,
+        reasoning: 5580,
+        'general-science': 2220,
         'computer-science': 810,
         'english-language': 680,
-        'current-affairs': 641
+        'current-affairs': 1593
       },
-      source: 'Official Question Bank (19,121 Qs • 163 Shifts · All Official Papers)'
+      source: 'Official Question Bank (23,921 Qs • 211 Shifts · All Official Papers)'
     };
     try {
-      const cached = localStorage.getItem('eqh_db_mock_stats_v2');
+      const cached = localStorage.getItem('eqh_db_mock_stats_v3');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions > 0) {
@@ -246,7 +246,7 @@ export default function MockTestsHubPage() {
   const baseUrl = import.meta.env.BASE_URL || '/';
   const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
-  const liveTotalQuestionsNumber = firestoreStats.totalQuestions || 19121;
+  const liveTotalQuestionsNumber = firestoreStats.totalQuestions || 23921;
   const liveSubjectCounts = firestoreStats.subjectCounts || {};
 
   // Circular Subject Carousel Items (Strictly Subjects + All Mock as requested)
@@ -264,7 +264,7 @@ export default function MockTestsHubPage() {
       id: 'current-affairs',
       title: 'Current Affairs',
       shortTitle: 'Current Affairs',
-      badge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 641, '641 Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 1593, '1.6k Qs'),
       image3d: iconCurrentAffairs,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_current_affairs_icon_fdc345ae.png`,
       type: 'subject'
@@ -273,7 +273,7 @@ export default function MockTestsHubPage() {
       id: 'general-knowledge',
       title: 'General Awareness',
       shortTitle: 'GA / GK',
-      badge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 7420, '7.4k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 7428, '7.4k Qs'),
       image3d: iconGeneralKnowledge,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_general_awareness_icon_2f897e54.png`,
       type: 'subject'
@@ -282,7 +282,7 @@ export default function MockTestsHubPage() {
       id: 'quantitative-aptitude',
       title: 'Mathematics',
       shortTitle: 'Maths / Quant',
-      badge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 4410, '4.4k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 5610, '5.6k Qs'),
       image3d: iconQuant,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_mathematics_icon_ab20c36e.png`,
       type: 'subject'
@@ -291,7 +291,7 @@ export default function MockTestsHubPage() {
       id: 'reasoning',
       title: 'Reasoning',
       shortTitle: 'Reasoning',
-      badge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 4140, '4.1k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 5580, '5.6k Qs'),
       image3d: iconReasoning,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_reasoning_icon_b6acb299.png`,
       type: 'subject'
@@ -309,7 +309,7 @@ export default function MockTestsHubPage() {
       id: 'general-science',
       title: 'General Science',
       shortTitle: 'Science',
-      badge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 1020, '1.0k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 2220, '2.2k Qs'),
       image3d: iconScience,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_general_science_icon_02b3df39.png`,
       type: 'subject'
@@ -382,14 +382,16 @@ export default function MockTestsHubPage() {
       (s.examYear === '2026' || String(s.id).includes('2026') || String(s.examName || '').includes('2025-26'));
     const isGrad2024 = (s) =>
       (s.examLevel === 'Graduate' || String(s.id).includes('grad')) && !isGrad2026(s);
+    const isGroupD = (s) =>
+      s.examType === 'RRB Group D' || String(s.id).includes('group-d');
     const isUg = (s) =>
-      String(s.id).includes('ug') || String(s.examName || '').includes('Under Graduate') || s.examLevel === 'Under Graduate';
+      !isGroupD(s) && (String(s.id).includes('ug') || String(s.examName || '').includes('Under Graduate') || s.examLevel === 'Under Graduate');
     const isSsc2020 = (s) =>
       (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) && (s.examYear === '2020' || String(s.id).includes('2020'));
     const isSsc2026 = (s) =>
       (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) && (s.examYear === '2026' || String(s.id).includes('2026'));
     const isSsc = (s) => isSsc2020(s) || isSsc2026(s) || String(s.id).includes('ssc');
-    const isRrb = (s) => isUg(s) || isGrad2024(s) || isGrad2026(s);
+    const isRrb = (s) => isUg(s) || isGrad2024(s) || isGrad2026(s) || isGroupD(s);
 
     // Apply Carousel Exam selection
     if (selectedSubject === 'rrb-ntpc') {
@@ -405,6 +407,8 @@ export default function MockTestsHubPage() {
       list = list.filter(isGrad2024);
     } else if (pyqExamFilter === 'rrb-grad-2026') {
       list = list.filter(isGrad2026);
+    } else if (pyqExamFilter === 'rrb-group-d') {
+      list = list.filter(isGroupD);
     } else if (pyqExamFilter === 'ssc-2020') {
       list = list.filter(isSsc2020);
     } else if (pyqExamFilter === 'ssc-2026') {
@@ -431,16 +435,20 @@ export default function MockTestsHubPage() {
     return { matchingShifts: list, paginatedShifts: paginated, totalPages: total };
   }, [shifts, selectedSubject, pyqExamFilter, shiftSearch, globalSearch, pyqCurrentPage]);
 
-  // Real, Dynamic Available Test Series (Strictly mapped to real data: 163 CBT Shifts & Full Mocks)
+  // Real, Dynamic Available Test Series (Strictly mapped to real data: 211 CBT Shifts & Full Mocks)
   const realExamSeriesList = useMemo(() => {
     const ugShifts = shifts.filter(
       (s) =>
-        String(s.id).includes('ug') ||
-        String(s.examName || '').includes('Under Graduate') ||
-        s.examLevel === 'Under Graduate'
+        !(s.examType === 'RRB Group D' || String(s.id).includes('group-d')) &&
+        (String(s.id).includes('ug') ||
+          String(s.examName || '').includes('Under Graduate') ||
+          s.examLevel === 'Under Graduate')
     );
     const gradShifts = shifts.filter(
       (s) => s.examLevel === 'Graduate' || String(s.id).includes('grad')
+    );
+    const groupDShifts = shifts.filter(
+      (s) => s.examType === 'RRB Group D' || String(s.id).includes('group-d')
     );
     const ssc2026Shifts = shifts.filter(
       (s) =>
@@ -455,11 +463,26 @@ export default function MockTestsHubPage() {
 
     const ugCount = ugShifts.length || 57;
     const gradCount = gradShifts.length || 71;
+    const groupDCount = groupDShifts.length || 48;
     const ssc26Count = ssc2026Shifts.length || 14;
     const ssc20Count = ssc2020Shifts.length || 21;
-    const fullMockCount = FULL_MOCK_SERIES.length || 14;
+    const fullMockCount = FULL_MOCK_SERIES.length || 17;
 
     return [
+      {
+        id: 'series-rrb-group-d',
+        title: 'RRB Group D 2025-26 Official CBT Shift Papers (All 48 Sets)',
+        subtitle: '25 General Science · 25 Maths · 30 Reasoning · 20 GA & Current Affairs per set',
+        totalTests: `${groupDCount} Official Sets`,
+        questionsCount: `${(groupDCount * 100).toLocaleString()} Qs`,
+        languages: 'English · Hindi',
+        agency: 'RRB',
+        examId: 'rrb-group-d',
+        filterKey: 'rrb-group-d',
+        targetTab: 'pyqs',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
+        badge: `${groupDCount} SETS`
+      },
       {
         id: 'series-rrb-ug',
         title: 'RRB NTPC Under Graduate Official CBT Papers',
@@ -612,6 +635,24 @@ export default function MockTestsHubPage() {
       });
     }
 
+    const groupDShift = shifts.find((s) => s.examType === 'RRB Group D' || String(s.id).includes('group-d'));
+    if (groupDShift) {
+      list.push({
+        id: groupDShift.id,
+        title: groupDShift.title || `RRB Group D 2025 Set ${groupDShift.shiftNumber || 1}`,
+        examName: 'RRB Group D 2025-26',
+        questionsCount: 100,
+        timeMinutes: 90,
+        pattern: '25 Science · 25 Maths · 30 Reasoning · 20 GA & CA',
+        agency: 'RRB',
+        category: 'pyqs',
+        badge: 'GROUP D',
+        badgeColor: 'bg-rose-100 text-rose-800',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
+        rawObj: groupDShift
+      });
+    }
+
     const ssc20Shift = shifts.find(
       (s) =>
         (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) &&
@@ -712,13 +753,13 @@ export default function MockTestsHubPage() {
         </div>
 
         {/* =========================================================================
-            COMPACT STATISTICS CARDS (Verified Bank: 19,121+ Questions • 163 CBT Shifts)
+            COMPACT STATISTICS CARDS (Verified Bank: 23,921+ Questions • 211 CBT Shifts)
             ========================================================================= */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-xs border border-slate-100 grid grid-cols-4 divide-x divide-slate-100 text-center">
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalQuestions?.toLocaleString() || '19,121'}+
+              {firestoreStats.totalQuestions?.toLocaleString() || '23,921'}+
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
               Total Questions
@@ -728,7 +769,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalMockTests ? `${firestoreStats.totalMockTests}+` : '380+'}
+              {firestoreStats.totalMockTests ? `${firestoreStats.totalMockTests}+` : '428+'}
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
               Mock Tests
@@ -738,7 +779,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              163
+              {firestoreStats.totalShifts || shifts.length || 211}
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1 leading-tight text-center">
               CBT Shift Papers
@@ -1018,8 +1059,8 @@ export default function MockTestsHubPage() {
             ========================================================================= */}
         <section className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 select-none">
           {[
-            { id: 'all', label: 'All Tests', icon: LayoutGrid, count: '380+' },
-            { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: '14 Series' },
+            { id: 'all', label: 'All Tests', icon: LayoutGrid, count: '428+' },
+            { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: '17 Series' },
             { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: 'Shift Sets' },
             { id: 'subject-wise', label: 'Subject-wise Tests', icon: Layers, count: '8 Core' },
             { id: 'topic-wise', label: 'Topic-wise Practice', icon: Sparkles, count: '64 Units' },
@@ -1090,7 +1131,7 @@ export default function MockTestsHubPage() {
         )}
 
         {/* =========================================================================
-            VIEW 2: DEDICATED PREVIOUS YEAR PAPERS (RRB NTPC & SSC CGL - 163 Shifts)
+            VIEW 2: DEDICATED PREVIOUS YEAR PAPERS (RRB NTPC, Group D & SSC CGL - 211 Shifts)
             ========================================================================= */}
         {(activeCategoryTab === 'all' || activeCategoryTab === 'pyqs') && (
           <section className="space-y-4 pt-2">
@@ -1111,6 +1152,7 @@ export default function MockTestsHubPage() {
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
                 {[
                   { id: 'all', label: 'All Papers' },
+                  { id: 'rrb-group-d', label: 'RRB Group D 2025' },
                   { id: 'rrb-ug', label: 'RRB UG' },
                   { id: 'rrb-grad-2024', label: 'RRB Grad 2024' },
                   { id: 'rrb-grad-2026', label: 'RRB Grad 2025-26' },
@@ -1139,6 +1181,8 @@ export default function MockTestsHubPage() {
             {/* PYQ Shift Tests Container (Compact list styled like Available Mock Tests, prominent logos) */}
             <div className="bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 border border-slate-200/90 shadow-xs divide-y divide-slate-100">
               {paginatedShifts.map((shift) => {
+                const isGroupD =
+                  shift.examType === 'RRB Group D' || String(shift.id).includes('group-d');
                 const is2026Grad =
                   (shift.examLevel === 'Graduate' || String(shift.id).includes('grad')) &&
                   (shift.examYear === '2026' || String(shift.id).includes('2026'));
@@ -1149,24 +1193,30 @@ export default function MockTestsHubPage() {
 
                 const pdfDownloadUrl = isSsc
                   ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf'
+                  : isGroupD
+                  ? '/assets/aistudio/RRB-Group-D-2025-EN-All-Sections_dece0c81.pdf'
                   : is2026Grad
                   ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf'
                   : is2024Grad
                   ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf'
                   : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf';
 
-                const testTitle = shift.title || (isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`);
+                const testTitle = shift.title || (isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : isGroupD ? `RRB Group D 2025 Set ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`);
                 const badgeText = isSsc
                   ? (shift.examYear === '2026' ? '2026 CBT' : 'TIER-1')
+                  : isGroupD
+                  ? 'GROUP D'
                   : (shift.examLevel === 'Graduate' ? (is2026Grad ? 'GRAD 25-26' : 'GRAD 2024') : 'UG SHIFT');
                 const badgeColor = isSsc
                   ? (shift.examYear === '2026' ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800')
+                  : isGroupD
+                  ? 'bg-rose-100 text-rose-800'
                   : (shift.examLevel === 'Graduate' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800');
                 const logoUrl = isSsc ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png';
-                const examLabel = isSsc ? 'SSC CGL' : 'RRB NTPC';
+                const examLabel = isSsc ? 'SSC CGL' : isGroupD ? 'RRB Group D' : 'RRB NTPC';
                 const qCount = shift.questionsCount || 100;
                 const duration = shift.durationMinutes || (isSsc ? 60 : 90);
-                const negMarking = isSsc ? '-0.50 Negative' : '-0.25 Negative';
+                const negMarking = isSsc ? '-0.50 Negative' : isGroupD ? '-0.33 Negative' : '-0.25 Negative';
 
                 return (
                   <div

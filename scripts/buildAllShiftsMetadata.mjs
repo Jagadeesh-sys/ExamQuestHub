@@ -5,6 +5,7 @@ const grad2024 = JSON.parse(fs.readFileSync('public/data/rrbNtpcGraduate2024Full
 const grad2026 = JSON.parse(fs.readFileSync('public/data/rrbNtpcGraduate2025Full.json', 'utf8'));
 const ssc2020 = JSON.parse(fs.readFileSync('public/data/sscCgl2020Full.json', 'utf8'));
 const ssc2026 = JSON.parse(fs.readFileSync('public/data/sscCgl2026Full.json', 'utf8'));
+const groupD = JSON.parse(fs.readFileSync('public/data/rrbGroupD2025Full.json', 'utf8'));
 
 // 1. All Shifts Metadata
 const allShifts = [
@@ -12,7 +13,8 @@ const allShifts = [
   ...grad2024.shifts,
   ...grad2026.shifts,
   ...ssc2020.shifts,
-  ...ssc2026.shifts
+  ...ssc2026.shifts,
+  ...groupD.shifts
 ];
 
 console.log(`Aggregating metadata for ${allShifts.length} total CBT exam shifts...`);

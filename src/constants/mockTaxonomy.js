@@ -871,6 +871,16 @@ export const SUBJECT_TOPIC_TAXONOMY = {
         ]
       },
       {
+        id: 'mathematical-operations',
+        name: 'Mathematical Operations',
+        description: 'Operator Substitution, Sign Interchange and Equation Balancing',
+        subtopics: [
+          'Symbol & Operator Swap Puzzles',
+          'BODMAS Equation Balancing with Replaced Signs',
+          'Alphabet-to-Operator Substitution Expressions'
+        ]
+      },
+      {
         id: 'non-verbal',
         name: 'Non-Verbal Reasoning',
         description: 'Paper Folding, Mirror Images, Embedded Figures, Cubes and Dices',
@@ -1413,6 +1423,22 @@ export function classifyQuestion(question) {
   const rawSub = String(question.subject || question.subjectId || '').toLowerCase();
   const rawCat = String(question.categoryId || '').toLowerCase();
   const rawSubtopic = String(question.subtopic || '').toLowerCase();
+  const explicitSubjectId = String(question.subjectId || '').toLowerCase();
+  const explicitTopicId = String(question.topicId || '').toLowerCase();
+
+  // Fast-path: Honor explicit curated subjectId + topicId when valid in taxonomy (e.g. RRB Group D 2025)
+  if (explicitSubjectId && explicitTopicId && SUBJECT_TOPIC_TAXONOMY[explicitSubjectId]) {
+    const matchedTopic = SUBJECT_TOPIC_TAXONOMY[explicitSubjectId].topics.find((t) => t.id === explicitTopicId);
+    if (matchedTopic) {
+      return {
+        subjectId: explicitSubjectId,
+        subjectName: SUBJECT_TOPIC_TAXONOMY[explicitSubjectId].title,
+        topicId: matchedTopic.id,
+        topicName: matchedTopic.name,
+        subtopic: question.subtopic || matchedTopic.name
+      };
+    }
+  }
 
   const safeQText = typeof question.question === 'string'
     ? question.question
@@ -1437,6 +1463,7 @@ export function classifyQuestion(question) {
   // 1. Current Affairs
   if (
     rawSub.includes('current-affairs') ||
+    rawSub.includes('current affairs') ||
     rawCat === 'ca' ||
     String(question.id || '').startsWith('dec25-') ||
     String(question.id || '').startsWith('nov25-') ||
@@ -1618,6 +1645,9 @@ export function classifyQuestion(question) {
     } else if (rawSubtopic.includes('puzzle') || text.includes('box') && text.includes('stacked') || text.includes('floor')) {
       topicId = 'puzzles';
       topicName = 'Puzzles';
+    } else if (rawSubtopic.includes('mathematical operations') || text.includes('interchange') && text.includes('signs')) {
+      topicId = 'mathematical-operations';
+      topicName = 'Mathematical Operations';
     } else if (rawSubtopic.includes('non-verbal') || text.includes('paper fold') || text.includes('mirror image') || text.includes('water image') || text.includes('embedded figure') || text.includes('dice')) {
       topicId = 'non-verbal';
       topicName = 'Non-Verbal Reasoning';

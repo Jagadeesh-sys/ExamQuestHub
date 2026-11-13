@@ -915,11 +915,11 @@ export default function AdminPage() {
             Verified Questions
           </span>
           <div className="text-2xl font-extrabold text-[#12345A] mt-1 flex items-center gap-1.5">
-            <span>{mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '19,121+'}</span>
+            <span>{mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '23,921+'}</span>
             <Award className="w-4 h-4 text-[#F2BE4F]" />
           </div>
           <span className="text-[10px] text-[#2468B4] font-medium flex items-center gap-1">
-            163 Exam Shifts (CBT) · 380+ Mock Tests
+            211 Exam Shifts (CBT) · 428+ Mock Tests
           </span>
         </div>
       </div>
@@ -995,7 +995,7 @@ export default function AdminPage() {
         >
           <Award className="w-3.5 h-3.5 text-[#F2BE4F]" />
           <span>
-            Previous Year Questions ({mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '19,121+'})
+            Previous Year Questions ({mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '23,921+'})
           </span>
         </button>
         <button

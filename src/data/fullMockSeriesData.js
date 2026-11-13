@@ -160,6 +160,86 @@ export const FULL_MOCK_SERIES = [
     ]
   },
 
+  // --- RRB Group D (Level-1) CBT Series ---
+  {
+    id: 'rrb-group-d-cbt1-mock-01',
+    examId: 'rrb-group-d',
+    examName: 'RRB Group D',
+    mockNumber: 'Mock 01',
+    title: 'RRB Group D (Level-1) CBT Full Mock – 01',
+    subtitle: 'Official Level-1 CBT Pattern · 48 Verified 2025-26 Shift Pool',
+    pattern: '25 Science · 25 Maths · 30 Reasoning · 20 GA & CA',
+    questionsCount: 100,
+    timeMinutes: 90,
+    marks: 100,
+    negativeMarking: '-0.33 Negative Marking',
+    difficulty: 'Medium',
+    difficultyBadge: 'bg-[#FEF9C3] text-[#854D0E]',
+    isFree: true,
+    attempts: '48.5K Attempts',
+    agency: 'RRB',
+    agencyColor: 'bg-[#FFE4E6] text-[#E11D48]',
+    targetSubject: 'all',
+    sections: [
+      { name: 'General Science', count: 25 },
+      { name: 'Mathematics', count: 25 },
+      { name: 'General Intelligence & Reasoning', count: 30 },
+      { name: 'General Awareness & Current Affairs', count: 20 }
+    ]
+  },
+  {
+    id: 'rrb-group-d-cbt1-mock-02',
+    examId: 'rrb-group-d',
+    examName: 'RRB Group D',
+    mockNumber: 'Mock 02',
+    title: 'RRB Group D (Level-1) CBT Full Mock – 02',
+    subtitle: 'NCERT Science & Reasoning Focus · Timed 90-Minute Simulator',
+    pattern: '25 Science · 25 Maths · 30 Reasoning · 20 GA & CA',
+    questionsCount: 100,
+    timeMinutes: 90,
+    marks: 100,
+    negativeMarking: '-0.33 Negative Marking',
+    difficulty: 'Medium',
+    difficultyBadge: 'bg-[#FEF3C7] text-[#D97706]',
+    isFree: true,
+    attempts: '34.2K Attempts',
+    agency: 'RRB',
+    agencyColor: 'bg-[#EAF3FF] text-[#12345A]',
+    targetSubject: 'all',
+    sections: [
+      { name: 'General Science', count: 25 },
+      { name: 'Mathematics', count: 25 },
+      { name: 'General Intelligence & Reasoning', count: 30 },
+      { name: 'General Awareness & Current Affairs', count: 20 }
+    ]
+  },
+  {
+    id: 'rrb-group-d-cbt1-mock-03',
+    examId: 'rrb-group-d',
+    examName: 'RRB Group D',
+    mockNumber: 'Mock 03',
+    title: 'RRB Group D (Level-1) CBT Full Mock – 03',
+    subtitle: 'High-Yield Speed & Accuracy Booster · Authentic Shift Questions',
+    pattern: '25 Science · 25 Maths · 30 Reasoning · 20 GA & CA',
+    questionsCount: 100,
+    timeMinutes: 90,
+    marks: 100,
+    negativeMarking: '-0.33 Negative Marking',
+    difficulty: 'Hard',
+    difficultyBadge: 'bg-[#FEE2E2] text-[#DC2626]',
+    isFree: true,
+    attempts: '27.6K Attempts',
+    agency: 'RRB',
+    agencyColor: 'bg-[#EAF3FF] text-[#12345A]',
+    targetSubject: 'all',
+    sections: [
+      { name: 'General Science', count: 25 },
+      { name: 'Mathematics', count: 25 },
+      { name: 'General Intelligence & Reasoning', count: 30 },
+      { name: 'General Awareness & Current Affairs', count: 20 }
+    ]
+  },
+
   // --- SSC CGL Tier-1 Series (Continued) ---
   {
     id: 'ssc-cgl-tier1-mock-02',

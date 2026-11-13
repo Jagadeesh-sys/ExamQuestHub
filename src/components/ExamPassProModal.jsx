@@ -59,7 +59,7 @@ export default function ExamPassProModal({ isOpen, onClose, onActivatePass, isPa
             {
               icon: FileText,
               title: 'Official CBT Question Papers & Solutions',
-              desc: 'Direct PDF downloads for all 163 official examination shift papers'
+              desc: 'Direct PDF downloads for all 211 official examination shift papers'
             }
           ].map((item, idx) => (
             <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-[#F6F8FC] border border-[#E3EAF2]">

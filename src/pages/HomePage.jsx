@@ -91,7 +91,7 @@ export default function HomePage() {
       id: 'banner-mock-tests',
       image: '/assets/aistudio/image_ef986abf.png',
       alt: 'Ace Your Government Exams - Mock Tests & Practice Tests with Real Exam Pattern',
-      eyebrow: `${(mockStats?.totalQuestions || 19121).toLocaleString()}+ Questions • ${mockStats?.totalShifts || 163} CBT Shifts`,
+      eyebrow: `${(mockStats?.totalQuestions || 23921).toLocaleString()}+ Questions • ${mockStats?.totalShifts || 211} CBT Shifts`,
       ctaText: 'Start Tests',
       ctaLink: '/mocks'
     },

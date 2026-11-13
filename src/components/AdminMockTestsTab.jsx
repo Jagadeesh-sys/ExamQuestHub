@@ -35,7 +35,8 @@ import {
   ChevronsRight,
   ChevronLeft,
   ChevronRight,
-  Hash
+  Hash,
+  Newspaper
 } from 'lucide-react';
 import {
   bulkSaveMockQuestions,
@@ -150,6 +151,8 @@ export default function AdminMockTestsTab({ onNotify }) {
         if (rrbSubjectFilter === 'Computer Science') {
           const isCs = q.categoryId === 'cse' || q.subject === 'Computer Science' || (q.subtopic && ['Operating Systems', 'Computer Networks', 'Database Management Systems', 'Digital Logic & Computer Organization', 'Software Engineering', 'Programming & OOP', 'Data Structures & Algorithms'].includes(q.subtopic));
           if (!isCs) continue;
+        } else if (rrbSubjectFilter === 'Current Affairs') {
+          if (q.subject !== 'Current Affairs' && q.subjectId !== 'current-affairs') continue;
         } else if (q.subject !== rrbSubjectFilter) {
           continue;
         }
@@ -168,13 +171,17 @@ export default function AdminMockTestsTab({ onNotify }) {
           if (!isCs) return false;
         } else if (rrbSubjectFilter === 'English Language') {
           if (q.subject !== 'English Language' && q.categoryId !== 'english') return false;
+        } else if (rrbSubjectFilter === 'Current Affairs') {
+          if (q.subject !== 'Current Affairs' && q.subjectId !== 'current-affairs') return false;
         } else if (q.subject !== rrbSubjectFilter) {
           return false;
         }
       }
       if (rrbTopicFilter !== 'All' && q.subtopic !== rrbTopicFilter) return false;
       if (rrbExamFilter !== 'All') {
-        if (rrbExamFilter === 'SSC CGL' || rrbExamFilter === 'CGL Tier-I' || rrbExamFilter === 'SSC CGL 2020') {
+        if (rrbExamFilter === 'Group D 2025') {
+          if (q.examType !== 'RRB Group D' && !String(q.id || '').includes('group-d')) return false;
+        } else if (rrbExamFilter === 'SSC CGL' || rrbExamFilter === 'CGL Tier-I' || rrbExamFilter === 'SSC CGL 2020') {
           const isSsc = q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl');
           if (!isSsc) return false;
         } else if (rrbExamFilter === 'Graduate 2026') {
@@ -188,7 +195,14 @@ export default function AdminMockTestsTab({ onNotify }) {
         } else if (rrbExamFilter === 'Graduate') {
           if (q.examType === 'SSC CGL' || (q.examLevel || '') !== 'Graduate') return false;
         } else if (rrbExamFilter === 'Under Graduate') {
-          if (q.examType === 'SSC CGL' || (q.examLevel || 'Under Graduate') !== 'Under Graduate') return false;
+          if (
+            q.examType === 'SSC CGL' ||
+            q.examType === 'RRB Group D' ||
+            String(q.id || '').includes('group-d') ||
+            (q.examLevel || 'Under Graduate') !== 'Under Graduate'
+          ) {
+            return false;
+          }
         }
       }
       if (rrbShiftFilter !== 'All') {
@@ -404,7 +418,7 @@ export default function AdminMockTestsTab({ onNotify }) {
     );
   };
 
-  // Statistics with exact counts for Reasoning, GK, Quant, Science, English, Computer Science & Subtopics
+  // Statistics with exact counts for Reasoning, GK, Current Affairs, Quant, Science, English, Computer Science & Subtopics
   const rrbStats = useMemo(() => {
     let published = 0;
     let needsReview = 0;
@@ -412,9 +426,11 @@ export default function AdminMockTestsTab({ onNotify }) {
     let graduate = 0;
     let graduate2026 = 0;
     let graduate2024 = 0;
+    let groupD2025 = 0;
     let sscCgl = 0;
     const bySubject = {
       'General Knowledge': 0,
+      'Current Affairs': 0,
       'Reasoning': 0,
       'Quantitative Aptitude': 0,
       'General Science': 0,
@@ -424,6 +440,7 @@ export default function AdminMockTestsTab({ onNotify }) {
     const byTopic = {};
     const topicsBySubject = {
       'General Knowledge': {},
+      'Current Affairs': {},
       'Reasoning': {},
       'Quantitative Aptitude': {},
       'General Science': {},
@@ -441,6 +458,8 @@ export default function AdminMockTestsTab({ onNotify }) {
 
       if (q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl')) {
         sscCgl++;
+      } else if (q.examType === 'RRB Group D' || String(q.id || '').includes('group-d')) {
+        groupD2025++;
       } else if ((q.examLevel || 'Under Graduate') === 'Graduate') {
         graduate++;
         const is2026 = q.examYear === '2026' || String(q.id || '').includes('2026') || (q.examDate && q.examDate.includes('2026'));
@@ -462,7 +481,12 @@ export default function AdminMockTestsTab({ onNotify }) {
         }
       }
 
-      if (q.subject === 'General Knowledge') {
+      if (q.subject === 'Current Affairs' || q.subjectId === 'current-affairs') {
+        bySubject['Current Affairs']++;
+        if (q.subtopic) {
+          topicsBySubject['Current Affairs'][q.subtopic] = (topicsBySubject['Current Affairs'][q.subtopic] || 0) + 1;
+        }
+      } else if (q.subject === 'General Knowledge') {
         bySubject['General Knowledge']++;
         if (q.subtopic) {
           topicsBySubject['General Knowledge'][q.subtopic] = (topicsBySubject['General Knowledge'][q.subtopic] || 0) + 1;
@@ -502,6 +526,7 @@ export default function AdminMockTestsTab({ onNotify }) {
       graduate,
       graduate2026,
       graduate2024,
+      groupD2025,
       sscCgl,
       bySubject,
       byTopic,
@@ -674,8 +699,40 @@ export default function AdminMockTestsTab({ onNotify }) {
       // Reload unified questions
       await loadRrbData();
     } catch (err) {
-      setSeedLog(err.message || 'Upload failed.');
-      if (onNotify) onNotify('Failed to store questions on the server.', 'error');
+      const msg = err?.message || 'Upload failed.';
+      setSeedLog(`Server upload blocked: ${msg}. Ensure firestore.rules allows Admin writes in Firebase Console.`);
+      if (onNotify) onNotify(`Server upload failed: ${msg}`, 'error');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  // Targeted fast upload of all 4,800 topic-segregated RRB Group D 2025-26 questions to Firestore
+  const handleSeedGroupDToFirestore = async () => {
+    const groupDList = rrbQuestions.filter(
+      (q) => q.examType === 'RRB Group D' || String(q.id || '').includes('group-d')
+    );
+    if (isSeeding || groupDList.length === 0) {
+      if (onNotify && groupDList.length === 0) onNotify('No RRB Group D questions loaded yet.', 'info');
+      return;
+    }
+    setIsSeeding(true);
+    setSeedProgress(0);
+    setSeedLog(`Uploading ${groupDList.length.toLocaleString()} RRB Group D 2025-26 topic-segregated questions to server...`);
+
+    try {
+      const saved = await bulkSaveMockQuestions(groupDList, (done, total) => {
+        setSeedProgress(Math.round((done / total) * 100));
+        setSeedLog(`Uploading RRB Group D 2025-26: ${done.toLocaleString()} of ${total.toLocaleString()} questions stored on server...`);
+      });
+      setSeedProgress(100);
+      setSeedLog(`Successfully stored ${saved.toLocaleString()} RRB Group D questions on server across 48 sets & topic taxonomies.`);
+      if (onNotify) onNotify(`Uploaded ${saved.toLocaleString()} RRB Group D questions to server!`, 'success');
+      await loadRrbData();
+    } catch (err) {
+      const msg = err?.message || 'Upload failed.';
+      setSeedLog(`Group D server upload blocked: ${msg}. Publish firestore.rules in Firebase Console and retry while signed in.`);
+      if (onNotify) onNotify(`Group D upload failed: ${msg}`, 'error');
     } finally {
       setIsSeeding(false);
     }
@@ -807,7 +864,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             Previous Year Verified Questions Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 163} official examination shifts.
+            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '23,921+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 211} official examination shifts.
           </p>
         </div>
 
@@ -822,7 +879,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'})</span>
+            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '23,921+'})</span>
           </button>
 
           <button
@@ -834,7 +891,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Columns3 className="w-3.5 h-3.5" />
-            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 163})</span>
+            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 211})</span>
           </button>
 
           <button
@@ -864,10 +921,10 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                     <Award className="w-6 h-6 text-[#F2BE4F]" />
-                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'} Questions)
+                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '23,921+'} Questions)
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
-                    Full official question bank with verified answer keys across 163 shifts (5,700 Under-Graduate questions in 57 shifts + 2,400 March 2026 Graduate questions in 24 sets + 4,700 2024 Graduate questions in 47 shifts + 3,600 SSC CGL questions). All questions are segregated based on existing curriculum topics.
+                    Full official question bank with verified answer keys across 211 shifts (4,800 RRB Group D 2025-26 questions in 48 sets + 5,700 Under-Graduate questions in 57 shifts + 2,400 March 2026 Graduate questions in 24 sets + 4,700 2024 Graduate questions in 47 shifts + 3,600 SSC CGL questions). All questions are segregated by subject &amp; syllabus topic.
                   </p>
                 </div>
 
@@ -886,7 +943,16 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'})</span>
+                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '23,921+'})</span>
+                  </button>
+
+                  <button
+                    onClick={handleSeedGroupDToFirestore}
+                    disabled={isSeeding || rrbLoading || (rrbStats.groupD2025 || 0) === 0}
+                    className="px-4 py-2.5 rounded-full bg-sky-500 hover:bg-sky-400 text-white font-black text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Upload className={`w-3.5 h-3.5 ${isSeeding ? 'animate-pulse' : ''}`} />
+                    <span>Upload Group D 2025 ({(rrbStats.groupD2025 || 4800).toLocaleString()} Qs)</span>
                   </button>
 
                   <button
@@ -900,36 +966,38 @@ export default function AdminMockTestsTab({ onNotify }) {
                 </div>
               </div>
 
-              {/* Server Seeding Progress Bar */}
-              {isSeeding && (
+              {/* Server Seeding Progress / Status Bar */}
+              {(isSeeding || seedLog) && (
                 <div className="bg-black/20 p-4 rounded-2xl border border-white/10 space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-200">
-                    <span>{seedLog}</span>
-                    <span>{seedProgress}%</span>
+                  <div className="flex justify-between text-xs font-bold text-slate-200 gap-2">
+                    <span className="break-words">{seedLog}</span>
+                    {isSeeding && <span className="shrink-0">{seedProgress}%</span>}
                   </div>
-                  <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-400 h-full transition-all duration-300 rounded-full"
-                      style={{ width: `${seedProgress}%` }}
-                    />
-                  </div>
+                  {isSeeding && (
+                    <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-emerald-400 h-full transition-all duration-300 rounded-full"
+                        style={{ width: `${seedProgress}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Live Statistics Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 pt-2">
                 <div
-                  onClick={() => { setRrbStatusFilter('All'); setRrbPage(1); }}
+                  onClick={() => { setRrbStatusFilter('All'); setRrbExamFilter('All'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '19,121+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '23,921+'}</div>
                   <div className="text-[11px] text-slate-300">Total Questions</div>
                 </div>
                 <div
                   onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-emerald-500/20 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-emerald-400/30"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '19,121+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '23,921+'}</div>
                   <div className="text-[11px] text-emerald-200 font-semibold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
                     <span>100% Verified</span>
@@ -939,15 +1007,22 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onClick={() => { setRrbStatusFilter('Needs Review'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-amber-500/25 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-amber-400/40"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.needsReview || 700}</div>
+                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.needsReview || 0}</div>
                   <div className="text-[11px] text-amber-200 font-semibold flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3 text-amber-300" />
                     <span>Important (Review)</span>
                   </div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 163}</div>
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 211}</div>
                   <div className="text-[11px] text-slate-300">Exam Shifts (CBT)</div>
+                </div>
+                <div
+                  onClick={() => { setRrbExamFilter(rrbExamFilter === 'Group D 2025' ? 'All' : 'Group D 2025'); setRrbPage(1); }}
+                  className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
+                >
+                  <div className="text-xl sm:text-2xl font-black text-cyan-300">{(rrbStats.groupD2025 || 4800).toLocaleString()}</div>
+                  <div className="text-[11px] text-slate-300">RRB Group D (48 Sets)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
                   <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl ? `${rrbStats.sscCgl.toLocaleString()}+` : '3,600+'}</div>
@@ -973,7 +1048,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2.5">
                   {/* General Knowledge */}
                   <div
                     onClick={() => {
@@ -993,14 +1068,44 @@ export default function AdminMockTestsTab({ onNotify }) {
                         <span>General Knowledge</span>
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-black bg-amber-400/20 text-amber-300">
-                        {rrbStats.bySubject['General Knowledge'] || 3911} Qs
+                        {rrbStats.bySubject['General Knowledge'] || 0} Qs
                       </span>
                     </div>
                     <div className="text-xl font-black mt-1">
-                      {(rrbStats.bySubject['General Knowledge'] || 3911).toLocaleString()}
+                      {(rrbStats.bySubject['General Knowledge'] || 0).toLocaleString()}
                     </div>
                     <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
-                      Polity 393 · History 233 · Geo 174 · Eco 156
+                      Polity · History · Geo · Economy · Static GK
+                    </div>
+                  </div>
+
+                  {/* Current Affairs */}
+                  <div
+                    onClick={() => {
+                      setRrbSubjectFilter(rrbSubjectFilter === 'Current Affairs' ? 'All' : 'Current Affairs');
+                      setRrbTopicFilter('All');
+                      setRrbPage(1);
+                    }}
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                      rrbSubjectFilter === 'Current Affairs'
+                        ? 'bg-white text-[#12345A] border-white shadow-md'
+                        : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Newspaper className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Current Affairs</span>
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-black bg-rose-400/20 text-rose-200">
+                        {rrbStats.bySubject['Current Affairs'] || 0} Qs
+                      </span>
+                    </div>
+                    <div className="text-xl font-black mt-1">
+                      {(rrbStats.bySubject['Current Affairs'] || 0).toLocaleString()}
+                    </div>
+                    <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
+                      National · Sports · Schemes · Awards · Defence
                     </div>
                   </div>
 
@@ -1023,14 +1128,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                         <span>Reasoning</span>
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-black bg-emerald-400/20 text-emerald-300">
-                        {rrbStats.bySubject['Reasoning'] || 1631} Qs
+                        {rrbStats.bySubject['Reasoning'] || 0} Qs
                       </span>
                     </div>
                     <div className="text-xl font-black mt-1">
-                      {(rrbStats.bySubject['Reasoning'] || 1631).toLocaleString()}
+                      {(rrbStats.bySubject['Reasoning'] || 0).toLocaleString()}
                     </div>
                     <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
-                      Series 1,126 · Relations 325 · Analogy 132
+                      Series · Puzzles · Coding · Seating · Ops
                     </div>
                   </div>
 
@@ -1053,14 +1158,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                         <span>Quant / Maths</span>
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-black bg-orange-400/20 text-orange-300">
-                        {rrbStats.bySubject['Quantitative Aptitude'] || 1876} Qs
+                        {rrbStats.bySubject['Quantitative Aptitude'] || 0} Qs
                       </span>
                     </div>
                     <div className="text-xl font-black mt-1">
-                      {(rrbStats.bySubject['Quantitative Aptitude'] || 1876).toLocaleString()}
+                      {(rrbStats.bySubject['Quantitative Aptitude'] || 0).toLocaleString()}
                     </div>
                     <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
-                      P&amp;L 463 · Num 441 · Ratio 437 · Work 226
+                      Trig · Ratio · Average · P&amp;L · SI/CI · Algebra
                     </div>
                   </div>
 
@@ -1083,14 +1188,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                         <span>General Science</span>
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-black bg-sky-400/20 text-sky-300">
-                        {rrbStats.bySubject['General Science'] || 482} Qs
+                        {rrbStats.bySubject['General Science'] || 0} Qs
                       </span>
                     </div>
                     <div className="text-xl font-black mt-1">
-                      {(rrbStats.bySubject['General Science'] || 482).toLocaleString()}
+                      {(rrbStats.bySubject['General Science'] || 0).toLocaleString()}
                     </div>
                     <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
-                      Chemistry 177 · Biology 161 · Physics 144
+                      Physics · Chemistry · Biology · Human Body
                     </div>
                   </div>
 
@@ -1113,14 +1218,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                         <span>Computer Awareness</span>
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-black bg-indigo-400/20 text-indigo-300">
-                        {rrbStats.bySubject['Computer Science'] || 412} Qs
+                        {rrbStats.bySubject['Computer Science'] || 0} Qs
                       </span>
                     </div>
                     <div className="text-xl font-black mt-1">
-                      {(rrbStats.bySubject['Computer Science'] || 412).toLocaleString()}
+                      {(rrbStats.bySubject['Computer Science'] || 0).toLocaleString()}
                     </div>
                     <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
-                      DBMS 128 · Logic 104 · OS 95 · Networks 45
+                      DBMS · Logic · OS · Networks
                     </div>
                   </div>
 
@@ -1143,14 +1248,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                         <span>English Language</span>
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full font-black bg-sky-400/20 text-sky-200">
-                        {rrbStats.bySubject['English Language'] || 525} Qs
+                        {rrbStats.bySubject['English Language'] || 0} Qs
                       </span>
                     </div>
                     <div className="text-xl font-black mt-1">
-                      {(rrbStats.bySubject['English Language'] || 525).toLocaleString()}
+                      {(rrbStats.bySubject['English Language'] || 0).toLocaleString()}
                     </div>
                     <div className="text-[10px] opacity-80 mt-0.5 line-clamp-1">
-                      Grammar · Vocab · Cloze · Idioms · One-word
+                      Grammar · Vocab · Cloze · Idioms
                     </div>
                   </div>
                 </div>
@@ -1225,7 +1330,19 @@ export default function AdminMockTestsTab({ onNotify }) {
                   }`}
                 >
                   <Landmark className="w-3 h-3 text-amber-500" />
-                  <span>GK &amp; GA ({rrbStats.bySubject['General Knowledge'] || 3911})</span>
+                  <span>GK &amp; GA ({rrbStats.bySubject['General Knowledge'] || 0})</span>
+                </button>
+
+                <button
+                  onClick={() => { setRrbSubjectFilter('Current Affairs'); setRrbTopicFilter('All'); setRrbPage(1); }}
+                  className={`px-3 py-1.5 rounded-full font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 ${
+                    rrbSubjectFilter === 'Current Affairs'
+                      ? 'bg-[#12345A] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <Newspaper className="w-3 h-3 text-rose-500" />
+                  <span>Current Affairs ({rrbStats.bySubject['Current Affairs'] || 0})</span>
                 </button>
 
                 <button
@@ -1237,7 +1354,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   }`}
                 >
                   <BrainCircuit className="w-3 h-3 text-emerald-500" />
-                  <span>Reasoning ({rrbStats.bySubject['Reasoning'] || 1631})</span>
+                  <span>Reasoning ({rrbStats.bySubject['Reasoning'] || 0})</span>
                 </button>
 
                 <button
@@ -1249,7 +1366,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   }`}
                 >
                   <Calculator className="w-3 h-3 text-orange-500" />
-                  <span>Quant ({rrbStats.bySubject['Quantitative Aptitude'] || 1876})</span>
+                  <span>Quant ({rrbStats.bySubject['Quantitative Aptitude'] || 0})</span>
                 </button>
 
                 <button
@@ -1261,7 +1378,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   }`}
                 >
                   <Atom className="w-3 h-3 text-sky-500" />
-                  <span>Science ({rrbStats.bySubject['General Science'] || 482})</span>
+                  <span>Science ({rrbStats.bySubject['General Science'] || 0})</span>
                 </button>
 
                 <button
@@ -1273,7 +1390,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   }`}
                 >
                   <Cpu className="w-3 h-3 text-indigo-500" />
-                  <span>Computer ({rrbStats.bySubject['Computer Science'] || 412})</span>
+                  <span>Computer ({rrbStats.bySubject['Computer Science'] || 0})</span>
                 </button>
 
                 <button
@@ -1285,7 +1402,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   }`}
                 >
                   <Languages className="w-3 h-3 text-sky-500" />
-                  <span>English ({rrbStats.bySubject['English Language'] || 525})</span>
+                  <span>English ({rrbStats.bySubject['English Language'] || 0})</span>
                 </button>
               </div>
 
@@ -1311,10 +1428,11 @@ export default function AdminMockTestsTab({ onNotify }) {
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
                   <option value="All">All Exams ({rrbStats.total})</option>
+                  <option value="Group D 2025">RRB Group D 2025-26 · 48 Sets ({rrbStats.groupD2025 || 4800})</option>
                   <option value="Graduate 2026">RRB NTPC Graduate 2025-26 · March 2026 ({rrbStats.graduate2026 || 2400})</option>
                   <option value="Graduate 2024">RRB NTPC Graduate 2024 · Previous ({rrbStats.graduate2024 || 4700})</option>
-                  <option value="Under Graduate">RRB NTPC UG 2025 ({rrbStats.underGraduate || 3200})</option>
-                  <option value="SSC CGL">SSC CGL 2020 Tier-I ({rrbStats.sscCgl || 2100})</option>
+                  <option value="Under Graduate">RRB NTPC UG 2025 ({rrbStats.underGraduate || 5700})</option>
+                  <option value="SSC CGL">SSC CGL Tier-I ({rrbStats.sscCgl || 3600})</option>
                 </select>
 
                 <select
@@ -1332,10 +1450,10 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbShiftFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700 max-w-[170px]"
                 >
-                  <option value="All">All Shifts ({shifts.length || 163})</option>
+                  <option value="All">All Shifts ({shifts.length || 211})</option>
                   {shifts.map((s) => (
                     <option key={s.id} value={s.shiftNumber}>
-                      Shift {s.shiftNumber} ({s.examLevel || 'UG'})
+                      {s.examType === 'RRB Group D' ? `Group D Set ${s.shiftNumber}` : `Shift ${s.shiftNumber} (${s.examLevel || 'UG'})`}
                     </option>
                   ))}
                 </select>
@@ -1575,16 +1693,17 @@ export default function AdminMockTestsTab({ onNotify }) {
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-5 border border-[#E3EAF2] shadow-xs">
             <h3 className="text-lg font-black text-[#12345A] mb-1">
-              {shifts.length || 163} Official Examination Shifts Configuration
+              {shifts.length || 211} Official Examination Shifts Configuration
             </h3>
             <p className="text-xs text-slate-500">
-              Manage all official CBT shifts: RRB NTPC Under Graduate 2024 (57 Shifts), RRB NTPC Graduate 2025-26 (24 Sets), RRB NTPC Graduate 2024 (47 Shifts), and SSC CGL Tier-I (35 Shifts).
+              Manage all official CBT shifts: RRB Group D 2025-26 (48 Sets), RRB NTPC Under Graduate 2024 (57 Shifts), RRB NTPC Graduate 2025-26 (24 Sets), RRB NTPC Graduate 2024 (47 Shifts), and SSC CGL Tier-I (35 Shifts).
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {shifts.map((shift) => {
               const isSsc = shift.examType === 'SSC CGL' || (shift.id || '').includes('ssc-cgl');
+              const isGroupD = shift.examType === 'RRB Group D' || (shift.id || '').includes('group-d');
               const isGrad = shift.examLevel === 'Graduate';
               return (
               <div
@@ -1595,16 +1714,18 @@ export default function AdminMockTestsTab({ onNotify }) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-black px-2.5 py-0.5 rounded-md bg-[#12345A] text-white">
-                        Shift {shift.shiftNumber}
+                        {isGroupD ? `Set ${shift.shiftNumber}` : `Shift ${shift.shiftNumber}`}
                       </span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                         isSsc
                           ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                          : isGroupD
+                          ? 'bg-cyan-100 text-cyan-800 border border-cyan-200'
                           : isGrad
                           ? 'bg-purple-100 text-purple-800 border border-purple-200'
                           : 'bg-blue-100 text-blue-800 border border-blue-200'
                       }`}>
-                        {isSsc ? 'SSC CGL 2020' : isGrad ? 'Graduate' : 'Under Graduate'}
+                        {isSsc ? 'SSC CGL' : isGroupD ? 'RRB Group D' : isGrad ? 'Graduate' : 'Under Graduate'}
                       </span>
                     </div>
                     <span

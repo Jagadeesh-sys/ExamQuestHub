@@ -107,6 +107,32 @@ export default function TestSeriesPage() {
       };
     }
 
+    if (id.includes('group-d') || id.includes('level-1')) {
+      const groupDShifts = ALL_CBT_SHIFTS.filter(
+        (s) => s.examType === 'RRB Group D' || String(s.id).includes('group-d')
+      );
+      return {
+        id: 'series-rrb-group-d',
+        bannerTitle: 'RRB Group D 2025-26 (Level-1 CBT) All 48 Sets Mock Test Series',
+        title: 'RRB Group D 2025-26 (Level-1 CBT) All 48 Sets Mock Test Series',
+        totalTestsBadge: `${groupDShifts.length || 48} Total Tests`,
+        freeTestsBadge: '2 Free Tests',
+        description:
+          'Practice all 48 official RRB Group D Level-1 CBT sets (4,800 verified questions). Features 25 General Science, 25 Mathematics, 30 Reasoning, and 20 General Awareness & Current Affairs per set.',
+        agency: 'RRB',
+        examLevel: 'Level-1 (CEN 09/2025)',
+        totalTests: groupDShifts.length || 48,
+        questionsPerTest: 100,
+        timeMinutes: 90,
+        totalMarks: 100,
+        negativeMarking: '0.33',
+        languages: 'English · Hindi',
+        logoUrl: '/assets/aistudio/image_cbd93505.png',
+        badge: `${groupDShifts.length || 48} OFFICIAL SETS`,
+        shifts: groupDShifts
+      };
+    }
+
     if (id.includes('ssc') && id.includes('2026')) {
       const ssc2026 = ALL_CBT_SHIFTS.filter(
         (s) =>
@@ -214,6 +240,9 @@ export default function TestSeriesPage() {
     }
     if (seriesConfig.id.includes('rrb-grad')) {
       return `RRB NTPC Graduate CBT–1 Shift – ${num}`;
+    }
+    if (seriesConfig.id.includes('group-d')) {
+      return `RRB Group D 2025 – Set ${num}`;
     }
     if (seriesConfig.id.includes('ssc') && seriesConfig.id.includes('2026')) {
       return `SSC CGL 2026 Tier–1 Shift – ${num}`;

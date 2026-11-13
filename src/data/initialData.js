@@ -1119,5 +1119,23 @@ export const INITIAL_RESOURCES = [
       en: 'Complete 32 shifts of RRB NTPC Under-Graduate Level CBT-1 official question paper with 3,200 questions and official answer keys.',
       te: 'అండర్ గ్రాడ్యుయేట్ లెవెల్ 32 షిఫ్టుల పూర్తి అధికారిక ప్రశ్నాపత్రాలు మరియు జవాబుల కీ (3,200 ప్రశ్నలు).'
     }
+  },
+  {
+    id: 'pyq-rrb-group-d-2025-cbt',
+    title: {
+      en: 'RRB Group D (Level-1) 2025-26 Official Answer Key & Papers (All 48 Sets · 4,800 Questions)',
+      te: 'RRB గ్రూప్ D (లెవెల్-1) 2025-26 అధికారిక కీ & ప్రశ్నాపత్రాలు (మొత్తం 48 సెట్లు · 4,800 ప్రశ్నలు)'
+    },
+    category: 'Previous Year Question Papers',
+    examBoard: 'RRB',
+    year: '2025',
+    type: 'Official Question Paper & Answer Key',
+    fileSize: '681 Pages PDF',
+    downloadUrl: '/assets/aistudio/RRB-Group-D-2025-EN-All-Sections_dece0c81.pdf',
+    officialSource: 'https://rrbcdg.gov.in',
+    description: {
+      en: 'Complete 48 official shift papers for RRB Group D (Level-1) covering General Science, Mathematics, Reasoning, and General Awareness & Current Affairs with verified answer keys.',
+      te: 'RRB గ్రూప్ D (లెవెల్-1) 48 అధికారిక షిఫ్ట్ ప్రశ్నాపత్రాలు — జనరల్ సైన్స్, గణితం, రీజనింగ్ మరియు కరెంట్ అఫైర్స్ అధికారిక సమాధానాలతో (4,800 ప్రశ్నలు).'
+    }
   }
 ];
