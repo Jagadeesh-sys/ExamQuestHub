@@ -22,6 +22,8 @@ const CurrentAffairDetailPage = lazyWithRetry(() => import('./pages/CurrentAffai
 const GKPracticePage = lazyWithRetry(() => import('./pages/GKPracticePage.jsx'), 'GKPracticePage');
 const PreviousPapersPage = lazyWithRetry(() => import('./pages/PreviousPapersPage.jsx'), 'PreviousPapersPage');
 const StudyMaterialPage = lazyWithRetry(() => import('./pages/StudyMaterialPage.jsx'), 'StudyMaterialPage');
+const SyllabusHubPage = lazyWithRetry(() => import('./pages/SyllabusHubPage.jsx'), 'SyllabusHubPage');
+const SyllabusDetailPage = lazyWithRetry(() => import('./pages/SyllabusDetailPage.jsx'), 'SyllabusDetailPage');
 const MockTestsHubPage = lazyWithRetry(() => import('./pages/MockTestsHubPage.jsx'), 'MockTestsHubPage');
 const MockCategoryPage = lazyWithRetry(() => import('./pages/MockCategoryPage.jsx'), 'MockCategoryPage');
 const MockSubjectPage = lazyWithRetry(() => import('./pages/MockSubjectPage.jsx'), 'MockSubjectPage');
@@ -110,6 +112,8 @@ export default function App() {
                 <Route path="/mocks/:mockId" element={<MockTestEnginePage />} />
                 <Route path="/previous-papers" element={<PreviousPapersPage />} />
                 <Route path="/study-material" element={<StudyMaterialPage />} />
+                <Route path="/syllabus" element={<SyllabusHubPage />} />
+                <Route path="/syllabus/:examId" element={<SyllabusDetailPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

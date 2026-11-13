@@ -58,11 +58,11 @@ export default function Header() {
   const navLinks = [
     { to: '/', label: t('navHome') || 'Home' },
     { to: '/jobs', label: t('navJobs') || 'Jobs' },
+    { to: '/syllabus', label: 'Syllabus' },
     { to: '/mocks', label: 'Mock Tests', isHot: true },
     { to: '/results', label: t('navResults') || 'Results' },
     { to: '/current-affairs', label: t('navCurrentAffairs') || 'Current Affairs' },
     { to: '/previous-papers', label: t('navPreviousPapers') || 'Previous Papers' },
-    { to: '/study-material', label: t('navStudyMaterials') || 'Syllabus & Materials' },
   ];
 
   const quickNotifications = [

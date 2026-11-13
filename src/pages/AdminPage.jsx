@@ -59,6 +59,7 @@ import ImagePasteUploader from '../components/ImagePasteUploader.jsx';
 import DocumentFileUploader from '../components/DocumentFileUploader.jsx';
 import AdminDiagnosticsTab from '../components/AdminDiagnosticsTab.jsx';
 import AdminMockTestsTab from '../components/AdminMockTestsTab.jsx';
+import AdminSyllabusTab from '../components/AdminSyllabusTab.jsx';
 import { CURRENT_AFFAIR_TOPICS, topicMatches, normalizeTopic } from '../constants/currentAffairs.js';
 import {
   getEffectiveStatus,
@@ -1021,6 +1022,18 @@ export default function AdminPage() {
         </button>
         <button
           type="button"
+          onClick={() => setActiveTab('syllabus')}
+          className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
+            activeTab === 'syllabus'
+              ? 'bg-[#12345A] text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5 text-[#F2BE4F]" />
+          <span>Exam Syllabi</span>
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab('diagnostics')}
           className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === 'diagnostics'
@@ -1974,7 +1987,16 @@ export default function AdminPage() {
       )}
 
       {/* -------------------------------------------------------------
-          TAB 5: SYSTEM DIAGNOSTICS & TELEMETRY
+          TAB 5B: EXAM SYLLABUS LIBRARY MANAGER (2026)
+         ------------------------------------------------------------- */}
+      {activeTab === 'syllabus' && (
+        <AdminSyllabusTab
+          onNotify={(message, type) => triggerToast(message, type)}
+        />
+      )}
+
+      {/* -------------------------------------------------------------
+          TAB 6: SYSTEM DIAGNOSTICS & TELEMETRY
          ------------------------------------------------------------- */}
       {activeTab === 'diagnostics' && (
         <AdminDiagnosticsTab

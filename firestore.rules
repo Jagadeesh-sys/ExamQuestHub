@@ -55,5 +55,45 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    match /examCategories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidId(categoryId);
+    }
+
+    match /examSyllabi/{syllabusId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidId(syllabusId);
+    }
+
+    match /examSubjects/{subjectId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidId(subjectId);
+    }
+
+    match /examTopics/{topicId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidId(topicId);
+    }
+
+    match /syllabusProgress/{progressId} {
+      allow read: if signedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && isValidId(progressId)
+        && request.resource.data.keys().hasAll(['userId', 'examId', 'completedChapters'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.examId is string
+        && request.resource.data.completedChapters is list;
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.examId == resource.data.examId
+        && request.resource.data.completedChapters is list;
+      allow delete: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
   }
 }

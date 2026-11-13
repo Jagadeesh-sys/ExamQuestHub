@@ -104,6 +104,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/syllabus" className="hover:text-white transition-colors">
+                  Exam Syllabus Library (2026)
+                </Link>
+              </li>
+              <li>
                 <Link to="/study-material" className="hover:text-white transition-colors">
                   {t('navStudyMaterials')}
                 </Link>

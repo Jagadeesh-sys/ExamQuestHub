@@ -245,7 +245,7 @@ export default function HomePage() {
       id: 'syllabus',
       label: 'Syllabus',
       icon: BookOpen,
-      to: '/study-material',
+      to: '/syllabus',
       bgClass: 'bg-[#EEF2FF] border-[#E0E7FF]',
       iconClass: 'text-[#6366F1]'
     },

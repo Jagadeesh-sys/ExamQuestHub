@@ -91,6 +91,15 @@ export const STATIC_PAGES = [
     priority: '0.6'
   },
   {
+    path: '/syllabus',
+    title: 'Government Competitive Exams Syllabus Library (2026)',
+    h1: 'Government Competitive Exams Syllabus Library (2026)',
+    description:
+      'Complete, searchable 2026 exam syllabus library for RRB, SSC, APPSC, TGPSC, UPSC, Banking, Defence, Police, Engineering and Teaching exams with exam patterns, chapters, and official PDF links.',
+    changefreq: 'weekly',
+    priority: '0.9'
+  },
+  {
     // Never prerendered as a public page: it is disallowed in robots.txt and
     // carries a noindex directive whenever the SPA renders it.
     path: '/admin',
@@ -117,7 +126,7 @@ export function resolveRouteMeta(pathname) {
   if (staticPage) return { ...staticPage };
 
   // Detail routes set their own metadata once their record has loaded.
-  if (/^\/(jobs|current-affairs)\/[^/]+$/.test(pathname)) return null;
+  if (/^\/(jobs|current-affairs|syllabus)\/[^/]+$/.test(pathname)) return null;
 
   // Subject-wise browse routes: /mocks/category/:categoryId[/:subjectId]
   if (/^\/mocks\/category\/[^/]+(\/[^/]+)?$/.test(pathname)) {

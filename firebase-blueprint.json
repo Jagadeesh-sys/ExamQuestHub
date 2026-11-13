@@ -193,6 +193,99 @@
         }
       },
       "required": ["email", "role"]
+    },
+    "ExamCategory": {
+      "title": "ExamCategory",
+      "description": "Top-level government competitive exam board category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 120 },
+        "shortName": { "type": "string", "maxLength": 80 },
+        "code": { "type": "string", "maxLength": 24 },
+        "scope": { "type": "string", "maxLength": 40 },
+        "authority": { "type": "string", "maxLength": 200 },
+        "officialPortal": { "type": "string", "maxLength": 500 },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "name", "code", "scope"]
+    },
+    "ExamSyllabus": {
+      "title": "ExamSyllabus",
+      "description": "Complete 20-point government competitive exam syllabus record with stages, pattern, and subject-chapter trees",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "examCode": { "type": "string", "maxLength": 60 },
+        "name": { "type": "string", "maxLength": 200 },
+        "shortName": { "type": "string", "maxLength": 120 },
+        "categoryId": { "type": "string", "maxLength": 64 },
+        "secondaryCategoryIds": { "type": "array" },
+        "scope": { "type": "string", "maxLength": 40 },
+        "state": { "type": "string", "maxLength": 80 },
+        "authority": { "type": "string", "maxLength": 250 },
+        "introduction": { "type": "string", "maxLength": 2000 },
+        "qualification": { "type": "string", "maxLength": 1000 },
+        "selectionProcess": { "type": "string", "maxLength": 1000 },
+        "stages": { "type": "array" },
+        "examPattern": { "type": "array" },
+        "totalQuestions": { "type": "string", "maxLength": 200 },
+        "totalMarks": { "type": "string", "maxLength": 200 },
+        "duration": { "type": "string", "maxLength": 200 },
+        "negativeMarking": { "type": "string", "maxLength": 400 },
+        "subjects": { "type": "array" },
+        "languages": { "type": "array" },
+        "officialNotificationRef": { "type": "string", "maxLength": 250 },
+        "officialWebsiteUrl": { "type": "string", "maxLength": 500 },
+        "officialSyllabusPdfUrl": { "type": "string", "maxLength": 500 },
+        "notificationYear": { "type": "number" },
+        "verificationStatus": { "type": "string", "maxLength": 80 },
+        "syllabusVersion": { "type": "string", "maxLength": 40 },
+        "versionHistory": { "type": "array" },
+        "status": { "type": "string", "maxLength": 30 }
+      },
+      "required": ["id", "examCode", "name", "categoryId", "authority", "status"]
+    },
+    "ExamSubject": {
+      "title": "ExamSubject",
+      "description": "Canonical subject blueprint used across competitive exam syllabi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 80 },
+        "name": { "type": "string", "maxLength": 150 },
+        "shortName": { "type": "string", "maxLength": 100 },
+        "code": { "type": "string", "maxLength": 40 },
+        "chapterCount": { "type": "number" }
+      },
+      "required": ["id", "name", "code"]
+    },
+    "ExamTopic": {
+      "title": "ExamTopic",
+      "description": "Chapter and subtopic node distinguishing official syllabus vs recommended prep topics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 120 },
+        "subjectId": { "type": "string", "maxLength": 80 },
+        "chapterId": { "type": "string", "maxLength": 80 },
+        "title": { "type": "string", "maxLength": 200 },
+        "topicType": { "type": "string", "maxLength": 30 },
+        "subtopics": { "type": "array" }
+      },
+      "required": ["id", "subjectId", "title", "topicType"]
+    },
+    "SyllabusProgress": {
+      "title": "SyllabusProgress",
+      "description": "User-scoped chapter completion tracker per exam syllabus",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 100 },
+        "completedChapters": { "type": "array" },
+        "totalChapters": { "type": "number" },
+        "completionPercent": { "type": "number" },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["userId", "examId", "completedChapters"]
     }
   },
   "firestore": {
@@ -215,6 +308,26 @@
     "/admins/{adminId}": {
       "schema": "Admin",
       "description": "Authorized administrators list"
+    },
+    "/examCategories/{categoryId}": {
+      "schema": "ExamCategory",
+      "description": "12 competitive exam board categories"
+    },
+    "/examSyllabi/{syllabusId}": {
+      "schema": "ExamSyllabus",
+      "description": "Detailed exam syllabus records with pattern and subject trees"
+    },
+    "/examSubjects/{subjectId}": {
+      "schema": "ExamSubject",
+      "description": "Canonical syllabus subject index"
+    },
+    "/examTopics/{topicId}": {
+      "schema": "ExamTopic",
+      "description": "Chapter & subtopic catalog for syllabus search and editing"
+    },
+    "/syllabusProgress/{progressId}": {
+      "schema": "SyllabusProgress",
+      "description": "Per-user chapter completion tracking for exam syllabi"
     }
   }
 }
