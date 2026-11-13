@@ -1462,8 +1462,10 @@ export function classifyQuestion(question) {
 
   // 1. Current Affairs
   if (
+    explicitSubjectId === 'current-affairs' ||
     rawSub.includes('current-affairs') ||
     rawSub.includes('current affairs') ||
+    rawSubtopic.includes('current affairs') ||
     rawCat === 'ca' ||
     String(question.id || '').startsWith('dec25-') ||
     String(question.id || '').startsWith('nov25-') ||
@@ -1504,7 +1506,7 @@ export function classifyQuestion(question) {
   }
 
   // 2. English Language
-  if (rawSub.includes('english') || rawCat === 'english' || (question.sectionName && question.sectionName.toLowerCase().includes('english'))) {
+  if (explicitSubjectId === 'english-language' || rawSub.includes('english') || rawCat === 'english' || (question.sectionName && question.sectionName.toLowerCase().includes('english'))) {
     let topicId = 'grammar';
     let topicName = 'Grammar';
     if (rawSubtopic.includes('idiom') || text.includes('idiom') || text.includes('phrase')) {
@@ -1546,6 +1548,7 @@ export function classifyQuestion(question) {
 
   // 3. Quantitative Aptitude (strictly isolated)
   if (
+    explicitSubjectId === 'quantitative-aptitude' ||
     rawSub.includes('quant') ||
     rawSub.includes('math') ||
     rawCat === 'quant' ||
@@ -1607,6 +1610,7 @@ export function classifyQuestion(question) {
 
   // 4. Reasoning (strictly isolated)
   if (
+    explicitSubjectId === 'reasoning' ||
     rawSub.includes('reason') ||
     rawCat === 'reasoning' ||
     (question.sectionName && question.sectionName.toLowerCase().includes('reasoning')) ||
@@ -1718,6 +1722,7 @@ export function classifyQuestion(question) {
     text.includes('shortcut key in');
 
   if (
+    explicitSubjectId === 'computer-science' ||
     rawSub.includes('computer') ||
     rawCat === 'cse' ||
     rawSubtopic.includes('operating systems') ||
@@ -1766,6 +1771,7 @@ export function classifyQuestion(question) {
 
   // 6. General Science (strictly isolated)
   if (
+    explicitSubjectId === 'general-science' ||
     rawSub.includes('general-science') ||
     rawSub.includes('general science') ||
     rawCat === 'general-science' ||

@@ -77,7 +77,7 @@ export default function MockSubjectPage() {
             .filter((question) => question.examName && question.examYear)
             .map((question) => `${question.examName} · ${question.examYear}`)
         )
-      ).slice(0, 6);
+      ).slice(0, 12);
 
       return { type, total: bucket.length, verifiedCount, coverage };
     });

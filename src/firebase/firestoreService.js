@@ -37,7 +37,7 @@ const STORAGE_KEYS = {
   CURRENT_AFFAIRS: 'eqh_db_current_affairs_v1',
   QUESTIONS: 'eqh_db_questions_v1',
   MOCK_QUESTIONS: 'eqh_db_mock_questions_v1',
-  MOCK_STATS: 'eqh_db_mock_stats_v3',
+  MOCK_STATS: 'eqh_db_mock_stats_v4',
   RESOURCES: 'eqh_db_resources_v1',
   ADMINS: 'eqh_db_admins_v1'
 };

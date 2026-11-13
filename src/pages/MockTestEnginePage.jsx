@@ -53,7 +53,7 @@ import {
   selectTestQuestions,
   toEngineQuestion
 } from '../constants/mockTaxonomy.js';
-import { getEngineMockTest } from '../services/rrbMockService.js';
+import { getEngineMockTest, getQuestionsByIds, summarizeIncludedExams } from '../services/rrbMockService.js';
 
 /**
  * Builds engine metadata for a Firestore-backed subject test
@@ -80,19 +80,33 @@ function buildSubjectTestMeta({ categoryId, subjectId, questionType }, questions
 }
 
 /**
- * Attribution strip for a question showing exam details and source
+ * Attribution strip for a question showing complete exam details, year, shift, topic, and source
  */
 function QuestionAttribution({ question, className = '' }) {
   if (!question?.examName && !question?.source && !question?.paperUrl) return null;
 
   const verified = question.verificationStatus === MOCK_VERIFICATION.VERIFIED || question.isVerified;
+  const examNameStr = String(question.examName || '').trim();
+  const examYearStr = String(question.examYear || '').trim();
+  const showYearSeparately = Boolean(examYearStr && !examNameStr.includes(examYearStr));
+  const shiftInfo = question.shift && question.shift !== 'Master PYQ Pool' && question.shift !== 'Official Question Bank'
+    ? question.shift
+    : '';
+  const dateInfo = question.examDate ? String(question.examDate).trim() : '';
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 text-[11px] ${className}`}>
-      {question.examName && (
-        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold">
-          {question.examName}
-          {question.examYear ? ` · ${question.examYear}` : ''}
+    <div className={`flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] ${className}`}>
+      {examNameStr && (
+        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 font-bold border border-slate-200/80">
+          {examNameStr}
+          {showYearSeparately ? ` · ${examYearStr}` : ''}
+          {shiftInfo ? ` · ${shiftInfo}` : ''}
+          {dateInfo ? ` (${dateInfo})` : ''}
+        </span>
+      )}
+      {question.topic && (
+        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#12345A] font-semibold border border-blue-100">
+          {question.topic}
         </span>
       )}
       {verified && (
@@ -101,7 +115,6 @@ function QuestionAttribution({ question, className = '' }) {
           Verified
         </span>
       )}
-      {question.source && <span className="text-slate-500">Source: {question.source}</span>}
       {question.paperUrl && (
         <a
           href={question.paperUrl}
@@ -150,8 +163,9 @@ export default function MockTestEnginePage() {
   const [subjectTest, setSubjectTest] = useState({ loading: isSubjectTest, meta: null, questions: [] });
   const [rrbTestState, setRrbTestState] = useState({ loading: isDynamicTest, meta: null, questions: [] });
 
-  // Custom practice subset (for "Practice Incorrect Questions" feature)
+  // Custom practice subset (for "Practice Incorrect Questions" feature) & random shuffle nonce
   const [practiceSubset, setPracticeSubset] = useState(null);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     if (!isSubjectTest) {
@@ -179,7 +193,7 @@ export default function MockTestEnginePage() {
   const subjectParam = searchParams.get('subject');
   const limitParam = searchParams.get('limit');
 
-  // Load CBT, Subject, or Topic-wise Test (stable, never re-fetches on navigation)
+  // Load CBT, Subject, or Topic-wise Test (preserves active CBT questionIds across page refresh; re-samples on refreshNonce)
   useEffect(() => {
     if (!isDynamicTest) {
       setRrbTestState({ loading: false, meta: null, questions: [] });
@@ -193,7 +207,41 @@ export default function MockTestEnginePage() {
       try {
         const data = await getEngineMockTest(mockId, subjectParam, limitParam);
         if (!active) return;
-        setRrbTestState({ loading: false, meta: data?.meta || null, questions: data?.questions || [] });
+
+        let finalQuestions = data?.questions || [];
+        let finalMeta = data?.meta || null;
+
+        // If user refreshes mid-CBT test, restore the exact same question IDs so saved answers match
+        if (refreshNonce === 0 && modeParam === 'cbt' && mockId) {
+          try {
+            const savedRaw = localStorage.getItem(`eqh_active_test_${mockId}`);
+            if (savedRaw) {
+              const saved = JSON.parse(savedRaw);
+              if (saved && !saved.isSubmitted && Array.isArray(saved.questionIds) && saved.questionIds.length > 0) {
+                const restoredQs = await getQuestionsByIds(saved.questionIds);
+                if (active && restoredQs.length > 0) {
+                  finalQuestions = restoredQs;
+                  if (finalMeta) {
+                    const summary = summarizeIncludedExams(restoredQs);
+                    finalMeta = {
+                      ...finalMeta,
+                      questionsCount: restoredQs.length,
+                      includedExams: summary.includedExams,
+                      yearsList: summary.yearsList,
+                      examName: summary.examsSummaryText,
+                      examYear: summary.yearsText
+                    };
+                  }
+                }
+              }
+            }
+          } catch {
+            // fallback to fresh randomized draw
+          }
+        }
+
+        if (!active) return;
+        setRrbTestState({ loading: false, meta: finalMeta, questions: finalQuestions });
       } catch (err) {
         if (!active) return;
         console.error('Failed to load mock test:', err);
@@ -204,7 +252,7 @@ export default function MockTestEnginePage() {
     return () => {
       active = false;
     };
-  }, [mockId, subjectParam, limitParam, isDynamicTest]);
+  }, [mockId, subjectParam, limitParam, isDynamicTest, refreshNonce]);
 
   const staticMeta = useMemo(
     () => MOCK_TESTS_METADATA.find((m) => m.id === mockId) || null,
@@ -312,6 +360,7 @@ export default function MockTestEnginePage() {
           testId: mockMeta?.id,
           testTitle: mockMeta?.title,
           targetSubject: mockMeta?.targetSubject,
+          questionIds: baseQuestions.map((q) => q.id),
           selectedAnswers,
           markedForReview,
           visitedQuestions: Array.from(visitedQuestions),
@@ -324,7 +373,7 @@ export default function MockTestEnginePage() {
     } catch {
       // ignore storage quota errors
     }
-  }, [STORAGE_KEY_ACTIVE_TEST, selectedAnswers, markedForReview, visitedQuestions, currentIndex, isSubmitted, activeMode, allQuestions.length, mockMeta?.id, mockMeta?.title, mockMeta?.targetSubject]);
+  }, [STORAGE_KEY_ACTIVE_TEST, selectedAnswers, markedForReview, visitedQuestions, currentIndex, isSubmitted, activeMode, allQuestions.length, baseQuestions, mockMeta?.id, mockMeta?.title, mockMeta?.targetSubject]);
 
   // Clear saved progress on submission
   useEffect(() => {
@@ -377,6 +426,7 @@ export default function MockTestEnginePage() {
   }, [mockMeta]);
 
   const examAgency = useMemo(() => {
+    if (mockMeta?.includedExams && mockMeta.includedExams.length > 1) return 'PYQ';
     const raw = String(mockMeta?.agency || mockMeta?.examName || mockMeta?.code || mockId || '').toLowerCase();
     if (raw.includes('rrb') || raw.includes('railway') || raw.includes('ntpc')) return 'RRB';
     if (raw.includes('ssc') || raw.includes('cgl') || raw.includes('chsl') || raw.includes('mts')) return 'SSC';
@@ -454,15 +504,25 @@ export default function MockTestEnginePage() {
     setMobilePaletteOpen(false);
   };
 
-  // Retake test from scratch
+  // Retake test from scratch (deals a fresh randomized set across all exams/years for dynamic pools)
   const handleRetake = () => {
+    if (STORAGE_KEY_ACTIVE_TEST) {
+      try {
+        localStorage.removeItem(STORAGE_KEY_ACTIVE_TEST);
+      } catch {
+        // ignore
+      }
+    }
     setSelectedAnswers({});
     setMarkedForReview({});
     setVisitedQuestions(new Set([0]));
     setCurrentIndex(0);
-    setTimeRemaining((mockMeta.timeMinutes || 60) * 60);
+    setTimeRemaining((mockMeta?.timeMinutes || 60) * 60);
     setIsSubmitted(false);
     setPracticeSubset(null);
+    if (mockMeta?.isRandomizedPool) {
+      setRefreshNonce((n) => n + 1);
+    }
   };
 
   // Practice incorrect questions only
@@ -767,12 +827,27 @@ export default function MockTestEnginePage() {
 
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <span className="px-2.5 py-0.5 rounded-full bg-[#EAF3FF] text-[#1D4ED8] text-[10px] sm:text-xs font-bold">
-                    Mock Test
+                    {mockMeta.isRandomizedPool ? 'Random Multi-Exam PYQs' : 'Mock Test'}
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#F3E8FF] text-[#7E22CE] text-[10px] sm:text-xs font-bold">
-                    Based on Latest Pattern
-                  </span>
+                  {mockMeta.examYear && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#F3E8FF] text-[#7E22CE] text-[10px] sm:text-xs font-bold">
+                      Years: {mockMeta.examYear}
+                    </span>
+                  )}
                 </div>
+
+                {mockMeta.includedExams && mockMeta.includedExams.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    {mockMeta.includedExams.map((ex) => (
+                      <span
+                        key={ex.label}
+                        className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] sm:text-[11px] font-semibold border border-slate-200/80"
+                      >
+                        {ex.label} ({ex.count} Qs)
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1327,53 +1402,82 @@ export default function MockTestEnginePage() {
               SOLUTIONS & EXPLANATIONS MODE
               ========================================================================= */
           <div className="w-full space-y-6">
-            <div className="bg-white rounded-3xl p-6 border border-[#E3EAF2] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-black text-[#12345A]">
-                  Verified Solutions &amp; Explanations
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Complete questions with official explanations grounded in authentic examination compilations.
-                </p>
+            <div className="bg-white rounded-3xl p-6 border border-[#E3EAF2] flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-black text-[#12345A]">
+                    Verified Solutions &amp; Explanations
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Complete questions with official explanations grounded in authentic examination compilations.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {mockMeta?.isRandomizedPool && (
+                    <button
+                      type="button"
+                      onClick={handleRetake}
+                      className="px-3.5 py-1.5 rounded-full bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>New Random Set</span>
+                    </button>
+                  )}
+
+                  {/* Filter Tabs */}
+                  <div className="flex items-center gap-1.5 bg-[#F6F8FC] p-1 rounded-full border border-[#E3EAF2] text-xs font-bold">
+                    <button
+                      onClick={() => setSolutionFilter('all')}
+                      className={`px-3 py-1 rounded-full transition cursor-pointer ${
+                        solutionFilter === 'all'
+                          ? 'bg-[#12345A] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      All ({allQuestions.length})
+                    </button>
+                    {Object.keys(selectedAnswers).length > 0 && (
+                      <>
+                        <button
+                          onClick={() => setSolutionFilter('correct')}
+                          className={`px-3 py-1 rounded-full transition cursor-pointer ${
+                            solutionFilter === 'correct'
+                              ? 'bg-emerald-700 text-white shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          Correct ({stats.correct})
+                        </button>
+                        <button
+                          onClick={() => setSolutionFilter('incorrect')}
+                          className={`px-3 py-1 rounded-full transition cursor-pointer ${
+                            solutionFilter === 'incorrect'
+                              ? 'bg-rose-700 text-white shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          Incorrect ({stats.incorrect})
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Filter Tabs */}
-              <div className="flex items-center gap-1.5 bg-[#F6F8FC] p-1 rounded-full border border-[#E3EAF2] text-xs font-bold">
-                <button
-                  onClick={() => setSolutionFilter('all')}
-                  className={`px-3 py-1 rounded-full transition cursor-pointer ${
-                    solutionFilter === 'all'
-                      ? 'bg-[#12345A] text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  All ({allQuestions.length})
-                </button>
-                {Object.keys(selectedAnswers).length > 0 && (
-                  <>
-                    <button
-                      onClick={() => setSolutionFilter('correct')}
-                      className={`px-3 py-1 rounded-full transition cursor-pointer ${
-                        solutionFilter === 'correct'
-                          ? 'bg-emerald-700 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
+              {mockMeta?.includedExams && mockMeta.includedExams.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+                  <span className="text-[11px] font-bold text-slate-500 mr-1">Exams &amp; Years in Set:</span>
+                  {mockMeta.includedExams.map((ex) => (
+                    <span
+                      key={ex.label}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200/80"
                     >
-                      Correct ({stats.correct})
-                    </button>
-                    <button
-                      onClick={() => setSolutionFilter('incorrect')}
-                      className={`px-3 py-1 rounded-full transition cursor-pointer ${
-                        solutionFilter === 'incorrect'
-                          ? 'bg-rose-700 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Incorrect ({stats.incorrect})
-                    </button>
-                  </>
-                )}
-              </div>
+                      {ex.label} ({ex.count} Qs)
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* List of Questions with Expanded Explanations */}
@@ -1468,6 +1572,35 @@ export default function MockTestEnginePage() {
           <>
             {/* Left Question Box */}
             <div className="flex-1 flex flex-col justify-between space-y-4">
+              {/* Multi-Exam PYQ Coverage & New Random Set Strip */}
+              {mockMeta?.includedExams && mockMeta.includedExams.length > 0 && (
+                <div className="bg-white rounded-2xl px-3.5 py-2.5 border border-[#E3EAF2] shadow-2xs flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-[#12345A] uppercase tracking-wider mr-0.5">
+                      Exam &amp; Year Mix:
+                    </span>
+                    {mockMeta.includedExams.map((ex) => (
+                      <span
+                        key={ex.label}
+                        className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10.5px] font-semibold border border-slate-200/80"
+                      >
+                        {ex.label} · {ex.count}
+                      </span>
+                    ))}
+                  </div>
+                  {activeMode === 'practice' && mockMeta?.isRandomizedPool && (
+                    <button
+                      type="button"
+                      onClick={handleRetake}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] text-[11px] font-bold transition cursor-pointer shrink-0"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>New Random Set</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Multi-Section Tabs Header (e.g. Quantitative Aptitude, Reasoning, General Awareness) */}
               {sectionsList.length > 1 && (
                 <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-[#E3EAF2] shadow-2xs flex items-center gap-2 overflow-x-auto no-scrollbar">

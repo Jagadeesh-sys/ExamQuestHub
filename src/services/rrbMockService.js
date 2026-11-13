@@ -662,6 +662,182 @@ export function normalizeSubjectId(raw) {
   return 'general-knowledge';
 }
 
+const classificationCache = new WeakMap();
+
+function classifyQuestionCached(question) {
+  if (!question || typeof question !== 'object') {
+    return classifyQuestion(question);
+  }
+  const cached = classificationCache.get(question);
+  if (cached) return cached;
+  const result = classifyQuestion(question);
+  classificationCache.set(question, result);
+  return result;
+}
+
+export function shuffleArray(items) {
+  const arr = Array.isArray(items) ? [...items] : [];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function deriveQuestionExamYear(q) {
+  if (q?.examYear) return String(q.examYear);
+  const id = String(q?.id || '');
+  const name = String(q?.examName || '');
+  const combined = `${id} ${name}`;
+  if (combined.includes('2026')) return '2026';
+  if (combined.includes('2025')) return '2025';
+  if (combined.includes('2024')) return '2024';
+  if (combined.includes('2020')) return '2020';
+  return '2025';
+}
+
+function formatExamBucketLabel(examName, examYear) {
+  const cleanName = String(examName || 'Official CBT Paper').trim();
+  const cleanYear = String(examYear || '').trim();
+  if (!cleanYear) return cleanName;
+  if (cleanName.includes(cleanYear)) return cleanName;
+  return `${cleanName} (${cleanYear})`;
+}
+
+/**
+ * Stratified random sampling across every exam and year represented in `pool`.
+ * Guarantees questions are randomly drawn from all available exams/years rather than
+ * slicing sequentially from the first file loaded (e.g. RRB NTPC UG 2024).
+ */
+export function sampleStratifiedRandomQuestions(pool, limit = null) {
+  if (!Array.isArray(pool) || pool.length === 0) return [];
+
+  const bucketsMap = new Map();
+  for (const q of pool) {
+    if (!q) continue;
+    const examName = q.examName || q.examType || 'Official CBT Paper';
+    const examYear = deriveQuestionExamYear(q);
+    const key = `${examName}:::${examYear}`;
+    if (!bucketsMap.has(key)) bucketsMap.set(key, []);
+    bucketsMap.get(key).push(q);
+  }
+
+  const buckets = shuffleArray(Array.from(bucketsMap.values())).map((items) => shuffleArray(items));
+  const numericLimit = limit !== null && limit !== undefined ? Number(limit) : 0;
+  const hasLimit = Number.isFinite(numericLimit) && numericLimit > 0 && numericLimit < pool.length;
+  const targetCount = hasLimit ? numericLimit : pool.length;
+
+  const picked = [];
+  let cursor = 0;
+  while (picked.length < targetCount) {
+    let addedInRound = false;
+    const roundItems = [];
+    for (const bucket of buckets) {
+      if (cursor < bucket.length) {
+        roundItems.push(bucket[cursor]);
+        addedInRound = true;
+      }
+    }
+    if (!addedInRound) break;
+    // Shuffle each round so even "all" mode opens with mixed exams/years on question #1+
+    const shuffledRound = shuffleArray(roundItems);
+    for (const item of shuffledRound) {
+      if (picked.length >= targetCount) break;
+      picked.push(item);
+    }
+    cursor++;
+  }
+
+  return hasLimit ? shuffleArray(picked) : picked;
+}
+
+export function summarizeIncludedExams(questions) {
+  const countsMap = new Map();
+  const yearsSet = new Set();
+
+  for (const q of questions || []) {
+    if (!q) continue;
+    const examName = String(q.examName || 'Official CBT Paper').trim();
+    const examYear = deriveQuestionExamYear(q);
+    if (examYear) yearsSet.add(examYear);
+
+    const key = `${examName}:::${examYear}`;
+    if (!countsMap.has(key)) {
+      countsMap.set(key, {
+        examName,
+        examYear,
+        label: formatExamBucketLabel(examName, examYear),
+        count: 0
+      });
+    }
+    countsMap.get(key).count += 1;
+  }
+
+  const includedExams = Array.from(countsMap.values()).sort((a, b) => {
+    const yearCmp = String(b.examYear).localeCompare(String(a.examYear));
+    if (yearCmp !== 0) return yearCmp;
+    return b.count - a.count;
+  });
+
+  const yearsList = Array.from(yearsSet).sort((a, b) => String(a).localeCompare(String(b)));
+  const yearsText = yearsList.length > 0 ? yearsList.join(', ') : '2020–2026';
+  const examsSummaryText = includedExams.length > 0
+    ? includedExams.map((e) => e.label).join(' · ')
+    : 'All Official PYQ Papers';
+
+  return {
+    includedExams,
+    yearsList,
+    yearsText,
+    examsSummaryText
+  };
+}
+
+function getFallbackPaperInfo(q) {
+  if (q?.paperUrl) {
+    return {
+      paperUrl: q.paperUrl,
+      paperFileName: q.paperFileName || q.paperUrl.split('/').pop() || 'Official_Paper.pdf'
+    };
+  }
+  const id = String(q?.id || '').toLowerCase();
+  const examName = String(q?.examName || '').toLowerCase();
+  const examType = String(q?.examType || '').toLowerCase();
+  const examYear = String(q?.examYear || '');
+
+  if (examType.includes('group d') || id.includes('group-d')) {
+    return {
+      paperUrl: '/assets/aistudio/RRB-Group-D-2025-EN-All-Sections_dece0c81.pdf',
+      paperFileName: 'RRB-Group-D-2025-EN-All-Sections.pdf'
+    };
+  }
+  if (examType.includes('ssc') || id.includes('ssc-cgl')) {
+    return {
+      paperUrl: '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf',
+      paperFileName: examYear === '2026' ? 'SSC_CGL_2026_All_Shift_Papers.pdf' : 'SSC_CGL_2020_All_21_Sets_English.pdf'
+    };
+  }
+  if (q?.examLevel === 'Graduate' || id.includes('grad')) {
+    if (examYear === '2026' || id.includes('grad-2026')) {
+      return {
+        paperUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf',
+        paperFileName: 'RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper.pdf'
+      };
+    }
+    return {
+      paperUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf',
+      paperFileName: 'RRB-NTPC-Graduate-2024-CBT1-Official-Answer-Key.pdf'
+    };
+  }
+  if (id.includes('ug-2024') || examName.includes('under graduate')) {
+    return {
+      paperUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
+      paperFileName: 'RRB-NTPC-UG-2025-EN-All-Papers.pdf'
+    };
+  }
+  return { paperUrl: '', paperFileName: '' };
+}
+
 /**
  * Get all questions for a given subject with strict, reliable filtering.
  * Guaranteed: When General Knowledge is selected, only GK questions are returned.
@@ -676,14 +852,15 @@ export async function getQuestionsForSubject(subjectIdOrName) {
   }
 
   return all.filter((q) => {
-    const classification = classifyQuestion(q);
+    const classification = classifyQuestionCached(q);
     return classification.subjectId === targetSubjectId;
   });
 }
 
 /**
  * Get questions strictly for a specific topic within a subject.
- * Accurately isolates topic questions and allows limiting question count (10, 20, 25, 50, all).
+ * Randomly samples across all exams & years represented in that topic,
+ * and allows limiting question count (10, 20, 25, 50, all).
  */
 export async function getQuestionsForTopic(subjectId, topicSlug, limit = null) {
   const canonicalSub = normalizeSubjectId(subjectId);
@@ -691,7 +868,7 @@ export async function getQuestionsForTopic(subjectId, topicSlug, limit = null) {
   const cleanSlug = String(topicSlug || '').toLowerCase().trim();
 
   let filtered = subjectQuestions.filter((q) => {
-    const c = classifyQuestion(q);
+    const c = classifyQuestionCached(q);
     return (
       c.topicId === cleanSlug ||
       slugifyTopic(c.topicName) === cleanSlug ||
@@ -711,10 +888,21 @@ export async function getQuestionsForTopic(subjectId, topicSlug, limit = null) {
     }
   }
 
-  if (limit && Number(limit) > 0 && Number(limit) < filtered.length) {
-    return filtered.slice(0, Number(limit));
-  }
-  return filtered;
+  const parsedLimit = limit && limit !== 'all' ? parseInt(limit, 10) : null;
+  const effectiveLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
+  return sampleStratifiedRandomQuestions(filtered, effectiveLimit);
+}
+
+/**
+ * Resolve an ordered list of saved question IDs back into formatted engine questions.
+ * Used to preserve the active question set across page refreshes during an unfinished CBT test.
+ */
+export async function getQuestionsByIds(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const all = await loadAllRRBQuestions();
+  const byId = new Map(all.map((q) => [q.id, q]));
+  const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
+  return formatToEngineQuestions(ordered);
 }
 
 /**
@@ -724,10 +912,10 @@ export async function getQuestionsForTopic(subjectId, topicSlug, limit = null) {
 export async function getVerifiedMockStats() {
   if (typeof window !== 'undefined') {
     try {
-      const cached = window.localStorage?.getItem('eqh_db_mock_stats_v3');
+      const cached = window.localStorage?.getItem('eqh_db_mock_stats_v4');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions >= 22000) {
+        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions >= 20000) {
           return parsed;
         }
       }
@@ -763,7 +951,7 @@ export async function getVerifiedMockStats() {
   const topicCounts = {};
 
   for (const q of all) {
-    const c = classifyQuestion(q);
+    const c = classifyQuestionCached(q);
     if (subjectCounts[c.subjectId] !== undefined) {
       subjectCounts[c.subjectId]++;
     } else {
@@ -785,7 +973,7 @@ export async function getVerifiedMockStats() {
 
   if (typeof window !== 'undefined' && all.length > 0) {
     try {
-      window.localStorage?.setItem('eqh_db_mock_stats_v3', JSON.stringify(statsSnapshot));
+      window.localStorage?.setItem('eqh_db_mock_stats_v4', JSON.stringify(statsSnapshot));
     } catch {
       // ignore storage write failure
     }
@@ -850,12 +1038,12 @@ export async function getQuestionsForShift(shiftNumberOrId, subject = null) {
   }
 
   const targetSubjectId = normalizeSubjectId(subject);
-  return shiftFiltered.filter((q) => classifyQuestion(q).subjectId === targetSubjectId);
+  return shiftFiltered.filter((q) => classifyQuestionCached(q).subjectId === targetSubjectId);
 }
 
 function formatToEngineQuestions(questions) {
   return questions.map((q, idx) => {
-    const c = classifyQuestion(q);
+    const c = classifyQuestionCached(q);
     let sectionName = 'General Awareness';
     if (c.subjectId === 'quantitative-aptitude') {
       sectionName = 'Quantitative Aptitude';
@@ -909,6 +1097,9 @@ function formatToEngineQuestions(questions) {
           ? q.explanation.en.trim()
           : `Official answer is Option (${correctLetter}). Preserved from official examination key.`);
 
+    const resolvedYear = deriveQuestionExamYear(q);
+    const paperInfo = getFallbackPaperInfo(q);
+
     return {
       id: q.id,
       number: idx + 1,
@@ -931,8 +1122,12 @@ function formatToEngineQuestions(questions) {
       explanation: safeExpEn,
       explanationTe: q.explanation?.te || '',
       examName: q.examName || 'Official CBT Paper',
-      examYear: q.examYear || '2025',
-      shift: q.shiftNumber ? `Shift ${q.shiftNumber}` : 'Master PYQ Pool',
+      examYear: resolvedYear,
+      examType: q.examType || '',
+      examLevel: q.examLevel || '',
+      examLevelLabel: q.examLevelLabel || '',
+      shiftNumber: q.shiftNumber || null,
+      shift: q.shiftNumber ? `Shift ${q.shiftNumber}` : 'Official Question Bank',
       examDate: q.examDate,
       shiftTiming: q.shiftTiming,
       sectionName: q.sectionName || sectionName,
@@ -942,9 +1137,27 @@ function formatToEngineQuestions(questions) {
       topicId: c.topicId,
       subtopic: q.subtopic || c.topicName,
       verificationStatus: q.status === 'Published' || q.verificationStatus === 'VERIFIED' ? 'VERIFIED' : 'UNVERIFIED',
-      source: q.source || 'Official Answer Key'
+      source: q.source || 'Official Answer Key',
+      paperUrl: paperInfo.paperUrl,
+      paperFileName: paperInfo.paperFileName
     };
   });
+}
+
+function pickSectionStratified(primaryPool, fallbackPool, count, sectionName, alreadyPickedIds) {
+  const safePrimary = primaryPool.filter((q) => q && !alreadyPickedIds.has(q.id));
+  let chosen = sampleStratifiedRandomQuestions(safePrimary, count);
+  chosen.forEach((q) => alreadyPickedIds.add(q.id));
+
+  if (chosen.length < count && Array.isArray(fallbackPool) && fallbackPool.length > 0) {
+    const remainingNeeded = count - chosen.length;
+    const safeFallback = fallbackPool.filter((q) => q && !alreadyPickedIds.has(q.id));
+    const extras = sampleStratifiedRandomQuestions(safeFallback, remainingNeeded);
+    extras.forEach((q) => alreadyPickedIds.add(q.id));
+    chosen = [...chosen, ...extras];
+  }
+
+  return chosen.map((q) => ({ ...q, sectionName }));
 }
 
 /**
@@ -953,6 +1166,9 @@ function formatToEngineQuestions(questions) {
 export async function getEngineMockTest(testId, subjectParam = null, limitParam = null) {
   const shifts = getAllShifts();
   const allQuestions = await loadAllRRBQuestions();
+
+  const rawParsedLimit = limitParam && limitParam !== 'all' ? parseInt(limitParam, 10) : null;
+  const parsedLimitNum = Number.isFinite(rawParsedLimit) && rawParsedLimit > 0 ? rawParsedLimit : null;
 
   // 1. Topic-Wise Mock Tests: e.g. "topic-general-knowledge-indian-polity"
   if (testId.startsWith('topic-')) {
@@ -966,33 +1182,31 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       'english-language',
       'current-affairs'
     ];
-    let matchedSubjectId = knownSubjects.find((s) => rest === s || rest.startsWith(`${s}-`)) || 'general-knowledge';
-    let topicSlug = rest.slice(matchedSubjectId.length + 1) || rest;
+    const matchedSubjectId = knownSubjects.find((s) => rest === s || rest.startsWith(`${s}-`)) || 'general-knowledge';
+    const topicSlug = rest.slice(matchedSubjectId.length + 1) || rest;
 
-    // Check if query or URL has custom count
     const targetSubjectName = SUBJECT_TOPIC_TAXONOMY[matchedSubjectId]?.title || 'Subject';
     const topicMeta = SUBJECT_TOPIC_TAXONOMY[matchedSubjectId]?.topics.find((t) => t.id === topicSlug);
     const topicTitle = topicMeta ? topicMeta.name : titleCaseTopic(topicSlug);
 
-    const limitNum = limitParam ? parseInt(limitParam, 10) : 0;
-    let topicQuestions = await getQuestionsForTopic(matchedSubjectId, topicSlug, limitNum);
-    if (limitNum > 0 && topicQuestions.length > limitNum) {
-      topicQuestions = topicQuestions.slice(0, limitNum);
-    }
+    const topicQuestions = await getQuestionsForTopic(matchedSubjectId, topicSlug, parsedLimitNum);
     const isEnglish = matchedSubjectId === 'english-language';
     const isSSC = isEnglish;
     const duration = Math.max(5, Math.min(120, Math.round(topicQuestions.length * (isSSC ? 0.75 : 1))));
 
     const engineQuestions = formatToEngineQuestions(topicQuestions);
+    const examSummary = summarizeIncludedExams(engineQuestions);
 
     return {
       meta: {
         id: testId,
         code: `TOPIC-${matchedSubjectId.slice(0, 3).toUpperCase()}`,
         title: `${targetSubjectName} – ${topicTitle}`,
-        subtitle: `Topic-Wise Test · ${topicMeta?.description || 'Authentic Examination Questions'}`,
-        examName: 'ExamQuestHub Topic Mastery',
-        examYear: '2026',
+        subtitle: `Randomly sampled across ${examSummary.examsSummaryText}`,
+        examName: examSummary.examsSummaryText,
+        examYear: examSummary.yearsText,
+        includedExams: examSummary.includedExams,
+        yearsList: examSummary.yearsList,
         subjectLabel: targetSubjectName,
         targetSubject: matchedSubjectId,
         topicName: topicTitle,
@@ -1003,7 +1217,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
         negativeMarking: isSSC ? 0.5 : 0.33,
         pdfUrl: '',
         pdfFileName: '',
-        subjectTest: true
+        subjectTest: true,
+        isRandomizedPool: true
       },
       questions: engineQuestions
     };
@@ -1036,27 +1251,24 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     if (isRrbGroupDFullMock) {
       const groupDPool = allQuestions.filter((q) => q.examType === 'RRB Group D' || String(q.id).includes('rrb-group-d'));
       const sourcePool = groupDPool.length >= 100 ? groupDPool : allQuestions;
-      const qSciAll = sourcePool.filter((q) => classifyQuestion(q).subjectId === 'general-science');
-      const qQuantAll = sourcePool.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
-      const qReasAll = sourcePool.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
+      const qSciAll = sourcePool.filter((q) => classifyQuestionCached(q).subjectId === 'general-science');
+      const qQuantAll = sourcePool.filter((q) => classifyQuestionCached(q).subjectId === 'quantitative-aptitude');
+      const qReasAll = sourcePool.filter((q) => classifyQuestionCached(q).subjectId === 'reasoning');
       const qGaAll = sourcePool.filter((q) => {
-        const sid = classifyQuestion(q).subjectId;
+        const sid = classifyQuestionCached(q).subjectId;
         return sid === 'current-affairs' || sid === 'general-knowledge';
       });
 
-      const sciOffset = ((mockNum - 1) * 25) % Math.max(1, qSciAll.length - 25);
-      const quantOffset = ((mockNum - 1) * 25) % Math.max(1, qQuantAll.length - 25);
-      const reasOffset = ((mockNum - 1) * 30) % Math.max(1, qReasAll.length - 30);
-      const gaOffset = ((mockNum - 1) * 20) % Math.max(1, qGaAll.length - 20);
-
+      const usedIds = new Set();
       const picked = [
-        ...qSciAll.slice(sciOffset, sciOffset + 25).map((q) => ({ ...q, sectionName: 'General Science' })),
-        ...qQuantAll.slice(quantOffset, quantOffset + 25).map((q) => ({ ...q, sectionName: 'Mathematics' })),
-        ...qReasAll.slice(reasOffset, reasOffset + 30).map((q) => ({ ...q, sectionName: 'General Intelligence & Reasoning' })),
-        ...qGaAll.slice(gaOffset, gaOffset + 20).map((q) => ({ ...q, sectionName: 'General Awareness & Current Affairs' }))
+        ...pickSectionStratified(qSciAll, allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'general-science'), 25, 'General Science', usedIds),
+        ...pickSectionStratified(qQuantAll, allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'quantitative-aptitude'), 25, 'Mathematics', usedIds),
+        ...pickSectionStratified(qReasAll, allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'reasoning'), 30, 'General Intelligence & Reasoning', usedIds),
+        ...pickSectionStratified(qGaAll, allQuestions.filter((q) => ['current-affairs', 'general-knowledge'].includes(classifyQuestionCached(q).subjectId)), 20, 'General Awareness & Current Affairs', usedIds)
       ];
 
       const engineQuestions = formatToEngineQuestions(picked);
+      const examSummary = summarizeIncludedExams(engineQuestions);
 
       return {
         meta: {
@@ -1064,8 +1276,10 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           code: `RRB-GROUPD-MOCK-${mockNum.toString().padStart(2, '0')}`,
           title: `RRB Group D 2025 Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
           subtitle: 'Official CEN 09/2025 Pattern: 25 Science · 25 Maths · 30 Reasoning · 20 GA & CA',
-          examName: 'RRB Group D (CEN 09/2025)',
-          examYear: '2025',
+          examName: examSummary.examsSummaryText,
+          examYear: examSummary.yearsText,
+          includedExams: examSummary.includedExams,
+          yearsList: examSummary.yearsList,
           subjectLabel: 'All Sections (100 Qs)',
           targetSubject: 'full',
           questionsCount: engineQuestions.length,
@@ -1074,7 +1288,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           negativeMarking: 0.33,
           pdfUrl: '/assets/aistudio/RRB-Group-D-2025-EN-All-Sections_dece0c81.pdf',
           pdfFileName: 'RRB-Group-D-2025-EN-All-Sections.pdf',
-          subjectTest: false
+          subjectTest: false,
+          isRandomizedPool: true
         },
         questions: engineQuestions
       };
@@ -1082,33 +1297,35 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
 
     // RRB NTPC CBT-1 Full Pattern: 30 Math, 30 Reasoning, 30 GK, 10 Science = 100 Qs | 90 Mins | 100 Marks | -0.33
     if (isRrbFullMock) {
-      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
-      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
-      const qSciAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-science');
-      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
+      const qQuantAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'quantitative-aptitude');
+      const qGkAll = allQuestions.filter((q) => {
+        const sid = classifyQuestionCached(q).subjectId;
+        return sid === 'general-knowledge' || sid === 'current-affairs';
+      });
+      const qSciAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'general-science');
+      const qReasAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'reasoning');
 
-      const quantOffset = ((mockNum - 1) * 30) % Math.max(1, qQuantAll.length - 30);
-      const gkOffset = ((mockNum - 1) * 30) % Math.max(1, qGkAll.length - 30);
-      const sciOffset = ((mockNum - 1) * 10) % Math.max(1, qSciAll.length - 10);
-      const reasOffset = ((mockNum - 1) * 30) % Math.max(1, qReasAll.length - 30);
-
+      const usedIds = new Set();
       const picked = [
-        ...qQuantAll.slice(quantOffset, quantOffset + 30).map((q) => ({ ...q, sectionName: 'Quantitative Aptitude' })),
-        ...qReasAll.slice(reasOffset, reasOffset + 30).map((q) => ({ ...q, sectionName: 'General Intelligence & Reasoning' })),
-        ...qGkAll.slice(gkOffset, gkOffset + 30).map((q) => ({ ...q, sectionName: 'General Awareness' })),
-        ...qSciAll.slice(sciOffset, sciOffset + 10).map((q) => ({ ...q, sectionName: 'General Awareness' }))
+        ...pickSectionStratified(qQuantAll, null, 30, 'Quantitative Aptitude', usedIds),
+        ...pickSectionStratified(qReasAll, null, 30, 'General Intelligence & Reasoning', usedIds),
+        ...pickSectionStratified(qGkAll, null, 30, 'General Awareness', usedIds),
+        ...pickSectionStratified(qSciAll, null, 10, 'General Awareness', usedIds)
       ];
 
       const engineQuestions = formatToEngineQuestions(picked);
+      const examSummary = summarizeIncludedExams(engineQuestions);
 
       return {
         meta: {
           id: testId,
           code: `RRB-NTPC-MOCK-${mockNum.toString().padStart(2, '0')}`,
           title: `RRB NTPC CBT-1 Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
-          subtitle: `Official Pattern CBT: 30 Math · 30 Reasoning · 40 General Awareness`,
-          examName: 'RRB NTPC CBT-1',
-          examYear: '2025-26',
+          subtitle: `Official Pattern CBT across ${examSummary.examsSummaryText}`,
+          examName: examSummary.examsSummaryText,
+          examYear: examSummary.yearsText,
+          includedExams: examSummary.includedExams,
+          yearsList: examSummary.yearsList,
           subjectLabel: 'All Sections (100 Qs)',
           targetSubject: 'full',
           questionsCount: engineQuestions.length,
@@ -1117,7 +1334,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           negativeMarking: 0.33,
           pdfUrl: '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
           pdfFileName: 'RRB-NTPC-UG-2025-EN-All-Papers.pdf',
-          subjectTest: false
+          subjectTest: false,
+          isRandomizedPool: true
         },
         questions: engineQuestions
       };
@@ -1125,33 +1343,33 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
 
     // SSC CGL Tier-1 Full Pattern: 25 Reasoning, 25 GA, 25 Math, 25 English = 100 Qs | 60 Mins | 200 Marks | -0.50
     if (isSscCglFullMock) {
-      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
-      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
-      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
-      const qEngAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'english-language');
+      const isSscQ = (q) => q.examType === 'SSC CGL' || String(q.id || '').includes('ssc');
+      const qReasAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'reasoning');
+      const qGkAll = allQuestions.filter((q) => ['general-knowledge', 'general-science', 'current-affairs'].includes(classifyQuestionCached(q).subjectId));
+      const qQuantAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'quantitative-aptitude');
+      const qEngAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'english-language');
 
-      const reasOffset = ((mockNum - 1) * 25) % Math.max(1, qReasAll.length - 25);
-      const gkOffset = ((mockNum - 1) * 25) % Math.max(1, qGkAll.length - 25);
-      const quantOffset = ((mockNum - 1) * 25) % Math.max(1, qQuantAll.length - 25);
-      const engOffset = ((mockNum - 1) * 25) % Math.max(1, (qEngAll.length || 25) - 25);
-
+      const usedIds = new Set();
       const picked = [
-        ...qReasAll.slice(reasOffset, reasOffset + 25).map((q) => ({ ...q, sectionName: 'General Intelligence & Reasoning' })),
-        ...qGkAll.slice(gkOffset, gkOffset + 25).map((q) => ({ ...q, sectionName: 'General Awareness' })),
-        ...qQuantAll.slice(quantOffset, quantOffset + 25).map((q) => ({ ...q, sectionName: 'Quantitative Aptitude' })),
-        ...qEngAll.slice(engOffset, engOffset + 25).map((q) => ({ ...q, sectionName: 'English Comprehension' }))
+        ...pickSectionStratified(qReasAll.filter(isSscQ), qReasAll, 25, 'General Intelligence & Reasoning', usedIds),
+        ...pickSectionStratified(qGkAll.filter(isSscQ), qGkAll, 25, 'General Awareness', usedIds),
+        ...pickSectionStratified(qQuantAll.filter(isSscQ), qQuantAll, 25, 'Quantitative Aptitude', usedIds),
+        ...pickSectionStratified(qEngAll.filter(isSscQ), qEngAll, 25, 'English Comprehension', usedIds)
       ];
 
       const engineQuestions = formatToEngineQuestions(picked);
+      const examSummary = summarizeIncludedExams(engineQuestions);
 
       return {
         meta: {
           id: testId,
           code: `SSC-CGL-MOCK-${mockNum.toString().padStart(2, '0')}`,
           title: `SSC CGL Tier-1 Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
-          subtitle: `Tier-1 Pattern: 25 Reasoning · 25 GA · 25 Quant · 25 English`,
-          examName: 'SSC CGL Tier-1',
-          examYear: '2026',
+          subtitle: `Tier-1 Pattern across ${examSummary.examsSummaryText}`,
+          examName: examSummary.examsSummaryText,
+          examYear: examSummary.yearsText,
+          includedExams: examSummary.includedExams,
+          yearsList: examSummary.yearsList,
           subjectLabel: 'All Sections (100 Qs)',
           targetSubject: 'full',
           questionsCount: engineQuestions.length,
@@ -1160,7 +1378,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           negativeMarking: 0.5,
           pdfUrl: '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf',
           pdfFileName: 'SSC_CGL_2020_All_21_Sets_English.pdf',
-          subjectTest: false
+          subjectTest: false,
+          isRandomizedPool: true
         },
         questions: engineQuestions
       };
@@ -1168,28 +1387,33 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
 
     // SSC CHSL Full Mock Pattern
     if (isSscChslFullMock) {
-      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
-      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
-      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
-      const qEngAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'english-language');
+      const isSscQ = (q) => q.examType === 'SSC CGL' || String(q.id || '').includes('ssc');
+      const qReasAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'reasoning');
+      const qGkAll = allQuestions.filter((q) => ['general-knowledge', 'general-science', 'current-affairs'].includes(classifyQuestionCached(q).subjectId));
+      const qQuantAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'quantitative-aptitude');
+      const qEngAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'english-language');
 
+      const usedIds = new Set();
       const picked = [
-        ...qReasAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'General Intelligence' })),
-        ...qGkAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'General Awareness' })),
-        ...qQuantAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'Quantitative Aptitude' })),
-        ...qEngAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'English Language' }))
+        ...pickSectionStratified(qReasAll.filter(isSscQ), qReasAll, 25, 'General Intelligence', usedIds),
+        ...pickSectionStratified(qGkAll.filter(isSscQ), qGkAll, 25, 'General Awareness', usedIds),
+        ...pickSectionStratified(qQuantAll.filter(isSscQ), qQuantAll, 25, 'Quantitative Aptitude', usedIds),
+        ...pickSectionStratified(qEngAll.filter(isSscQ), qEngAll, 25, 'English Language', usedIds)
       ];
 
       const engineQuestions = formatToEngineQuestions(picked);
+      const examSummary = summarizeIncludedExams(engineQuestions);
 
       return {
         meta: {
           id: testId,
           code: `SSC-CHSL-MOCK-${mockNum.toString().padStart(2, '0')}`,
           title: `SSC CHSL Tier-1 Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
-          subtitle: `Official Pattern: 100 Questions · 60 Minutes · 200 Marks`,
-          examName: 'SSC CHSL Tier-1',
-          examYear: '2026',
+          subtitle: `Official Pattern across ${examSummary.examsSummaryText}`,
+          examName: examSummary.examsSummaryText,
+          examYear: examSummary.yearsText,
+          includedExams: examSummary.includedExams,
+          yearsList: examSummary.yearsList,
           subjectLabel: 'All Sections (100 Qs)',
           targetSubject: 'full',
           questionsCount: engineQuestions.length,
@@ -1198,7 +1422,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           negativeMarking: 0.5,
           pdfUrl: '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf',
           pdfFileName: 'SSC_CHSL_Sample_Paper.pdf',
-          subjectTest: false
+          subjectTest: false,
+          isRandomizedPool: true
         },
         questions: engineQuestions
       };
@@ -1206,28 +1431,33 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
 
     // SSC MTS Full Mock Pattern (90 Qs | 90 Mins | 270 Marks)
     if (isSscMtsFullMock) {
-      const qQuantAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude');
-      const qReasAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning');
-      const qGkAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge');
-      const qEngAll = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'english-language');
+      const isSscQ = (q) => q.examType === 'SSC CGL' || String(q.id || '').includes('ssc');
+      const qQuantAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'quantitative-aptitude');
+      const qReasAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'reasoning');
+      const qGkAll = allQuestions.filter((q) => ['general-knowledge', 'general-science', 'current-affairs'].includes(classifyQuestionCached(q).subjectId));
+      const qEngAll = allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'english-language');
 
+      const usedIds = new Set();
       const picked = [
-        ...qQuantAll.slice(0, 20).map((q) => ({ ...q, sectionName: 'Session 1: Numerical Ability' })),
-        ...qReasAll.slice(0, 20).map((q) => ({ ...q, sectionName: 'Session 1: Reasoning Ability' })),
-        ...qGkAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'Session 2: General Awareness' })),
-        ...qEngAll.slice(0, 25).map((q) => ({ ...q, sectionName: 'Session 2: English Language' }))
+        ...pickSectionStratified(qQuantAll.filter(isSscQ), qQuantAll, 20, 'Session 1: Numerical Ability', usedIds),
+        ...pickSectionStratified(qReasAll.filter(isSscQ), qReasAll, 20, 'Session 1: Reasoning Ability', usedIds),
+        ...pickSectionStratified(qGkAll.filter(isSscQ), qGkAll, 25, 'Session 2: General Awareness', usedIds),
+        ...pickSectionStratified(qEngAll.filter(isSscQ), qEngAll, 25, 'Session 2: English Language', usedIds)
       ];
 
       const engineQuestions = formatToEngineQuestions(picked);
+      const examSummary = summarizeIncludedExams(engineQuestions);
 
       return {
         meta: {
           id: testId,
           code: `SSC-MTS-MOCK-${mockNum.toString().padStart(2, '0')}`,
           title: `SSC MTS Full Mock Test ${mockNum.toString().padStart(2, '0')}`,
-          subtitle: `Session 1 (40 Qs, Qualifying) + Session 2 (50 Qs, Merit)`,
-          examName: 'SSC MTS',
-          examYear: '2026',
+          subtitle: `Session 1 + Session 2 across ${examSummary.examsSummaryText}`,
+          examName: examSummary.examsSummaryText,
+          examYear: examSummary.yearsText,
+          includedExams: examSummary.includedExams,
+          yearsList: examSummary.yearsList,
           subjectLabel: 'Session 1 & 2 (90 Qs)',
           targetSubject: 'full',
           questionsCount: engineQuestions.length,
@@ -1236,7 +1466,59 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           negativeMarking: 1.0,
           pdfUrl: '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf',
           pdfFileName: 'SSC_MTS_Sample_Paper.pdf',
-          subjectTest: false
+          subjectTest: false,
+          isRandomizedPool: true
+        },
+        questions: engineQuestions
+      };
+    }
+
+    // Monthly Current Affairs Compendium Tests (ca-mock-01 .. ca-mock-06)
+    if (testId.startsWith('ca-mock-') && Array.isArray(MOCK_QUESTIONS_DATABASE?.[testId]) && MOCK_QUESTIONS_DATABASE[testId].length > 0) {
+      const caRaw = shuffleArray(MOCK_QUESTIONS_DATABASE[testId]).map((caQ) => ({
+        id: caQ.id,
+        questionNumber: caQ.qNumber,
+        question: { en: caQ.question, te: '' },
+        options: {
+          en: [caQ.options?.A || '', caQ.options?.B || '', caQ.options?.C || '', caQ.options?.D || ''],
+          te: []
+        },
+        correctAnswer: ['A', 'B', 'C', 'D'].indexOf(caQ.correctAnswer) >= 0 ? ['A', 'B', 'C', 'D'].indexOf(caQ.correctAnswer) : 0,
+        correctLetter: caQ.correctAnswer || 'A',
+        explanation: { en: caQ.explanation || '', te: '' },
+        subject: 'Current Affairs',
+        subjectId: 'current-affairs',
+        categoryId: 'ca',
+        subtopic: caQ.topic || 'National & International Current Affairs',
+        difficulty: caQ.difficulty || 'Medium',
+        status: 'Published',
+        verificationStatus: 'VERIFIED',
+        examName: 'Current Affairs 2025-2026',
+        examYear: String(caQ.id || '').startsWith('jan26-') ? '2026' : '2025',
+        source: 'ExamQuestHub Monthly Current Affairs Compendium'
+      }));
+      const engineQuestions = formatToEngineQuestions(parsedLimitNum ? caRaw.slice(0, parsedLimitNum) : caRaw);
+      const examSummary = summarizeIncludedExams(engineQuestions);
+      return {
+        meta: {
+          id: testId,
+          code: 'MOCK-CA',
+          title: 'Current Affairs – Official Compendium Mock',
+          subtitle: `Curated Monthly Current Affairs (${examSummary.yearsText})`,
+          examName: examSummary.examsSummaryText,
+          examYear: examSummary.yearsText,
+          includedExams: examSummary.includedExams,
+          yearsList: examSummary.yearsList,
+          subjectLabel: 'Current Affairs',
+          targetSubject: 'current-affairs',
+          questionsCount: engineQuestions.length,
+          timeMinutes: Math.max(15, Math.min(90, engineQuestions.length)),
+          marks: engineQuestions.length,
+          negativeMarking: 0.25,
+          pdfUrl: '',
+          pdfFileName: '',
+          subjectTest: true,
+          isRandomizedPool: true
         },
         questions: engineQuestions
       };
@@ -1328,9 +1610,9 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       title = 'Current Affairs 2025–2026 – Full Mega Mock';
     }
 
-    let poolOffset = 0;
-    if (limitParam && parseInt(limitParam, 10) > 0) {
-      targetCount = parseInt(limitParam, 10);
+    if (parsedLimitNum) {
+      targetCount = parsedLimitNum;
+      duration = Math.max(10, Math.min(120, targetCount));
     } else if (testId === 'sec-gk-01') {
       targetCount = 40;
       duration = 30;
@@ -1346,22 +1628,18 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     } else if (testId.includes('30q') || testId.includes('-30') || testId.includes('30-q')) {
       targetCount = 30;
       duration = 30;
-      poolOffset = 25;
       title = `${subject} – 30 Questions Practice Mock`;
     } else if (testId.includes('speed') || testId.includes('25q') || testId.includes('quick')) {
       targetCount = 25;
       duration = 25;
-      poolOffset = 0;
       title = `${subject} – Speed Drill Mock (25 Qs)`;
     } else if (testId.includes('sectional') || testId.includes('50q') || testId.includes('sec-')) {
       targetCount = 50;
       duration = 45;
-      poolOffset = 55;
       title = `${subject} – Sectional CBT Drill (50 Qs)`;
     } else if (testId.includes('pyq-master') || testId.includes('mixed') || testId.includes('100q')) {
       targetCount = 100;
       duration = 90;
-      poolOffset = 105;
       title = `${subject} – Previous Year Master Mock (100 Qs)`;
     } else {
       targetCount = 30;
@@ -1370,19 +1648,21 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
 
     let picked = [];
     if (canonicalSub === 'all' || subject === 'full') {
-      const qQuant = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'quantitative-aptitude').slice(0, 30);
-      const qGk = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-knowledge').slice(0, 30);
-      const qSci = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'general-science').slice(0, 10);
-      const qReas = allQuestions.filter((q) => classifyQuestion(q).subjectId === 'reasoning').slice(0, 30);
-      picked = [...qQuant, ...qGk, ...qSci, ...qReas];
+      const usedIds = new Set();
+      picked = [
+        ...pickSectionStratified(allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'quantitative-aptitude'), null, 30, 'Quantitative Aptitude', usedIds),
+        ...pickSectionStratified(allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'reasoning'), null, 30, 'General Intelligence & Reasoning', usedIds),
+        ...pickSectionStratified(allQuestions.filter((q) => ['general-knowledge', 'current-affairs'].includes(classifyQuestionCached(q).subjectId)), null, 30, 'General Awareness', usedIds),
+        ...pickSectionStratified(allQuestions.filter((q) => classifyQuestionCached(q).subjectId === 'general-science'), null, 10, 'General Science', usedIds)
+      ];
     } else {
       const subjectPool = await getQuestionsForSubject(canonicalSub);
-      const count = Math.min(targetCount, subjectPool.length);
-      const start = subjectPool.length > count ? (poolOffset % Math.max(1, subjectPool.length - count)) : 0;
-      picked = subjectPool.slice(start, start + count);
+      const count = limitParam === 'all' ? subjectPool.length : Math.min(targetCount, subjectPool.length);
+      picked = sampleStratifiedRandomQuestions(subjectPool, limitParam === 'all' ? null : count);
     }
 
     const engineQuestions = formatToEngineQuestions(picked);
+    const examSummary = summarizeIncludedExams(engineQuestions);
     const isEnglish = canonicalSub === 'english-language';
 
     return {
@@ -1390,18 +1670,21 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
         id: testId,
         code: `MOCK-${(canonicalSub || 'CBT').slice(0, 4).toUpperCase()}`,
         title,
-        subtitle: isEnglish ? 'SSC CGL Official Tier-I Question Bank' : 'ExamQuestHub Verified Official Examination Question Pool',
-        examName: isEnglish ? 'SSC CGL Tier-I' : 'RRB NTPC CBT–1',
-        examYear: '2025-26',
+        subtitle: `Randomly sampled PYQs across ${examSummary.examsSummaryText}`,
+        examName: examSummary.examsSummaryText,
+        examYear: examSummary.yearsText,
+        includedExams: examSummary.includedExams,
+        yearsList: examSummary.yearsList,
         subjectLabel: subject === 'full' ? 'All Subjects' : subject,
         targetSubject: canonicalSub,
         questionsCount: engineQuestions.length,
         timeMinutes: duration,
         marks: isEnglish ? engineQuestions.length * 2 : engineQuestions.length,
         negativeMarking: isEnglish ? 0.5 : 0.33,
-        pdfUrl: isEnglish ? '/assets/aistudio/SSC_CGL_2020_All_21_Sets_English.pdf' : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf',
-        pdfFileName: isEnglish ? 'SSC_CGL_2020_All_21_Sets_English.pdf' : 'RRB-NTPC-UG-2025-EN-All-Papers.pdf',
-        subjectTest: subject !== 'full'
+        pdfUrl: '',
+        pdfFileName: '',
+        subjectTest: subject !== 'full',
+        isRandomizedPool: true
       },
       questions: engineQuestions
     };
@@ -1422,8 +1705,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       const subjectDisplayName = subjectMeta?.name || categoryMeta?.name || 'Subject Mock Test';
 
       let targetCount = 30;
-      if (limitParam && parseInt(limitParam, 10) > 0) {
-        targetCount = parseInt(limitParam, 10);
+      if (parsedLimitNum) {
+        targetCount = parsedLimitNum;
       } else if (testId.includes('25q')) {
         targetCount = 25;
       } else if (testId.includes('50q')) {
@@ -1434,25 +1717,33 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       const subjectQuestions = await getQuestionsForSubject(canonicalSub);
 
       // Attempt subtopic/topic filtering first
-      let matched = subjectQuestions.filter((q) => {
-        const c = classifyQuestion(q);
-        const cleanSub = subSubjectId.replace(/[^a-z0-9]/g, '');
+      const cleanSub = subSubjectId.replace(/[^a-z0-9]/g, '');
+      let topicMatched = subjectQuestions.filter((q) => {
+        const c = classifyQuestionCached(q);
         const qTopic = String(c.topicId || c.topicName || q.subtopic || '').toLowerCase().replace(/[^a-z0-9]/g, '');
         return qTopic.includes(cleanSub) || cleanSub.includes(qTopic);
       });
 
-      // If matched questions are fewer than target count, fill remaining from same subject pool
-      if (matched.length < targetCount) {
-        const remainingNeeded = targetCount - matched.length;
-        const matchedIds = new Set(matched.map((q) => q.id));
-        const additional = subjectQuestions.filter((q) => !matchedIds.has(q.id)).slice(0, remainingNeeded);
-        matched = [...matched, ...additional];
-      } else if (matched.length > targetCount) {
-        matched = matched.slice(0, targetCount);
+      // Prefer verified PYQ records when PYQ test type is requested
+      if (testTypeId === 'PYQ') {
+        const pyqTopicOnly = topicMatched.filter((q) => q.examName && deriveQuestionExamYear(q));
+        if (pyqTopicOnly.length > 0) topicMatched = pyqTopicOnly;
       }
 
-      const finalQuestions = matched.length > 0 ? matched : subjectQuestions.slice(0, targetCount);
+      const effectiveLimit = limitParam === 'all' ? null : targetCount;
+      let finalQuestions = sampleStratifiedRandomQuestions(topicMatched, effectiveLimit);
+
+      // If matched questions are fewer than target count, supplement randomly across all exams/years in same subject pool
+      if (effectiveLimit && finalQuestions.length < effectiveLimit) {
+        const remainingNeeded = effectiveLimit - finalQuestions.length;
+        const pickedIds = new Set(finalQuestions.map((q) => q.id));
+        const remainingSubjectPool = subjectQuestions.filter((q) => !pickedIds.has(q.id));
+        const extras = sampleStratifiedRandomQuestions(remainingSubjectPool, remainingNeeded);
+        finalQuestions = shuffleArray([...finalQuestions, ...extras]);
+      }
+
       const engineQuestions = formatToEngineQuestions(finalQuestions);
+      const examSummary = summarizeIncludedExams(engineQuestions);
       const duration = Math.max(15, Math.min(120, engineQuestions.length));
 
       return {
@@ -1460,9 +1751,11 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           id: testId,
           code: `${categoryId.toUpperCase()}-${testTypeId}`,
           title: `${subjectDisplayName} – ${testTypeId} Mock Test`,
-          subtitle: `${categoryMeta?.name || 'Subject'} Mastery · Strictly Isolated Question Pool`,
-          examName: 'ExamQuestHub Subject Mock',
-          examYear: '2026',
+          subtitle: `Randomly sampled across ${examSummary.examsSummaryText}`,
+          examName: examSummary.examsSummaryText,
+          examYear: examSummary.yearsText,
+          includedExams: examSummary.includedExams,
+          yearsList: examSummary.yearsList,
           subjectLabel: subjectDisplayName,
           targetSubject: canonicalSub,
           questionsCount: engineQuestions.length,
@@ -1471,7 +1764,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
           negativeMarking: 0.33,
           pdfUrl: '',
           pdfFileName: '',
-          subjectTest: true
+          subjectTest: true,
+          isRandomizedPool: true
         },
         questions: engineQuestions
       };

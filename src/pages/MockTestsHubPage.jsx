@@ -46,6 +46,7 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import {
   getAllShifts,
   loadAllShifts,
+  getVerifiedMockStats,
   RRB_MOCK_SUBJECTS,
   slugifyTopic,
   classifyGkTopic,
@@ -171,7 +172,7 @@ export default function MockTestsHubPage() {
       source: 'Official Question Bank (23,921 Qs • 211 Shifts · All Official Papers)'
     };
     try {
-      const cached = localStorage.getItem('eqh_db_mock_stats_v3');
+      const cached = localStorage.getItem('eqh_db_mock_stats_v4');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions > 0) {
@@ -202,6 +203,16 @@ export default function MockTestsHubPage() {
           setFirestoreStats(stats);
         }
 
+        const verifiedStats = await getVerifiedMockStats();
+        if (isMounted && verifiedStats && verifiedStats.totalQuestions) {
+          setFirestoreStats((prev) => ({
+            ...prev,
+            ...verifiedStats,
+            subjectCounts: verifiedStats.subjectCounts || prev?.subjectCounts,
+            topicCounts: verifiedStats.topicCounts || prev?.topicCounts
+          }));
+        }
+
         const allLoadedShifts = await loadAllShifts();
         if (isMounted && allLoadedShifts) {
           setShifts(allLoadedShifts);
@@ -210,15 +221,6 @@ export default function MockTestsHubPage() {
         const qData = await getMockQuestions();
         if (isMounted && Array.isArray(qData) && qData.length > 0) {
           setFirestoreQuestions(qData);
-          setFirestoreStats((prev) => ({
-            ...prev,
-            totalQuestions: qData.length,
-            verifiedQuestions: qData.length,
-            subjectCounts: {
-              ...(prev?.subjectCounts || {}),
-              all: qData.length
-            }
-          }));
         }
       } catch (err) {
         console.error('Error fetching questions and shifts from server:', err);
@@ -1026,7 +1028,7 @@ export default function MockTestsHubPage() {
                     {activeSubjectMeta?.title || 'Selected Subject'} Mock Tests
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Showing strictly {activeSubjectMeta?.title || 'subject'} mock tests and topic-wise drills with zero cross-subject mixing.
+                    Randomly sampled PYQs for {activeSubjectMeta?.title || 'this subject'} across RRB NTPC (UG 2024, Grad 2024 &amp; 2025–26), RRB Group D 2025, and SSC CGL (2020 &amp; 2026).
                   </p>
                 </div>
               </div>
@@ -1742,9 +1744,7 @@ export default function MockTestsHubPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
                 <Link
                   to={`/mocks/topic-${activeTopicModal.subjectId || 'general-knowledge'}-${activeTopicModal.id}?mode=practice&limit=${
-                    chosenTopicQuestionCount === 'all'
-                      ? getTopicQuestionCount(activeTopicModal.subjectId || 'general-knowledge', activeTopicModal)
-                      : chosenTopicQuestionCount
+                    chosenTopicQuestionCount === 'all' ? 'all' : chosenTopicQuestionCount
                   }`}
                   className="w-full py-2.5 px-4 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95"
                 >
@@ -1754,9 +1754,7 @@ export default function MockTestsHubPage() {
 
                 <Link
                   to={`/mocks/topic-${activeTopicModal.subjectId || 'general-knowledge'}-${activeTopicModal.id}?mode=cbt&limit=${
-                    chosenTopicQuestionCount === 'all'
-                      ? getTopicQuestionCount(activeTopicModal.subjectId || 'general-knowledge', activeTopicModal)
-                      : chosenTopicQuestionCount
+                    chosenTopicQuestionCount === 'all' ? 'all' : chosenTopicQuestionCount
                   }`}
                   className="w-full py-2.5 px-4 rounded-full bg-[#12345A] hover:bg-[#0B1F3A] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95"
                 >
