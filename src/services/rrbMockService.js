@@ -1318,6 +1318,7 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     } else if (
       testId.includes('current-affairs') ||
       testId.includes('ca-mock') ||
+      testId.includes('sec-ca') ||
       subject === 'current-affairs' ||
       subject === 'Current Affairs' ||
       subject === 'ca'
@@ -1327,24 +1328,41 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       title = 'Current Affairs 2025–2026 – Full Mega Mock';
     }
 
+    let poolOffset = 0;
     if (limitParam && parseInt(limitParam, 10) > 0) {
       targetCount = parseInt(limitParam, 10);
+    } else if (testId === 'sec-gk-01') {
+      targetCount = 40;
+      duration = 30;
+      title = `${subject} – Comprehensive Sectional Mock (40 Qs)`;
+    } else if (testId === 'sec-quant-01' || testId === 'sec-reasoning-01') {
+      targetCount = 30;
+      duration = 30;
+      title = `${subject} – CBT Sectional Mock (30 Qs)`;
+    } else if (testId === 'sec-english-01' || testId === 'sec-science-01' || testId === 'sec-ca-01' || testId === 'sec-computer-01') {
+      targetCount = 25;
+      duration = 20;
+      title = `${subject} – High Yield Speed Drill (25 Qs)`;
     } else if (testId.includes('30q') || testId.includes('-30') || testId.includes('30-q')) {
       targetCount = 30;
       duration = 30;
-      title = `${subject} – 30 Questions Practice Test`;
+      poolOffset = 25;
+      title = `${subject} – 30 Questions Practice Mock`;
     } else if (testId.includes('speed') || testId.includes('25q') || testId.includes('quick')) {
       targetCount = 25;
       duration = 25;
-      title = `${subject} – Speed Drill Practice (25 Qs)`;
+      poolOffset = 0;
+      title = `${subject} – Speed Drill Mock (25 Qs)`;
     } else if (testId.includes('sectional') || testId.includes('50q') || testId.includes('sec-')) {
       targetCount = 50;
       duration = 45;
+      poolOffset = 55;
       title = `${subject} – Sectional CBT Drill (50 Qs)`;
-    } else if (testId.includes('pyq-master') || testId.includes('mixed')) {
+    } else if (testId.includes('pyq-master') || testId.includes('mixed') || testId.includes('100q')) {
       targetCount = 100;
       duration = 90;
-      title = `${subject} – Previous Year Papers Master Test`;
+      poolOffset = 105;
+      title = `${subject} – Previous Year Master Mock (100 Qs)`;
     } else {
       targetCount = 30;
       duration = 30;
@@ -1359,7 +1377,9 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
       picked = [...qQuant, ...qGk, ...qSci, ...qReas];
     } else {
       const subjectPool = await getQuestionsForSubject(canonicalSub);
-      picked = subjectPool.slice(0, Math.min(targetCount, subjectPool.length));
+      const count = Math.min(targetCount, subjectPool.length);
+      const start = subjectPool.length > count ? (poolOffset % Math.max(1, subjectPool.length - count)) : 0;
+      picked = subjectPool.slice(start, start + count);
     }
 
     const engineQuestions = formatToEngineQuestions(picked);

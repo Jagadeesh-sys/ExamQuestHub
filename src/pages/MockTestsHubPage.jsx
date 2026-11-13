@@ -52,7 +52,11 @@ import {
   classifyComputerTopic
 } from '../services/rrbMockService.js';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
-import { FULL_MOCK_SERIES, SECTIONAL_TESTS } from '../data/fullMockSeriesData.js';
+import {
+  FULL_MOCK_SERIES,
+  SECTIONAL_TESTS,
+  SUBJECT_MOCK_TESTS
+} from '../data/fullMockSeriesData.js';
 import OfficialMockTestCard from '../components/OfficialMockTestCard.jsx';
 import {
   getMockQuestions,
@@ -85,6 +89,16 @@ export default function MockTestsHubPage() {
   // 'all' | 'full-mock' | 'pyqs' | 'subject-wise' | 'topic-wise' | 'sectional'
   const initialTab = searchParams.get('tab') || 'all';
   const [activeCategoryTab, setActiveCategoryTab] = useState(initialTab);
+
+  // Keep selectedSubject & activeCategoryTab synced when URL query changes (e.g. Link clicks or back/forward)
+  useEffect(() => {
+    const urlSub = searchParams.get('subject') || 'all';
+    const urlTab = searchParams.get('tab');
+    setSelectedSubject(urlSub);
+    if (urlTab) {
+      setActiveCategoryTab(urlTab);
+    }
+  }, [searchParams]);
 
   // Global search input for mock tests & papers
   const [globalSearch, setGlobalSearch] = useState('');
@@ -342,6 +356,94 @@ export default function MockTestsHubPage() {
     const totalSub = liveSubjectCounts[subjectId] || 600;
     return Math.max(25, Math.round(totalSub / Math.max(1, currentSubjectTopics.length)));
   };
+
+  const subjectLogoMap = useMemo(() => ({
+    'current-affairs': iconCurrentAffairs,
+    'general-knowledge': iconGeneralKnowledge,
+    'quantitative-aptitude': iconQuant,
+    'reasoning': iconReasoning,
+    'english-language': iconEnglish,
+    'general-science': iconScience,
+    'computer-science': iconComputer
+  }), []);
+
+  const isSubjectFiltered =
+    selectedSubject !== 'all' &&
+    !selectedSubject.startsWith('rrb') &&
+    !selectedSubject.startsWith('ssc');
+
+  const activeSubjectMeta = useMemo(
+    () => examCarouselCards.find((c) => c.id === selectedSubject) || null,
+    [examCarouselCards, selectedSubject]
+  );
+
+  // Subject-Pure Mock Tests (Speed Drills, 30Q, 50Q, 100Q Master, Sectional & Monthly CA)
+  const allSubjectMocks = useMemo(() => {
+    const seen = new Set();
+    const combined = [];
+
+    const addTest = (raw) => {
+      if (!raw || !raw.id || seen.has(raw.id)) return;
+      seen.add(raw.id);
+      combined.push({
+        ...raw,
+        logoUrl: raw.logoUrl || subjectLogoMap[raw.subjectId] || iconAllMock
+      });
+    };
+
+    SUBJECT_MOCK_TESTS.forEach(addTest);
+    SECTIONAL_TESTS.forEach(addTest);
+    MOCK_TESTS_METADATA.forEach((ca) =>
+      addTest({
+        ...ca,
+        subjectId: 'current-affairs',
+        subjectName: 'Current Affairs',
+        agency: 'CA',
+        difficulty: ca.difficulty || 'Medium',
+        negativeMarking: ca.negativeMarking || '-0.25 Negative Marking'
+      })
+    );
+
+    return combined;
+  }, [subjectLogoMap]);
+
+  const filteredSubjectMocks = useMemo(() => {
+    let list = allSubjectMocks;
+    if (isSubjectFiltered) {
+      list = list.filter((m) => m.subjectId === selectedSubject);
+    }
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase().trim();
+      list = list.filter(
+        (m) =>
+          (m.title && m.title.toLowerCase().includes(q)) ||
+          (m.subtitle && m.subtitle.toLowerCase().includes(q)) ||
+          (m.subjectName && m.subjectName.toLowerCase().includes(q)) ||
+          (m.agency && m.agency.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [allSubjectMocks, isSubjectFiltered, selectedSubject, globalSearch]);
+
+  const filteredSectionalTests = useMemo(() => {
+    let list = SECTIONAL_TESTS.map((t) => ({
+      ...t,
+      logoUrl: t.logoUrl || subjectLogoMap[t.subjectId] || iconAllMock
+    }));
+    if (isSubjectFiltered) {
+      list = list.filter((t) => t.subjectId === selectedSubject);
+    }
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase().trim();
+      list = list.filter(
+        (t) =>
+          (t.title && t.title.toLowerCase().includes(q)) ||
+          (t.subtitle && t.subtitle.toLowerCase().includes(q)) ||
+          (t.subjectName && t.subjectName.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [isSubjectFiltered, selectedSubject, globalSearch, subjectLogoMap]);
 
   // Full Mock Tests filtered by selected exam/subject and search
   const filteredFullMocks = useMemo(() => {
@@ -890,8 +992,91 @@ export default function MockTestsHubPage() {
         </section>
 
         {/* =========================================================================
-            AVAILABLE REAL TEST SERIES (Strictly genuine series that actually exist)
+            SUBJECT-FILTERED MODE: STRICTLY SHOW ONLY THE SELECTED SUBJECT'S MOCKS
             ========================================================================= */}
+        {isSubjectFiltered && (
+          <section className="space-y-4 pt-1">
+            {/* Active Subject Focused Header */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-[#2468B4]/20 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5 min-w-0">
+                {activeSubjectMeta && (
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl p-1 bg-blue-50/70 border border-[#2468B4]/20 shrink-0 flex items-center justify-center">
+                    <img
+                      src={activeSubjectMeta.image3d}
+                      alt={activeSubjectMeta.title}
+                      className="w-full h-full object-cover rounded-xl"
+                      onError={(e) => {
+                        if (activeSubjectMeta.fallbackUrl && e.currentTarget.src !== activeSubjectMeta.fallbackUrl) {
+                          e.currentTarget.src = activeSubjectMeta.fallbackUrl;
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-[#12345A] text-[#F2BE4F] text-[10px] font-black uppercase tracking-wider">
+                      Subject Mocks Only
+                    </span>
+                    <span className="text-xs font-bold text-[#2468B4]">
+                      {filteredSubjectMocks.length} Mock Tests · {currentSubjectTopics.length} Syllabus Units · {(liveSubjectCounts[selectedSubject] || 0).toLocaleString()}+ Qs
+                    </span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-black text-[#12345A] font-heading tracking-tight mt-0.5 truncate">
+                    {activeSubjectMeta?.title || 'Selected Subject'} Mock Tests
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Showing strictly {activeSubjectMeta?.title || 'subject'} mock tests and topic-wise drills with zero cross-subject mixing.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleSelectSubject('all')}
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-[#12345A] hover:text-white text-[#12345A] text-xs font-bold transition cursor-pointer shrink-0 self-start sm:self-center flex items-center gap-1.5"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Show All Exams &amp; Subjects</span>
+              </button>
+            </div>
+
+            {/* Subject Mock Tests Grid */}
+            {filteredSubjectMocks.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredSubjectMocks.map((test) => (
+                  <OfficialMockTestCard
+                    key={test.id}
+                    test={test}
+                    isBookmarked={bookmarkedIds.includes(test.id)}
+                    onToggleBookmark={toggleBookmark}
+                    onStartTest={(t) => handleLaunchTest(t, 'cbt')}
+                    onPractice={(t) => handleLaunchTest(t, 'practice')}
+                    hasProPass={hasProPass}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 space-y-2">
+                <p className="text-sm font-bold text-[#12345A]">
+                  No {activeSubjectMeta?.title || 'subject'} mock tests matched &ldquo;{globalSearch}&rdquo;.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setGlobalSearch('')}
+                  className="px-4 py-1.5 rounded-full bg-[#12345A] text-white text-xs font-bold cursor-pointer hover:bg-[#2468B4]"
+                >
+                  Clear Search
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* =========================================================================
+            AVAILABLE REAL TEST SERIES (Strictly hidden when filtering by a single subject)
+            ========================================================================= */}
+        {!isSubjectFiltered && (
         <section className="space-y-3 pt-1">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-5 bg-[#2468B4] rounded-full inline-block" />
@@ -945,10 +1130,12 @@ export default function MockTestsHubPage() {
             ))}
           </div>
         </section>
+        )}
 
         {/* =========================================================================
-            AVAILABLE MOCK TESTS (Real Available Mocks with Instant Start)
+            AVAILABLE MOCK TESTS (Real Available Mocks with Instant Start - hidden when a subject is selected)
             ========================================================================= */}
+        {!isSubjectFiltered && (
         <section className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1051,18 +1238,20 @@ export default function MockTestsHubPage() {
             ))}
           </div>
         </section>
+        )}
 
         {/* =========================================================================
-            TEST CATEGORY NAVIGATION TABS (Horizontally Scrollable)
+            TEST CATEGORY NAVIGATION TABS (Horizontally Scrollable - All Exams Mode)
             1. All Tests  2. Full Mock Tests  3. Previous Year Papers
             4. Subject-wise Tests  5. Topic-wise Practice  6. Sectional Tests
             ========================================================================= */}
+        {!isSubjectFiltered && (
         <section className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 select-none">
           {[
             { id: 'all', label: 'All Tests', icon: LayoutGrid, count: '428+' },
             { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: '17 Series' },
             { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: 'Shift Sets' },
-            { id: 'subject-wise', label: 'Subject-wise Tests', icon: Layers, count: '8 Core' },
+            { id: 'subject-wise', label: 'Subject-wise Tests', icon: Layers, count: '7 Core' },
             { id: 'topic-wise', label: 'Topic-wise Practice', icon: Sparkles, count: '64 Units' },
             { id: 'sectional', label: 'Sectional Tests', icon: Target, count: 'Speed Drills' }
           ].map((tab) => {
@@ -1091,11 +1280,12 @@ export default function MockTestsHubPage() {
             );
           })}
         </section>
+        )}
 
         {/* =========================================================================
             VIEW 1: FULL MOCK TESTS (Exam-specific patterns: RRB NTPC CBT-1 & SSC CGL)
             ========================================================================= */}
-        {(activeCategoryTab === 'all' || activeCategoryTab === 'full-mock') && (
+        {!isSubjectFiltered && (activeCategoryTab === 'all' || activeCategoryTab === 'full-mock') && (
           <section className="space-y-4 pt-1">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
@@ -1133,7 +1323,7 @@ export default function MockTestsHubPage() {
         {/* =========================================================================
             VIEW 2: DEDICATED PREVIOUS YEAR PAPERS (RRB NTPC, Group D & SSC CGL - 211 Shifts)
             ========================================================================= */}
-        {(activeCategoryTab === 'all' || activeCategoryTab === 'pyqs') && (
+        {!isSubjectFiltered && (activeCategoryTab === 'all' || activeCategoryTab === 'pyqs') && (
           <section className="space-y-4 pt-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
@@ -1324,18 +1514,58 @@ export default function MockTestsHubPage() {
         )}
 
         {/* =========================================================================
-            VIEW 3: TOPIC-WISE PRACTICE & DRILL GENERATOR
-            (General Awareness, Mathematics, Reasoning, English, General Science)
-            Configurable: 10, 20, 25, 50 questions with strict subject protection!
+            VIEW 2B: SUBJECT-WISE MOCK TESTS (All 7 Core Subjects when Subject-wise Tab Active)
             ========================================================================= */}
-        {(activeCategoryTab === 'all' || activeCategoryTab === 'topic-wise') && (
+        {!isSubjectFiltered && activeCategoryTab === 'subject-wise' && (
           <section className="space-y-4 pt-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block" />
                   <h3 className="text-base sm:text-lg font-black text-[#12345A] font-heading">
-                    Topic-Wise Practice &amp; Drill Generator
+                    Subject-Wise Mock Tests (All 7 Core Subjects)
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500 pl-3.5 mt-0.5">
+                  Dedicated mock series strictly isolated by subject. Click any subject card above to filter further.
+                </p>
+              </div>
+              <span className="text-xs font-bold text-[#12345A] bg-white px-3 py-1 rounded-full border border-slate-200 shadow-2xs self-start sm:self-auto">
+                {filteredSubjectMocks.length} Subject Tests
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredSubjectMocks.map((test) => (
+                <OfficialMockTestCard
+                  key={test.id}
+                  test={test}
+                  isBookmarked={bookmarkedIds.includes(test.id)}
+                  onToggleBookmark={toggleBookmark}
+                  onStartTest={(t) => handleLaunchTest(t, 'cbt')}
+                  onPractice={(t) => handleLaunchTest(t, 'practice')}
+                  hasProPass={hasProPass}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* =========================================================================
+            VIEW 3: TOPIC-WISE PRACTICE & DRILL GENERATOR
+            (General Awareness, Mathematics, Reasoning, English, General Science)
+            Configurable: 10, 20, 25, 50 questions with strict subject protection!
+            ========================================================================= */}
+        {(isSubjectFiltered || activeCategoryTab === 'all' || activeCategoryTab === 'topic-wise') && (
+          <section className="space-y-4 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block" />
+                  <h3 className="text-base sm:text-lg font-black text-[#12345A] font-heading">
+                    {isSubjectFiltered
+                      ? `${activeSubjectMeta?.title || 'Subject'} Topic-Wise Practice & Drills`
+                      : 'Topic-Wise Practice & Drill Generator'}
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500 pl-3.5 mt-0.5">
@@ -1412,9 +1642,9 @@ export default function MockTestsHubPage() {
         )}
 
         {/* =========================================================================
-            VIEW 4: SECTIONAL TESTS (Speed Drills 25 Qs & Sectional CBTs)
+            VIEW 4: SECTIONAL TESTS (Speed Drills 25 Qs & Sectional CBTs - All Exams Mode)
             ========================================================================= */}
-        {(activeCategoryTab === 'all' || activeCategoryTab === 'sectional') && (
+        {!isSubjectFiltered && (activeCategoryTab === 'all' || activeCategoryTab === 'sectional') && (
           <section className="space-y-4 pt-2">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-5 bg-[#F2BE4F] rounded-full inline-block" />
@@ -1424,7 +1654,7 @@ export default function MockTestsHubPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {SECTIONAL_TESTS.map((test) => (
+              {filteredSectionalTests.map((test) => (
                 <OfficialMockTestCard
                   key={test.id}
                   test={{
