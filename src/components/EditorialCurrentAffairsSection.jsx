@@ -631,7 +631,7 @@ export default function EditorialCurrentAffairsSection({
                 <img
                   src="/assets/aistudio/examquesthub-logo.png"
                   alt="ExamQuestHub"
-                  className="w-7 h-7 rounded-lg object-contain bg-slate-50 border border-slate-200/80 p-0.5 shadow-2xs shrink-0"
+                  className="w-8 h-8 object-contain shrink-0"
                 />
                 <div className="leading-tight">
                   <h2 className="font-heading font-black text-[#0B1F3A] text-sm uppercase tracking-tight">
@@ -643,9 +643,9 @@ export default function EditorialCurrentAffairsSection({
               <button
                 type="button"
                 onClick={() => setViewMode('editorial')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10.5px] font-black text-[#0B1F3A] bg-slate-50 border border-slate-200 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 py-1 text-[11px] font-black text-[#0B1F3A] bg-transparent hover:text-[#2468B4] active:scale-95 transition-all cursor-pointer"
               >
-                <Grid className="w-3 h-3" />
+                <Grid className="w-3.5 h-3.5" />
                 <span>Classic View</span>
               </button>
             </div>
