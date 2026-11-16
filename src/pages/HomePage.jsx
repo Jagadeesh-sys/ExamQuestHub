@@ -25,7 +25,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
-  Play
+  Play,
+  BarChart3
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { subscribeToUpdates, subscribeToCurrentAffairs, getDirectFirestoreMockStats } from '../firebase/firestoreService.js';
@@ -91,10 +92,10 @@ export default function HomePage() {
     },
     {
       id: 'banner-mock-tests',
-      image: '/assets/aistudio/image_ef986abf.png',
+      image: '/assets/aistudio/image_3a3807e5.png',
       alt: 'Ace Your Government Exams - Mock Tests & Practice Tests with Real Exam Pattern',
-      eyebrow: `${(mockStats?.totalQuestions || 23921).toLocaleString()}+ Questions • ${mockStats?.totalShifts || 211} CBT Shifts`,
-      ctaText: 'Start Tests',
+      eyebrow: 'Mock Tests & Practice Tests',
+      ctaText: 'Attempt Mocks',
       ctaLink: '/mocks'
     },
     {
@@ -304,7 +305,7 @@ export default function HomePage() {
         {/* 1. HERO BANNER - Horizontal Scroll Carousel with 3 Banners */}
         <section
           aria-label="Featured Announcements and Exam Prep"
-          className="relative w-full min-h-[145px] sm:min-h-[180px] md:min-h-[220px] aspect-[2.5/1] sm:aspect-[2.8/1] md:aspect-[3/1] rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B] group"
+          className="relative w-full min-h-[145px] sm:min-h-[180px] md:min-h-[220px] aspect-[2.5/1] sm:aspect-[2.8/1] md:aspect-[3/1] rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#041A54] group"
           onMouseEnter={() => { isHoveredRef.current = true; }}
           onMouseLeave={() => { isHoveredRef.current = false; }}
         >
@@ -322,7 +323,7 @@ export default function HomePage() {
                 className="absolute inset-0 w-full h-full object-cover object-right sm:object-center block pointer-events-none"
                 loading="eager"
               />
-              <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-3 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
+              <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-2.5 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[#F2BE4F] text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wide uppercase mb-1 sm:mb-1.5">
                   <Award className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-[#F2BE4F] shrink-0" />
                   <span>{homeBanners[0].eyebrow}</span>
@@ -345,16 +346,67 @@ export default function HomePage() {
             </div>
 
             {/* Banner 2: Ace Your Government Exams (Mock Tests & Practice Tests) */}
-            <div className="min-w-full w-full shrink-0 snap-center relative h-full">
-              <Link to="/mocks" className="block w-full h-full relative group/b2 cursor-pointer">
+            <div className="min-w-full w-full shrink-0 snap-center relative h-full bg-[#021242]">
+              <Link to="/mocks" className="block w-full h-full relative group/b2 cursor-pointer overflow-hidden">
                 <img
                   src={homeBanners[1].image}
                   alt={homeBanners[1].alt}
-                  className="w-full h-full object-cover select-none pointer-events-none"
+                  className="absolute top-0 bottom-0 right-0 w-[66%] sm:w-full h-full object-cover object-right sm:object-center select-none pointer-events-none"
                   loading="lazy"
                 />
-                {/* Desktop Action Affordance */}
-                <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-6 hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-xs sm:text-sm shadow-xl transition-transform group-hover/b2:scale-105">
+                {/* Readability scrim blending artwork into deep blue left side on mobile & subtle scrim on desktop */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#021242] via-[#021242]/90 via-42% to-transparent sm:from-[#021242]/75 sm:via-[#021242]/30 sm:via-50% sm:to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#021242]/65 via-transparent to-transparent pointer-events-none sm:hidden" />
+
+                {/* Responsive Text Overlay */}
+                <div className="relative z-20 flex flex-col justify-center items-start h-full px-4 sm:px-8 md:px-11 lg:px-14 pt-2.5 pb-5 sm:py-5 max-w-[66%] sm:max-w-[62%] md:max-w-[58%] gap-0.5 sm:gap-2 md:gap-2.5">
+                  <span className="inline-flex items-center px-2 sm:px-3.5 py-0.5 sm:py-1 rounded-full bg-[#FACC15] text-[#081B44] font-heading font-black text-[8px] sm:text-[11px] md:text-xs tracking-tight shadow-md">
+                    {homeBanners[1].eyebrow}
+                  </span>
+
+                  <h2 className="font-heading font-black tracking-tight leading-[1.08] text-[15px] sm:text-2xl md:text-3xl lg:text-[40px] drop-shadow-sm mt-0.5">
+                    <span className="text-white block">Ace Your</span>
+                    <span className="text-[#FACC15] block">Government Exams</span>
+                  </h2>
+
+                  <p className="text-slate-100/95 text-[8.5px] sm:text-xs md:text-sm lg:text-[15px] font-medium leading-tight sm:leading-snug max-w-lg line-clamp-1 sm:line-clamp-none mt-0.5">
+                    Real exam pattern tests, topic-wise practice, and previous year papers with detailed analysis.
+                  </p>
+
+                  {/* Feature Highlights on Tablet/Desktop */}
+                  <div className="hidden md:flex flex-wrap items-center gap-2 pt-0.5">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0A2768]/75 backdrop-blur-xs border border-white/20 shadow-xs">
+                      <Target className="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
+                      <span className="text-[11px] font-bold text-white leading-tight">
+                        Exam Pattern Based
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0A2768]/75 backdrop-blur-xs border border-white/20 shadow-xs">
+                      <BarChart3 className="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
+                      <span className="text-[11px] font-bold text-white leading-tight">
+                        Instant Result &amp; Analysis
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0A2768]/75 backdrop-blur-xs border border-white/20 shadow-xs">
+                      <Layers className="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
+                      <span className="text-[11px] font-bold text-white leading-tight">
+                        No Login Required
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mobile Inline CTA */}
+                  <div className="pt-1 sm:hidden">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FACC15] text-[#081B44] font-black text-[9px] shadow-md">
+                      <Play className="w-2.5 h-2.5 fill-[#081B44]" />
+                      <span>Attempt Mocks</span>
+                      <ArrowRight className="w-2.5 h-2.5 stroke-[2.5]" />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Desktop & Tablet Action Affordance */}
+                <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-6 hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] font-black text-xs sm:text-sm shadow-xl transition-transform group-hover/b2:scale-105 z-20">
                   <Play className="w-3.5 h-3.5 fill-[#0B1F3A]" />
                   <span>Attempt Mocks</span>
                   <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -371,7 +423,7 @@ export default function HomePage() {
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/75 via-[#07183B]/30 to-transparent pointer-events-none" />
-              <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-3 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
+              <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-2.5 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[#F2BE4F] text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wide uppercase mb-1 sm:mb-1.5">
                   <Newspaper className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-[#F2BE4F] shrink-0" />
                   <span>{homeBanners[2].eyebrow}</span>

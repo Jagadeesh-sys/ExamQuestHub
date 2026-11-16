@@ -39,7 +39,8 @@ import {
   Lock,
   Unlock,
   Bell,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -887,16 +888,63 @@ export default function MockTestsHubPage() {
             ========================================================================= */}
         <section
           aria-label="Ace Your Government Exams"
-          className="relative w-full rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#07183B] group"
+          className="relative w-full min-h-[145px] sm:min-h-[210px] md:min-h-[270px] lg:min-h-[340px] aspect-[2.5/1] sm:aspect-[2.7/1] md:aspect-[2.9/1] rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#021242] flex items-center"
         >
           <img
-            src="/assets/aistudio/image_ef986abf.png"
-            alt="Ace Your Government Exams - Real exam pattern tests, topic-wise practice, and previous year papers with detailed analysis."
-            className="w-full h-auto object-cover block select-none pointer-events-none"
+            src="/assets/aistudio/image_3a3807e5.png"
+            alt="Ace Your Government Exams - Mock Tests & Practice Tests"
+            className="absolute top-0 bottom-0 right-0 w-[66%] sm:w-full h-full object-cover object-right sm:object-center block select-none pointer-events-none"
             loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/70 via-[#07183B]/25 to-transparent pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#07183B]/55 via-transparent to-transparent pointer-events-none" />
+          {/* Smooth left-to-right feather so artwork remains sharp on right while text has high contrast on left */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#021242] via-[#021242]/90 via-42% to-transparent sm:from-[#021242]/75 sm:via-[#021242]/30 sm:via-50% sm:to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#021242]/70 via-transparent to-transparent pointer-events-none sm:hidden" />
+
+          {/* Text Overlay Content */}
+          <div className="relative z-10 w-full sm:max-w-[60%] md:max-w-[58%] px-3.5 sm:px-8 md:px-11 lg:px-14 py-2.5 sm:py-6 md:py-8 flex flex-col justify-center items-start gap-1.5 sm:gap-3 md:gap-3.5">
+            {/* Top Text Block constrained away from right artwork on mobile */}
+            <div className="max-w-[65%] sm:max-w-none flex flex-col items-start gap-0.5 sm:gap-2.5 md:gap-3">
+              {/* Eyebrow Tag */}
+              <span className="inline-flex items-center px-2 sm:px-4 py-0.5 sm:py-1 rounded-full bg-[#FACC15] text-[#081B44] font-heading font-black text-[8px] sm:text-xs md:text-sm tracking-tight shadow-md">
+                Mock Tests &amp; Practice Tests
+              </span>
+
+              {/* Main Headline */}
+              <h1 className="font-heading font-black tracking-tight leading-[1.08] text-[15px] sm:text-3xl md:text-4xl lg:text-[44px] drop-shadow-sm mt-0.5">
+                <span className="text-white block">Ace Your</span>
+                <span className="text-[#FACC15] block">Government Exams</span>
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-slate-100/95 text-[8.5px] sm:text-sm md:text-[15px] lg:text-base font-medium leading-tight sm:leading-relaxed max-w-xl line-clamp-1 sm:line-clamp-none mt-0.5">
+                Real exam pattern tests, topic-wise practice, and previous year papers with detailed analysis.
+              </p>
+            </div>
+
+            {/* Feature Highlights: ultra-compact single row on mobile, inline flex on tablet/desktop */}
+            <div className="grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5 md:gap-3 w-full sm:w-auto pt-0.5">
+              <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3.5 py-1 sm:py-2 rounded-lg sm:rounded-xl bg-[#08225D]/85 sm:bg-[#0A2768]/75 backdrop-blur-xs border border-white/20 shadow-xs min-w-0">
+                <Target className="w-2.5 h-2.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-[#FACC15] shrink-0" />
+                <span className="text-[7.5px] sm:text-[11px] md:text-xs font-bold text-white leading-[1.1]">
+                  Exam Pattern<br />Based
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3.5 py-1 sm:py-2 rounded-lg sm:rounded-xl bg-[#08225D]/85 sm:bg-[#0A2768]/75 backdrop-blur-xs border border-white/20 shadow-xs min-w-0">
+                <BarChart3 className="w-2.5 h-2.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-[#FACC15] shrink-0" />
+                <span className="text-[7.5px] sm:text-[11px] md:text-xs font-bold text-white leading-[1.1]">
+                  Instant Result<br />&amp; Analysis
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3.5 py-1 sm:py-2 rounded-lg sm:rounded-xl bg-[#08225D]/85 sm:bg-[#0A2768]/75 backdrop-blur-xs border border-white/20 shadow-xs min-w-0">
+                <Layers className="w-2.5 h-2.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-[#FACC15] shrink-0" />
+                <span className="text-[7.5px] sm:text-[11px] md:text-xs font-bold text-white leading-[1.1]">
+                  No Login<br />Required
+                </span>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* =========================================================================
