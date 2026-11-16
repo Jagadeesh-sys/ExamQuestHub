@@ -45,6 +45,7 @@ const STORAGE_KEYS = {
 
 const MAX_INLINE_BYTES = 700000;
 let lastFirestoreError = null;
+let inMemoryCurrentAffairs = null;
 
 export function getLastFirestoreError() {
   return lastFirestoreError;
@@ -515,45 +516,53 @@ export async function getCurrentAffairs(includeDrafts = false) {
 }
 
 export function subscribeToCurrentAffairs(callback, includeDrafts = false) {
-  let settled = false;
+  let liveSettled = false;
   const decorate = (list) => {
     const source = Array.isArray(list) && list.length > 0 ? list : INITIAL_CURRENT_AFFAIRS;
-    return source.map((item) => ({
+    return sortByDateDesc(source).map((item) => ({
       ...item,
       imageUrl: item.imageUrl || getDefaultImageForTopic(item.topic),
       examRelevance: item.examRelevance?.length ? item.examRelevance : ['UPSC', 'APPSC', 'SSC']
     }));
   };
   const emit = (items) => {
-    settled = true;
     const next = decorate(items);
     callback(includeDrafts ? next : next.filter((item) => !isDraft(item)));
   };
 
+  // 1. Immediately emit in-memory, cached, or seed articles so ALL current affairs open instantaneously (0ms)
+  const initialCached = inMemoryCurrentAffairs?.length
+    ? inMemoryCurrentAffairs
+    : cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
+  emit(initialCached.length ? initialCached : INITIAL_CURRENT_AFFAIRS);
+
   if (isFirebaseConfigured && db) {
     const timeoutId = setTimeout(() => {
-      if (!settled) {
+      if (!liveSettled) {
         const cached = cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
-        emit(cached.length ? cached : INITIAL_CURRENT_AFFAIRS);
+        if (cached.length) emit(cached);
       }
-    }, 8000);
+    }, 3500);
 
     try {
       const unsubscribe = onSnapshot(
         collection(db, 'currentAffairs'),
         (snapshot) => {
+          liveSettled = true;
           clearTimeout(timeoutId);
           const list = sortByDateDesc(snapshot.docs.map((d) => hydrateDoc(d.id, d.data())));
-          saveLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, list);
+          if (list.length > 0) {
+            inMemoryCurrentAffairs = list;
+            saveLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, list);
+          }
           markSyncSuccess();
           emit(list);
         },
         (error) => {
+          liveSettled = true;
           clearTimeout(timeoutId);
           recordError('subscribeToCurrentAffairs', error);
           markSyncFailure(error);
-          const cached = cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
-          emit(cached.length ? cached : INITIAL_CURRENT_AFFAIRS);
         }
       );
       return () => {
@@ -561,14 +570,12 @@ export function subscribeToCurrentAffairs(callback, includeDrafts = false) {
         unsubscribe();
       };
     } catch (err) {
+      liveSettled = true;
       clearTimeout(timeoutId);
       recordError('subscribeToCurrentAffairs', err);
-      const cached = cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
-      emit(cached.length ? cached : INITIAL_CURRENT_AFFAIRS);
     }
   }
 
-  emit(getLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, INITIAL_CURRENT_AFFAIRS));
   return () => {};
 }
 

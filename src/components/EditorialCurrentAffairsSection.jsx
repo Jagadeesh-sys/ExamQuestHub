@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Globe2,
@@ -226,7 +226,8 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           <img
             src={imgSrc}
             alt={headline}
-            loading="lazy"
+            loading={index < 8 ? 'eager' : 'lazy'}
+            decoding="async"
             className="w-full h-full object-cover object-top"
             onError={() => {
               const fallback = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
@@ -333,6 +334,14 @@ export default function EditorialCurrentAffairsSection({
   );
   const [bookmarkedIds, setBookmarkedIds] = useState({});
   const [expandedIds, setExpandedIds] = useState({});
+  const reelsScrollRef = useRef(null);
+
+  // Reset Reels scroll position when filter/topic changes so user starts cleanly at top
+  useEffect(() => {
+    if (viewMode === 'reels' && reelsScrollRef.current) {
+      reelsScrollRef.current.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [selectedTopic, searchQuery, viewMode]);
 
   // Lock body scroll when in full-screen Reels mode
   useEffect(() => {
@@ -622,10 +631,10 @@ export default function EditorialCurrentAffairsSection({
 
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
-        /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) - Full top-0 (removes global header) to above bottom nav */
-        <div className="fixed top-0 bottom-[64px] pb-[max(0px,env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
+        /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) - Single snap container, zero nested scroll trap */
+        <div className="fixed top-0 bottom-[calc(68px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 bg-white lg:hidden overflow-hidden flex flex-col">
           {/* Reels Header: App logo on left side of News Reels text */}
-          <div className="bg-white px-3.5 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100 safe-area-pt shadow-2xs">
+          <div className="shrink-0 bg-white px-3.5 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100 safe-area-pt shadow-2xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img
@@ -634,9 +643,14 @@ export default function EditorialCurrentAffairsSection({
                   className="w-8 h-8 object-contain shrink-0"
                 />
                 <div className="leading-tight">
-                  <h2 className="font-heading font-black text-[#0B1F3A] text-sm uppercase tracking-tight">
-                    News Reels
-                  </h2>
+                  <div className="flex items-center gap-1.5">
+                    <h2 className="font-heading font-black text-[#0B1F3A] text-sm uppercase tracking-tight">
+                      News Reels
+                    </h2>
+                    <span className="px-1.5 py-0.5 rounded-full bg-blue-50 text-[#2468B4] text-[9.5px] font-extrabold border border-blue-100">
+                      {filtered.length}
+                    </span>
+                  </div>
                   <p className="text-[9.5px] text-slate-500 font-bold">Swipe up for next update</p>
                 </div>
               </div>
@@ -651,18 +665,23 @@ export default function EditorialCurrentAffairsSection({
             </div>
 
             {/* Topic Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            <div className="flex items-center gap-1.5 overflow-x-auto touch-pan-x no-scrollbar pb-0.5">
               {topics.map((topic) => (
                 <button
                   key={topic}
+                  type="button"
                   onClick={() => setSelectedTopic(topic)}
-                  className={`px-3 py-1 rounded-xl text-[10px] font-black whitespace-nowrap border transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-xl text-[10px] font-black whitespace-nowrap border transition-all cursor-pointer shrink-0 ${
                     selectedTopic === topic
                       ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-sm'
                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  {topic}
+                  {topic === 'Andhra Pradesh current affairs'
+                    ? 'Andhra Pradesh'
+                    : topic === 'Telangana current affairs'
+                      ? 'Telangana'
+                      : topic}
                 </button>
               ))}
             </div>
@@ -674,15 +693,20 @@ export default function EditorialCurrentAffairsSection({
                 <Search className="w-8 h-8 text-slate-300" />
               </div>
               <p>No current affairs match your filters yet.</p>
-              <button 
+              <button
+                type="button"
                 onClick={() => setSelectedTopic('All')}
-                className="text-[#2468B4] font-bold text-xs hover:underline"
+                className="text-[#2468B4] font-bold text-xs hover:underline cursor-pointer"
               >
                 Clear all filters
               </button>
             </div>
           ) : (
-            <div className="flex-1 snap-y snap-mandatory overflow-y-auto no-scrollbar overscroll-contain">
+            <div
+              ref={reelsScrollRef}
+              className="flex-1 min-h-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain no-scrollbar touch-pan-y bg-white"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               {filtered.map((item, idx) => (
                 <div key={item.id} className="h-full w-full snap-start snap-always">
                   <ReelCard
