@@ -1,32 +1,38 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
-import { ArrowRight, Bell, BookOpen } from 'lucide-react';
-import jobBannerArtwork from '../assets/images/job_banner_8d9279ad.png';
+import { ArrowRight, Bell, BookOpen, Play, Target } from 'lucide-react';
 
 export const ONBOARDING_STORAGE_KEY = 'eqh_onboarding_v1_done';
 
 const CAP_LOGO_URL = '/assets/aistudio/examquesthub_cap_logo.png';
 const ONBOARDING_1_ARTWORK_URL =
   '/assets/aistudio/e036085fed9de97849e05bc00f1bdb7158c52d62247e4e329467bab21a32f66d_78218901.png';
+const ONBOARDING_2_ARTWORK_URL =
+  '/assets/aistudio/927aabd3f7f80153274253916f68d206d4adaabfc7d703091e830c1b762d6839_5b35c1a5.png';
+const ONBOARDING_3_ARTWORK_URL =
+  '/assets/aistudio/b4b5305fddf3c5d8a4a4332b4afcfed9b178b1c10c8189301e3f01031810f4e1_3b619faf.png';
 
 /**
- * Full-screen Splash Screen + 2-Step Onboarding Flow:
+ * Full-screen Splash Screen + 3-Step Onboarding Flow:
  * - Stage 'splash': Vertical shading merge (#152164 -> #1F317B -> #3B59AA -> #AEC6EE -> #F5F8FD),
  *   "Welcome" with golden curved swash, centered 30% cap+book logo, and slim blue-to-gold loading bar.
- * - Stage 'onboarding-1': Matches the exact attached reference design ("Skip" top-right,
- *   centered 3D clipboard/cap/books/target artwork floating on gradient, "Prepare for Govt Exams",
- *   half-gold/half-white swash, concise subtitle, dots + circular white arrow CTA, and bottom waves).
- * - Stage 'onboarding-2': Matching screen for Government Job Notifications & Exam Alerts.
+ * - Stage 'onboarding-1': "Prepare for Govt Exams" (3D clipboard/cap/books/target artwork).
+ * - Stage 'onboarding-2': "Get Latest Job Notifications" (3D phone/bell/megaphone/calendar artwork).
+ * - Stage 'onboarding-3': "Practice with Real Mock Tests" (3D target/laptop/stopwatch artwork + gold Start CTA -> Home).
  */
 export default function SplashOnboarding({
   isOpen,
   showOnboardingAfterSplash = true,
   onComplete
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [stage, setStage] = useState('splash');
   const [progress, setProgress] = useState(0);
   const [art1Failed, setArt1Failed] = useState(false);
   const [art2Failed, setArt2Failed] = useState(false);
+  const [art3Failed, setArt3Failed] = useState(false);
 
   const splashDurationMs = showOnboardingAfterSplash ? 1950 : 1200;
 
@@ -82,24 +88,29 @@ export default function SplashOnboarding({
     if (!isOpen) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        handleFinish();
-      } else if (e.key === 'ArrowRight' && stage === 'onboarding-1') {
-        setStage('onboarding-2');
-      } else if (e.key === 'ArrowLeft' && stage === 'onboarding-2') {
-        setStage('onboarding-1');
+        handleFinish(true);
+      } else if (e.key === 'ArrowRight') {
+        if (stage === 'onboarding-1') setStage('onboarding-2');
+        else if (stage === 'onboarding-2') setStage('onboarding-3');
+      } else if (e.key === 'ArrowLeft') {
+        if (stage === 'onboarding-3') setStage('onboarding-2');
+        else if (stage === 'onboarding-2') setStage('onboarding-1');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, stage]);
 
-  const handleFinish = () => {
+  const handleFinish = (goHome = true) => {
     try {
       localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
     } catch {
       // Ignore storage quota errors
     }
     onComplete?.();
+    if (goHome && location.pathname !== '/') {
+      navigate('/');
+    }
   };
 
   const onboardingSlides = useMemo(
@@ -109,14 +120,21 @@ export default function SplashOnboarding({
         line1: 'Prepare for',
         line2: 'Govt Exams',
         subtitle: 'Mock Tests & Practice Tests · 213+ Official CBT Shifts',
-        nextLabel: 'Next: Government Job Notifications'
+        nextLabel: 'Next: Get Latest Job Notifications'
       },
       'onboarding-2': {
         step: 2,
-        line1: 'Govt Job Alerts',
-        line2: '& Exam Updates',
-        subtitle: 'Official Notifications, Admit Cards & Results',
-        nextLabel: 'Get Started'
+        line1: 'Get Latest',
+        line2: 'Job Notifications',
+        subtitle: '',
+        nextLabel: 'Next: Practice with Real Mock Tests'
+      },
+      'onboarding-3': {
+        step: 3,
+        line1: 'Practice with',
+        line2: 'Real Mock Tests',
+        subtitle: '',
+        nextLabel: 'Start Mock Test'
       }
     }),
     []
@@ -256,7 +274,7 @@ export default function SplashOnboarding({
               <div className="relative z-20 w-full max-w-4xl mx-auto px-5 sm:px-8 pt-4 sm:pt-6 flex items-center justify-end">
                 <button
                   type="button"
-                  onClick={handleFinish}
+                  onClick={() => handleFinish(true)}
                   className="min-h-[44px] px-3 py-2 text-sm sm:text-base font-bold text-white hover:text-[#F9B822] transition-colors cursor-pointer"
                 >
                   Skip
@@ -301,28 +319,66 @@ export default function SplashOnboarding({
                     </div>
                   ) : stage === 'onboarding-2' && !art2Failed ? (
                     <div
-                      className="relative w-[256px] sm:w-[304px] md:w-[328px] aspect-[1.22/1] overflow-hidden"
+                      className="relative w-[256px] sm:w-[306px] md:w-[332px] aspect-[1.22/1] overflow-hidden"
                       style={{
                         maskImage:
-                          'radial-gradient(ellipse 76% 74% at 50% 50%, #000 58%, transparent 96%)',
+                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)',
                         WebkitMaskImage:
-                          'radial-gradient(ellipse 76% 74% at 50% 50%, #000 58%, transparent 96%)'
+                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)'
                       }}
                     >
                       <img
-                        src={jobBannerArtwork}
-                        alt="Government Job Notifications and Exam Alerts"
+                        src={ONBOARDING_2_ARTWORK_URL}
+                        alt="Get Latest Job Notifications"
                         onError={() => setArt2Failed(true)}
                         referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover object-[76%_50%] pointer-events-none"
+                        style={{
+                          position: 'absolute',
+                          left: '50%',
+                          top: 0,
+                          width: '128%',
+                          maxWidth: 'none',
+                          height: 'auto',
+                          transform: 'translate(-50%, -23.2%)',
+                          pointerEvents: 'none'
+                        }}
+                      />
+                    </div>
+                  ) : stage === 'onboarding-3' && !art3Failed ? (
+                    <div
+                      className="relative w-[256px] sm:w-[306px] md:w-[332px] aspect-[1.22/1] overflow-hidden"
+                      style={{
+                        maskImage:
+                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)',
+                        WebkitMaskImage:
+                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)'
+                      }}
+                    >
+                      <img
+                        src={ONBOARDING_3_ARTWORK_URL}
+                        alt="Practice with Real Mock Tests"
+                        onError={() => setArt3Failed(true)}
+                        referrerPolicy="no-referrer"
+                        style={{
+                          position: 'absolute',
+                          left: '50%',
+                          top: 0,
+                          width: '128%',
+                          maxWidth: 'none',
+                          height: 'auto',
+                          transform: 'translate(-50%, -23.2%)',
+                          pointerEvents: 'none'
+                        }}
                       />
                     </div>
                   ) : (
                     <div className="w-40 h-40 flex items-center justify-center">
                       {stage === 'onboarding-1' ? (
                         <BookOpen className="w-24 h-24 text-[#F9B822]" />
-                      ) : (
+                      ) : stage === 'onboarding-2' ? (
                         <Bell className="w-24 h-24 text-[#F9B822]" />
+                      ) : (
+                        <Target className="w-24 h-24 text-[#F9B822]" />
                       )}
                     </div>
                   )}
@@ -366,58 +422,107 @@ export default function SplashOnboarding({
                     />
                   </svg>
 
-                  {/* Quiet single-line subtitle */}
-                  <p className="mt-3 text-xs sm:text-sm font-medium text-[#EAF2FF] max-w-xs sm:max-w-md drop-shadow-2xs">
-                    {activeSlide.subtitle}
-                  </p>
+                  {/* Quiet single-line subtitle when provided */}
+                  {activeSlide.subtitle ? (
+                    <p className="mt-3 text-xs sm:text-sm font-medium text-[#EAF2FF] max-w-xs sm:max-w-md drop-shadow-2xs">
+                      {activeSlide.subtitle}
+                    </p>
+                  ) : null}
                 </motion.div>
               </div>
 
-              {/* Lower Controls Row: Centered Pagination Dots + Right Floating Circular Arrow Button */}
-              <div className="relative z-20 w-full max-w-md sm:max-w-lg mx-auto px-6 pb-[13vh] sm:pb-[15vh] pt-4 flex items-center justify-center">
-                {/* Centered Dots */}
-                <div
-                  className="flex items-center gap-2.5"
-                  aria-label={`Onboarding screen ${activeSlide.step} of 2`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setStage('onboarding-1')}
-                    aria-label="Mock Tests and Practice Tests"
-                    className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
-                      stage === 'onboarding-1'
-                        ? 'bg-[#F9B822] scale-110'
-                        : 'bg-[#94A3B8]/55 hover:bg-[#64748B]/70'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setStage('onboarding-2')}
-                    aria-label="Government Job Notifications and Exam Alerts"
-                    className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
-                      stage === 'onboarding-2'
-                        ? 'bg-[#F9B822] scale-110'
-                        : 'bg-[#94A3B8]/55 hover:bg-[#64748B]/70'
-                    }`}
-                  />
-                </div>
+              {/* Lower Controls Row */}
+              {stage === 'onboarding-3' ? (
+                <div className="relative z-20 w-full max-w-md sm:max-w-lg mx-auto px-6 pb-[10vh] sm:pb-[12vh] pt-3 flex flex-col items-center gap-5">
+                  {/* Centered 3 Dots */}
+                  <div
+                    className="flex items-center gap-2.5"
+                    aria-label={`Onboarding screen ${activeSlide.step} of 3`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setStage('onboarding-1')}
+                      aria-label="Prepare for Govt Exams"
+                      className="w-2.5 h-2.5 rounded-full bg-[#CBD5E1]/70 hover:bg-white transition-all cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setStage('onboarding-2')}
+                      aria-label="Get Latest Job Notifications"
+                      className="w-2.5 h-2.5 rounded-full bg-[#CBD5E1]/70 hover:bg-white transition-all cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setStage('onboarding-3')}
+                      aria-label="Practice with Real Mock Tests"
+                      className="w-2.5 h-2.5 rounded-full bg-[#F9B822] scale-110 transition-all cursor-pointer"
+                    />
+                  </div>
 
-                {/* Right Circular White Arrow CTA */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (stage === 'onboarding-1') {
-                      setStage('onboarding-2');
-                    } else {
-                      handleFinish();
-                    }
-                  }}
-                  aria-label={activeSlide.nextLabel}
-                  className="absolute right-6 sm:right-8 w-14 h-14 rounded-full bg-white hover:bg-[#F8FAFC] text-[#1045A1] shadow-[0_10px_28px_rgba(16,69,161,0.22)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                >
-                  <ArrowRight className="w-6 h-6 stroke-[2.4]" />
-                </button>
-              </div>
+                  {/* Full Gold Pill CTA Button: Play + Start Mock Test + ArrowRight -> Displays Home Page */}
+                  <button
+                    type="button"
+                    onClick={() => handleFinish(true)}
+                    aria-label="Start Mock Test and open Home Page"
+                    className="w-full max-w-[300px] sm:max-w-[320px] min-h-[54px] px-7 py-3.5 rounded-full bg-gradient-to-b from-[#FFD230] to-[#F7B212] hover:from-[#FFD94A] hover:to-[#F9B822] text-[#0D2C7A] font-heading font-extrabold text-[17px] sm:text-[18px] tracking-tight shadow-[0_10px_28px_rgba(245,176,20,0.42)] flex items-center justify-center gap-3.5 transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  >
+                    <Play className="w-4 h-4 sm:w-[18px] sm:h-[18px] fill-[#0D2C7A] text-[#0D2C7A] shrink-0" />
+                    <span>Start Mock Test</span>
+                    <ArrowRight className="w-5 h-5 stroke-[2.5] text-[#0D2C7A] shrink-0" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative z-20 w-full max-w-md sm:max-w-lg mx-auto px-6 pb-[13vh] sm:pb-[15vh] pt-4 flex items-center justify-center">
+                  {/* Centered 3 Dots */}
+                  <div
+                    className="flex items-center gap-2.5"
+                    aria-label={`Onboarding screen ${activeSlide.step} of 3`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setStage('onboarding-1')}
+                      aria-label="Prepare for Govt Exams"
+                      className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
+                        stage === 'onboarding-1'
+                          ? 'bg-[#F9B822] scale-110'
+                          : 'bg-[#CBD5E1]/70 hover:bg-white'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setStage('onboarding-2')}
+                      aria-label="Get Latest Job Notifications"
+                      className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
+                        stage === 'onboarding-2'
+                          ? 'bg-[#F9B822] scale-110'
+                          : 'bg-[#CBD5E1]/70 hover:bg-white'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setStage('onboarding-3')}
+                      aria-label="Practice with Real Mock Tests"
+                      className="w-2.5 h-2.5 rounded-full bg-[#CBD5E1]/70 hover:bg-white transition-all cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Right Circular White Arrow CTA */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (stage === 'onboarding-1') {
+                        setStage('onboarding-2');
+                      } else if (stage === 'onboarding-2') {
+                        setStage('onboarding-3');
+                      }
+                    }}
+                    aria-label={activeSlide.nextLabel}
+                    className="absolute right-6 sm:right-8 w-14 h-14 rounded-full bg-white hover:bg-[#F8FAFC] text-[#1045A1] shadow-[0_10px_28px_rgba(16,69,161,0.22)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                  >
+                    <ArrowRight className="w-6 h-6 stroke-[2.4]" />
+                  </button>
+                </div>
+              )}
 
               {/* Bottom Flowing Decorative Waves (Sky Blue + Gold Ribbon Line + Deep Royal Blue) */}
               <div
