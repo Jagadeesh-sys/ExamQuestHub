@@ -137,11 +137,14 @@ nav[aria-label="Mobile Bottom Navigation"] {
 .eqh-shading-merge-splash {
   background: linear-gradient(
     180deg,
-    #152164 0%,
-    #1F317B 28%,
-    #3B59AA 55%,
-    #AEC6EE 80%,
-    #F5F8FD 100%
+    #122A84 0%,
+    #193397 18%,
+    #203DA8 32%,
+    #2F50C2 46%,
+    #4567D4 56%,
+    #8FAEF5 72%,
+    #D4E3FD 85%,
+    #F5F8FD 96%
   );
 }
 

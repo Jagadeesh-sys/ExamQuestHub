@@ -120,21 +120,27 @@ export default function SplashOnboarding({
         line1: 'Prepare for',
         line2: 'Govt Exams',
         subtitle: 'Mock Tests & Practice Tests · 213+ Official CBT Shifts',
-        nextLabel: 'Next: Learn with Current Affairs Reels'
+        nextLabel: 'Next: Learn with Current Affairs Reels',
+        bgGradient:
+          'linear-gradient(180deg, #142977 0%, #1B338D 20%, #223B9B 34%, #314EB1 48%, #4F6EC9 58%, #95B1F1 73%, #D4E3FD 85%, #F5F8FD 96%)'
       },
       'onboarding-2': {
         step: 2,
         line1: 'Learn with',
         line2: 'Current Affairs Reels',
         subtitle: '',
-        nextLabel: 'Next: Practice with Real Mock Tests'
+        nextLabel: 'Next: Practice with Real Mock Tests',
+        bgGradient:
+          'linear-gradient(180deg, #102A86 0%, #18349A 20%, #1E3CA5 34%, #2B4EC0 48%, #496AD6 58%, #8FAEF5 73%, #D2E1FD 85%, #F5F8FD 96%)'
       },
       'onboarding-3': {
         step: 3,
         line1: 'Practice with',
         line2: 'Real Mock Tests',
         subtitle: '',
-        nextLabel: 'Start Mock Test'
+        nextLabel: 'Get Started',
+        bgGradient:
+          'linear-gradient(180deg, #112C8B 0%, #1B36A2 20%, #2040B0 34%, #2F51CA 48%, #4D6FE0 58%, #92B0F8 73%, #D5E4FD 85%, #F5F8FD 96%)'
       }
     }),
     []
@@ -156,10 +162,11 @@ export default function SplashOnboarding({
         }
         className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-[#F5F8FD] text-[#182B45] select-none"
       >
-        {/* Exact Shading Merge Gradient Layer */}
+        {/* Exact Shading Merge Gradient Layer matched to each stage/image */}
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-0 eqh-shading-merge-splash"
+          className="pointer-events-none fixed inset-0 eqh-shading-merge-splash transition-all duration-300"
+          style={activeSlide?.bgGradient ? { background: activeSlide.bgGradient } : undefined}
         />
 
         <AnimatePresence mode="wait">
@@ -292,12 +299,12 @@ export default function SplashOnboarding({
                 >
                   {stage === 'onboarding-1' && !art1Failed ? (
                     <div
-                      className="relative w-[248px] sm:w-[296px] md:w-[320px] aspect-[1.15/1] overflow-hidden"
+                      className="relative w-[276px] sm:w-[328px] md:w-[356px] aspect-[1.24/1] overflow-hidden"
                       style={{
                         maskImage:
-                          'radial-gradient(ellipse 78% 76% at 50% 50%, #000 62%, transparent 98%)',
+                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)',
                         WebkitMaskImage:
-                          'radial-gradient(ellipse 78% 76% at 50% 50%, #000 62%, transparent 98%)'
+                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)'
                       }}
                     >
                       <img
@@ -309,22 +316,22 @@ export default function SplashOnboarding({
                           position: 'absolute',
                           left: '50%',
                           top: 0,
-                          width: '138%',
+                          width: '122%',
                           maxWidth: 'none',
                           height: 'auto',
-                          transform: 'translate(-50%, -23.2%)',
+                          transform: 'translate(-50%, -22.2%)',
                           pointerEvents: 'none'
                         }}
                       />
                     </div>
                   ) : stage === 'onboarding-2' && !art2Failed ? (
                     <div
-                      className="relative w-[256px] sm:w-[306px] md:w-[332px] aspect-[1.2/1] overflow-hidden"
+                      className="relative w-[276px] sm:w-[328px] md:w-[356px] aspect-[1.24/1] overflow-hidden"
                       style={{
                         maskImage:
-                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)',
+                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)',
                         WebkitMaskImage:
-                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)'
+                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)'
                       }}
                     >
                       <img
@@ -336,22 +343,22 @@ export default function SplashOnboarding({
                           position: 'absolute',
                           left: '50%',
                           top: 0,
-                          width: '126%',
+                          width: '120%',
                           maxWidth: 'none',
                           height: 'auto',
-                          transform: 'translate(-50%, -22.8%)',
+                          transform: 'translate(-50%, -22.2%)',
                           pointerEvents: 'none'
                         }}
                       />
                     </div>
                   ) : stage === 'onboarding-3' && !art3Failed ? (
                     <div
-                      className="relative w-[256px] sm:w-[306px] md:w-[332px] aspect-[1.22/1] overflow-hidden"
+                      className="relative w-[276px] sm:w-[328px] md:w-[356px] aspect-[1.24/1] overflow-hidden"
                       style={{
                         maskImage:
-                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)',
+                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)',
                         WebkitMaskImage:
-                          'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)'
+                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)'
                       }}
                     >
                       <img
@@ -363,10 +370,10 @@ export default function SplashOnboarding({
                           position: 'absolute',
                           left: '50%',
                           top: 0,
-                          width: '128%',
+                          width: '122%',
                           maxWidth: 'none',
                           height: 'auto',
-                          transform: 'translate(-50%, -23.2%)',
+                          transform: 'translate(-50%, -22.2%)',
                           pointerEvents: 'none'
                         }}
                       />
@@ -459,15 +466,15 @@ export default function SplashOnboarding({
                     />
                   </div>
 
-                  {/* Full Gold Pill CTA Button: Play + Start Mock Test + ArrowRight -> Displays Home Page */}
+                  {/* Full Gold Pill CTA Button: Play + Get Started + ArrowRight -> Displays Home Page */}
                   <button
                     type="button"
                     onClick={() => handleFinish(true)}
-                    aria-label="Start Mock Test and open Home Page"
+                    aria-label="Get Started and open Home Page"
                     className="w-full max-w-[300px] sm:max-w-[320px] min-h-[54px] px-7 py-3.5 rounded-full bg-gradient-to-b from-[#FFD230] to-[#F7B212] hover:from-[#FFD94A] hover:to-[#F9B822] text-[#0D2C7A] font-heading font-extrabold text-[17px] sm:text-[18px] tracking-tight shadow-[0_10px_28px_rgba(245,176,20,0.42)] flex items-center justify-center gap-3.5 transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                   >
                     <Play className="w-4 h-4 sm:w-[18px] sm:h-[18px] fill-[#0D2C7A] text-[#0D2C7A] shrink-0" />
-                    <span>Start Mock Test</span>
+                    <span>Get Started</span>
                     <ArrowRight className="w-5 h-5 stroke-[2.5] text-[#0D2C7A] shrink-0" />
                   </button>
                 </div>
