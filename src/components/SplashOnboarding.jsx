@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
-import { ArrowRight, Bell, BookOpen, Play, Target } from 'lucide-react';
+import { ArrowRight, BookOpen, Globe, Play, Target } from 'lucide-react';
 
 export const ONBOARDING_STORAGE_KEY = 'eqh_onboarding_v1_done';
 
@@ -9,7 +9,7 @@ const CAP_LOGO_URL = '/assets/aistudio/examquesthub_cap_logo.png';
 const ONBOARDING_1_ARTWORK_URL =
   '/assets/aistudio/e036085fed9de97849e05bc00f1bdb7158c52d62247e4e329467bab21a32f66d_78218901.png';
 const ONBOARDING_2_ARTWORK_URL =
-  '/assets/aistudio/927aabd3f7f80153274253916f68d206d4adaabfc7d703091e830c1b762d6839_5b35c1a5.png';
+  '/assets/aistudio/5f62669d0d4482dbdeda591881a6a9db79ab85bd39ac82d8058589430bb53f0d_4c624fc4.png';
 const ONBOARDING_3_ARTWORK_URL =
   '/assets/aistudio/b4b5305fddf3c5d8a4a4332b4afcfed9b178b1c10c8189301e3f01031810f4e1_3b619faf.png';
 
@@ -18,7 +18,7 @@ const ONBOARDING_3_ARTWORK_URL =
  * - Stage 'splash': Vertical shading merge (#152164 -> #1F317B -> #3B59AA -> #AEC6EE -> #F5F8FD),
  *   "Welcome" with golden curved swash, centered 30% cap+book logo, and slim blue-to-gold loading bar.
  * - Stage 'onboarding-1': "Prepare for Govt Exams" (3D clipboard/cap/books/target artwork).
- * - Stage 'onboarding-2': "Get Latest Job Notifications" (3D phone/bell/megaphone/calendar artwork).
+ * - Stage 'onboarding-2': "Learn with Current Affairs Reels" (3D phone/news/calendar/globe/bulb artwork).
  * - Stage 'onboarding-3': "Practice with Real Mock Tests" (3D target/laptop/stopwatch artwork + gold Start CTA -> Home).
  */
 export default function SplashOnboarding({
@@ -120,12 +120,12 @@ export default function SplashOnboarding({
         line1: 'Prepare for',
         line2: 'Govt Exams',
         subtitle: 'Mock Tests & Practice Tests · 213+ Official CBT Shifts',
-        nextLabel: 'Next: Get Latest Job Notifications'
+        nextLabel: 'Next: Learn with Current Affairs Reels'
       },
       'onboarding-2': {
         step: 2,
-        line1: 'Get Latest',
-        line2: 'Job Notifications',
+        line1: 'Learn with',
+        line2: 'Current Affairs Reels',
         subtitle: '',
         nextLabel: 'Next: Practice with Real Mock Tests'
       },
@@ -319,7 +319,7 @@ export default function SplashOnboarding({
                     </div>
                   ) : stage === 'onboarding-2' && !art2Failed ? (
                     <div
-                      className="relative w-[256px] sm:w-[306px] md:w-[332px] aspect-[1.22/1] overflow-hidden"
+                      className="relative w-[256px] sm:w-[306px] md:w-[332px] aspect-[1.2/1] overflow-hidden"
                       style={{
                         maskImage:
                           'radial-gradient(ellipse 80% 78% at 50% 50%, #000 62%, transparent 98%)',
@@ -329,17 +329,17 @@ export default function SplashOnboarding({
                     >
                       <img
                         src={ONBOARDING_2_ARTWORK_URL}
-                        alt="Get Latest Job Notifications"
+                        alt="Learn with Current Affairs Reels"
                         onError={() => setArt2Failed(true)}
                         referrerPolicy="no-referrer"
                         style={{
                           position: 'absolute',
                           left: '50%',
                           top: 0,
-                          width: '128%',
+                          width: '126%',
                           maxWidth: 'none',
                           height: 'auto',
-                          transform: 'translate(-50%, -23.2%)',
+                          transform: 'translate(-50%, -22.8%)',
                           pointerEvents: 'none'
                         }}
                       />
@@ -376,7 +376,7 @@ export default function SplashOnboarding({
                       {stage === 'onboarding-1' ? (
                         <BookOpen className="w-24 h-24 text-[#F9B822]" />
                       ) : stage === 'onboarding-2' ? (
-                        <Bell className="w-24 h-24 text-[#F9B822]" />
+                        <Globe className="w-24 h-24 text-[#F9B822]" />
                       ) : (
                         <Target className="w-24 h-24 text-[#F9B822]" />
                       )}
@@ -448,7 +448,7 @@ export default function SplashOnboarding({
                     <button
                       type="button"
                       onClick={() => setStage('onboarding-2')}
-                      aria-label="Get Latest Job Notifications"
+                      aria-label="Learn with Current Affairs Reels"
                       className="w-2.5 h-2.5 rounded-full bg-[#CBD5E1]/70 hover:bg-white transition-all cursor-pointer"
                     />
                     <button
@@ -491,7 +491,7 @@ export default function SplashOnboarding({
                     <button
                       type="button"
                       onClick={() => setStage('onboarding-2')}
-                      aria-label="Get Latest Job Notifications"
+                      aria-label="Learn with Current Affairs Reels"
                       className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
                         stage === 'onboarding-2'
                           ? 'bg-[#F9B822] scale-110'
