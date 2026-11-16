@@ -89,6 +89,42 @@ function MonthGroupHeader({ label, count }) {
   );
 }
 
+function getReelImageSourceLabel(item) {
+  if (item?.imageSource && String(item.imageSource).trim()) {
+    return String(item.imageSource).trim();
+  }
+  if (item?.imageCredit && String(item.imageCredit).trim()) {
+    return String(item.imageCredit).trim();
+  }
+  const imgUrl = item?.imageUrl ? String(item.imageUrl).trim() : '';
+  if (imgUrl && !imgUrl.startsWith('data:')) {
+    try {
+      const host = new URL(imgUrl).hostname.replace(/^www\./, '');
+      if (
+        host &&
+        !host.includes('firebasestorage.googleapis.com') &&
+        !host.includes('unsplash.com')
+      ) {
+        return host;
+      }
+    } catch {
+      // ignore malformed URL
+    }
+  }
+  if (item?.sourceUrl && !String(item.sourceUrl).startsWith('data:')) {
+    try {
+      const host = new URL(item.sourceUrl).hostname.replace(/^www\./, '');
+      if (host) return host;
+    } catch {
+      // ignore malformed URL
+    }
+  }
+  if (item?.sourceName && String(item.sourceName).trim()) {
+    return String(item.sourceName).trim();
+  }
+  return 'pib.gov.in';
+}
+
 // Full-height swipeable card used by the Reels-style mobile feed
 function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
   const { getLocalized } = useLanguage();
@@ -96,6 +132,25 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
   const summary = getLocalized(item.summary);
   const content = getLocalized(item.content);
   const detailSlug = item.slug || item.id;
+  const imageSource = getReelImageSourceLabel(item);
+  const defaultImg = 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80';
+  const [imgSrc, setImgSrc] = useState(item.imageUrl || defaultImg);
+
+  useEffect(() => {
+    setImgSrc(item.imageUrl || defaultImg);
+  }, [item.imageUrl]);
+  const examTags = Array.isArray(item.examRelevance) && item.examRelevance.length > 0
+    ? item.examRelevance
+    : ['UPSC', 'APPSC', 'SSC'];
+  const customHighlights = Array.isArray(item.highlights) && item.highlights.length > 0
+    ? item.highlights.map((h) => getLocalized(h)).filter(Boolean)
+    : [
+        `Verified against ${item.sourceName || 'official PIB & government releases'} for ${examTags.slice(0, 3).join(', ')} exam readiness.`,
+        item.tags?.length
+          ? `Key syllabus themes: ${item.tags.slice(0, 4).join(' • ')}.`
+          : `Focuses on ${item.topic || 'National Affairs'} policy updates and factual indicators.`,
+        'Essential high-yield update for Prelims objective MCQs and Mains analytical answers.'
+      ];
 
   const handleShare = async (e) => {
     e.preventDefault();
@@ -114,103 +169,146 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
   };
 
   return (
-    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-24 pt-2">
+    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-14 pt-1">
       {/* Decorative Corner */}
-      <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] pointer-events-none overflow-hidden">
+      <div className="absolute top-0 right-0 w-24 h-24 opacity-[0.03] pointer-events-none overflow-hidden">
         <GoldenCornerFlourish />
       </div>
 
-      <div className="px-4 pb-12 space-y-4">
+      <div className="px-3.5 pb-6 space-y-2.5">
         {/* Top Info: Category + Date + Page Indicator */}
-        <div className="flex items-center justify-between text-[10px] font-bold pt-2">
-          <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wide">
-              {item.topic || 'International Affairs'}
+        <div className="flex items-center justify-between text-[10px] font-bold pt-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wide truncate max-w-[155px]">
+              {item.topic || 'National Affairs'}
             </span>
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{item.eventDate || '12 Sep 2026'}</span>
+            <div className="flex items-center gap-1 text-slate-500 shrink-0">
+              <Calendar className="w-3 h-3" />
+              <span>{item.eventDate || 'Today'}</span>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-extrabold tracking-tighter">
+          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-extrabold tracking-tight shrink-0">
             {index + 1}/{total}
           </span>
         </div>
 
-        {/* Headline + Share Button */}
-        <div className="flex items-start justify-between gap-4">
-          <h2 className="font-heading font-black text-[#0B1F3A] text-[22px] leading-[1.2] tracking-tight flex-1">
+        {/* Headline + Bookmark & Share Buttons */}
+        <div className="flex items-start justify-between gap-2.5">
+          <h2 className="font-heading font-black text-[#0B1F3A] text-[17px] leading-[1.24] tracking-tight flex-1">
             {headline}
           </h2>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 text-[#0B1F3A] shadow-sm flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-            aria-label="Share story"
-          >
-            <Share2 className="w-4.5 h-4.5" />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => onToggleBookmark && onToggleBookmark(item.id, e)}
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center active:scale-90 transition-transform ${
+                isBookmarked
+                  ? 'bg-amber-50 border-amber-200 text-amber-500'
+                  : 'bg-slate-50 border-slate-200 text-slate-500'
+              }`}
+              aria-label="Bookmark story"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400 text-amber-500' : ''}`} />
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-[#0B1F3A] flex items-center justify-center active:scale-90 transition-transform"
+              aria-label="Share story"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
-        {/* Main Image - Below Headline */}
-        <div className="relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/50 shadow-sm">
+        {/* Uniform 1.68:1 card ratio matching reference screenshot, pinned to top edge so tops never clip */}
+        <div className="relative w-full aspect-[1.68/1] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/70 shadow-xs">
           <img
-            src={item.imageUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80'}
+            src={imgSrc}
             alt={headline}
             loading="lazy"
-            className="w-full aspect-[4/3] object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
+            className="w-full h-full object-cover object-top"
+            onError={() => {
+              const fallback = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
+              if (imgSrc !== fallback) setImgSrc(fallback);
             }}
           />
+          {imageSource && (
+            <div
+              className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-xs text-white shadow-xs max-w-[85%]"
+              title={imageSource}
+            >
+              <span className="text-[11px] font-medium leading-none tracking-tight truncate">
+                {imageSource}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Matter (Summary + Content) - Clean unboxed text, no background cards */}
-        <div className="space-y-3.5 pt-1">
-          {/* Summary Lead text */}
-          <p className="text-slate-800 text-[14px] sm:text-[15px] leading-relaxed font-semibold">
+        {/* Expanded Matter Block — Designed to display 9+ clear readable lines immediately */}
+        <div className="space-y-2 pt-0.5">
+          {/* Summary Lead */}
+          <p className="text-slate-800 text-[13px] leading-[1.48] font-semibold">
             {summary}
           </p>
 
           {/* Detailed News */}
           {content && (
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-4 bg-[#2468B4] rounded-full" />
-                <h3 className="font-heading font-black text-[#0B1F3A] text-sm sm:text-base">Detailed News</h3>
+            <div className="space-y-1 pt-1.5 border-t border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1 h-3.5 bg-[#2468B4] rounded-full inline-block" />
+                <h3 className="font-heading font-black text-[#0B1F3A] text-xs uppercase tracking-wide">
+                  Detailed Analysis
+                </h3>
               </div>
-              <p className="text-slate-600 text-[13px] leading-relaxed font-normal">
+              <p className="text-slate-600 text-[12.5px] leading-[1.48] font-normal">
                 {content}
               </p>
             </div>
           )}
 
-          {/* Key Highlights - Clean unboxed bullet list */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-2 text-[#2468B4] font-bold text-xs uppercase tracking-wider">
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>Key Highlights</span>
+          {/* Key Highlights */}
+          <div className="space-y-1.5 pt-1.5 border-t border-slate-100">
+            <div className="flex items-center gap-1.5 text-[#2468B4] font-bold text-[11px] uppercase tracking-wider">
+              <Zap className="w-3 h-3 fill-current" />
+              <span>Exam Key Takeaways</span>
             </div>
-            <ul className="space-y-1.5">
-              {[
-                "Important national and international milestone verified against PIB and official gazette bulletins.",
-                "High relevance for UPSC, State PSCs, SSC CGL/CHSL, and Railway CBT examinations.",
-                "Focus on policies, bilateral cooperation, and socio-economic development metrics."
-              ].map((highlight, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-slate-700 text-[12.5px] leading-snug font-medium">
+            <ul className="space-y-1">
+              {customHighlights.map((highlight, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-slate-700 text-[12px] leading-[1.42] font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#2468B4] mt-1.5 shrink-0" />
                   <span>{highlight}</span>
                 </li>
               ))}
             </ul>
           </div>
+
+          {/* Exam Relevance Tags + Read Story Link */}
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1 flex-wrap">
+              {examTags.slice(0, 4).map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="px-1.5 py-0.5 rounded bg-slate-100 text-[#12345A] font-bold text-[9.5px] border border-slate-200/80"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <Link
+              to={`/current-affairs/${detailSlug}`}
+              className="inline-flex items-center gap-1 text-[11px] font-black text-[#2468B4] hover:text-[#12345A] shrink-0"
+            >
+              <span>Full Story</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         {/* Swipe Indicator */}
-        <div className="pt-6 pb-4 flex flex-col items-center gap-1.5 text-slate-400 animate-bounce">
-          <ChevronUp className="w-5 h-5" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Swipe up for next update</span>
+        <div className="pt-2 pb-1 flex items-center justify-center gap-1.5 text-slate-400">
+          <ChevronUp className="w-4 h-4 animate-bounce" />
+          <span className="text-[9px] font-bold uppercase tracking-[0.18em]">Swipe up for next update</span>
         </div>
       </div>
     </article>
@@ -527,40 +625,40 @@ export default function EditorialCurrentAffairsSection({
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) - Full top-0 (removes global header) to above bottom nav */
         <div className="fixed top-0 bottom-[64px] pb-[max(0px,env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white animate-in fade-in duration-200 lg:hidden overflow-hidden flex flex-col">
           {/* Reels Header: App logo on left side of News Reels text */}
-          <div className="bg-white px-4 pt-3 pb-2.5 space-y-2.5 border-b border-slate-100 safe-area-pt shadow-2xs">
+          <div className="bg-white px-3.5 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100 safe-area-pt shadow-2xs">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <img
                   src="/assets/aistudio/examquesthub-logo.png"
                   alt="ExamQuestHub"
-                  className="w-8 h-8 rounded-xl object-contain bg-slate-50 border border-slate-200/80 p-0.5 shadow-2xs shrink-0"
+                  className="w-7 h-7 rounded-lg object-contain bg-slate-50 border border-slate-200/80 p-0.5 shadow-2xs shrink-0"
                 />
                 <div className="leading-tight">
-                  <h2 className="font-heading font-black text-[#0B1F3A] text-base uppercase tracking-tight">
+                  <h2 className="font-heading font-black text-[#0B1F3A] text-sm uppercase tracking-tight">
                     News Reels
                   </h2>
-                  <p className="text-[10px] text-slate-500 font-bold">Swipe up for next update</p>
+                  <p className="text-[9.5px] text-slate-500 font-bold">Swipe up for next update</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setViewMode('editorial')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black text-[#0B1F3A] bg-slate-50 border border-slate-200 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10.5px] font-black text-[#0B1F3A] bg-slate-50 border border-slate-200 shadow-2xs active:scale-95 transition-all cursor-pointer"
               >
-                <Grid className="w-3.5 h-3.5" />
+                <Grid className="w-3 h-3" />
                 <span>Classic View</span>
               </button>
             </div>
 
             {/* Topic Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
               {topics.map((topic) => (
                 <button
                   key={topic}
                   onClick={() => setSelectedTopic(topic)}
-                  className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black whitespace-nowrap border transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-xl text-[10px] font-black whitespace-nowrap border transition-all cursor-pointer ${
                     selectedTopic === topic
-                      ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-md'
+                      ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-sm'
                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -643,11 +741,11 @@ export default function EditorialCurrentAffairsSection({
                     className="py-4 sm:py-5 first:pt-3 last:pb-1 flex flex-col sm:flex-row gap-3.5 sm:gap-4 items-start group"
                   >
                     {/* Thumbnail */}
-                    <div className="w-full sm:w-44 aspect-[16/10] sm:aspect-square rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 relative">
+                    <div className="w-full sm:w-52 aspect-[1.68/1] rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 relative">
                       <img
                         src={item.imageUrl || 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80'}
                         alt={headline}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80';

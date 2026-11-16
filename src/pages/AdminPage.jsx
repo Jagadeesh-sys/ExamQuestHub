@@ -2624,6 +2624,19 @@ export default function AdminPage() {
                   label="Featured Image (Clipboard Copy-Paste, File Upload, or URL)"
                 />
 
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Image Source / Credit <span className="text-slate-400 font-normal">(Optional — shown on image corner in Reels)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. PIB Photo, ISRO Official, The Hindu (defaults to Primary Source if blank)"
+                    value={editingItem.imageSource || ''}
+                    onChange={(e) => setEditingItem({ ...editingItem, imageSource: e.target.value })}
+                    className="w-full p-2 bg-[#F6F8FC] border rounded-lg focus:bg-white"
+                  />
+                </div>
+
                 {/* EXAM RELEVANCE TAGS */}
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">

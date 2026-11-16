@@ -151,11 +151,11 @@ export default function CurrentAffairDetailPage() {
 
         {/* Featured Image */}
         {article.imageUrl && (
-          <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 max-h-96">
+          <div className="w-full aspect-[1.68/1] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
             <img
               src={article.imageUrl}
               alt={headline}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
               onError={(e) => {
                 e.target.style.display = 'none';
               }}

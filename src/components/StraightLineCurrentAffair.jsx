@@ -126,11 +126,11 @@ export default function StraightLineCurrentAffair({
           {/* Media & Full Narrative / Summary */}
           <div className="flex flex-col sm:flex-row gap-4 bg-white p-3.5 sm:p-4 rounded-xl border border-[#E3EAF2]">
             {item.imageUrl && (
-              <div className="w-full sm:w-36 h-28 sm:h-28 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+              <div className="w-full sm:w-44 aspect-[1.68/1] rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
                 <img
                   src={item.imageUrl}
                   alt={headline}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80';
