@@ -8,5 +8,12 @@ coverage/
 !.env.example
 dev-dist/
 .aistudio/
-# Large uploaded raw exam PDFs (>50MB) that exceed GitHub file limits
+.vercel/
+.firebase/
+*.tsbuildinfo
+*.tmp
+server.js
+# Large uploaded raw exam PDFs that exceed GitHub file/push limits
 public/assets/aistudio/SSC_CGL_2026_All_Shift_Papers_3eaf7686.pdf
+public/assets/aistudio/RRB-Group-D-2024-EN-All-Sections_copy_1724c65a.pdf
+

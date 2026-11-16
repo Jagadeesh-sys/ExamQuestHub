@@ -51,29 +51,57 @@
       id="eqh-boot"
       role="status"
       aria-live="polite"
-      style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #F6F8FC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; text-align: center;"
+      style="position: fixed; inset: 0; z-index: 9999; display: grid; grid-template-rows: 1fr auto 1fr; justify-items: center; background: linear-gradient(180deg, #152164 0%, #1F317B 28%, #3B59AA 55%, #AEC6EE 80%, #F5F8FD 100%); font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; text-align: center; overflow: hidden; box-sizing: border-box;"
     >
-      <div id="eqh-boot-spinner" style="width: 44px; height: 44px; border: 3.5px solid #E3EAF2; border-top-color: #12345A; border-radius: 50%; animation: eqh-spin 0.85s linear infinite; margin-bottom: 14px;"></div>
-      <div id="eqh-boot-title" style="font-size: 15px; font-weight: 700; color: #12345A; margin-bottom: 4px;">ExamQuestHub</div>
-      <div id="eqh-boot-text" style="font-size: 12px; color: #718096;">Loading verified notifications...</div>
-      <div id="eqh-boot-actions" style="display: none; margin-top: 16px; max-width: 340px;">
-        <p id="eqh-boot-msg" style="font-size: 12px; color: #C64545; margin: 0 0 12px; line-height: 1.6;">We could not load the page on this connection.</p>
-        <button type="button" onclick="window.location.reload()" style="background-color: #12345A; color: #ffffff; border: none; padding: 10px 20px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer;">Retry</button>
+      <div id="eqh-boot-title" style="align-self: end; padding-bottom: 14px; display: flex; flex-direction: column; align-items: center;">
+        <div style="font-size: 34px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: #FFFFFF;">
+          Wel<span style="color: #F9B822;">come</span>
+        </div>
+        <svg width="104" height="12" viewBox="0 0 110 12" fill="none" style="margin-top: 2px; margin-left: 50px;" aria-hidden="true">
+          <path d="M2 7.5C32 2.5 72 2.5 106 6.5" stroke="#F9B822" stroke-width="3.2" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <div id="eqh-boot-emblem" style="align-self: center; display: flex; align-items: center; justify-content: center; animation: eqh-logo-float 2.4s ease-in-out infinite;">
+        <img src="/assets/aistudio/examquesthub_cap_logo.png" alt="ExamQuest Hub" style="width: clamp(116px, 30vw, 176px); height: auto; object-fit: contain; display: block; margin: 0 auto; filter: drop-shadow(0 12px 24px rgba(11, 24, 72, 0.28));" />
+      </div>
+
+      <div style="align-self: start; padding-top: 14px; display: flex; flex-direction: column; align-items: center;">
+        <div id="eqh-boot-spinner" style="width: 164px; max-width: 48vw; height: 3.5px; border-radius: 9999px; background: rgba(255, 255, 255, 0.38); overflow: hidden;">
+          <div style="width: 60%; height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #1045A1 0%, #2468B4 52%, #F9B822 100%); animation: eqh-bar-slide 1.3s ease-in-out infinite;"></div>
+        </div>
+
+        <div id="eqh-boot-text" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0);">Loading ExamQuest Hub…</div>
+
+        <div id="eqh-boot-actions" style="display: none; margin-top: 16px; max-width: 340px; background: rgba(255, 255, 255, 0.96); padding: 16px 20px; border-radius: 16px; box-shadow: 0 12px 30px rgba(8, 31, 68, 0.18);">
+          <p id="eqh-boot-msg" style="font-size: 12px; color: #C64545; margin: 0 0 12px; line-height: 1.6; font-weight: 600;">We could not load the page on this connection.</p>
+          <button type="button" onclick="window.location.reload()" style="background: linear-gradient(135deg, #152164, #3B59AA); color: #ffffff; border: none; padding: 10px 20px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer;">Retry</button>
+        </div>
       </div>
     </div>
 
     <noscript>
       <style>#eqh-boot { display: none !important; }</style>
-      <div style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #F6F8FC; padding: 24px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <div style="font-size: 17px; font-weight: 700; color: #12345A; margin-bottom: 8px;">ExamQuestHub</div>
-        <p style="font-size: 13px; color: #182B45; max-width: 360px; line-height: 1.6; margin: 0;">
+      <div style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #152164 0%, #3B59AA 55%, #F5F8FD 100%); padding: 24px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; margin-bottom: 8px;">ExamQuestHub</div>
+        <p style="font-size: 13px; color: #E2EEFF; max-width: 360px; line-height: 1.6; margin: 0;">
           JavaScript is disabled in this browser, so the app cannot start. Please enable JavaScript and reload this page.
         </p>
       </div>
     </noscript>
 
     <style>
-      @keyframes eqh-spin { to { transform: rotate(360deg); } }
+      @keyframes eqh-logo-float {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-5px) scale(1.02); }
+      }
+      @keyframes eqh-bar-slide {
+        0% { transform: translateX(-110%); }
+        100% { transform: translateX(210%); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #eqh-boot * { animation: none !important; }
+      }
     </style>
 
     <script>

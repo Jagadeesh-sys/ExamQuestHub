@@ -212,6 +212,16 @@ export default function Footer() {
                 </a>
               </li>
               <li className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('eqh:replay-onboarding'))}
+                  className="text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <GraduationCap className="w-3 h-3 text-[#F2BE4F]" />
+                  <span>Replay Welcome Tour</span>
+                </button>
+              </li>
+              <li className="pt-1">
                 <Link to="/admin" className="text-slate-400 hover:text-white flex items-center gap-1">
                   <Shield className="w-3 h-3" />
                   <span>Editor & Admin Sign-in</span>

@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
@@ -9,6 +9,8 @@ import Footer from './components/Footer.jsx';
 import MobileBottomNav from './components/MobileBottomNav.jsx';
 import PWAInstallBanner from './components/PWAInstallBanner.jsx';
 import RouteSeo from './components/RouteSeo.jsx';
+import LoadingIndicator from './components/LoadingIndicator.jsx';
+import SplashOnboarding, { ONBOARDING_STORAGE_KEY } from './components/SplashOnboarding.jsx';
 
 import HomePage from './pages/HomePage.jsx';
 
@@ -43,15 +45,10 @@ function ScrollToTop() {
 
 // Fallback shown while a lazily loaded route chunk is being fetched.
 function RouteLoadingFallback() {
-  return (
-    <div className="w-full min-h-[50vh] flex flex-col items-center justify-center gap-3 py-16 px-4">
-      <div className="w-9 h-9 rounded-full border-[3px] border-[#E3EAF2] border-t-[#12345A] animate-spin" />
-      <p className="text-xs font-semibold text-slate-500">Loading…</p>
-    </div>
-  );
+  return <LoadingIndicator variant="route" label="Loading verified exams & alerts…" />;
 }
 
-function AppLayout({ children }) {
+function AppLayout({ children, introOpen }) {
   const { pathname } = useLocation();
 
   // Test engine / Agree & Continue page is /mocks/:mockId
@@ -68,13 +65,47 @@ function AppLayout({ children }) {
         {children}
       </main>
       {!isMockEngine && <Footer />}
-      {!isMockEngine && <PWAInstallBanner />}
+      {!isMockEngine && !introOpen && <PWAInstallBanner />}
       {!isMockEngine && <MobileBottomNav />}
     </div>
   );
 }
 
 export default function App() {
+  const [introState, setIntroState] = useState(() => {
+    if (typeof window === 'undefined') {
+      return { open: false, showOnboarding: false };
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('skipSplash') === '1') {
+      return { open: false, showOnboarding: false };
+    }
+    const forceTour = params.get('tour') === '1' || params.get('onboarding') === '1';
+    const isMockDirectLink =
+      window.location.pathname.startsWith('/mocks/') &&
+      !window.location.pathname.startsWith('/mocks/category') &&
+      !window.location.pathname.startsWith('/mocks/series');
+
+    if (forceTour) {
+      return { open: true, showOnboarding: true };
+    }
+    if (isMockDirectLink) {
+      return { open: false, showOnboarding: false };
+    }
+
+    let onboardingDone = false;
+    try {
+      onboardingDone = localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true';
+    } catch {
+      onboardingDone = false;
+    }
+
+    return {
+      open: true,
+      showOnboarding: !onboardingDone
+    };
+  });
+
   // React has committed its first render — remove the document-level boot overlay
   // defined in index.html so users never sit on a blank or endless loading screen.
   useEffect(() => {
@@ -83,13 +114,27 @@ export default function App() {
     }
   }, []);
 
+  // Allow Header/Footer "Welcome Tour" actions to replay Splash + Onboarding 1 & 2
+  useEffect(() => {
+    const handleReplay = () => {
+      setIntroState({ open: true, showOnboarding: true });
+    };
+    window.addEventListener('eqh:replay-onboarding', handleReplay);
+    return () => window.removeEventListener('eqh:replay-onboarding', handleReplay);
+  }, []);
+
   return (
     <LanguageProvider>
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
           <RouteSeo />
-          <AppLayout>
+          <SplashOnboarding
+            isOpen={introState.open}
+            showOnboardingAfterSplash={introState.showOnboarding}
+            onComplete={() => setIntroState({ open: false, showOnboarding: false })}
+          />
+          <AppLayout introOpen={introState.open}>
             <Suspense fallback={<RouteLoadingFallback />}>
               <Routes>
                 <Route path="/" element={<HomePage />} />

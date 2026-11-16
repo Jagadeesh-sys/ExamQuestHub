@@ -352,6 +352,17 @@ export default function Header() {
                   <div className="px-1">
                     <PWAInstallButton className="w-full justify-center bg-[#12345A] text-white hover:bg-[#0B1F3A] py-2.5 shadow-xs" />
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      window.dispatchEvent(new CustomEvent('eqh:replay-onboarding'));
+                    }}
+                    className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    <GraduationCap className="w-4 h-4 text-[#2468B4]" />
+                    <span>Welcome Tour</span>
+                  </button>
                   <Link
                     to="/admin"
                     onClick={() => setMobileMenuOpen(false)}
