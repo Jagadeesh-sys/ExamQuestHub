@@ -167,8 +167,13 @@ export default function Header() {
                 aria-label="ExamQuestHub Home"
               >
                 <img
-                  src="/assets/aistudio/examquesthub_cap_logo.png"
+                  src="/assets/aistudio/examquesthub_cap_logo.webp"
                   alt="ExamQuest Hub Logo"
+                  decoding="async"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/assets/aistudio/examquesthub_cap_logo.png';
+                  }}
                   className="h-[24px] sm:h-[27px] w-auto object-contain shrink-0 drop-shadow-xs group-hover:scale-105 transition-transform"
                 />
                 
@@ -291,8 +296,13 @@ export default function Header() {
               <div className="p-4 bg-[#1F224D] text-white flex items-center justify-between border-b border-[#2C3867]">
                 <div className="flex items-center gap-1.5">
                   <img
-                    src="/assets/aistudio/examquesthub_cap_logo.png"
+                    src="/assets/aistudio/examquesthub_cap_logo.webp"
                     alt="ExamQuest Hub Logo"
+                    decoding="async"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '/assets/aistudio/examquesthub_cap_logo.png';
+                    }}
                     className="h-[24px] w-auto object-contain shrink-0"
                   />
                   <div>

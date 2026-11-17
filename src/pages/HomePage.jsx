@@ -81,7 +81,8 @@ export default function HomePage() {
   const homeBanners = [
     {
       id: 'banner-govt-exams',
-      image: '/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.png',
+      image: '/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.webp',
+      fallbackImage: '/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.png',
       alt: 'Your Next Government Exams Starts Here',
       eyebrow: 'All Govt Exams — One Platform',
       titleLine1: 'Your Next',
@@ -92,7 +93,8 @@ export default function HomePage() {
     },
     {
       id: 'banner-mock-tests',
-      image: '/assets/aistudio/image_3a3807e5.png',
+      image: '/assets/aistudio/image_3a3807e5.webp',
+      fallbackImage: '/assets/aistudio/image_3a3807e5.png',
       alt: 'Ace Your Government Exams - Mock Tests & Practice Tests with Real Exam Pattern',
       eyebrow: 'Mock Tests & Practice Tests',
       ctaText: 'Attempt Mocks',
@@ -100,7 +102,8 @@ export default function HomePage() {
     },
     {
       id: 'banner-current-affairs',
-      image: '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.png',
+      image: '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.webp',
+      fallbackImage: '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.png',
       alt: 'Daily Current Affairs & Monthly Editorial GK Practice',
       eyebrow: 'Daily GK • Monthly PDF Capsules',
       titleLine1: 'Master Daily',
@@ -322,6 +325,12 @@ export default function HomePage() {
                 alt={homeBanners[0].alt}
                 className="absolute inset-0 w-full h-full object-cover object-right sm:object-center block pointer-events-none"
                 loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = homeBanners[0].fallbackImage;
+                }}
               />
               <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-2.5 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[#F2BE4F] text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wide uppercase mb-1 sm:mb-1.5">
@@ -352,7 +361,12 @@ export default function HomePage() {
                   src={homeBanners[1].image}
                   alt={homeBanners[1].alt}
                   className="absolute top-0 bottom-0 right-0 w-[66%] sm:w-full h-full object-cover object-right sm:object-center select-none pointer-events-none"
-                  loading="lazy"
+                  loading="eager"
+                  decoding="async"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = homeBanners[1].fallbackImage;
+                  }}
                 />
                 {/* Readability scrim blending artwork into deep blue left side on mobile & subtle scrim on desktop */}
                 <div className="absolute inset-0 bg-gradient-to-r from-[#021242] via-[#021242]/90 via-42% to-transparent sm:from-[#021242]/75 sm:via-[#021242]/30 sm:via-50% sm:to-transparent pointer-events-none" />
@@ -420,7 +434,12 @@ export default function HomePage() {
                 src={homeBanners[2].image}
                 alt={homeBanners[2].alt}
                 className="absolute inset-0 w-full h-full object-cover object-right sm:object-center block pointer-events-none"
-                loading="lazy"
+                loading="eager"
+                decoding="async"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = homeBanners[2].fallbackImage;
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-[#07183B]/75 via-[#07183B]/30 to-transparent pointer-events-none" />
               <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12 lg:px-16 py-2.5 sm:py-5 max-w-[62%] sm:max-w-[58%] md:max-w-[55%]">
@@ -665,10 +684,15 @@ export default function HomePage() {
         >
           {/* Background Image: Clean 3D Globe, books & laptop on purple desk */}
           <img
-            src="/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.png"
+            src="/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.webp"
             alt="Current Affairs & Practice — Daily updates, quizzes & full mock tests"
             className="w-full h-full object-cover block"
-            loading="lazy"
+            loading="eager"
+            decoding="async"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.png';
+            }}
           />
 
           {/* Real Live Text & Button Overlay */}

@@ -229,7 +229,8 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
             loading={index < 8 ? 'eager' : 'lazy'}
             decoding="async"
             className="w-full h-full object-cover object-top"
-            onError={() => {
+            onError={(e) => {
+              e.currentTarget.onerror = null;
               const fallback = 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=900&q=80';
               if (imgSrc !== fallback) setImgSrc(fallback);
             }}

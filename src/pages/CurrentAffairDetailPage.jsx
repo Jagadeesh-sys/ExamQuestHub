@@ -155,9 +155,11 @@ export default function CurrentAffairDetailPage() {
             <img
               src={article.imageUrl}
               alt={headline}
+              decoding="async"
               className="w-full h-full object-cover object-top"
               onError={(e) => {
-                e.target.style.display = 'none';
+                e.currentTarget.onerror = null;
+                e.currentTarget.style.display = 'none';
               }}
             />
           </div>

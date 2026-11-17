@@ -76,8 +76,10 @@ export default function OfficialMockTestCard({
             <img
               src={logoUrl}
               alt={agency}
+              decoding="async"
               className="w-full h-full object-contain rounded-full"
               onError={(e) => {
+                e.currentTarget.onerror = null;
                 e.currentTarget.src = defaultLogo;
               }}
             />

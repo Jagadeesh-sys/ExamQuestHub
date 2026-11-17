@@ -24,7 +24,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 3,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -51,7 +51,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 8,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -78,7 +78,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 3,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -105,7 +105,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -132,7 +132,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -159,7 +159,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 7,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -186,7 +186,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -213,7 +213,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -240,7 +240,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -267,7 +267,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -294,7 +294,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 8,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -321,7 +321,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -348,7 +348,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -375,7 +375,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -402,7 +402,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -429,7 +429,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 8,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -456,7 +456,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -483,7 +483,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -510,7 +510,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 6,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -537,7 +537,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 3,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -564,7 +564,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -591,7 +591,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -618,7 +618,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -645,7 +645,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -672,7 +672,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -699,7 +699,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -726,7 +726,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -753,7 +753,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 3,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -780,7 +780,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 8,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -807,7 +807,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -834,7 +834,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -861,7 +861,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -888,7 +888,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 3,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -915,7 +915,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 6,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -942,7 +942,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -969,7 +969,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 2,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -996,7 +996,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 8,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1023,7 +1023,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1050,7 +1050,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1077,7 +1077,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1104,7 +1104,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1131,7 +1131,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 7,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1158,7 +1158,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 6,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1185,7 +1185,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 7,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1212,7 +1212,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 8,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1239,7 +1239,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 6,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1266,7 +1266,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 3,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1293,7 +1293,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1320,7 +1320,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1347,7 +1347,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 7,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1374,7 +1374,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1401,7 +1401,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 8,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1428,7 +1428,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 5,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1455,7 +1455,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 7,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1482,7 +1482,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1509,7 +1509,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 4,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {
@@ -1536,7 +1536,7 @@ export const ALL_CBT_SHIFTS = [
       "General Science": 7,
       "Reasoning": 30
     },
-    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-CBT1-EN-Complete-Paper_2024_8fc6d121.pdf",
+    "paperUrl": "/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf",
     "status": "Published"
   },
   {

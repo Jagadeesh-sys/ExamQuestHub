@@ -69,14 +69,14 @@ import {
 import { SUBJECT_TOPIC_TAXONOMY, getTopicsForSubject } from '../constants/mockTaxonomy.js';
 
 // Import Circular 3D Medallion Subject Icons
-import iconAllMock from '../assets/images/subject_all_mock.png';
-import iconCurrentAffairs from '../assets/images/subject_current_affairs.png';
-import iconEnglish from '../assets/images/subject_english.png';
-import iconGeneralKnowledge from '../assets/images/subject_general_knowledge.png';
-import iconReasoning from '../assets/images/subject_reasoning.png';
-import iconQuant from '../assets/images/subject_quant.png';
-import iconScience from '../assets/images/subject_science.png';
-import iconComputer from '../assets/images/subject_computer.png';
+import iconAllMock from '../assets/images/subject_all_mock.webp';
+import iconCurrentAffairs from '../assets/images/subject_current_affairs.webp';
+import iconEnglish from '../assets/images/subject_english.webp';
+import iconGeneralKnowledge from '../assets/images/subject_general_knowledge.webp';
+import iconReasoning from '../assets/images/subject_reasoning.webp';
+import iconQuant from '../assets/images/subject_quant.webp';
+import iconScience from '../assets/images/subject_science.webp';
+import iconComputer from '../assets/images/subject_computer.webp';
 
 export default function MockTestsHubPage() {
   const { t } = useLanguage();
@@ -199,29 +199,33 @@ export default function MockTestsHubPage() {
     let isMounted = true;
     const fetchServerData = async () => {
       try {
-        const stats = await getDirectFirestoreMockStats();
-        if (isMounted && stats && stats.totalQuestions) {
-          setFirestoreStats(stats);
-        }
+        const [statsRes, verifiedRes, shiftsRes, qDataRes] = await Promise.allSettled([
+          getDirectFirestoreMockStats(),
+          getVerifiedMockStats(),
+          loadAllShifts(),
+          getMockQuestions()
+        ]);
 
-        const verifiedStats = await getVerifiedMockStats();
-        if (isMounted && verifiedStats && verifiedStats.totalQuestions) {
+        if (!isMounted) return;
+
+        const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
+        const verifiedStats = verifiedRes.status === 'fulfilled' ? verifiedRes.value : null;
+        if ((stats && stats.totalQuestions) || (verifiedStats && verifiedStats.totalQuestions)) {
           setFirestoreStats((prev) => ({
             ...prev,
-            ...verifiedStats,
-            subjectCounts: verifiedStats.subjectCounts || prev?.subjectCounts,
-            topicCounts: verifiedStats.topicCounts || prev?.topicCounts
+            ...(stats || {}),
+            ...(verifiedStats || {}),
+            subjectCounts: verifiedStats?.subjectCounts || stats?.subjectCounts || prev?.subjectCounts,
+            topicCounts: verifiedStats?.topicCounts || stats?.topicCounts || prev?.topicCounts
           }));
         }
 
-        const allLoadedShifts = await loadAllShifts();
-        if (isMounted && allLoadedShifts) {
-          setShifts(allLoadedShifts);
+        if (shiftsRes.status === 'fulfilled' && shiftsRes.value) {
+          setShifts(shiftsRes.value);
         }
 
-        const qData = await getMockQuestions();
-        if (isMounted && Array.isArray(qData) && qData.length > 0) {
-          setFirestoreQuestions(qData);
+        if (qDataRes.status === 'fulfilled' && Array.isArray(qDataRes.value) && qDataRes.value.length > 0) {
+          setFirestoreQuestions(qDataRes.value);
         }
       } catch (err) {
         console.error('Error fetching questions and shifts from server:', err);
@@ -917,10 +921,16 @@ export default function MockTestsHubPage() {
           className="relative w-full min-h-[145px] sm:min-h-[210px] md:min-h-[270px] lg:min-h-[340px] aspect-[2.5/1] sm:aspect-[2.7/1] md:aspect-[2.9/1] rounded-2xl sm:rounded-[20px] overflow-hidden shadow-xl shadow-[#081F44]/25 border border-white/10 select-none bg-[#021242] flex items-center"
         >
           <img
-            src="/assets/aistudio/image_3a3807e5.png"
+            src="/assets/aistudio/image_3a3807e5.webp"
             alt="Ace Your Government Exams - Mock Tests & Practice Tests"
             className="absolute top-0 bottom-0 right-0 w-[66%] sm:w-full h-full object-cover object-right sm:object-center block select-none pointer-events-none"
             loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/assets/aistudio/image_3a3807e5.png';
+            }}
           />
           {/* Smooth left-to-right feather so artwork remains sharp on right while text has high contrast on left */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#021242] via-[#021242]/90 via-42% to-transparent sm:from-[#021242]/75 sm:via-[#021242]/30 sm:via-50% sm:to-transparent pointer-events-none" />
@@ -1090,9 +1100,11 @@ export default function MockTestsHubPage() {
                         src={item.image3d}
                         alt={item.title}
                         className="w-full h-full object-cover rounded-xl sm:rounded-[18px] drop-shadow-xs"
-                        loading="lazy"
+                        loading="eager"
+                        decoding="async"
                         onError={(e) => {
-                          if (item.fallbackUrl && e.currentTarget.src !== item.fallbackUrl) {
+                          e.currentTarget.onerror = null;
+                          if (item.fallbackUrl) {
                             e.currentTarget.src = item.fallbackUrl;
                           }
                         }}
@@ -1146,8 +1158,10 @@ export default function MockTestsHubPage() {
                       src={activeSubjectMeta.image3d}
                       alt={activeSubjectMeta.title}
                       className="w-full h-full object-cover rounded-xl"
+                      decoding="async"
                       onError={(e) => {
-                        if (activeSubjectMeta.fallbackUrl && e.currentTarget.src !== activeSubjectMeta.fallbackUrl) {
+                        e.currentTarget.onerror = null;
+                        if (activeSubjectMeta.fallbackUrl) {
                           e.currentTarget.src = activeSubjectMeta.fallbackUrl;
                         }
                       }}
@@ -1242,7 +1256,9 @@ export default function MockTestsHubPage() {
                       src={series.logoUrl}
                       alt={series.title}
                       className="w-full h-full object-contain rounded-full"
+                      decoding="async"
                       onError={(e) => {
+                        e.currentTarget.onerror = null;
                         e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
                       }}
                     />
@@ -1330,7 +1346,9 @@ export default function MockTestsHubPage() {
                       src={item.logoUrl}
                       alt={item.title}
                       className="w-full h-full object-contain rounded-full"
+                      decoding="async"
                       onError={(e) => {
+                        e.currentTarget.onerror = null;
                         e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
                       }}
                     />
@@ -1541,7 +1559,7 @@ export default function MockTestsHubPage() {
                   : isGroupD
                   ? '/assets/aistudio/RRB-Group-D-2025-EN-All-Sections_dece0c81.pdf'
                   : is2026Grad
-                  ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf'
+                  ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf'
                   : is2024Grad
                   ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf'
                   : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf');
@@ -1583,8 +1601,10 @@ export default function MockTestsHubPage() {
                           src={logoUrl}
                           alt={examLabel}
                           className="w-full h-full object-contain rounded-full"
+                          decoding="async"
                           onError={(e) => {
-                            e.currentTarget.src = logoUrl;
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
                           }}
                         />
                       </div>

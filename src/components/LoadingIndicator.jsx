@@ -34,8 +34,13 @@ export default function LoadingIndicator({
     >
       <div className="relative z-10 flex flex-col items-center text-center w-full max-w-xs gap-3.5">
         <img
-          src="/assets/aistudio/examquesthub_cap_logo.png"
+          src="/assets/aistudio/examquesthub_cap_logo.webp"
           alt="ExamQuest Hub"
+          decoding="async"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/assets/aistudio/examquesthub_cap_logo.png';
+          }}
           className="w-20 h-auto object-contain drop-shadow-[0_10px_22px_rgba(11,24,72,0.28)]"
           referrerPolicy="no-referrer"
         />

@@ -41,8 +41,14 @@ export default function Footer() {
           <div className="space-y-4 col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src="/assets/aistudio/examquesthub_cap_logo.png"
+                src="/assets/aistudio/examquesthub_cap_logo.webp"
                 alt="ExamQuestHub Logo"
+                loading="lazy"
+                decoding="async"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/assets/aistudio/examquesthub_cap_logo.png';
+                }}
                 className="h-9 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
               />
               <span className="font-heading font-black text-lg text-white">

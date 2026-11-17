@@ -24,7 +24,7 @@ import {
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { getQuestions } from '../firebase/firestoreService.js';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
-import practiceBannerImg from '../assets/images/practice_banner_3d_exact.png';
+import practiceBannerImg from '../assets/images/practice_banner_3d_exact.webp';
 
 export default function GKPracticePage() {
   const { t, getLocalized, language, setLanguage } = useLanguage();
@@ -139,10 +139,11 @@ export default function GKPracticePage() {
             alt="Daily General Knowledge Practice"
             className="w-full h-auto object-cover block select-none pointer-events-none"
             loading="eager"
+            decoding="async"
+            fetchPriority="high"
             onError={(e) => {
-              if (e.currentTarget.src !== '/assets/aistudio/image_64ced5a3.png') {
-                e.currentTarget.src = '/assets/aistudio/image_64ced5a3.png';
-              }
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/assets/aistudio/image_64ced5a3.webp';
             }}
           />
 

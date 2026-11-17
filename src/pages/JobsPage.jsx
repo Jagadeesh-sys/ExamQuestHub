@@ -40,7 +40,7 @@ import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
-import jobBannerImg from '../assets/images/job_banner_8d9279ad.png';
+import jobBannerImg from '../assets/images/job_banner_8d9279ad.webp';
 import {
   getEffectiveStatus,
   getApplicationStartDate,
@@ -305,9 +305,11 @@ export default function JobsPage() {
             alt="Latest Government Job Notifications with verified commission announcements"
             className="absolute inset-0 w-full h-full object-cover object-right sm:object-right-center block pointer-events-none select-none"
             loading="eager"
+            decoding="async"
+            fetchPriority="high"
             onError={(e) => {
               e.currentTarget.onerror = null;
-              e.currentTarget.src = `${import.meta.env.BASE_URL}assets/aistudio/image_8d9279ad.png`;
+              e.currentTarget.style.display = 'none';
             }}
           />
 

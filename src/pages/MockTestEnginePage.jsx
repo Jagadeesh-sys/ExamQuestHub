@@ -775,8 +775,10 @@ export default function MockTestEnginePage() {
               <img
                 src="/assets/aistudio/examquesthub-logo.png"
                 alt="ExamQuestHub"
+                decoding="async"
                 className="h-9 w-auto object-contain"
                 onError={(e) => {
+                  e.currentTarget.onerror = null;
                   e.currentTarget.src = '/logo.png';
                 }}
               />
@@ -811,8 +813,10 @@ export default function MockTestEnginePage() {
                 <img
                   src={examAgency === 'SSC' ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png'}
                   alt={examAgency || 'Exam'}
+                  decoding="async"
                   className="w-7 h-7 sm:w-9 sm:h-9 object-contain rounded-full"
                   onError={(e) => {
+                    e.currentTarget.onerror = null;
                     e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
                   }}
                 />
@@ -1091,8 +1095,10 @@ export default function MockTestEnginePage() {
               <img
                 src="/assets/aistudio/examquesthub-logo.png"
                 alt="ExamQuestHub"
+                decoding="async"
                 className="h-6 sm:h-9 w-auto object-contain shrink-0"
                 onError={(e) => {
+                  e.currentTarget.onerror = null;
                   e.currentTarget.src = '/logo.png';
                 }}
               />

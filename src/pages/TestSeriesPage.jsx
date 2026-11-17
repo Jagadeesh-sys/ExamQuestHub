@@ -386,8 +386,10 @@ export default function TestSeriesPage() {
               <img
                 src={seriesConfig.logoUrl}
                 alt={seriesConfig.agency}
+                decoding="async"
                 className="w-full h-full object-contain rounded-full"
                 onError={(e) => {
+                  e.currentTarget.onerror = null;
                   e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
                 }}
               />
@@ -491,8 +493,10 @@ export default function TestSeriesPage() {
                           <img
                             src={seriesConfig.logoUrl}
                             alt={seriesConfig.agency}
+                            decoding="async"
                             className="w-full h-full object-contain rounded-full"
                             onError={(e) => {
+                              e.currentTarget.onerror = null;
                               e.currentTarget.src = '/assets/aistudio/image_cbd93505.png';
                             }}
                           />

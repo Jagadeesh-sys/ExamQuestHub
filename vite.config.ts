@@ -49,9 +49,38 @@ export default defineConfig(() => {
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2}'],
-          maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
+          globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}', 'pwa-*.png', 'favicon.png', 'apple-touch-icon.png', 'logo.png', 'assets/*.{png,jpg,jpeg,webp}'],
+          globIgnores: ['**/assets/aistudio/**', '**/data/**'],
+          maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
           runtimeCaching: [
+            {
+              urlPattern: /\/assets\/.*\.(?:png|jpg|jpeg|webp|svg)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'app-images-cache',
+                expiration: {
+                  maxEntries: 80,
+                  maxAgeSeconds: 60 * 60 * 24 * 30
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
+            {
+              urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'external-images-cache',
+                expiration: {
+                  maxEntries: 60,
+                  maxAgeSeconds: 60 * 60 * 24 * 14
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
             {
               urlPattern: /\/data\/.*\.json$/i,
               handler: 'NetworkFirst',

@@ -848,8 +848,8 @@ function getFallbackPaperInfo(q) {
   if (q?.examLevel === 'Graduate' || id.includes('grad')) {
     if (examYear === '2026' || id.includes('grad-2026')) {
       return {
-        paperUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf',
-        paperFileName: 'RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper.pdf'
+        paperUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf',
+        paperFileName: 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf'
       };
     }
     return {
@@ -1878,8 +1878,8 @@ export async function getEngineMockTest(testId, subjectParam = null, limitParam 
     defaultPdfUrl = '/assets/aistudio/RRB-Group-D-2025-EN-All-Sections_dece0c81.pdf';
     defaultPdfFileName = 'RRB-Group-D-2025-EN-All-Sections.pdf';
   } else if (isGrad2026) {
-    defaultPdfUrl = '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf';
-    defaultPdfFileName = 'RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper.pdf';
+    defaultPdfUrl = '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf';
+    defaultPdfFileName = 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf';
   } else if (isGrad2024) {
     defaultPdfUrl = '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf';
     defaultPdfFileName = 'RRB-NTPC-Graduate-2024-CBT1-Official-Answer-Key.pdf';

@@ -1129,7 +1129,7 @@ export const INITIAL_RESOURCES = [
     year: '2026',
     type: 'Official Question Paper & Answer Key',
     fileSize: '335 Pages PDF',
-    downloadUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf',
+    downloadUrl: '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf',
     officialSource: 'https://rrbcdg.gov.in',
     description: {
       en: 'Official 24 shifts compilation conducted from 16 March 2026 to 27 March 2026 with 2,400 questions and official verified answer keys.',

@@ -5,13 +5,24 @@ import { ArrowRight, BookOpen, Globe, Play, Target } from 'lucide-react';
 
 export const ONBOARDING_STORAGE_KEY = 'eqh_onboarding_v1_done';
 
-const CAP_LOGO_URL = '/assets/aistudio/examquesthub_cap_logo.png';
-const ONBOARDING_1_ARTWORK_URL =
-  '/assets/aistudio/e036085fed9de97849e05bc00f1bdb7158c52d62247e4e329467bab21a32f66d_78218901.png';
-const ONBOARDING_2_ARTWORK_URL =
-  '/assets/aistudio/5f62669d0d4482dbdeda591881a6a9db79ab85bd39ac82d8058589430bb53f0d_4c624fc4.png';
-const ONBOARDING_3_ARTWORK_URL =
-  '/assets/aistudio/b4b5305fddf3c5d8a4a4332b4afcfed9b178b1c10c8189301e3f01031810f4e1_3b619faf.png';
+const CAP_LOGO_URL = '/assets/aistudio/examquesthub_cap_logo.webp';
+const CAP_LOGO_FALLBACK = '/assets/aistudio/examquesthub_cap_logo.png';
+const ONBOARDING_1_ARTWORK_URL = '/assets/aistudio/image_7ab1a23f.webp';
+const ONBOARDING_1_FALLBACK = '/assets/aistudio/image_7ab1a23f.png';
+const ONBOARDING_2_ARTWORK_URL = '/assets/aistudio/image_ce51b61f.webp';
+const ONBOARDING_2_FALLBACK = '/assets/aistudio/image_ce51b61f.png';
+const ONBOARDING_3_ARTWORK_URL = '/assets/aistudio/image_ac66ee33.webp';
+const ONBOARDING_3_FALLBACK = '/assets/aistudio/image_ac66ee33.png';
+
+const PRELOAD_IMAGE_URLS = [
+  CAP_LOGO_URL,
+  ONBOARDING_1_ARTWORK_URL,
+  ONBOARDING_2_ARTWORK_URL,
+  ONBOARDING_3_ARTWORK_URL,
+  '/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.webp',
+  '/assets/aistudio/image_3a3807e5.webp',
+  '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.webp'
+];
 
 /**
  * Full-screen Splash Screen + 3-Step Onboarding Flow:
@@ -36,11 +47,25 @@ export default function SplashOnboarding({
 
   const splashDurationMs = showOnboardingAfterSplash ? 1950 : 1200;
 
-  // Reset stage whenever opened
+  // Reset stage whenever opened & aggressively preload + decode all onboarding/hero assets
   useEffect(() => {
     if (!isOpen) return;
     setStage('splash');
     setProgress(8);
+    setArt1Failed(false);
+    setArt2Failed(false);
+    setArt3Failed(false);
+
+    if (typeof window !== 'undefined') {
+      PRELOAD_IMAGE_URLS.forEach((url) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = url;
+        if (typeof img.decode === 'function') {
+          img.decode().catch(() => {});
+        }
+      });
+    }
   }, [isOpen]);
 
   // Smoothly animate loading indicator bar during Splash stage
@@ -235,6 +260,13 @@ export default function SplashOnboarding({
                   <img
                     src={CAP_LOGO_URL}
                     alt="ExamQuest Hub Logo"
+                    loading="eager"
+                    decoding="sync"
+                    fetchPriority="high"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = CAP_LOGO_FALLBACK;
+                    }}
                     className="w-[30vw] min-w-[116px] max-w-[176px] h-auto object-contain block mx-auto drop-shadow-[0_14px_26px_rgba(12,26,78,0.28)]"
                     referrerPolicy="no-referrer"
                   />
@@ -298,84 +330,60 @@ export default function SplashOnboarding({
                   className="mb-5 sm:mb-6 flex items-center justify-center"
                 >
                   {stage === 'onboarding-1' && !art1Failed ? (
-                    <div
-                      className="relative w-[276px] sm:w-[328px] md:w-[356px] aspect-[1.24/1] overflow-hidden"
-                      style={{
-                        maskImage:
-                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)',
-                        WebkitMaskImage:
-                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)'
-                      }}
-                    >
+                    <div className="relative w-[272px] sm:w-[328px] md:w-[364px] flex items-center justify-center">
                       <img
                         src={ONBOARDING_1_ARTWORK_URL}
                         alt="Prepare for Govt Exams - Mock Tests and Practice Tests"
-                        onError={() => setArt1Failed(true)}
-                        referrerPolicy="no-referrer"
-                        style={{
-                          position: 'absolute',
-                          left: '50%',
-                          top: 0,
-                          width: '122%',
-                          maxWidth: 'none',
-                          height: 'auto',
-                          transform: 'translate(-50%, -22.2%)',
-                          pointerEvents: 'none'
+                        loading="eager"
+                        decoding="sync"
+                        onError={(e) => {
+                          if (!e.currentTarget.dataset.fbTried) {
+                            e.currentTarget.dataset.fbTried = '1';
+                            e.currentTarget.src = ONBOARDING_1_FALLBACK;
+                          } else {
+                            setArt1Failed(true);
+                          }
                         }}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-auto max-h-[34vh] object-contain pointer-events-none select-none drop-shadow-[0_18px_36px_rgba(8,22,74,0.34)]"
                       />
                     </div>
                   ) : stage === 'onboarding-2' && !art2Failed ? (
-                    <div
-                      className="relative w-[276px] sm:w-[328px] md:w-[356px] aspect-[1.24/1] overflow-hidden"
-                      style={{
-                        maskImage:
-                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)',
-                        WebkitMaskImage:
-                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)'
-                      }}
-                    >
+                    <div className="relative w-[272px] sm:w-[328px] md:w-[364px] flex items-center justify-center">
                       <img
                         src={ONBOARDING_2_ARTWORK_URL}
                         alt="Learn with Current Affairs Reels"
-                        onError={() => setArt2Failed(true)}
-                        referrerPolicy="no-referrer"
-                        style={{
-                          position: 'absolute',
-                          left: '50%',
-                          top: 0,
-                          width: '120%',
-                          maxWidth: 'none',
-                          height: 'auto',
-                          transform: 'translate(-50%, -22.2%)',
-                          pointerEvents: 'none'
+                        loading="eager"
+                        decoding="sync"
+                        onError={(e) => {
+                          if (!e.currentTarget.dataset.fbTried) {
+                            e.currentTarget.dataset.fbTried = '1';
+                            e.currentTarget.src = ONBOARDING_2_FALLBACK;
+                          } else {
+                            setArt2Failed(true);
+                          }
                         }}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-auto max-h-[34vh] object-contain pointer-events-none select-none drop-shadow-[0_18px_36px_rgba(8,22,74,0.34)]"
                       />
                     </div>
                   ) : stage === 'onboarding-3' && !art3Failed ? (
-                    <div
-                      className="relative w-[276px] sm:w-[328px] md:w-[356px] aspect-[1.24/1] overflow-hidden"
-                      style={{
-                        maskImage:
-                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)',
-                        WebkitMaskImage:
-                          'radial-gradient(ellipse 68% 66% at 50% 50%, #000 42%, rgba(0,0,0,0.88) 56%, rgba(0,0,0,0.48) 72%, rgba(0,0,0,0.14) 86%, transparent 98%)'
-                      }}
-                    >
+                    <div className="relative w-[272px] sm:w-[328px] md:w-[364px] flex items-center justify-center">
                       <img
                         src={ONBOARDING_3_ARTWORK_URL}
                         alt="Practice with Real Mock Tests"
-                        onError={() => setArt3Failed(true)}
-                        referrerPolicy="no-referrer"
-                        style={{
-                          position: 'absolute',
-                          left: '50%',
-                          top: 0,
-                          width: '122%',
-                          maxWidth: 'none',
-                          height: 'auto',
-                          transform: 'translate(-50%, -22.2%)',
-                          pointerEvents: 'none'
+                        loading="eager"
+                        decoding="sync"
+                        onError={(e) => {
+                          if (!e.currentTarget.dataset.fbTried) {
+                            e.currentTarget.dataset.fbTried = '1';
+                            e.currentTarget.src = ONBOARDING_3_FALLBACK;
+                          } else {
+                            setArt3Failed(true);
+                          }
                         }}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-auto max-h-[34vh] object-contain pointer-events-none select-none drop-shadow-[0_18px_36px_rgba(8,22,74,0.34)]"
                       />
                     </div>
                   ) : (

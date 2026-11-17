@@ -113,10 +113,20 @@ function getLocalData(key, defaultData) {
 function saveLocalData(key, data) {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(key, JSON.stringify(data));
+      if (key === STORAGE_KEYS.MOCK_QUESTIONS) {
+        // Large question collections exceed the 5 MB localStorage quota and stall JSON serialization
+        return;
+      }
+      const serialized = JSON.stringify(data);
+      if (serialized.length > 1500000) {
+        return;
+      }
+      window.localStorage.setItem(key, serialized);
     }
   } catch (e) {
-    console.warn('[Cache] Save error for key', key, e);
+    if (e?.name !== 'QuotaExceededError') {
+      console.warn('[Cache] Save error for key', key, e);
+    }
   }
 }
 
@@ -921,8 +931,8 @@ export function mapRrbToMockQuestion(q) {
       examName = 'RRB NTPC Graduate 2025-26 (CEN 06/2025)';
       examLevelLabel = 'Graduate (March 2026 Exam)';
       source = q.source || 'RRB NTPC Graduate 2025-26 Official Answer Key (CEN 06/2025 · Sets 1-24)';
-      paperUrl = '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper_4ec5b5cd.pdf';
-      paperFileName = 'RRB-NTPC-Graduate-2025-CBT1-EN-Complete-Paper.pdf';
+      paperUrl = '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf';
+      paperFileName = 'RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key.pdf';
     } else {
       // User explicitly requested: "then change previous rrb ntpc graduate 2025 to 2024"
       examYear = '2024';
