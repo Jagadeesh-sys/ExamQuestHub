@@ -288,6 +288,7 @@ export function toEngineQuestion(question, index) {
     source: question?.source || '',
     paperUrl: question?.paperUrl || '',
     paperFileName: question?.paperFileName || '',
+    imageUrl: question?.imageUrl || '',
     verificationStatus:
       String(question?.verificationStatus || '').toUpperCase() === MOCK_VERIFICATION.VERIFIED
         ? MOCK_VERIFICATION.VERIFIED
@@ -428,6 +429,21 @@ export const SUBJECT_TOPIC_TAXONOMY = {
           'Union and State Government',
           'Panchayati Raj & Municipalities',
           'Election Commission & CAG'
+        ]
+      },
+      {
+        id: 'indian-society',
+        name: 'Indian Society',
+        description: 'Social Structure, Family, Marriage, Kinship, Tribes, Caste, Gender & Social Issues',
+        subtopics: [
+          'Family, Marriage & Kinship Systems',
+          'Tribal Communities & Customs in India',
+          'Social Stratification, Caste & Religious Minorities',
+          'Women Empowerment & Gender Equality Laws',
+          'Child Protection & Welfare Legislation',
+          'Social Movements, Communalism & Regionalism',
+          'SC/ST Welfare & Constitutional Safeguards',
+          'Social Justice Schemes & Initiatives'
         ]
       },
       {
@@ -1874,6 +1890,17 @@ export function classifyQuestion(question) {
   ) {
     gkTopicId = 'indian-geography';
     gkTopicName = 'Indian Geography';
+  } else if (
+    rawSubtopic.includes('society') ||
+    rawSubtopic.includes('kinship') ||
+    rawSubtopic.includes('tribal') ||
+    text.includes('indian society') ||
+    text.includes('kinship') ||
+    text.includes('communalism') ||
+    text.includes('dowry prohibition')
+  ) {
+    gkTopicId = 'indian-society';
+    gkTopicName = 'Indian Society';
   } else if (
     rawSubtopic.includes('economy') ||
     text.includes('gdp') ||

@@ -6,6 +6,9 @@ const grad2026 = JSON.parse(fs.readFileSync('public/data/rrbNtpcGraduate2025Full
 const ssc2020 = JSON.parse(fs.readFileSync('public/data/sscCgl2020Full.json', 'utf8'));
 const ssc2026 = JSON.parse(fs.readFileSync('public/data/sscCgl2026Full.json', 'utf8'));
 const groupD = JSON.parse(fs.readFileSync('public/data/rrbGroupD2025Full.json', 'utf8'));
+const appsc2024Prelims = JSON.parse(fs.readFileSync('public/data/appscGroup2Prelims2024Full.json', 'utf8'));
+const appsc2025Paper2 = JSON.parse(fs.readFileSync('public/data/appscGroup2Paper22025Full.json', 'utf8'));
+const appsc2025Paper1 = JSON.parse(fs.readFileSync('public/data/appscGroup2Paper12025Full.json', 'utf8'));
 
 // 1. All Shifts Metadata
 const allShifts = [
@@ -14,7 +17,10 @@ const allShifts = [
   ...grad2026.shifts,
   ...ssc2020.shifts,
   ...ssc2026.shifts,
-  ...groupD.shifts
+  ...groupD.shifts,
+  ...appsc2024Prelims.shifts,
+  ...appsc2025Paper2.shifts,
+  ...appsc2025Paper1.shifts
 ];
 
 console.log(`Aggregating metadata for ${allShifts.length} total CBT exam shifts...`);
@@ -29,13 +35,14 @@ const CORE_SUBJECTS = [
     id: 'general-knowledge',
     title: 'General Knowledge',
     name: 'General Knowledge (GK & GA)',
-    description: 'Indian History, Geography, Indian Polity, Economy, Static GK, Current Affairs, Schemes',
+    description: 'Indian History, Geography, Indian Society, Indian Polity, Economy, Static GK, Current Affairs, Schemes',
     color: 'from-amber-600 to-amber-700',
     badge: 'GK & GA',
     topics: [
       'Indian Polity & Constitution',
       'Indian History',
       'Geography',
+      'Indian Society',
       'Indian Economy',
       'Static GK & Culture',
       'Current Affairs',

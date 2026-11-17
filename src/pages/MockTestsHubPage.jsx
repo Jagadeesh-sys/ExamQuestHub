@@ -151,32 +151,32 @@ export default function MockTestsHubPage() {
   // Chosen question count for topic practice: 10 | 20 | 25 | 50 | 'all'
   const [chosenTopicQuestionCount, setChosenTopicQuestionCount] = useState(25);
 
-  // Unified Bank Stats (Stable verified ground truth: 24,221 Questions • 213 CBT Shifts)
+  // Unified Bank Stats (Stable verified ground truth: 24,367 Questions • 214 CBT Shifts)
   const [firestoreStats, setFirestoreStats] = useState(() => {
     const defaultStats = {
-      totalQuestions: 24221,
-      verifiedQuestions: 24221,
+      totalQuestions: 24367,
+      verifiedQuestions: 24367,
       unverifiedQuestions: 0,
-      totalShifts: 213,
-      totalSubtopics: 65,
-      totalMockTests: 430,
+      totalShifts: 214,
+      totalSubtopics: 66,
+      totalMockTests: 431,
       subjectCounts: {
-        all: 24221,
-        'general-knowledge': 7653,
-        'quantitative-aptitude': 5610,
-        reasoning: 5580,
+        all: 24367,
+        'general-knowledge': 7739,
+        'quantitative-aptitude': 5621,
+        reasoning: 5599,
         'general-science': 2295,
         'computer-science': 810,
         'english-language': 680,
-        'current-affairs': 1593
+        'current-affairs': 1623
       },
-      source: 'Official Question Bank (24,221 Qs • 213 Shifts · All Official Papers)'
+      source: 'Official Question Bank (24,367 Qs • 214 Shifts · All Official Papers)'
     };
     try {
-      const cached = localStorage.getItem('eqh_db_mock_stats_v6');
+      const cached = localStorage.getItem('eqh_db_mock_stats_v7');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions >= 24200) {
+        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions >= 19900 && (parsed.totalShifts || 0) >= 214) {
           return parsed;
         }
       }
@@ -263,7 +263,7 @@ export default function MockTestsHubPage() {
   const baseUrl = import.meta.env.BASE_URL || '/';
   const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
-  const liveTotalQuestionsNumber = firestoreStats.totalQuestions || 24221;
+  const liveTotalQuestionsNumber = firestoreStats.totalQuestions || 24367;
   const liveSubjectCounts = firestoreStats.subjectCounts || {};
 
   // Circular Subject Carousel Items (Strictly Subjects + All Mock as requested)
@@ -281,7 +281,7 @@ export default function MockTestsHubPage() {
       id: 'current-affairs',
       title: 'Current Affairs',
       shortTitle: 'Current Affairs',
-      badge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 1593, '1.6k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 1623, '1.6k Qs'),
       image3d: iconCurrentAffairs,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_current_affairs_icon_fdc345ae.png`,
       type: 'subject'
@@ -290,7 +290,7 @@ export default function MockTestsHubPage() {
       id: 'general-knowledge',
       title: 'General Awareness',
       shortTitle: 'GA / GK',
-      badge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 7578, '7.6k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 7739, '7.7k Qs'),
       image3d: iconGeneralKnowledge,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_general_awareness_icon_2f897e54.png`,
       type: 'subject'
@@ -299,7 +299,7 @@ export default function MockTestsHubPage() {
       id: 'quantitative-aptitude',
       title: 'Mathematics',
       shortTitle: 'Maths / Quant',
-      badge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 5610, '5.6k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 5621, '5.6k Qs'),
       image3d: iconQuant,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_mathematics_icon_ab20c36e.png`,
       type: 'subject'
@@ -578,23 +578,24 @@ export default function MockTestsHubPage() {
     const groupDCount = groupDShifts.length || 48;
     const ssc26Count = ssc2026Shifts.length || 14;
     const ssc20Count = ssc2020Shifts.length || 21;
-    const appscCount = appscShifts.length || 2;
+    const appscCount = appscShifts.length || 3;
+    const appscTotalQs = appscShifts.reduce((acc, s) => acc + (s.questionsCount || 150), 0) || 446;
     const fullMockCount = FULL_MOCK_SERIES.length || 17;
 
     return [
       {
         id: 'series-appsc-group2',
-        title: 'APPSC Group-2 (2025) Official Bilingual Papers (Paper-1 & Paper-2)',
-        subtitle: 'Paper-1: AP History & Constitution (150 Qs) · Paper-2: Economy & S&T (150 Qs)',
+        title: 'APPSC Group-2 (2024 & 2025) Official Bilingual Papers (Prelims, P1 & P2)',
+        subtitle: '2024 Prelims: History, Geography, Society, CA & Mental Ability · 2025 P1 & P2',
         totalTests: `${appscCount} Official Papers`,
-        questionsCount: `${(appscCount * 150).toLocaleString()} Qs`,
+        questionsCount: `${appscTotalQs.toLocaleString()} Qs`,
         languages: 'English · Telugu',
         agency: 'APPSC',
         examId: 'appsc-group2',
         filterKey: 'appsc-group2',
         targetTab: 'pyqs',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
-        badge: '2025 P1 & P2'
+        badge: '2024–25 PRELIMS, P1 & P2'
       },
       {
         id: 'series-rrb-group-d',
@@ -802,6 +803,28 @@ export default function MockTestsHubPage() {
       });
     }
 
+    const appscPrelimsShift = shifts.find(
+      (s) =>
+        (s.examType === 'APPSC Group II' || String(s.id).includes('appsc')) &&
+        (s.paperNumber === 0 || s.examYear === '2024' || String(s.id).includes('2024-prelims'))
+    );
+    if (appscPrelimsShift) {
+      list.push({
+        id: appscPrelimsShift.id,
+        title: appscPrelimsShift.title || 'APPSC Group-2 Prelims (2024) – Full Official Paper',
+        examName: 'APPSC Group II',
+        questionsCount: appscPrelimsShift.questionsCount || 146,
+        timeMinutes: appscPrelimsShift.durationMinutes || 150,
+        pattern: 'History · Geography · Society · CA · Mental Ability (EN + TE)',
+        agency: 'APPSC',
+        category: 'pyqs',
+        badge: '2024 PRELIMS',
+        badgeColor: 'bg-teal-100 text-teal-800',
+        logoUrl: '/assets/aistudio/image_3b1d93b9.png',
+        rawObj: appscPrelimsShift
+      });
+    }
+
     const appscP1Shift = shifts.find(
       (s) =>
         (s.examType === 'APPSC Group II' || String(s.id).includes('appsc')) &&
@@ -827,6 +850,9 @@ export default function MockTestsHubPage() {
     const appscP2Shift = shifts.find(
       (s) =>
         (s.examType === 'APPSC Group II' || String(s.id).includes('appsc')) &&
+        s.paperNumber !== 0 &&
+        s.examYear !== '2024' &&
+        !String(s.id).includes('2024-prelims') &&
         (s.paperNumber === 2 || String(s.id).includes('paper2') || (!s.paperNumber && !String(s.id).includes('paper1')))
     );
     if (appscP2Shift) {
@@ -976,7 +1002,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalQuestions?.toLocaleString() || '24,221'}+
+              {firestoreStats.totalQuestions?.toLocaleString() || '24,367'}+
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
               Total Questions
@@ -986,7 +1012,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalMockTests ? `${firestoreStats.totalMockTests}+` : '430+'}
+              {firestoreStats.totalMockTests ? `${firestoreStats.totalMockTests}+` : '431+'}
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
               Mock Tests
@@ -996,7 +1022,7 @@ export default function MockTestsHubPage() {
           <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
             <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
             <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalShifts || shifts.length || 213}
+              {firestoreStats.totalShifts || shifts.length || 214}
             </div>
             <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1 leading-tight text-center">
               CBT Shift Papers
@@ -1489,8 +1515,10 @@ export default function MockTestsHubPage() {
               {paginatedShifts.map((shift) => {
                 const isAppsc =
                   shift.examType === 'APPSC Group II' || String(shift.id).includes('appsc');
+                const isAppscPrelims2024 =
+                  isAppsc && (shift.paperNumber === 0 || shift.examYear === '2024' || String(shift.id).includes('2024-prelims'));
                 const isAppscPaper1 =
-                  isAppsc && (shift.paperNumber === 1 || String(shift.id).includes('paper1'));
+                  isAppsc && !isAppscPrelims2024 && (shift.paperNumber === 1 || String(shift.id).includes('paper1'));
                 const isGroupD =
                   !isAppsc && (shift.examType === 'RRB Group D' || String(shift.id).includes('group-d'));
                 const is2026Grad =
@@ -1502,7 +1530,9 @@ export default function MockTestsHubPage() {
                 const isSsc =
                   !isAppsc && (shift.examType === 'SSC CGL' || String(shift.id).includes('ssc'));
 
-                const pdfDownloadUrl = shift.pdfUrl || (isAppscPaper1
+                const pdfDownloadUrl = shift.pdfUrl || (isAppscPrelims2024
+                  ? '/assets/aistudio/APPSC-Group-II-Preliminary-Exam-Official-Paper-Held-On_-25-Feb-2024_3a12a02d.pdf'
+                  : isAppscPaper1
                   ? '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-1-2025_copy_0f4dabbf.pdf'
                   : isAppsc
                   ? '/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-2-2025_copy_f6e37955.pdf'
@@ -1516,8 +1546,10 @@ export default function MockTestsHubPage() {
                   ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf'
                   : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf');
 
-                const testTitle = shift.title || (isAppscPaper1 ? 'APPSC Group-2 Paper-1 (2025) – History & Indian Constitution' : isAppsc ? 'APPSC Group-2 Paper-2 (2025)' : isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : isGroupD ? `RRB Group D 2025 Set ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`);
-                const badgeText = isAppscPaper1
+                const testTitle = shift.title || (isAppscPrelims2024 ? 'APPSC Group-2 Prelims (2024) – Full Official Paper' : isAppscPaper1 ? 'APPSC Group-2 Paper-1 (2025) – History & Indian Constitution' : isAppsc ? 'APPSC Group-2 Paper-2 (2025)' : isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : isGroupD ? `RRB Group D 2025 Set ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`);
+                const badgeText = isAppscPrelims2024
+                  ? '2024 PRELIMS'
+                  : isAppscPaper1
                   ? 'PAPER-1'
                   : isAppsc
                   ? 'PAPER-2'

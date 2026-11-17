@@ -193,24 +193,25 @@ export default function TestSeriesPage() {
       const appscShifts = ALL_CBT_SHIFTS.filter(
         (s) => s.examType === 'APPSC Group II' || String(s.id).includes('appsc')
       );
+      const totalAppscQs = appscShifts.reduce((sum, s) => sum + (s.questionsCount || 150), 0) || 446;
       return {
         id: 'series-appsc-group2',
-        bannerTitle: 'APPSC Group-2 (2025) Official Question Paper Series (Paper-1 & Paper-2)',
-        title: 'APPSC Group-2 (2025) Official Bilingual Test Series',
-        totalTestsBadge: `${appscShifts.length || 2} Official Papers`,
+        bannerTitle: 'APPSC Group-2 (2024 & 2025) Official Question Paper Series (Prelims, P1 & P2)',
+        title: 'APPSC Group-2 (2024 & 2025) Official Bilingual Test Series',
+        totalTestsBadge: `${appscShifts.length || 3} Official Papers`,
         freeTestsBadge: 'Free Test',
         description:
-          'Complete bilingual (English & Telugu) official APPSC Group-2 (2025) question papers: Paper-1 covers Social & Cultural History of Andhra Pradesh (75 Qs) & Indian Constitution (75 Qs); Paper-2 covers Indian & AP Economy (75 Qs) & Science & Technology (75 Qs).',
+          'Complete bilingual (English & Telugu) official APPSC Group-2 papers: 2024 Prelims (History, Geography, Indian Society, Current Affairs & Mental Ability) plus 2025 Paper-1 (AP History & Indian Constitution) and Paper-2 (Indian & AP Economy & Science & Technology).',
         agency: 'APPSC',
-        examLevel: 'Group II Prelims (2025 · P1 & P2)',
-        totalTests: appscShifts.length || 2,
+        examLevel: 'Group II (2024 Prelims · 2025 P1 & P2)',
+        totalTests: appscShifts.length || 3,
         questionsPerTest: 150,
         timeMinutes: 150,
         totalMarks: 150,
         negativeMarking: '0.33',
         languages: 'English · Telugu',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
-        badge: 'P1 & P2 (300 Qs)',
+        badge: `PRELIMS, P1 & P2 (${totalAppscQs} Qs)`,
         shifts: appscShifts
       };
     }
@@ -277,8 +278,12 @@ export default function TestSeriesPage() {
       return `SSC CGL 2020 Tier–1 Set – ${num}`;
     }
     if (seriesConfig.id.includes('appsc')) {
+      if (shift.title) return shift.title;
+      if (shift.paperNumber === 0 || shift.examYear === '2024' || String(shift.id || '').includes('2024-prelims')) {
+        return 'APPSC Group-2 Prelims (2024) – Full Official Paper';
+      }
       const paperNum = shift.paperNumber || (String(shift.id || '').includes('paper1') ? 1 : 2);
-      return shift.title || `APPSC Group-2 Paper-${paperNum} (2025) – Set ${num}`;
+      return `APPSC Group-2 Paper-${paperNum} (2025) – Set ${num}`;
     }
     return shift.title || `${seriesConfig.agency} CBT–1 Full Mock – ${num}`;
   };

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 175" width="640" height="175">
+  <defs>
+    <pattern id="hatchRight" width="6" height="6" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="3" x2="6" y2="3" stroke="#0F172A" stroke-width="1.3"/>
+    </pattern>
+    <pattern id="hatchDiag" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#0F172A" stroke-width="1.4"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="175" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="68" y="22" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#1E293B">Question Figure</text>
+  <text x="392" y="22" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#1E293B">Answer Figures</text>
+
+  <!-- Question Figure -->
+  <g transform="translate(20, 32)">
+    <rect x="0" y="0" width="96" height="90" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="48,14 14,76 82,76" fill="none" stroke="#0F172A" stroke-width="2"/>
+    <!-- Hatched right sector -->
+    <polygon points="48,14 48,48 82,76" fill="url(#hatchRight)" stroke="#0F172A" stroke-width="1.5"/>
+    <line x1="48" y1="48" x2="14" y2="76" stroke="#0F172A" stroke-width="1.8"/>
+    <!-- Upright A in left sector -->
+    <text x="35" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A">A</text>
+    <!-- Bottom sector symbols: right-pointing and down-pointing small triangles -->
+    <polygon points="34,63 42,67 34,71" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <polygon points="52,63 60,63 56,71" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <!-- Mirror line AB -->
+    <text x="0" y="114" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0F172A">A</text>
+    <line x1="12" y1="110" x2="84" y2="110" stroke="#0F172A" stroke-width="2"/>
+    <line x1="16" y1="110" x2="12" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="24" y1="110" x2="20" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="32" y1="110" x2="28" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="40" y1="110" x2="36" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="48" y1="110" x2="44" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="56" y1="110" x2="52" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="64" y1="110" x2="60" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="72" y1="110" x2="68" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="80" y1="110" x2="76" y2="116" stroke="#0F172A" stroke-width="1.3"/>
+    <text x="87" y="114" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0F172A">B</text>
+  </g>
+
+  <!-- (1) Rotated right -->
+  <g transform="translate(155, 32)">
+    <rect x="0" y="0" width="96" height="90" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="16,14 16,76 80,45" fill="none" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="16,76 48,45 80,45" fill="url(#hatchRight)" stroke="#0F172A" stroke-width="1.5"/>
+    <line x1="16" y1="14" x2="48" y2="45" stroke="#0F172A" stroke-width="1.5"/>
+    <text x="27" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#0F172A">A</text>
+    <text x="48" y="128" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#0F172A">(1)</text>
+  </g>
+
+  <!-- (2) Correct Mirror Image: inverted triangle, top has |> and /\ , bottom-left has inverted A, bottom-right hatched -->
+  <g transform="translate(272, 32)">
+    <rect x="0" y="0" width="96" height="90" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="14,16 82,16 48,78" fill="none" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="48,44 82,16 48,78" fill="url(#hatchDiag)" stroke="#0F172A" stroke-width="1.5"/>
+    <line x1="14" y1="16" x2="48" y2="44" stroke="#0F172A" stroke-width="1.8"/>
+    <g transform="translate(36, 48) scale(1, -1)">
+      <text x="0" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A">A</text>
+    </g>
+    <polygon points="34,21 42,25 34,29" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <polygon points="52,29 60,29 56,21" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <text x="48" y="128" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#0F172A">(2)</text>
+  </g>
+
+  <!-- (3) Left hatched, Right upright A -->
+  <g transform="translate(389, 32)">
+    <rect x="0" y="0" width="96" height="90" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="14,16 82,16 48,78" fill="none" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="14,16 48,44 48,78" fill="url(#hatchRight)" stroke="#0F172A" stroke-width="1.5"/>
+    <line x1="82" y1="16" x2="48" y2="44" stroke="#0F172A" stroke-width="1.8"/>
+    <text x="61" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A">A</text>
+    <polygon points="34,21 42,25 34,29" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <polygon points="52,29 60,29 56,21" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <text x="48" y="128" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#0F172A">(3)</text>
+  </g>
+
+  <!-- (4) Left hatched, Right inverted A -->
+  <g transform="translate(506, 32)">
+    <rect x="0" y="0" width="96" height="90" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="14,16 82,16 48,78" fill="none" stroke="#0F172A" stroke-width="2"/>
+    <polygon points="14,16 48,44 48,78" fill="url(#hatchRight)" stroke="#0F172A" stroke-width="1.5"/>
+    <line x1="82" y1="16" x2="48" y2="44" stroke="#0F172A" stroke-width="1.8"/>
+    <g transform="translate(61, 48) scale(1, -1)">
+      <text x="0" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#0F172A">A</text>
+    </g>
+    <polygon points="34,21 42,25 34,29" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <polygon points="52,29 60,29 56,21" fill="none" stroke="#0F172A" stroke-width="1.4"/>
+    <text x="48" y="128" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#0F172A">(4)</text>
+  </g>
+</svg>

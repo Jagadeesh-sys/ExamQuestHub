@@ -746,6 +746,39 @@ export default function AdminMockTestsTab({ onNotify }) {
     }
   };
 
+  // Targeted fast upload of all 146 topic-segregated APPSC Group-2 Prelims (2024) questions to Firestore
+  const handleSeedAppscPrelims2024ToFirestore = async () => {
+    const appsc2024List = rrbQuestions.filter(
+      (q) =>
+        (q.examType === 'APPSC Group II' || String(q.id || '').includes('appsc')) &&
+        (q.paperNumber === 0 || q.examYear === '2024' || String(q.id || '').includes('2024-prelims'))
+    );
+    if (isSeeding || appsc2024List.length === 0) {
+      if (onNotify && appsc2024List.length === 0) onNotify('No APPSC Group-2 Prelims 2024 questions loaded yet.', 'info');
+      return;
+    }
+    setIsSeeding(true);
+    setSeedProgress(0);
+    setSeedLog(`Uploading ${appsc2024List.length} APPSC Group-2 Prelims (2024) topic-segregated questions to server...`);
+
+    try {
+      const saved = await bulkSaveMockQuestions(appsc2024List, (done, total) => {
+        setSeedProgress(Math.round((done / total) * 100));
+        setSeedLog(`Uploading APPSC 2024 Prelims: ${done} of ${total} questions stored on server...`);
+      });
+      setSeedProgress(100);
+      setSeedLog(`Successfully stored ${saved} APPSC Group-2 Prelims (2024) questions on server across separated syllabus topics.`);
+      if (onNotify) onNotify(`Uploaded ${saved} APPSC Group-2 Prelims (2024) questions to server!`, 'success');
+      await loadRrbData();
+    } catch (err) {
+      const msg = err?.message || 'Upload failed.';
+      setSeedLog(`APPSC 2024 server upload blocked: ${msg}. Ensure you are signed in as Admin.`);
+      if (onNotify) onNotify(`APPSC 2024 upload failed: ${msg}`, 'error');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   // Delete Question
   const confirmDeleteQuestion = async () => {
     if (!deleteTarget) return;
@@ -872,7 +905,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             Previous Year Verified Questions Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,221+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 213} official examination shifts.
+            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 214} official examination shifts.
           </p>
         </div>
 
@@ -887,7 +920,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,221+'})</span>
+            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'})</span>
           </button>
 
           <button
@@ -899,7 +932,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Columns3 className="w-3.5 h-3.5" />
-            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 213})</span>
+            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 214})</span>
           </button>
 
           <button
@@ -929,10 +962,10 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                     <Award className="w-6 h-6 text-[#F2BE4F]" />
-                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,221+'} Questions)
+                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'} Questions)
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
-                    Full official question bank with verified answer keys across 213 shifts (300 APPSC Group-2 Paper-1 &amp; Paper-2 2025 + 4,800 RRB Group D 2025-26 + 5,700 Under-Graduate + 2,400 March 2026 Graduate + 4,700 2024 Graduate + 3,600 SSC CGL questions). All questions are segregated by subject &amp; syllabus topic.
+                    Full official question bank with verified answer keys across 214 shifts (446 APPSC Group-2 2024 Prelims &amp; 2025 P1/P2 + 4,800 RRB Group D 2025-26 + 5,700 Under-Graduate + 2,400 March 2026 Graduate + 4,700 2024 Graduate + 3,600 SSC CGL questions). All questions are segregated by subject &amp; syllabus topic.
                   </p>
                 </div>
 
@@ -951,7 +984,16 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,221+'})</span>
+                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'})</span>
+                  </button>
+
+                  <button
+                    onClick={handleSeedAppscPrelims2024ToFirestore}
+                    disabled={isSeeding || rrbLoading}
+                    className="px-4 py-2.5 rounded-full bg-teal-500 hover:bg-teal-400 text-white font-black text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Upload className={`w-3.5 h-3.5 ${isSeeding ? 'animate-pulse' : ''}`} />
+                    <span>Upload APPSC 2024 (146 Qs)</span>
                   </button>
 
                   <button
@@ -998,14 +1040,14 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onClick={() => { setRrbStatusFilter('All'); setRrbExamFilter('All'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,221+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'}</div>
                   <div className="text-[11px] text-slate-300">Total Questions</div>
                 </div>
                 <div
                   onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-emerald-500/20 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-emerald-400/30"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '24,221+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '24,367+'}</div>
                   <div className="text-[11px] text-emerald-200 font-semibold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
                     <span>100% Verified</span>
@@ -1022,7 +1064,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   </div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 213}</div>
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 214}</div>
                   <div className="text-[11px] text-slate-300">Exam Shifts (CBT)</div>
                 </div>
                 <div
@@ -1436,7 +1478,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
                   <option value="All">All Exams ({rrbStats.total})</option>
-                  <option value="APPSC Group II">APPSC Group-2 (2025) P1 &amp; P2 ({rrbStats.appscGroup2 || 300})</option>
+                  <option value="APPSC Group II">APPSC Group-2 (2024 Prelims &amp; 2025 P1/P2) ({rrbStats.appscGroup2 || 446})</option>
                   <option value="Group D 2025">RRB Group D 2025-26 · 48 Sets ({rrbStats.groupD2025 || 4800})</option>
                   <option value="Graduate 2026">RRB NTPC Graduate 2025-26 · March 2026 ({rrbStats.graduate2026 || 2400})</option>
                   <option value="Graduate 2024">RRB NTPC Graduate 2024 · Previous ({rrbStats.graduate2024 || 4700})</option>
@@ -1459,10 +1501,18 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbShiftFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700 max-w-[170px]"
                 >
-                  <option value="All">All Shifts ({shifts.length || 213})</option>
+                  <option value="All">All Shifts ({shifts.length || 214})</option>
                   {shifts.map((s) => (
                     <option key={s.id} value={s.shiftNumber}>
-                      {s.examType === 'APPSC Group II' ? (s.paperNumber === 1 || String(s.id).includes('paper1') ? 'APPSC Group-2 Paper-1' : 'APPSC Group-2 Paper-2') : s.examType === 'RRB Group D' ? `Group D Set ${s.shiftNumber}` : `Shift ${s.shiftNumber} (${s.examLevel || 'UG'})`}
+                      {s.examType === 'APPSC Group II'
+                        ? (s.paperNumber === 0 || s.examYear === '2024' || String(s.id).includes('2024-prelims')
+                            ? 'APPSC Group-2 Prelims (2024)'
+                            : s.paperNumber === 1 || String(s.id).includes('paper1')
+                            ? 'APPSC Group-2 Paper-1'
+                            : 'APPSC Group-2 Paper-2')
+                        : s.examType === 'RRB Group D'
+                        ? `Group D Set ${s.shiftNumber}`
+                        : `Shift ${s.shiftNumber} (${s.examLevel || 'UG'})`}
                     </option>
                   ))}
                 </select>
@@ -1702,17 +1752,18 @@ export default function AdminMockTestsTab({ onNotify }) {
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-5 border border-[#E3EAF2] shadow-xs">
             <h3 className="text-lg font-black text-[#12345A] mb-1">
-              {shifts.length || 213} Official Examination Shifts Configuration
+              {shifts.length || 214} Official Examination Shifts Configuration
             </h3>
             <p className="text-xs text-slate-500">
-              Manage all official CBT shifts: APPSC Group-2 Paper-1 &amp; Paper-2 (2025), RRB Group D 2025-26 (48 Sets), RRB NTPC Under Graduate 2024 (57 Shifts), RRB NTPC Graduate 2025-26 (24 Sets), RRB NTPC Graduate 2024 (47 Shifts), and SSC CGL Tier-I (35 Shifts).
+              Manage all official CBT shifts: APPSC Group-2 Prelims (2024) &amp; Paper-1 &amp; Paper-2 (2025), RRB Group D 2025-26 (48 Sets), RRB NTPC Under Graduate 2024 (57 Shifts), RRB NTPC Graduate 2025-26 (24 Sets), RRB NTPC Graduate 2024 (47 Shifts), and SSC CGL Tier-I (35 Shifts).
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {shifts.map((shift) => {
               const isAppsc = shift.examType === 'APPSC Group II' || (shift.id || '').includes('appsc');
-              const isAppscPaper1 = isAppsc && (shift.paperNumber === 1 || (shift.id || '').includes('paper1'));
+              const isAppscPrelims2024 = isAppsc && (shift.paperNumber === 0 || shift.examYear === '2024' || (shift.id || '').includes('2024-prelims'));
+              const isAppscPaper1 = isAppsc && !isAppscPrelims2024 && (shift.paperNumber === 1 || (shift.id || '').includes('paper1'));
               const isSsc = !isAppsc && (shift.examType === 'SSC CGL' || (shift.id || '').includes('ssc-cgl'));
               const isGroupD = !isAppsc && (shift.examType === 'RRB Group D' || (shift.id || '').includes('group-d'));
               const isGrad = !isAppsc && shift.examLevel === 'Graduate';
@@ -1725,7 +1776,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-black px-2.5 py-0.5 rounded-md bg-[#12345A] text-white">
-                        {isAppscPaper1 ? 'Paper-1' : isAppsc ? 'Paper-2' : isGroupD ? `Set ${shift.shiftNumber}` : `Shift ${shift.shiftNumber}`}
+                        {isAppscPrelims2024 ? '2024 Prelims' : isAppscPaper1 ? 'Paper-1' : isAppsc ? 'Paper-2' : isGroupD ? `Set ${shift.shiftNumber}` : `Shift ${shift.shiftNumber}`}
                       </span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                         isAppsc

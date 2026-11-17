@@ -119,7 +119,7 @@ export default function SplashOnboarding({
         step: 1,
         line1: 'Prepare for',
         line2: 'Govt Exams',
-        subtitle: 'Mock Tests & Practice Tests · 213+ Official CBT Shifts',
+        subtitle: 'Mock Tests & Practice Tests · 214+ Official CBT Shifts',
         nextLabel: 'Next: Learn with Current Affairs Reels',
         bgGradient:
           'linear-gradient(180deg, #142977 0%, #1B338D 20%, #223B9B 34%, #314EB1 48%, #4F6EC9 58%, #95B1F1 73%, #D4E3FD 85%, #F5F8FD 96%)'

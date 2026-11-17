@@ -1505,6 +1505,16 @@ export default function MockTestEnginePage() {
                     <p className="text-sm text-slate-600 leading-relaxed -mt-1">{q.questionTe}</p>
                   )}
 
+                  {q.imageUrl && (
+                    <div className="my-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 flex justify-center">
+                      <img
+                        src={q.imageUrl}
+                        alt={`Question ${q.qNumber || idx + 1} figure`}
+                        className="max-h-64 w-auto object-contain rounded-lg"
+                      />
+                    </div>
+                  )}
+
                   <QuestionAttribution question={q} />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
@@ -1694,6 +1704,15 @@ export default function MockTestEnginePage() {
                     <p className="mt-1.5 text-[11px] sm:text-sm font-normal text-slate-600 leading-relaxed">
                       {currentQ.questionTe}
                     </p>
+                  )}
+                  {currentQ.imageUrl && (
+                    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 flex justify-center">
+                      <img
+                        src={currentQ.imageUrl}
+                        alt={`Question ${currentIndex + 1} diagram`}
+                        className="max-h-64 w-auto object-contain rounded-lg"
+                      />
+                    </div>
                   )}
                 </div>
 

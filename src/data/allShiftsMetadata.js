@@ -1,4 +1,4 @@
-// Auto-generated 213 CBT Exam Shifts Metadata
+// Auto-generated 214 CBT Exam Shifts Metadata
 export const ALL_CBT_SHIFTS = [
   {
     "id": "rrb-ntpc-ug-2024-shift-1",
@@ -5745,6 +5745,54 @@ export const ALL_CBT_SHIFTS = [
     "status": "Published"
   },
   {
+    "id": "appsc-group2-2024-prelims-shift-1",
+    "code": "APPSC-G2-2024-PRELIMS",
+    "title": "APPSC Group-2 Prelims (25 Feb 2024) – Screening Test (Official Bilingual)",
+    "examType": "APPSC Group II",
+    "examLevel": "Group II Prelims",
+    "examCode": "GS/2G/200 (A)",
+    "paperNumber": 0,
+    "shiftNumber": 1,
+    "setNumber": 1,
+    "examName": "APPSC Group-2 Prelims (2024)",
+    "examYear": "2024",
+    "examDate": "25 Feb 2024",
+    "shiftTiming": "Screening Test · 150 Mins",
+    "questionsCount": 146,
+    "durationMinutes": 150,
+    "totalMarks": 150,
+    "negativeMarking": 0.33,
+    "languages": [
+      "English",
+      "Telugu"
+    ],
+    "pdfUrl": "/assets/aistudio/APPSC-Group-II-Preliminary-Exam-Official-Paper-Held-On_-25-Feb-2024_3a12a02d.pdf",
+    "pdfFileName": "APPSC-Group-II-Preliminary-Exam-Official-Paper-Held-On_-25-Feb-2024.pdf",
+    "notes": "Source PDF omits booklet page 11 (Q27–Q30); all 146 physically present official questions (Q1–Q26, Q31–Q150) are included and segregated by subject & topic.",
+    "subjects": [
+      {
+        "name": "Indian History",
+        "count": 26
+      },
+      {
+        "name": "Geography",
+        "count": 30
+      },
+      {
+        "name": "Indian Society",
+        "count": 30
+      },
+      {
+        "name": "Current Affairs",
+        "count": 30
+      },
+      {
+        "name": "Mental Ability (Reasoning & Quant)",
+        "count": 30
+      }
+    ]
+  },
+  {
     "id": "appsc-group2-2025-paper2-shift-1",
     "code": "APPSC-G2-2025-P2",
     "examType": "APPSC Group II",
@@ -5774,28 +5822,36 @@ export const ALL_CBT_SHIFTS = [
   {
     "id": "appsc-group2-2025-paper1-shift-1",
     "code": "APPSC-G2-2025-P1",
+    "title": "APPSC Group-2 Paper-1 (2025) – History & Indian Constitution",
     "examType": "APPSC Group II",
     "examLevel": "Group II",
-    "examLevelLabel": "APPSC Group-II Paper-I (2025)",
+    "examCode": "2G/201 (C)",
     "paperNumber": 1,
     "shiftNumber": 1,
     "setNumber": 1,
-    "title": "APPSC Group-2 Paper-1 (2025) – History & Indian Constitution",
-    "subtitle": "23 Feb 2025 · 150 Qs (Social & Cultural History of AP + Indian Constitution)",
     "examName": "APPSC Group-2 Paper-1 (2025)",
     "examYear": "2025",
     "examDate": "23 Feb 2025",
     "shiftTiming": "Paper-I · 150 Mins",
+    "questionsCount": 150,
     "durationMinutes": 150,
     "totalMarks": 150,
     "negativeMarking": 0.33,
-    "totalQuestions": 150,
-    "questionsCount": 150,
-    "subjectCounts": {
-      "General Knowledge": 150
-    },
+    "languages": [
+      "English",
+      "Telugu"
+    ],
     "pdfUrl": "/assets/aistudio/Group-2-_-Prelims-Exam-Question-Paper-1-2025_copy_0f4dabbf.pdf",
     "pdfFileName": "Group-2-_-Prelims-Exam-Question-Paper-1-2025.pdf",
-    "status": "Published"
+    "subjects": [
+      {
+        "name": "Social and Cultural History of Andhra Pradesh",
+        "count": 75
+      },
+      {
+        "name": "Indian Constitution",
+        "count": 75
+      }
+    ]
   }
 ];
