@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ShieldCheck,
   Lock,
@@ -78,6 +78,8 @@ import {
   STATUS_DATE_NOT_ANNOUNCED
 } from '../utils/notificationStatus.js';
 import { SAMPLE_NOTIFICATIONS_JSON, SAMPLE_MINIMAL_TEMPLATE_JSON } from '../data/sampleImportNotifications.js';
+import { getAllShifts, loadAllShifts } from '../services/rrbMockService.js';
+import { computeUnifiedStats } from '../utils/questionStats.js';
 
 /**
  * Comparison key for a current affairs headline. Case, spacing and punctuation
@@ -159,21 +161,32 @@ export default function AdminPage() {
   const [gkImportBusy, setGkImportBusy] = useState(false);
   const [gkImportSummary, setGkImportSummary] = useState(null);
 
+  const [shifts, setShifts] = useState(() => getAllShifts());
+
+  const adminMockStats = useMemo(
+    () => computeUnifiedStats(mockQuestions, shifts, { gkQuestionsCount: questions.length }),
+    [mockQuestions, shifts, questions.length]
+  );
+
   const loadAllAdminData = async () => {
     setLoading(true);
     try {
-      const [up, ca, gk, mockGk, res] = await Promise.all([
+      const [up, ca, gk, mockGk, res, loadedShifts] = await Promise.all([
         getUpdates(true), // include drafts
         getCurrentAffairs(true),
         getQuestions(),
         getMockQuestions(),
-        getResources()
+        getResources(),
+        loadAllShifts().catch(() => getAllShifts())
       ]);
       setUpdates(up);
       setCurrentAffairs(ca);
       setQuestions(gk);
       setMockQuestions(mockGk);
       setResources(res);
+      if (Array.isArray(loadedShifts) && loadedShifts.length > 0) {
+        setShifts(loadedShifts);
+      }
     } catch (e) {
       console.error('Error loading admin dataset:', e);
     } finally {
@@ -923,14 +936,16 @@ export default function AdminPage() {
           className="bg-white rounded-2xl p-5 border border-[#E3EAF2] hover:border-[#2468B4] transition cursor-pointer group col-span-2 lg:col-span-1 shadow-2xs"
         >
           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block group-hover:text-[#2468B4] transition">
-            Verified Questions
+            Verified Mock Bank
           </span>
           <div className="text-2xl font-extrabold text-[#12345A] mt-1 flex items-center gap-1.5">
-            <span>{mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '23,921+'}</span>
+            <span>{mockQuestions.length > 0 ? adminMockStats.verifiedQuestions.toLocaleString() : '...'}</span>
             <Award className="w-4 h-4 text-[#F2BE4F]" />
           </div>
           <span className="text-[10px] text-[#2468B4] font-medium flex items-center gap-1">
-            211 Exam Shifts (CBT) · 428+ Mock Tests
+            {mockQuestions.length > 0
+              ? `${adminMockStats.importantQuestions.toLocaleString()} Important · ${adminMockStats.totalShifts} Shifts · ${adminMockStats.totalMockTests} Tests`
+              : 'Loading Question Bank...'}
           </span>
         </div>
       </div>
@@ -1006,7 +1021,7 @@ export default function AdminPage() {
         >
           <Award className="w-3.5 h-3.5 text-[#F2BE4F]" />
           <span>
-            Previous Year Questions ({mockQuestions.length > 0 ? `${mockQuestions.length.toLocaleString()}+` : '23,921+'})
+            Question Bank ({mockQuestions.length > 0 ? adminMockStats.totalQuestions.toLocaleString() : '...'})
           </span>
         </button>
         <button
@@ -1856,9 +1871,11 @@ export default function AdminPage() {
          ------------------------------------------------------------- */}
       {activeTab === 'mockTests' && (
         <AdminMockTestsTab
+          initialQuestions={mockQuestions}
+          gkQuestionsCount={questions.length}
+          onQuestionsChanged={setMockQuestions}
           onNotify={(message, type) => {
             triggerToast(message, type);
-            getMockQuestions().then(setMockQuestions);
           }}
         />
       )}

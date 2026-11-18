@@ -62,29 +62,43 @@ import {
   validateMockQuestion
 } from '../constants/mockTaxonomy.js';
 import {
-  loadAllRRBQuestions,
   loadAllShifts,
   saveLocalQuestionOverride,
   deleteLocalQuestionOverride,
   getAllShifts,
   saveShiftOverride,
-  RRB_CORE_SUBJECTS
+  getPaperInventorySummary
 } from '../services/rrbMockService.js';
+import {
+  computeUnifiedStats,
+  saveCachedUnifiedStats,
+  isImportantOrReviewQuestion
+} from '../utils/questionStats.js';
 
-export default function AdminMockTestsTab({ onNotify }) {
+export default function AdminMockTestsTab({
+  initialQuestions = null,
+  gkQuestionsCount = 0,
+  onQuestionsChanged,
+  onNotify
+}) {
   const { getLocalized } = useLanguage();
 
   // Active Sub-Tab: 'rrbNtpc' | 'shiftsConfig' | 'bulkJson'
   const [subTab, setSubTab] = useState('rrbNtpc');
 
   // RRB Questions State
-  const [rrbQuestions, setRrbQuestions] = useState([]);
-  const [shifts, setShifts] = useState([]);
-  const [rrbLoading, setRrbLoading] = useState(true);
+  const [rrbQuestions, setRrbQuestions] = useState(() =>
+    Array.isArray(initialQuestions) && initialQuestions.length > 0 ? initialQuestions : []
+  );
+  const [shifts, setShifts] = useState(() => getAllShifts());
+  const [paperInventory, setPaperInventory] = useState(() => getPaperInventorySummary());
+  const [rrbLoading, setRrbLoading] = useState(
+    !(Array.isArray(initialQuestions) && initialQuestions.length > 0)
+  );
   const [rrbSubjectFilter, setRrbSubjectFilter] = useState('All');
   const [rrbTopicFilter, setRrbTopicFilter] = useState('All');
   const [rrbShiftFilter, setRrbShiftFilter] = useState('All');
-  const [rrbExamFilter, setRrbExamFilter] = useState('All'); // 'All' | 'Under Graduate' | 'Graduate'
+  const [rrbExamFilter, setRrbExamFilter] = useState('All');
   const [rrbStatusFilter, setRrbStatusFilter] = useState('All'); // 'All' | 'Published' | 'Needs Review'
   const [rrbSearch, setRrbSearch] = useState('');
   const [rrbPage, setRrbPage] = useState(1);
@@ -104,10 +118,8 @@ export default function AdminMockTestsTab({ onNotify }) {
   const [editingShift, setEditingShift] = useState(null);
   const [shiftFormData, setShiftFormData] = useState(null);
 
-  // Extraction Simulation State
+  // Bank Refresh State
   const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionProgress, setExtractionProgress] = useState(0);
-  const [extractionLog, setExtractionLog] = useState('');
 
   // Server (Firestore) Seeding State
   const [isSeeding, setIsSeeding] = useState(false);
@@ -122,14 +134,33 @@ export default function AdminMockTestsTab({ onNotify }) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkSummary, setBulkSummary] = useState(null);
 
-  // Load Unified Questions (RRB 7,900 + Firestore Mock Questions)
-  const loadRrbData = async () => {
+  // Keep synced if parent passes updated questions on initial load
+  useEffect(() => {
+    if (Array.isArray(initialQuestions) && initialQuestions.length > 0 && rrbQuestions.length === 0) {
+      setRrbQuestions(initialQuestions);
+      setRrbLoading(false);
+    }
+  }, [initialQuestions, rrbQuestions.length]);
+
+  const syncStatsAndParent = (nextQuestions, activeShifts = shifts) => {
+    const unified = computeUnifiedStats(nextQuestions, activeShifts, { gkQuestionsCount });
+    saveCachedUnifiedStats(unified);
+    if (typeof onQuestionsChanged === 'function') {
+      onQuestionsChanged(nextQuestions);
+    }
+  };
+
+  // Load Unified Questions (Static Papers + Monthly CA + Firestore/IDB Custom Questions)
+  const loadRrbData = async (forceRefresh = false) => {
     setRrbLoading(true);
     try {
-      const qList = await getMockQuestions();
-      setRrbQuestions(qList);
+      const qList = await getMockQuestions(forceRefresh);
       await loadAllShifts();
-      setShifts(getAllShifts());
+      const loadedShifts = getAllShifts();
+      setRrbQuestions(qList);
+      setShifts(loadedShifts);
+      setPaperInventory(getPaperInventorySummary());
+      syncStatsAndParent(qList, loadedShifts);
     } catch (err) {
       console.error('Failed to load unified mock data:', err);
     } finally {
@@ -138,10 +169,21 @@ export default function AdminMockTestsTab({ onNotify }) {
   };
 
   useEffect(() => {
-    loadRrbData();
+    if (!Array.isArray(initialQuestions) || initialQuestions.length === 0) {
+      loadRrbData(false);
+    } else {
+      loadAllShifts()
+        .then(() => {
+          setShifts(getAllShifts());
+          setPaperInventory(getPaperInventorySummary());
+        })
+        .catch(() => {});
+      setRrbLoading(false);
+    }
   }, []);
 
   const [showTopicGrid, setShowTopicGrid] = useState(false);
+  const [showInventoryDetails, setShowInventoryDetails] = useState(true);
 
   // Unique Subtopics for the active subject filter
   const availableSubtopics = useMemo(() => {
@@ -216,7 +258,7 @@ export default function AdminMockTestsTab({ onNotify }) {
         }
       }
       if (rrbStatusFilter !== 'All') {
-        const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT';
+        const isUnv = isImportantOrReviewQuestion(q);
         if (rrbStatusFilter === 'Published' || rrbStatusFilter === 'Verified') {
           if (isUnv) return false;
         } else if (rrbStatusFilter === 'Needs Review' || rrbStatusFilter === 'Important Questions' || rrbStatusFilter === 'Unverified') {
@@ -422,184 +464,76 @@ export default function AdminMockTestsTab({ onNotify }) {
     );
   };
 
-  // Statistics with exact counts for Reasoning, GK, Current Affairs, Quant, Science, English, Computer Science & Subtopics
-  const rrbStats = useMemo(() => {
-    let published = 0;
-    let needsReview = 0;
-    let underGraduate = 0;
-    let graduate = 0;
-    let graduate2026 = 0;
-    let graduate2024 = 0;
-    let groupD2025 = 0;
-    let sscCgl = 0;
-    let appscGroup2 = 0;
-    const bySubject = {
-      'General Knowledge': 0,
-      'Current Affairs': 0,
-      'Reasoning': 0,
-      'Quantitative Aptitude': 0,
-      'General Science': 0,
-      'English Language': 0,
-      'Computer Science': 0
-    };
-    const byTopic = {};
-    const topicsBySubject = {
-      'General Knowledge': {},
-      'Current Affairs': {},
-      'Reasoning': {},
-      'Quantitative Aptitude': {},
-      'General Science': {},
-      'English Language': {},
-      'Computer Science': {}
-    };
+  // Canonical Deterministic Statistics (Single Source of Truth — zero double-counting)
+  const rrbStats = useMemo(
+    () => computeUnifiedStats(rrbQuestions, shifts, { gkQuestionsCount }),
+    [rrbQuestions, shifts, gkQuestionsCount]
+  );
 
-    for (const q of rrbQuestions) {
-      const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT';
-      if (!isUnv && (q.status === 'Published' || q.verificationStatus === 'VERIFIED')) {
-        published++;
-      } else {
-        needsReview++;
-      }
-
-      if (q.examType === 'APPSC Group II' || String(q.id || '').includes('appsc')) {
-        appscGroup2++;
-      } else if (q.examType === 'SSC CGL' || (q.examLevel || '').includes('CGL') || String(q.id || '').startsWith('ssc-cgl')) {
-        sscCgl++;
-      } else if (q.examType === 'RRB Group D' || String(q.id || '').includes('group-d')) {
-        groupD2025++;
-      } else if ((q.examLevel || 'Under Graduate') === 'Graduate') {
-        graduate++;
-        const is2026 = q.examYear === '2026' || String(q.id || '').includes('2026') || (q.examDate && q.examDate.includes('2026'));
-        if (is2026) {
-          graduate2026++;
-        } else {
-          graduate2024++;
-        }
-      } else {
-        underGraduate++;
-      }
-
-      const isCs = q.categoryId === 'cse' || q.subject === 'Computer Science' || (q.subtopic && ['Operating Systems', 'Computer Networks', 'Database Management Systems', 'Digital Logic & Computer Organization', 'Software Engineering', 'Programming & OOP', 'Data Structures & Algorithms'].includes(q.subtopic));
-
-      if (isCs) {
-        bySubject['Computer Science']++;
-        if (q.subtopic) {
-          topicsBySubject['Computer Science'][q.subtopic] = (topicsBySubject['Computer Science'][q.subtopic] || 0) + 1;
-        }
-      }
-
-      if (q.subject === 'Current Affairs' || q.subjectId === 'current-affairs') {
-        bySubject['Current Affairs']++;
-        if (q.subtopic) {
-          topicsBySubject['Current Affairs'][q.subtopic] = (topicsBySubject['Current Affairs'][q.subtopic] || 0) + 1;
-        }
-      } else if (q.subject === 'General Knowledge') {
-        bySubject['General Knowledge']++;
-        if (q.subtopic) {
-          topicsBySubject['General Knowledge'][q.subtopic] = (topicsBySubject['General Knowledge'][q.subtopic] || 0) + 1;
-        }
-      } else if (q.subject === 'Reasoning') {
-        bySubject['Reasoning']++;
-        if (q.subtopic) {
-          topicsBySubject['Reasoning'][q.subtopic] = (topicsBySubject['Reasoning'][q.subtopic] || 0) + 1;
-        }
-      } else if (q.subject === 'Quantitative Aptitude') {
-        bySubject['Quantitative Aptitude']++;
-        if (q.subtopic) {
-          topicsBySubject['Quantitative Aptitude'][q.subtopic] = (topicsBySubject['Quantitative Aptitude'][q.subtopic] || 0) + 1;
-        }
-      } else if (q.subject === 'General Science') {
-        bySubject['General Science']++;
-        if (q.subtopic) {
-          topicsBySubject['General Science'][q.subtopic] = (topicsBySubject['General Science'][q.subtopic] || 0) + 1;
-        }
-      } else if (q.subject === 'English Language' || q.categoryId === 'english') {
-        bySubject['English Language']++;
-        if (q.subtopic) {
-          topicsBySubject['English Language'][q.subtopic] = (topicsBySubject['English Language'][q.subtopic] || 0) + 1;
-        }
-      }
-
-      if (q.subtopic) {
-        byTopic[q.subtopic] = (byTopic[q.subtopic] || 0) + 1;
-      }
-    }
-
-    return {
-      total: rrbQuestions.length,
-      published,
-      needsReview,
-      underGraduate,
-      graduate,
-      graduate2026,
-      graduate2024,
-      groupD2025,
-      sscCgl,
-      appscGroup2,
-      bySubject,
-      byTopic,
-      topicsBySubject
-    };
-  }, [rrbQuestions]);
-
-  // Fast 1-Click Verification Handler for Admin (Fast to update!)
+  // Fast 1-Click Verification Handler for Admin
   const handleQuickVerify = async (q) => {
     const updatedQuestion = {
       ...q,
       status: 'Published',
       verificationStatus: 'VERIFIED',
-      questionType: 'PYQ',
+      questionType: q.questionType === 'IMPORTANT' ? 'PYQ' : (q.questionType || 'PYQ'),
+      isVerified: true,
       verifiedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     saveLocalQuestionOverride(updatedQuestion);
-    try {
-      saveMockQuestion(updatedQuestion).catch(() => {});
-    } catch {
-      // Local write already saved
-    }
+    saveMockQuestion(updatedQuestion).catch(() => {});
 
-    // Instantly update local state with zero latency
-    setRrbQuestions((prev) =>
-      prev.map((item) => (item.id === q.id ? updatedQuestion : item))
-    );
+    const nextQuestions = rrbQuestions.map((item) => (item.id === q.id ? updatedQuestion : item));
+    setRrbQuestions(nextQuestions);
+    syncStatsAndParent(nextQuestions);
 
-    if (onNotify) onNotify(`Question #${q.questionNumber || q.id} marked as 100% Verified!`, 'success');
+    if (onNotify) onNotify(`Question #${q.questionNumber || q.id} marked as Verified!`, 'success');
   };
 
-  // Fast batch verification for all currently filtered unverified questions
+  // Fast batch verification for all currently filtered Important / Needs Review questions
   const handleQuickVerifyAllFiltered = async () => {
-    const unverifiedList = filteredRrbQuestions.filter(
-      (q) => q.status !== 'Published' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT'
-    );
+    const unverifiedList = filteredRrbQuestions.filter((q) => isImportantOrReviewQuestion(q));
     if (unverifiedList.length === 0) {
-      if (onNotify) onNotify('No unverified questions in active filter.', 'info');
+      if (onNotify) onNotify('No Important / Needs Review questions in active filter.', 'info');
       return;
     }
 
     const updatedIds = new Set(unverifiedList.map((q) => q.id));
     const nowIso = new Date().toISOString();
+    const updatedItems = [];
 
     for (const q of unverifiedList) {
       const updated = {
         ...q,
         status: 'Published',
         verificationStatus: 'VERIFIED',
-        questionType: 'PYQ',
+        questionType: q.questionType === 'IMPORTANT' ? 'PYQ' : (q.questionType || 'PYQ'),
+        isVerified: true,
         verifiedAt: nowIso,
         updatedAt: nowIso
       };
       saveLocalQuestionOverride(updated);
+      updatedItems.push(updated);
     }
 
-    setRrbQuestions((prev) =>
-      prev.map((item) =>
-        updatedIds.has(item.id)
-          ? { ...item, status: 'Published', verificationStatus: 'VERIFIED', questionType: 'PYQ', verifiedAt: nowIso }
-          : item
-      )
-    );
+    const nextQuestions = rrbQuestions.map((item) => {
+      if (!updatedIds.has(item.id)) return item;
+      return {
+        ...item,
+        status: 'Published',
+        verificationStatus: 'VERIFIED',
+        questionType: item.questionType === 'IMPORTANT' ? 'PYQ' : (item.questionType || 'PYQ'),
+        isVerified: true,
+        verifiedAt: nowIso,
+        updatedAt: nowIso
+      };
+    });
+
+    setRrbQuestions(nextQuestions);
+    syncStatsAndParent(nextQuestions);
+    bulkSaveMockQuestions(updatedItems).catch(() => {});
 
     if (onNotify) onNotify(`Fast-verified all ${unverifiedList.length} questions successfully!`, 'success');
   };
@@ -639,6 +573,7 @@ export default function AdminMockTestsTab({ onNotify }) {
     setSavingQuestion(true);
 
     const letters = ['A', 'B', 'C', 'D'];
+    const isVerified = editFormData.status === 'Published';
     const updatedQuestion = {
       ...editingQuestion,
       subject: editFormData.subject,
@@ -658,6 +593,9 @@ export default function AdminMockTestsTab({ onNotify }) {
         te: editFormData.explanationTe
       },
       status: editFormData.status,
+      verificationStatus: isVerified ? 'VERIFIED' : 'UNVERIFIED',
+      questionType: isVerified ? (editingQuestion.questionType === 'IMPORTANT' ? 'PYQ' : (editingQuestion.questionType || 'PYQ')) : 'IMPORTANT',
+      isVerified,
       updatedAt: new Date().toISOString()
     };
 
@@ -665,14 +603,12 @@ export default function AdminMockTestsTab({ onNotify }) {
     try {
       await saveMockQuestion(updatedQuestion);
     } catch (err) {
-      // Offline or local write succeeded
       console.warn('Firestore mock question save notice:', err.message);
     }
 
-    // Update state
-    setRrbQuestions((prev) =>
-      prev.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q))
-    );
+    const nextQuestions = rrbQuestions.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q));
+    setRrbQuestions(nextQuestions);
+    syncStatsAndParent(nextQuestions);
 
     setSavingQuestion(false);
     setEditingQuestion(null);
@@ -704,8 +640,7 @@ export default function AdminMockTestsTab({ onNotify }) {
       setSeedProgress(100);
       setSeedLog(`${saved} questions stored on server with verified official keys and segregated topics.`);
       if (onNotify) onNotify(`Successfully stored ${saved} questions and updated server stats!`, 'success');
-      // Reload unified questions
-      await loadRrbData();
+      await loadRrbData(true);
     } catch (err) {
       const msg = err?.message || 'Upload failed.';
       setSeedLog(`Server upload blocked: ${msg}. Ensure firestore.rules allows Admin writes in Firebase Console.`);
@@ -746,20 +681,24 @@ export default function AdminMockTestsTab({ onNotify }) {
     }
   };
 
-  // Targeted fast upload of all 146 topic-segregated APPSC Group-2 Prelims (2024) questions to Firestore
+  // Targeted upload of APPSC Group-2 Prelims (2024) questions (or route to JSON importer if missing)
   const handleSeedAppscPrelims2024ToFirestore = async () => {
     const appsc2024List = rrbQuestions.filter(
       (q) =>
         (q.examType === 'APPSC Group II' || String(q.id || '').includes('appsc')) &&
         (q.paperNumber === 0 || q.examYear === '2024' || String(q.id || '').includes('2024-prelims'))
     );
-    if (isSeeding || appsc2024List.length === 0) {
-      if (onNotify && appsc2024List.length === 0) onNotify('No APPSC Group-2 Prelims 2024 questions loaded yet.', 'info');
+    if (appsc2024List.length === 0) {
+      setSubTab('bulkJson');
+      if (onNotify) {
+        onNotify('APPSC Group-2 Prelims (2024) JSON is not on disk/Firestore yet — paste or upload its JSON here.', 'info');
+      }
       return;
     }
+    if (isSeeding) return;
     setIsSeeding(true);
     setSeedProgress(0);
-    setSeedLog(`Uploading ${appsc2024List.length} APPSC Group-2 Prelims (2024) topic-segregated questions to server...`);
+    setSeedLog(`Uploading ${appsc2024List.length} APPSC Group-2 Prelims (2024) questions to server...`);
 
     try {
       const saved = await bulkSaveMockQuestions(appsc2024List, (done, total) => {
@@ -767,9 +706,9 @@ export default function AdminMockTestsTab({ onNotify }) {
         setSeedLog(`Uploading APPSC 2024 Prelims: ${done} of ${total} questions stored on server...`);
       });
       setSeedProgress(100);
-      setSeedLog(`Successfully stored ${saved} APPSC Group-2 Prelims (2024) questions on server across separated syllabus topics.`);
+      setSeedLog(`Successfully stored ${saved} APPSC Group-2 Prelims (2024) questions on server.`);
       if (onNotify) onNotify(`Uploaded ${saved} APPSC Group-2 Prelims (2024) questions to server!`, 'success');
-      await loadRrbData();
+      await loadRrbData(true);
     } catch (err) {
       const msg = err?.message || 'Upload failed.';
       setSeedLog(`APPSC 2024 server upload blocked: ${msg}. Ensure you are signed in as Admin.`);
@@ -788,7 +727,9 @@ export default function AdminMockTestsTab({ onNotify }) {
     } catch (err) {
       console.warn('Firestore mock question delete notice:', err.message);
     }
-    setRrbQuestions((prev) => prev.filter((q) => q.id !== deleteTarget.id));
+    const nextQuestions = rrbQuestions.filter((q) => q.id !== deleteTarget.id);
+    setRrbQuestions(nextQuestions);
+    syncStatsAndParent(nextQuestions);
     setDeleteTarget(null);
     if (onNotify) onNotify('Question removed.', 'info');
   };
@@ -820,29 +761,31 @@ export default function AdminMockTestsTab({ onNotify }) {
     if (onNotify) onNotify(`Shift ${editingShift.shiftNumber} settings updated!`, 'success');
   };
 
-  // Trigger PDF Re-extraction simulation
-  const handleTriggerReExtract = () => {
+  // Live reload from static JSON archives + Firestore + IDB (no fake counts)
+  const handleTriggerReExtract = async () => {
+    if (isExtracting) return;
     setIsExtracting(true);
-    setExtractionProgress(10);
-    setExtractionLog('Reading RRB-NTPC-UG-2025-EN-All-Papers.pdf (16.7MB)...');
-
-    setTimeout(() => {
-      setExtractionProgress(35);
-      setExtractionLog('Parsing 32 shifts across 416 pages and detecting official answer tick coordinates...');
-    }, 800);
-
-    setTimeout(() => {
-      setExtractionProgress(70);
-      setExtractionLog('Extracting General Science questions out of General Awareness section...');
-    }, 1600);
-
-    setTimeout(() => {
-      setExtractionProgress(100);
-      setExtractionLog('Extraction complete! 32 Shifts and 3,200 questions verified with official answer keys.');
+    try {
+      const qList = await getMockQuestions(true);
+      await loadAllShifts();
+      const loadedShifts = getAllShifts();
+      setRrbQuestions(qList);
+      setShifts(loadedShifts);
+      setPaperInventory(getPaperInventorySummary());
+      const refreshedStats = computeUnifiedStats(qList, loadedShifts, { gkQuestionsCount });
+      saveCachedUnifiedStats(refreshedStats);
+      if (typeof onQuestionsChanged === 'function') onQuestionsChanged(qList);
+      if (onNotify) {
+        onNotify(
+          `Reloaded ${refreshedStats.totalQuestions.toLocaleString()} questions (${refreshedStats.verifiedQuestions.toLocaleString()} Verified, ${refreshedStats.importantQuestions.toLocaleString()} Important) across ${refreshedStats.totalShifts} shifts.`,
+          'success'
+        );
+      }
+    } catch (err) {
+      if (onNotify) onNotify(`Reload failed: ${err.message}`, 'error');
+    } finally {
       setIsExtracting(false);
-      loadRrbData();
-      if (onNotify) onNotify('Extracted all 32 shifts and 3,200 questions successfully!', 'success');
-    }, 2400);
+    }
   };
 
   // Export All Questions as JSON
@@ -850,14 +793,14 @@ export default function AdminMockTestsTab({ onNotify }) {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rrbQuestions, null, 2));
     const dlAnchor = document.createElement('a');
     dlAnchor.setAttribute('href', dataStr);
-    dlAnchor.setAttribute('download', `RRB-NTPC-2025-All-${rrbQuestions.length}-Questions.json`);
+    dlAnchor.setAttribute('download', `ExamQuestHub-Question-Bank-${rrbQuestions.length}-Questions.json`);
     dlAnchor.click();
     dlAnchor.remove();
     if (onNotify) onNotify('Exported questions to JSON file!', 'success');
   };
 
-  // Import JSON Questions
-  const handleImportJson = () => {
+  // Import JSON Questions (persists to Firestore + IndexedDB + Local overrides)
+  const handleImportJson = async () => {
     if (!bulkJson.trim()) {
       if (onNotify) onNotify('Please paste JSON questions array.', 'error');
       return;
@@ -873,18 +816,41 @@ export default function AdminMockTestsTab({ onNotify }) {
       let added = 0;
       let updated = 0;
       const currentIds = new Set(rrbQuestions.map((q) => q.id));
+      const normalizedItems = [];
 
       for (const item of items) {
-        if (!item.id) item.id = `custom-q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        saveLocalQuestionOverride(item);
-        if (currentIds.has(item.id)) updated++;
+        if (!item || typeof item !== 'object') continue;
+        const normalized = {
+          _sourceOrigin: 'uploaded',
+          ...item,
+          id: item.id || `custom-q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          status: item.status || 'Published',
+          verificationStatus: item.verificationStatus || (item.status === 'Needs Review' || item.questionType === 'IMPORTANT' ? 'UNVERIFIED' : 'VERIFIED')
+        };
+        saveLocalQuestionOverride(normalized);
+        normalizedItems.push(normalized);
+        if (currentIds.has(normalized.id)) updated++;
         else added++;
       }
 
-      setBulkSummary({ total: items.length, added, updated });
+      let firestoreSaved = 0;
+      try {
+        firestoreSaved = await bulkSaveMockQuestions(normalizedItems);
+      } catch (err) {
+        console.warn('Firestore bulk import fallback to local cache:', err.message);
+      }
+
+      setBulkSummary({ total: normalizedItems.length, added, updated, firestoreSaved });
       setBulkJson('');
-      loadRrbData();
-      if (onNotify) onNotify(`Successfully imported ${items.length} questions!`, 'success');
+      await loadRrbData(false);
+      if (onNotify) {
+        onNotify(
+          firestoreSaved > 0
+            ? `Imported and synced ${firestoreSaved.toLocaleString()} questions to server!`
+            : `Imported ${normalizedItems.length.toLocaleString()} questions locally!`,
+          'success'
+        );
+      }
     } catch (err) {
       if (onNotify) onNotify(`JSON Import failed: ${err.message}`, 'error');
     } finally {
@@ -905,7 +871,9 @@ export default function AdminMockTestsTab({ onNotify }) {
             Previous Year Verified Questions Studio
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access and manage {rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'} previous year verified questions segregated across core examination topics and {shifts.length > 0 ? shifts.length : 214} official examination shifts.
+            {rrbLoading
+              ? 'Loading previous year papers, Monthly Current Affairs, and uploaded questions...'
+              : `${rrbStats.total.toLocaleString()} unique bank questions (${rrbStats.verifiedQuestions.toLocaleString()} Verified + ${rrbStats.importantQuestions.toLocaleString()} Important)${gkQuestionsCount > 0 ? ` + ${gkQuestionsCount.toLocaleString()} Daily GK` : ''} across ${rrbStats.totalShifts} loaded shifts.`}
           </p>
         </div>
 
@@ -920,7 +888,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'})</span>
+            <span>Question Bank ({rrbStats.total.toLocaleString()})</span>
           </button>
 
           <button
@@ -932,7 +900,7 @@ export default function AdminMockTestsTab({ onNotify }) {
             }`}
           >
             <Columns3 className="w-3.5 h-3.5" />
-            <span>Shifts Manager ({shifts.length > 0 ? shifts.length : 214})</span>
+            <span>Shifts Manager ({shifts.length})</span>
           </button>
 
           <button
@@ -958,14 +926,16 @@ export default function AdminMockTestsTab({ onNotify }) {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <span className="text-[11px] font-bold tracking-wider text-[#F2BE4F] uppercase">
-                    Official Exam Bank · Verified with Official Answer Keys
+                    Deterministic Unified Bank · Verified + Important Questions
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                     <Award className="w-6 h-6 text-[#F2BE4F]" />
-                    Previous Year Verified Questions ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'} Questions)
+                    Question Bank ({rrbStats.total.toLocaleString()} Total Questions)
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
-                    Full official question bank with verified answer keys across 214 shifts (446 APPSC Group-2 2024 Prelims &amp; 2025 P1/P2 + 4,800 RRB Group D 2025-26 + 5,700 Under-Graduate + 2,400 March 2026 Graduate + 4,700 2024 Graduate + 3,600 SSC CGL questions). All questions are segregated by subject &amp; syllabus topic.
+                    {rrbStats.previousPaperQuestions.toLocaleString()} Previous Paper Qs + {rrbStats.currentAffairsBankQuestions.toLocaleString()} Monthly CA Qs + {rrbStats.uploadedQuestions.toLocaleString()} Uploaded/Custom Qs
+                    {gkQuestionsCount > 0 ? ` (+ ${gkQuestionsCount.toLocaleString()} Daily GK Practice = ${rrbStats.allPlatformQuestions.toLocaleString()} Platform Total)` : ''}.
+                    {' '}APPSC: {rrbStats.appscGroup2.toLocaleString()} · Group D: {rrbStats.groupD2025.toLocaleString()} · UG: {rrbStats.underGraduate.toLocaleString()} · Grad: {rrbStats.graduate.toLocaleString()} · SSC CGL: {rrbStats.sscCgl.toLocaleString()}.
                   </p>
                 </div>
 
@@ -976,7 +946,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-[#F2BE4F] hover:bg-[#e0ac39] text-[#0B1F3A] font-black text-xs flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isExtracting ? 'animate-spin' : ''}`} />
-                    <span>{isExtracting ? 'Reloading...' : 'Reload Verified Bank'}</span>
+                    <span>{isExtracting ? 'Reloading...' : 'Refresh Bank'}</span>
                   </button>
 
                   <button
@@ -984,7 +954,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export JSON ({rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'})</span>
+                    <span>Export JSON ({rrbStats.total.toLocaleString()})</span>
                   </button>
 
                   <button
@@ -993,7 +963,11 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-teal-500 hover:bg-teal-400 text-white font-black text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
                     <Upload className={`w-3.5 h-3.5 ${isSeeding ? 'animate-pulse' : ''}`} />
-                    <span>Upload APPSC 2024 (146 Qs)</span>
+                    <span>
+                      {(rrbStats.appsc2024Prelims || 0) > 0
+                        ? `Upload APPSC 2024 (${rrbStats.appsc2024Prelims} Qs)`
+                        : 'Import APPSC 2024 JSON'}
+                    </span>
                   </button>
 
                   <button
@@ -1002,7 +976,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                     className="px-4 py-2.5 rounded-full bg-sky-500 hover:bg-sky-400 text-white font-black text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
                     <Upload className={`w-3.5 h-3.5 ${isSeeding ? 'animate-pulse' : ''}`} />
-                    <span>Upload Group D 2025 ({(rrbStats.groupD2025 || 4800).toLocaleString()} Qs)</span>
+                    <span>Upload Group D 2025 ({rrbStats.groupD2025.toLocaleString()} Qs)</span>
                   </button>
 
                   <button
@@ -1034,20 +1008,20 @@ export default function AdminMockTestsTab({ onNotify }) {
                 </div>
               )}
 
-              {/* Live Statistics Cards */}
+              {/* Live Statistics Cards (Exact Partition: Verified + Important === Total) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 pt-2">
                 <div
                   onClick={() => { setRrbStatusFilter('All'); setRrbExamFilter('All'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total ? `${rrbStats.total.toLocaleString()}+` : '24,367+'}</div>
-                  <div className="text-[11px] text-slate-300">Total Questions</div>
+                  <div className="text-xl sm:text-2xl font-black text-[#F2BE4F]">{rrbStats.total.toLocaleString()}</div>
+                  <div className="text-[11px] text-slate-300">Total Bank Qs</div>
                 </div>
                 <div
                   onClick={() => { setRrbStatusFilter('Published'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-emerald-500/20 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-emerald-400/30"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.published ? `${rrbStats.published.toLocaleString()}+` : '24,367+'}</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-400">{rrbStats.verifiedQuestions.toLocaleString()}</div>
                   <div className="text-[11px] text-emerald-200 font-semibold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
                     <span>100% Verified</span>
@@ -1057,43 +1031,94 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onClick={() => { setRrbStatusFilter('Needs Review'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-amber-500/25 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-amber-400/40"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.needsReview || 0}</div>
+                  <div className="text-xl sm:text-2xl font-black text-amber-300">{rrbStats.importantQuestions.toLocaleString()}</div>
                   <div className="text-[11px] text-amber-200 font-semibold flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3 text-amber-300" />
                     <span>Important (Review)</span>
                   </div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-sky-400">{shifts.length > 0 ? shifts.length : 214}</div>
-                  <div className="text-[11px] text-slate-300">Exam Shifts (CBT)</div>
+                  <div className="text-xl sm:text-2xl font-black text-sky-400">{rrbStats.uploadedQuestions.toLocaleString()}</div>
+                  <div className="text-[11px] text-slate-300">Uploaded / Custom</div>
                 </div>
                 <div
                   onClick={() => { setRrbExamFilter(rrbExamFilter === 'Group D 2025' ? 'All' : 'Group D 2025'); setRrbPage(1); }}
                   className="bg-white/10 hover:bg-white/15 transition cursor-pointer backdrop-blur-sm rounded-2xl p-3 border border-white/10"
                 >
-                  <div className="text-xl sm:text-2xl font-black text-cyan-300">{(rrbStats.groupD2025 || 4800).toLocaleString()}</div>
+                  <div className="text-xl sm:text-2xl font-black text-cyan-300">{rrbStats.groupD2025.toLocaleString()}</div>
                   <div className="text-[11px] text-slate-300">RRB Group D (48 Sets)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl ? `${rrbStats.sscCgl.toLocaleString()}+` : '3,600+'}</div>
-                  <div className="text-[11px] text-slate-300">SSC CGL (35 Shifts)</div>
+                  <div className="text-xl sm:text-2xl font-black text-rose-300">{rrbStats.sscCgl.toLocaleString()}</div>
+                  <div className="text-[11px] text-slate-300">SSC CGL (Unique Qs)</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
-                  <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.graduate ? `${rrbStats.graduate.toLocaleString()}+` : '7,100+'}</div>
-                  <div className="text-[11px] text-slate-300">RRB Grad (71 Shifts)</div>
+                  <div className="text-xl sm:text-2xl font-black text-violet-300">{rrbStats.totalShifts}</div>
+                  <div className="text-[11px] text-slate-300">Loaded CBT Shifts</div>
                 </div>
               </div>
+
+              {/* Paper-by-Paper Inventory Audit Bar */}
+              {paperInventory && (
+                <div className="bg-black/20 rounded-2xl p-3.5 border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#F2BE4F]">
+                      Previous Papers + Uploaded Inventory Audit ({paperInventory.rawPaperTotal?.toLocaleString()} raw slots → {paperInventory.uniqueStaticTotal?.toLocaleString()} unique static Qs)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowInventoryDetails((v) => !v)}
+                      className="text-slate-300 hover:text-white font-semibold cursor-pointer"
+                    >
+                      {showInventoryDetails ? 'Hide Audit' : 'Show Audit'}
+                    </button>
+                  </div>
+                  {showInventoryDetails && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-[11px]">
+                      {(paperInventory.fileBreakdown || []).map((f) => (
+                        <div
+                          key={f.fileName}
+                          className={`px-2.5 py-2 rounded-xl border ${
+                            f.status === 'missing'
+                              ? 'bg-rose-950/50 border-rose-400/30 text-rose-100'
+                              : 'bg-white/5 border-white/10 text-slate-200'
+                          }`}
+                        >
+                          <div className="font-bold truncate" title={f.fileName}>
+                            {f.fileName.replace('Full.json', '')}
+                          </div>
+                          {f.status === 'missing' ? (
+                            <div className="text-[10px] text-rose-300 font-semibold mt-0.5">
+                              Missing on disk {(rrbStats.appsc2024Prelims || 0) > 0 ? `(${rrbStats.appsc2024Prelims} on Firestore)` : '(0 loaded)'}
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-slate-300 mt-0.5">
+                              {f.uniqueCount.toLocaleString()} unique / {f.rawCount.toLocaleString()} raw ({f.shiftsCount} shifts)
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <div className="px-2.5 py-2 rounded-xl border bg-white/5 border-white/10 text-slate-200">
+                        <div className="font-bold truncate">Monthly CA + Daily GK</div>
+                        <div className="text-[10px] text-slate-300 mt-0.5">
+                          {rrbStats.currentAffairsBankQuestions.toLocaleString()} CA + {gkQuestionsCount.toLocaleString()} Daily GK
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Exact Subject-Wise Counts Matrix */}
               <div className="pt-2 border-t border-white/10 space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-300 font-bold">
-                  <span>Subject Breakdown (Exact Verified Counts)</span>
+                  <span>Subject Breakdown (Exact Non-Overlapping Counts)</span>
                   <button
                     type="button"
                     onClick={() => setShowTopicGrid(!showTopicGrid)}
                     className="text-[#F2BE4F] hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <span>{showTopicGrid ? 'Hide Topic Details' : 'Show Topic-Wise Counts (26 Topics)'}</span>
+                    <span>{showTopicGrid ? 'Hide Topic Details' : `Show Topic-Wise Counts (${Object.keys(rrbStats.byTopic).length} Topics)`}</span>
                     {showTopicGrid ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                   </button>
                 </div>
@@ -1477,13 +1502,13 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbExamFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
-                  <option value="All">All Exams ({rrbStats.total})</option>
-                  <option value="APPSC Group II">APPSC Group-2 (2024 Prelims &amp; 2025 P1/P2) ({rrbStats.appscGroup2 || 446})</option>
-                  <option value="Group D 2025">RRB Group D 2025-26 · 48 Sets ({rrbStats.groupD2025 || 4800})</option>
-                  <option value="Graduate 2026">RRB NTPC Graduate 2025-26 · March 2026 ({rrbStats.graduate2026 || 2400})</option>
-                  <option value="Graduate 2024">RRB NTPC Graduate 2024 · Previous ({rrbStats.graduate2024 || 4700})</option>
-                  <option value="Under Graduate">RRB NTPC UG 2025 ({rrbStats.underGraduate || 5700})</option>
-                  <option value="SSC CGL">SSC CGL Tier-I ({rrbStats.sscCgl || 3600})</option>
+                  <option value="All">All Exams ({rrbStats.total.toLocaleString()})</option>
+                  <option value="APPSC Group II">APPSC Group-2 ({rrbStats.appscGroup2.toLocaleString()})</option>
+                  <option value="Group D 2025">RRB Group D 2025-26 ({rrbStats.groupD2025.toLocaleString()})</option>
+                  <option value="Graduate 2026">RRB NTPC Graduate 2025-26 ({rrbStats.graduate2026.toLocaleString()})</option>
+                  <option value="Graduate 2024">RRB NTPC Graduate 2024 ({rrbStats.graduate2024.toLocaleString()})</option>
+                  <option value="Under Graduate">RRB NTPC UG 2024-25 ({rrbStats.underGraduate.toLocaleString()})</option>
+                  <option value="SSC CGL">SSC CGL Tier-I ({rrbStats.sscCgl.toLocaleString()})</option>
                 </select>
 
                 <select
@@ -1491,9 +1516,9 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbStatusFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700"
                 >
-                  <option value="All">All Verification Statuses ({rrbStats.total})</option>
-                  <option value="Published">100% Verified ({rrbStats.published})</option>
-                  <option value="Needs Review">Important Questions / Review ({rrbStats.needsReview})</option>
+                  <option value="All">All Verification Statuses ({rrbStats.total.toLocaleString()})</option>
+                  <option value="Published">100% Verified ({rrbStats.verifiedQuestions.toLocaleString()})</option>
+                  <option value="Needs Review">Important Questions / Review ({rrbStats.importantQuestions.toLocaleString()})</option>
                 </select>
 
                 <select
@@ -1501,7 +1526,7 @@ export default function AdminMockTestsTab({ onNotify }) {
                   onChange={(e) => { setRrbShiftFilter(e.target.value); setRrbPage(1); }}
                   className="px-3 py-1.5 rounded-full bg-[#F6F8FC] border border-[#E3EAF2] text-xs font-semibold text-slate-700 max-w-[170px]"
                 >
-                  <option value="All">All Shifts ({shifts.length || 214})</option>
+                  <option value="All">All Shifts ({shifts.length})</option>
                   {shifts.map((s) => (
                     <option key={s.id} value={s.shiftNumber}>
                       {s.examType === 'APPSC Group II'
@@ -1615,7 +1640,7 @@ export default function AdminMockTestsTab({ onNotify }) {
               paginatedQuestions.map((q) => {
                 const letters = ['A', 'B', 'C', 'D'];
                 const correctLetter = letters[q.correctAnswer] || q.correctLetter || 'A';
-                const isUnv = q.status === 'Needs Review' || q.status === 'Draft' || q.verificationStatus === 'UNVERIFIED' || q.questionType === 'IMPORTANT';
+                const isUnv = isImportantOrReviewQuestion(q);
 
                 return (
                   <div
@@ -1752,10 +1777,10 @@ export default function AdminMockTestsTab({ onNotify }) {
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-5 border border-[#E3EAF2] shadow-xs">
             <h3 className="text-lg font-black text-[#12345A] mb-1">
-              {shifts.length || 214} Official Examination Shifts Configuration
+              {shifts.length} Official Examination Shifts Configuration
             </h3>
             <p className="text-xs text-slate-500">
-              Manage all official CBT shifts: APPSC Group-2 Prelims (2024) &amp; Paper-1 &amp; Paper-2 (2025), RRB Group D 2025-26 (48 Sets), RRB NTPC Under Graduate 2024 (57 Shifts), RRB NTPC Graduate 2025-26 (24 Sets), RRB NTPC Graduate 2024 (47 Shifts), and SSC CGL Tier-I (35 Shifts).
+              Manage all {shifts.length} loaded CBT shifts across APPSC Group-2, RRB Group D 2025-26, RRB NTPC Under Graduate &amp; Graduate, and SSC CGL Tier-I.
             </p>
           </div>
 
@@ -1863,7 +1888,7 @@ export default function AdminMockTestsTab({ onNotify }) {
               Bulk JSON Import &amp; Export
             </h3>
             <p className="text-xs text-slate-500">
-              Export all 3,200 questions to JSON or import questions in bulk. Duplicates are safely updated by question ID.
+              Export all {rrbQuestions.length.toLocaleString()} questions to JSON or import new / missing papers (such as APPSC Group-2 Prelims 2024) in bulk.
             </p>
           </div>
 
@@ -1950,7 +1975,10 @@ export default function AdminMockTestsTab({ onNotify }) {
                     <option value="Quantitative Aptitude">Quantitative Aptitude</option>
                     <option value="Reasoning">Reasoning</option>
                     <option value="General Knowledge">General Knowledge</option>
+                    <option value="Current Affairs">Current Affairs</option>
                     <option value="General Science">General Science</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="English Language">English Language</option>
                   </select>
                 </div>
 

@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  FileText,
   Layers,
-  Calendar,
   LayoutGrid,
   Play,
   BookOpen,
@@ -27,13 +25,11 @@ import {
   Check,
   Award,
   Sparkles,
-  ShieldCheck,
   Flame,
   Newspaper,
   Trophy,
   Target,
   Globe,
-  AlertTriangle,
   Crown,
   Zap,
   Lock,
@@ -46,12 +42,7 @@ import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import {
   getAllShifts,
-  loadAllShifts,
-  getVerifiedMockStats,
-  RRB_MOCK_SUBJECTS,
-  slugifyTopic,
-  classifyGkTopic,
-  classifyComputerTopic
+  loadAllShifts
 } from '../services/rrbMockService.js';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import {
@@ -60,13 +51,15 @@ import {
   SUBJECT_MOCK_TESTS
 } from '../data/fullMockSeriesData.js';
 import OfficialMockTestCard from '../components/OfficialMockTestCard.jsx';
+import { getMockQuestions } from '../firebase/firestoreService.js';
+import { getTopicsForSubject } from '../constants/mockTaxonomy.js';
 import {
-  getMockQuestions,
-  bulkSaveMockQuestions,
-  getDirectFirestoreMockStats,
-  migrateOlderGraduateQuestionsTo2024
-} from '../firebase/firestoreService.js';
-import { SUBJECT_TOPIC_TAXONOMY, getTopicsForSubject } from '../constants/mockTaxonomy.js';
+  computeUnifiedStats,
+  getCachedUnifiedStats,
+  saveCachedUnifiedStats,
+  computeMockTestsCount,
+  TOTAL_TOPIC_UNITS
+} from '../utils/questionStats.js';
 
 // Import Circular 3D Medallion Subject Icons
 import iconAllMock from '../assets/images/subject_all_mock.webp';
@@ -151,88 +144,71 @@ export default function MockTestsHubPage() {
   // Chosen question count for topic practice: 10 | 20 | 25 | 50 | 'all'
   const [chosenTopicQuestionCount, setChosenTopicQuestionCount] = useState(25);
 
-  // Unified Bank Stats (Stable verified ground truth: 24,367 Questions • 214 CBT Shifts)
+  // Shifts Data & Deterministic Unified Bank Stats
+  const [shifts, setShifts] = useState(() => getAllShifts());
+  const [statsLoading, setStatsLoading] = useState(() => !getCachedUnifiedStats());
   const [firestoreStats, setFirestoreStats] = useState(() => {
-    const defaultStats = {
-      totalQuestions: 24367,
-      verifiedQuestions: 24367,
-      unverifiedQuestions: 0,
-      totalShifts: 214,
-      totalSubtopics: 66,
-      totalMockTests: 431,
-      subjectCounts: {
-        all: 24367,
-        'general-knowledge': 7739,
-        'quantitative-aptitude': 5621,
-        reasoning: 5599,
-        'general-science': 2295,
-        'computer-science': 810,
-        'english-language': 680,
-        'current-affairs': 1623
-      },
-      source: 'Official Question Bank (24,367 Qs • 214 Shifts · All Official Papers)'
+    const cached = getCachedUnifiedStats();
+    if (cached) return cached;
+    const initialShifts = getAllShifts();
+    return {
+      totalQuestions: null,
+      verifiedQuestions: null,
+      importantQuestions: null,
+      uploadedQuestions: 0,
+      previousPaperQuestions: null,
+      currentAffairsBankQuestions: null,
+      gkPracticeQuestions: 0,
+      appscGroup2: 0,
+      appsc2024Prelims: 0,
+      totalShifts: initialShifts.length,
+      totalSubtopics: TOTAL_TOPIC_UNITS,
+      totalMockTests: computeMockTestsCount(initialShifts),
+      subjectCounts: {},
+      topicCounts: {},
+      source: 'Loading Verified Question Bank...'
     };
-    try {
-      const cached = localStorage.getItem('eqh_db_mock_stats_v7');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed.totalQuestions === 'number' && parsed.totalQuestions >= 19900 && (parsed.totalShifts || 0) >= 214) {
-          return parsed;
-        }
-      }
-      return defaultStats;
-    } catch {
-      return defaultStats;
-    }
   });
 
-  // Shifts Data & Server Questions
-  const [shifts, setShifts] = useState(() => getAllShifts());
-  const [firestoreQuestions, setFirestoreQuestions] = useState([]);
   const [shiftSearch, setShiftSearch] = useState('');
   const [pyqExamFilter, setPyqExamFilter] = useState('all');
   const [pyqCurrentPage, setPyqCurrentPage] = useState(1);
   const SHIFTS_PER_PAGE = 10;
 
-  // Load real data directly from the Firestore server on component mount
+  // Deterministically load full merged pool (Static + Monthly CA + Firestore/IDB + Daily GK)
   useEffect(() => {
     let isMounted = true;
-    const fetchServerData = async () => {
+    const fetchUnifiedBankData = async () => {
       try {
-        const [statsRes, verifiedRes, shiftsRes, qDataRes] = await Promise.allSettled([
-          getDirectFirestoreMockStats(),
-          getVerifiedMockStats(),
-          loadAllShifts(),
-          getMockQuestions()
+        const [qRes, shiftsRes] = await Promise.allSettled([
+          getMockQuestions(),
+          loadAllShifts()
         ]);
 
         if (!isMounted) return;
 
-        const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
-        const verifiedStats = verifiedRes.status === 'fulfilled' ? verifiedRes.value : null;
-        if ((stats && stats.totalQuestions) || (verifiedStats && verifiedStats.totalQuestions)) {
-          setFirestoreStats((prev) => ({
-            ...prev,
-            ...(stats || {}),
-            ...(verifiedStats || {}),
-            subjectCounts: verifiedStats?.subjectCounts || stats?.subjectCounts || prev?.subjectCounts,
-            topicCounts: verifiedStats?.topicCounts || stats?.topicCounts || prev?.topicCounts
-          }));
-        }
+        const loadedShifts =
+          shiftsRes.status === 'fulfilled' && Array.isArray(shiftsRes.value) && shiftsRes.value.length > 0
+            ? shiftsRes.value
+            : getAllShifts();
+        setShifts(loadedShifts);
 
-        if (shiftsRes.status === 'fulfilled' && shiftsRes.value) {
-          setShifts(shiftsRes.value);
-        }
+        const allQuestions =
+          qRes.status === 'fulfilled' && Array.isArray(qRes.value) ? qRes.value : [];
 
-        if (qDataRes.status === 'fulfilled' && Array.isArray(qDataRes.value) && qDataRes.value.length > 0) {
-          setFirestoreQuestions(qDataRes.value);
+        if (allQuestions.length > 0) {
+          const unified = computeUnifiedStats(allQuestions, loadedShifts);
+          saveCachedUnifiedStats(unified);
+          setFirestoreStats(unified);
         }
       } catch (err) {
-        console.error('Error fetching questions and shifts from server:', err);
+        console.error('Error loading unified mock test bank:', err);
+      } finally {
+        if (isMounted) setStatsLoading(false);
       }
     };
 
-    fetchServerData();
+    fetchUnifiedBankData();
     return () => {
       isMounted = false;
     };
@@ -255,9 +231,9 @@ export default function MockTestsHubPage() {
     setSearchParams({ ...Object.fromEntries(searchParams.entries()), tab: tabId });
   };
 
-  // Helper to format real question counts matching reference image (12.2k Qs, 4.9k Qs, 875 Qs, etc.)
-  const formatQuestionsBadge = (count, fallbackLabel) => {
-    if (!count) return fallbackLabel;
+  // Format exact loaded question counts (no synthetic baselines)
+  const formatQuestionsBadge = (count) => {
+    if (count === null || count === undefined) return statsLoading ? '...' : '0 Qs';
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1)}k Qs`;
     }
@@ -267,16 +243,16 @@ export default function MockTestsHubPage() {
   const baseUrl = import.meta.env.BASE_URL || '/';
   const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
-  const liveTotalQuestionsNumber = firestoreStats.totalQuestions || 24367;
+  const liveTotalQuestionsNumber = firestoreStats.totalQuestions;
   const liveSubjectCounts = firestoreStats.subjectCounts || {};
 
-  // Circular Subject Carousel Items (Strictly Subjects + All Mock as requested)
+  // Circular Subject Carousel Items (Strictly Subjects + All Mock with live counts)
   const examCarouselCards = useMemo(() => [
     {
       id: 'all',
       title: 'All Mock',
       shortTitle: 'All Mock',
-      badge: `${(liveTotalQuestionsNumber / 1000).toFixed(1)}k Qs`,
+      badge: formatQuestionsBadge(liveTotalQuestionsNumber),
       image3d: iconAllMock,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_all_mock_icon_92222837.png`,
       type: 'all'
@@ -285,7 +261,7 @@ export default function MockTestsHubPage() {
       id: 'current-affairs',
       title: 'Current Affairs',
       shortTitle: 'Current Affairs',
-      badge: formatQuestionsBadge(liveSubjectCounts['current-affairs'] || 1623, '1.6k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['current-affairs']),
       image3d: iconCurrentAffairs,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_current_affairs_icon_fdc345ae.png`,
       type: 'subject'
@@ -294,7 +270,7 @@ export default function MockTestsHubPage() {
       id: 'general-knowledge',
       title: 'General Awareness',
       shortTitle: 'GA / GK',
-      badge: formatQuestionsBadge(liveSubjectCounts['general-knowledge'] || 7739, '7.7k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['general-knowledge']),
       image3d: iconGeneralKnowledge,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_general_awareness_icon_2f897e54.png`,
       type: 'subject'
@@ -303,7 +279,7 @@ export default function MockTestsHubPage() {
       id: 'quantitative-aptitude',
       title: 'Mathematics',
       shortTitle: 'Maths / Quant',
-      badge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude'] || 5621, '5.6k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['quantitative-aptitude']),
       image3d: iconQuant,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_mathematics_icon_ab20c36e.png`,
       type: 'subject'
@@ -312,7 +288,7 @@ export default function MockTestsHubPage() {
       id: 'reasoning',
       title: 'Reasoning',
       shortTitle: 'Reasoning',
-      badge: formatQuestionsBadge(liveSubjectCounts['reasoning'] || 5580, '5.6k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['reasoning']),
       image3d: iconReasoning,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_reasoning_icon_b6acb299.png`,
       type: 'subject'
@@ -321,7 +297,7 @@ export default function MockTestsHubPage() {
       id: 'english-language',
       title: 'English',
       shortTitle: 'English',
-      badge: formatQuestionsBadge(liveSubjectCounts['english-language'] || 680, '680 Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['english-language']),
       image3d: iconEnglish,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_english_icon_cb4147e7.png`,
       type: 'subject'
@@ -330,7 +306,7 @@ export default function MockTestsHubPage() {
       id: 'general-science',
       title: 'General Science',
       shortTitle: 'Science',
-      badge: formatQuestionsBadge(liveSubjectCounts['general-science'] || 2220, '2.2k Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['general-science']),
       image3d: iconScience,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_general_science_icon_02b3df39.png`,
       type: 'subject'
@@ -339,12 +315,12 @@ export default function MockTestsHubPage() {
       id: 'computer-science',
       title: 'Computer Science',
       shortTitle: 'Computer',
-      badge: formatQuestionsBadge(liveSubjectCounts['computer-science'] || 810, '810 Qs'),
+      badge: formatQuestionsBadge(liveSubjectCounts['computer-science']),
       image3d: iconComputer,
       fallbackUrl: `${cleanBase}assets/aistudio/examquesthub_computer_science_icon_573cd928.png`,
       type: 'subject'
     }
-  ], [liveTotalQuestionsNumber, liveSubjectCounts, cleanBase]);
+  ], [liveTotalQuestionsNumber, liveSubjectCounts, cleanBase, statsLoading]);
 
   // Current Subject Topics list (strictly filtered by subject)
   const currentSubjectTopics = useMemo(() => {
@@ -354,14 +330,13 @@ export default function MockTestsHubPage() {
     return getTopicsForSubject(targetSub);
   }, [selectedSubject]);
 
-  // Topic questions counter
+  // Exact Topic questions counter
   const getTopicQuestionCount = (subjectId, topic) => {
     const key = `${subjectId}::${topic.id}`;
-    if (firestoreStats?.topicCounts?.[key]) {
+    if (firestoreStats?.topicCounts && firestoreStats.topicCounts[key] !== undefined) {
       return firestoreStats.topicCounts[key];
     }
-    const totalSub = liveSubjectCounts[subjectId] || 600;
-    return Math.max(25, Math.round(totalSub / Math.max(1, currentSubjectTopics.length)));
+    return statsLoading ? '...' : 0;
   };
 
   const subjectLogoMap = useMemo(() => ({
@@ -577,20 +552,29 @@ export default function MockTestsHubPage() {
       (s) => s.examType === 'APPSC Group II' || String(s.id).includes('appsc')
     );
 
-    const ugCount = ugShifts.length || 57;
-    const gradCount = gradShifts.length || 71;
-    const groupDCount = groupDShifts.length || 48;
-    const ssc26Count = ssc2026Shifts.length || 14;
-    const ssc20Count = ssc2020Shifts.length || 21;
-    const appscCount = appscShifts.length || 3;
-    const appscTotalQs = appscShifts.reduce((acc, s) => acc + (s.questionsCount || 150), 0) || 446;
-    const fullMockCount = FULL_MOCK_SERIES.length || 17;
+    const ugCount = ugShifts.length;
+    const gradCount = gradShifts.length;
+    const groupDCount = groupDShifts.length;
+    const ssc26Count = ssc2026Shifts.length;
+    const ssc20Count = ssc2020Shifts.length;
+    const appscLoadedShifts = appscShifts.filter((s) => s.hasLoadedQuestions !== false);
+    const appscCount = appscLoadedShifts.length;
+    const appscTotalQs =
+      firestoreStats.appscGroup2 > 0
+        ? firestoreStats.appscGroup2
+        : appscLoadedShifts.reduce((acc, s) => acc + (s.questionsCount || 0), 0);
+    const hasAppsc2024 = (firestoreStats.appsc2024Prelims || 0) > 0;
+    const fullMockCount = FULL_MOCK_SERIES.length;
 
     return [
       {
         id: 'series-appsc-group2',
-        title: 'APPSC Group-2 (2024 & 2025) Official Bilingual Papers (Prelims, P1 & P2)',
-        subtitle: '2024 Prelims: History, Geography, Society, CA & Mental Ability · 2025 P1 & P2',
+        title: hasAppsc2024
+          ? 'APPSC Group-2 (2024 & 2025) Official Bilingual Papers (Prelims, P1 & P2)'
+          : 'APPSC Group-2 (2025) Official Bilingual Papers (Paper-1 & Paper-2)',
+        subtitle: hasAppsc2024
+          ? '2024 Prelims + 2025 Paper-1 & Paper-2 (English · Telugu)'
+          : '2025 Paper-1 (AP History & Polity) & Paper-2 (Economy & Sci-Tech)',
         totalTests: `${appscCount} Official Papers`,
         questionsCount: `${appscTotalQs.toLocaleString()} Qs`,
         languages: 'English · Telugu',
@@ -599,7 +583,7 @@ export default function MockTestsHubPage() {
         filterKey: 'appsc-group2',
         targetTab: 'pyqs',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
-        badge: '2024–25 PRELIMS, P1 & P2'
+        badge: hasAppsc2024 ? '2024–25 PRELIMS, P1 & P2' : '2025 P1 & P2'
       },
       {
         id: 'series-rrb-group-d',
@@ -686,7 +670,7 @@ export default function MockTestsHubPage() {
         badge: 'FULL CBT'
       }
     ];
-  }, [shifts]);
+  }, [shifts, firestoreStats.appscGroup2, firestoreStats.appsc2024Prelims]);
 
   // Real Available Dynamic Mocks (Top available tests user can immediately launch)
   const dynamicAvailableTests = useMemo(() => {
@@ -810,14 +794,15 @@ export default function MockTestsHubPage() {
     const appscPrelimsShift = shifts.find(
       (s) =>
         (s.examType === 'APPSC Group II' || String(s.id).includes('appsc')) &&
-        (s.paperNumber === 0 || s.examYear === '2024' || String(s.id).includes('2024-prelims'))
+        (s.paperNumber === 0 || s.examYear === '2024' || String(s.id).includes('2024-prelims')) &&
+        ((firestoreStats.appsc2024Prelims || 0) > 0 || s.hasLoadedQuestions === true)
     );
     if (appscPrelimsShift) {
       list.push({
         id: appscPrelimsShift.id,
         title: appscPrelimsShift.title || 'APPSC Group-2 Prelims (2024) – Full Official Paper',
         examName: 'APPSC Group II',
-        questionsCount: appscPrelimsShift.questionsCount || 146,
+        questionsCount: firestoreStats.appsc2024Prelims || appscPrelimsShift.questionsCount || 146,
         timeMinutes: appscPrelimsShift.durationMinutes || 150,
         pattern: 'History · Geography · Society · CA · Mental Ability (EN + TE)',
         agency: 'APPSC',
@@ -1006,53 +991,8 @@ export default function MockTestsHubPage() {
         </div>
 
         {/* =========================================================================
-            COMPACT STATISTICS CARDS (Verified Bank: 23,921+ Questions • 211 CBT Shifts)
-            ========================================================================= */}
-        <section className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-xs border border-slate-100 grid grid-cols-4 divide-x divide-slate-100 text-center">
-          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
-            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalQuestions?.toLocaleString() || '24,367'}+
-            </div>
-            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
-              Total Questions
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-            <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
-            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalMockTests ? `${firestoreStats.totalMockTests}+` : '431+'}
-            </div>
-            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
-              Mock Tests
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
-            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              {firestoreStats.totalShifts || shifts.length || 214}
-            </div>
-            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1 leading-tight text-center">
-              CBT Shift Papers
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1">
-            <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5 text-[#12345A] stroke-[2.2] mb-1 sm:mb-1.5" />
-            <div className="font-heading font-black text-sm sm:text-2xl text-[#12345A] tracking-tight leading-none">
-              8
-            </div>
-            <div className="text-[9.5px] sm:text-xs text-slate-500 font-semibold mt-1">
-              Available Subjects
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================================
             CIRCULAR HORIZONTAL EXAM / SUBJECT CAROUSEL
-            Display at TOP, right below counting questions as requested!
+            Display at TOP, right below Search Bar
             ========================================================================= */}
         <section className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
@@ -1407,12 +1347,12 @@ export default function MockTestsHubPage() {
         {!isSubjectFiltered && (
         <section className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 select-none">
           {[
-            { id: 'all', label: 'All Tests', icon: LayoutGrid, count: '430+' },
-            { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: '17 Series' },
-            { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: 'Shift Sets' },
+            { id: 'all', label: 'All Tests', icon: LayoutGrid, count: String(firestoreStats.totalMockTests || computeMockTestsCount(shifts)) },
+            { id: 'full-mock', label: 'Full Mock Tests', icon: Play, count: `${FULL_MOCK_SERIES.length} Series` },
+            { id: 'pyqs', label: 'Previous Year Papers', icon: BookOpen, count: `${shifts.length} Shifts` },
             { id: 'subject-wise', label: 'Subject-wise Tests', icon: Layers, count: '7 Core' },
-            { id: 'topic-wise', label: 'Topic-wise Practice', icon: Sparkles, count: '64 Units' },
-            { id: 'sectional', label: 'Sectional Tests', icon: Target, count: 'Speed Drills' }
+            { id: 'topic-wise', label: 'Topic-wise Practice', icon: Sparkles, count: `${TOTAL_TOPIC_UNITS} Units` },
+            { id: 'sectional', label: 'Sectional Tests', icon: Target, count: `${SECTIONAL_TESTS.length} Drills` }
           ].map((tab) => {
             const isActive = activeCategoryTab === tab.id;
             return (

@@ -14,6 +14,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { ALL_CBT_SHIFTS } from '../data/allShiftsMetadata.js';
+import { getAllShifts } from '../services/rrbMockService.js';
 import { FULL_MOCK_SERIES } from '../data/fullMockSeriesData.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 
@@ -63,7 +64,7 @@ export default function TestSeriesPage() {
         id: 'series-rrb-ug',
         bannerTitle: 'RRB NTPC Under Graduate 2026-27 (CBT 1 + CBT 2) Mock Test Series',
         title: 'RRB NTPC Under Graduate 2026-27 (CBT 1 + CBT 2) Mock Test Series',
-        totalTestsBadge: '656 Total Tests',
+        totalTestsBadge: `${ugShifts.length || 57} Total Tests`,
         freeTestsBadge: '2 Free Tests',
         description:
           'Practice all official shifts conducted for RRB NTPC Under Graduate (CEN 06/2024). Includes exact question sequence, official answer keys, time limits, and negative marking.',
@@ -76,7 +77,7 @@ export default function TestSeriesPage() {
         negativeMarking: '0.25',
         languages: 'English · Hindi',
         logoUrl: '/assets/aistudio/image_cbd93505.png',
-        badge: '57 OFFICIAL SHIFTS',
+        badge: `${ugShifts.length || 57} OFFICIAL SHIFTS`,
         shifts: ugShifts
       };
     }
@@ -190,10 +191,13 @@ export default function TestSeriesPage() {
     }
 
     if (id.includes('appsc')) {
-      const appscShifts = ALL_CBT_SHIFTS.filter(
-        (s) => s.examType === 'APPSC Group II' || String(s.id).includes('appsc')
+      const loadedShifts = getAllShifts();
+      const appscShifts = loadedShifts.filter(
+        (s) =>
+          (s.examType === 'APPSC Group II' || String(s.id).includes('appsc')) &&
+          s.hasLoadedQuestions !== false
       );
-      const totalAppscQs = appscShifts.reduce((sum, s) => sum + (s.questionsCount || 150), 0) || 446;
+      const totalAppscQs = appscShifts.reduce((sum, s) => sum + (s.questionsCount || 0), 0);
       return {
         id: 'series-appsc-group2',
         bannerTitle: 'APPSC Group-2 (2024 & 2025) Official Question Paper Series (Prelims, P1 & P2)',
