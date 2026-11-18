@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -13,8 +13,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { ALL_CBT_SHIFTS } from '../data/allShiftsMetadata.js';
-import { getAllShifts } from '../services/rrbMockService.js';
+import { getAllShifts, loadAllShifts } from '../services/rrbMockService.js';
 import { FULL_MOCK_SERIES } from '../data/fullMockSeriesData.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 
@@ -22,10 +21,25 @@ export default function TestSeriesPage() {
   const { seriesId } = useParams();
   const navigate = useNavigate();
 
+  const [shifts, setShifts] = useState(() => getAllShifts());
   const [searchQuery, setSearchQuery] = useState('');
   const [shiftTimeFilter, setShiftTimeFilter] = useState('all'); // 'all' | 'morning' | 'afternoon' | 'evening'
   const [currentPage, setCurrentPage] = useState(1);
   const SHIFTS_PER_PAGE = 10; // Exactly 10 tests / papers per page as requested
+
+  useEffect(() => {
+    let mounted = true;
+    loadAllShifts()
+      .then((loaded) => {
+        if (mounted && Array.isArray(loaded) && loaded.length > 0) {
+          setShifts(loaded);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Local Bookmarks store
   const [bookmarkedIds, setBookmarkedIds] = useState(() => {
@@ -54,11 +68,13 @@ export default function TestSeriesPage() {
     const id = String(seriesId || '').toLowerCase();
 
     if (id.includes('rrb-ug') || id.includes('undergraduate') || id === 'ug') {
-      const ugShifts = ALL_CBT_SHIFTS.filter(
+      const ugShifts = shifts.filter(
         (s) =>
-          String(s.id).includes('ug') ||
-          String(s.examName || '').includes('Under Graduate') ||
-          s.examLevel === 'Under Graduate'
+          !(s.examType === 'RRB Group D' || String(s.id).includes('group-d')) &&
+          !(s.examType === 'APPSC Group II' || String(s.id).includes('appsc')) &&
+          (String(s.id).includes('ug') ||
+            String(s.examName || '').includes('Under Graduate') ||
+            s.examLevel === 'Under Graduate')
       );
       return {
         id: 'series-rrb-ug',
@@ -83,7 +99,7 @@ export default function TestSeriesPage() {
     }
 
     if (id.includes('rrb-grad') || id.includes('graduate') || id === 'grad') {
-      const gradShifts = ALL_CBT_SHIFTS.filter(
+      const gradShifts = shifts.filter(
         (s) => s.examLevel === 'Graduate' || String(s.id).includes('grad')
       );
       return {
@@ -103,13 +119,13 @@ export default function TestSeriesPage() {
         negativeMarking: '0.25',
         languages: 'English · Hindi',
         logoUrl: '/assets/aistudio/image_cbd93505.png',
-        badge: '71 OFFICIAL SHIFTS',
+        badge: `${gradShifts.length || 71} OFFICIAL SHIFTS`,
         shifts: gradShifts
       };
     }
 
     if (id.includes('group-d') || id.includes('level-1')) {
-      const groupDShifts = ALL_CBT_SHIFTS.filter(
+      const groupDShifts = shifts.filter(
         (s) => s.examType === 'RRB Group D' || String(s.id).includes('group-d')
       );
       return {
@@ -135,7 +151,7 @@ export default function TestSeriesPage() {
     }
 
     if (id.includes('ssc') && id.includes('2026')) {
-      const ssc2026 = ALL_CBT_SHIFTS.filter(
+      const ssc2026 = shifts.filter(
         (s) =>
           (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) &&
           (s.examYear === '2026' || String(s.id).includes('2026'))
@@ -163,7 +179,7 @@ export default function TestSeriesPage() {
     }
 
     if (id.includes('ssc') && (id.includes('2020') || id.includes('cgl'))) {
-      const ssc2020 = ALL_CBT_SHIFTS.filter(
+      const ssc2020 = shifts.filter(
         (s) =>
           (s.examType === 'SSC CGL' || String(s.id).includes('ssc')) &&
           (s.examYear === '2020' || String(s.id).includes('2020'))
@@ -191,8 +207,7 @@ export default function TestSeriesPage() {
     }
 
     if (id.includes('appsc')) {
-      const loadedShifts = getAllShifts();
-      const appscShifts = loadedShifts.filter(
+      const appscShifts = shifts.filter(
         (s) =>
           (s.examType === 'APPSC Group II' || String(s.id).includes('appsc')) &&
           s.hasLoadedQuestions !== false
@@ -200,14 +215,14 @@ export default function TestSeriesPage() {
       const totalAppscQs = appscShifts.reduce((sum, s) => sum + (s.questionsCount || 0), 0);
       return {
         id: 'series-appsc-group2',
-        bannerTitle: 'APPSC Group-2 (2024 & 2025) Official Question Paper Series (Prelims, P1 & P2)',
-        title: 'APPSC Group-2 (2024 & 2025) Official Bilingual Test Series',
+        bannerTitle: 'APPSC Group-2 (2024 Prelims & 2025 Mains P1, P2) Official Question Paper Series',
+        title: 'APPSC Group-2 (2024 Prelims & 2025 Mains) Official Bilingual Test Series',
         totalTestsBadge: `${appscShifts.length || 3} Official Papers`,
         freeTestsBadge: 'Free Test',
         description:
-          'Complete bilingual (English & Telugu) official APPSC Group-2 papers: 2024 Prelims (History, Geography, Indian Society, Current Affairs & Mental Ability) plus 2025 Paper-1 (AP History & Indian Constitution) and Paper-2 (Indian & AP Economy & Science & Technology).',
+          'Complete bilingual (English & Telugu) official APPSC Group-2 papers: 2024 Prelims (History, Geography, Indian Society, Current Affairs & Mental Ability) plus 2025 Mains Paper-1 (AP History & Indian Constitution) and Paper-2 (Indian & AP Economy & Science & Technology).',
         agency: 'APPSC',
-        examLevel: 'Group II (2024 Prelims · 2025 P1 & P2)',
+        examLevel: 'APPSC Group-2 (2024 Prelims · 2025 Mains)',
         totalTests: appscShifts.length || 3,
         questionsPerTest: 150,
         timeMinutes: 150,
@@ -215,7 +230,7 @@ export default function TestSeriesPage() {
         negativeMarking: '0.33',
         languages: 'English · Telugu',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
-        badge: `PRELIMS, P1 & P2 (${totalAppscQs} Qs)`,
+        badge: `PRELIMS & MAINS (${totalAppscQs} Qs)`,
         shifts: appscShifts
       };
     }
@@ -258,7 +273,7 @@ export default function TestSeriesPage() {
       badge: 'FULL CBT SIMULATION',
       shifts: fullMockShifts
     };
-  }, [seriesId]);
+  }, [seriesId, shifts]);
 
   // Helper for dynamic card title matching Image 1
   const getCardTitle = (shift, idx) => {
@@ -284,10 +299,12 @@ export default function TestSeriesPage() {
     if (seriesConfig.id.includes('appsc')) {
       if (shift.title) return shift.title;
       if (shift.paperNumber === 0 || shift.examYear === '2024' || String(shift.id || '').includes('2024-prelims')) {
-        return 'APPSC Group-2 Prelims (2024) – Full Official Paper';
+        return 'APPSC Group-2 Prelims (25 Feb 2024) – Screening Test (Official Bilingual)';
       }
       const paperNum = shift.paperNumber || (String(shift.id || '').includes('paper1') ? 1 : 2);
-      return `APPSC Group-2 Paper-${paperNum} (2025) – Set ${num}`;
+      return paperNum === 1
+        ? 'APPSC Group-2 Mains Paper-1 (23 Feb 2025) – AP History & Indian Constitution'
+        : 'APPSC Group-2 Mains Paper-2 (23 Feb 2025) – Economy & Science & Technology';
     }
     return shift.title || `${seriesConfig.agency} CBT–1 Full Mock – ${num}`;
   };

@@ -46,7 +46,10 @@ export default function StudyMaterialPage() {
   const filtered = resources.filter((item) => {
     const title = getLocalized(item.title).toLowerCase();
     const matchSearch = !searchQuery.trim() || title.includes(searchQuery.toLowerCase());
-    const matchCat = categoryFilter === 'All' || item.category === categoryFilter;
+    const matchCat =
+      categoryFilter === 'All' ||
+      item.category === categoryFilter ||
+      (categoryFilter === 'Previous-Year Papers' && item.category === 'Previous Year Question Papers');
     return matchSearch && matchCat;
   });
 

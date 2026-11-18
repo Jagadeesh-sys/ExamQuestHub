@@ -820,7 +820,7 @@ export const INITIAL_CURRENT_AFFAIRS = [
     sourceUrl: 'https://pib.gov.in',
     sourceName: 'Press Information Bureau (PIB) / ISRO Official Release',
     verifiedAt: '2026-10-27T18:00:00Z',
-    imageUrl: 'https://images.unsplash.com/photo-1517976487502-d216f9f6e632?auto=format&fit=crop&w=600&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
     examRelevance: ['UPSC', 'APPSC', 'TGPSC'],
     summary: {
       en: 'Indian Space Research Organisation carried out the second test vehicle mission (TV-D2) confirming aerodynamic separation and high-altitude drogue parachute deployment of the Gaganyaan crew module off the coast of Sriharikota.',
@@ -1224,6 +1224,24 @@ export const INITIAL_RESOURCES = [
     description: {
       en: 'Complete bilingual (English + Telugu) APPSC Group-2 Paper-1 (2025) Booklet 2G/201 Series (C) covering Section A: Social & Cultural History of Andhra Pradesh (Q1–75) and Section B: Indian Constitution (Q76–150).',
       te: 'ఆంధ్రప్రదేశ్ సాంఘిక, సాంస్కృతిక చరిత్ర (Q1–75) మరియు భారత రాజ్యాంగం (Q76–150) విభాగాలతో APPSC గ్రూప్-2 పేపర్-1 (2025) పూర్తి ద్విభాషా ప్రశ్నాపత్రం.'
+    }
+  },
+  {
+    id: 'pyq-appsc-group2-2024-prelims',
+    title: {
+      en: 'APPSC Group-2 Prelims (25 Feb 2024) Official Bilingual Question Paper (146 Questions)',
+      te: 'APPSC గ్రూప్-2 ప్రిలిమ్స్ (25 ఫిబ్రవరి 2024) అధికారిక తెలుగు & ఇంగ్లీష్ ప్రశ్నాపత్రం (146 ప్రశ్నలు)'
+    },
+    category: 'Previous Year Question Papers',
+    examBoard: 'APPSC',
+    year: '2024',
+    type: 'Official Question Paper & Answer Key',
+    fileSize: '36 Pages PDF (Booklet GS/2G/200 · Series A)',
+    downloadUrl: '/assets/aistudio/APPSC-Group-II-Preliminary-Exam-Official-Paper-Held-On_-25-Feb-2024_3a12a02d.pdf',
+    officialSource: 'https://psc.ap.gov.in',
+    description: {
+      en: 'Official bilingual (English + Telugu) APPSC Group-2 Preliminary Screening Test (25 Feb 2024) covering Indian History, Geography, Indian Society, Current Affairs & Mental Ability.',
+      te: 'భారత చరిత్ర, భూగోళశాస్త్రం, భారతీయ సమాజం, కరెంట్ అఫైర్స్ మరియు మెంటల్ ఎబిలిటీ విభాగాలతో APPSC గ్రూప్-2 ప్రిలిమ్స్ (25 ఫిబ్రవరి 2024) అధికారిక ప్రశ్నాపత్రం.'
     }
   }
 ];

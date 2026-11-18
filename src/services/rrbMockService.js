@@ -189,7 +189,7 @@ export function classifyComputerTopic(question) {
   return 'Computer Fundamentals & Awareness';
 }
 
-const STORAGE_KEY_CACHED_SHIFTS = 'eqh_cached_cbt_shifts_v8';
+const STORAGE_KEY_CACHED_SHIFTS = 'eqh_cached_cbt_shifts_v10';
 const OPTIONAL_DATA_FILES = new Set(['appscGroup2Prelims2024Full.json']);
 
 let cachedQuestions = null;
@@ -246,10 +246,12 @@ function getDataFileUrl(fileName) {
 }
 
 async function loadRrbDataFile(fileName) {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions?.node) {
     try {
-      const fs = await import('fs/promises');
-      const path = await import('path');
+      const fsModule = `fs/${'promises'}`;
+      const pathModule = `${'pa'}th`;
+      const fs = await import(/* @vite-ignore */ fsModule);
+      const path = await import(/* @vite-ignore */ pathModule);
       const fullPath = path.resolve(process.cwd(), 'public/data', fileName);
       const fileData = await fs.readFile(fullPath, 'utf-8');
       return JSON.parse(fileData);
@@ -350,8 +352,8 @@ export function getPaperInventorySummary() {
  * Fetch and cache all RRB, SSC & APPSC examination questions in parallel.
  * Sub-second sync with inflight promise deduplication.
  */
-export async function loadAllRRBQuestions() {
-  if (cachedQuestions && cachedQuestions.length > 0) {
+export async function loadAllRRBQuestions(forceRefresh = false) {
+  if (!forceRefresh && cachedQuestions && cachedQuestions.length > 0) {
     return applyLocalOverrides(cachedQuestions);
   }
 

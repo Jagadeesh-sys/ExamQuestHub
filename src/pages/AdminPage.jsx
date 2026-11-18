@@ -225,7 +225,12 @@ export default function AdminPage() {
   }, [currentUser, isAdmin]);
 
   // Track verified Firestore sync health for the dashboard banner + diagnostics.
-  useEffect(() => subscribeToSyncState(setSyncState), []);
+  useEffect(() => {
+    const unsubscribe = subscribeToSyncState(setSyncState);
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const triggerToast = (msg, type = 'success') => {
     setToastType(type);

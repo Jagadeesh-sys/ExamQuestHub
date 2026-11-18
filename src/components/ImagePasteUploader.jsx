@@ -29,8 +29,8 @@ export const EXAM_IMAGE_PRESETS = [
   },
   {
     id: 'space',
-    label: 'Space & ISRO',
-    url: 'https://images.unsplash.com/photo-1517976487502-d216f9f6e632?auto=format&fit=crop&w=600&q=80'
+    label: 'Global & Science',
+    url: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'economy',
@@ -80,14 +80,25 @@ export default function ImagePasteUploader({ value, onChange, label = 'Current A
 
     const reader = new FileReader();
     reader.onload = (e) => {
+      const result = e?.target?.result;
+      if (typeof result !== 'string' || !result) {
+        setPasteError('Failed to read image data.');
+        setPasteStatus('');
+        return;
+      }
       const img = new Image();
       img.onload = () => {
         const maxWidth = 1200;
-        const scale = Math.min(1, maxWidth / img.width);
+        const scale = Math.min(1, maxWidth / (img.width || maxWidth));
         const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          setPasteError('Image processing context is unavailable in this browser.');
+          setPasteStatus('');
+          return;
+        }
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         let quality = 0.72;
         let dataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -108,7 +119,7 @@ export default function ImagePasteUploader({ value, onChange, label = 'Current A
         setPasteError('Failed to process image.');
         setPasteStatus('');
       };
-      img.src = e.target.result;
+      img.src = result;
     };
     reader.onerror = () => {
       setPasteError('Failed to read image file.');

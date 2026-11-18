@@ -5,13 +5,13 @@ import { ArrowRight, BookOpen, Globe, Play, Target } from 'lucide-react';
 
 export const ONBOARDING_STORAGE_KEY = 'eqh_onboarding_v1_done';
 
-const CAP_LOGO_URL = '/assets/aistudio/examquesthub_cap_logo.webp';
-const CAP_LOGO_FALLBACK = '/assets/aistudio/examquesthub_cap_logo.png';
-const ONBOARDING_1_ARTWORK_URL = '/assets/aistudio/image_7ab1a23f.webp';
+const CAP_LOGO_URL = '/assets/aistudio/examquesthub_cap_logo.png';
+const CAP_LOGO_FALLBACK = '/assets/aistudio/examquesthub-logo.png';
+const ONBOARDING_1_ARTWORK_URL = '/assets/aistudio/image_7ab1a23f.png';
 const ONBOARDING_1_FALLBACK = '/assets/aistudio/image_7ab1a23f.png';
-const ONBOARDING_2_ARTWORK_URL = '/assets/aistudio/image_ce51b61f.webp';
+const ONBOARDING_2_ARTWORK_URL = '/assets/aistudio/image_ce51b61f.png';
 const ONBOARDING_2_FALLBACK = '/assets/aistudio/image_ce51b61f.png';
-const ONBOARDING_3_ARTWORK_URL = '/assets/aistudio/image_ac66ee33.webp';
+const ONBOARDING_3_ARTWORK_URL = '/assets/aistudio/image_ac66ee33.png';
 const ONBOARDING_3_FALLBACK = '/assets/aistudio/image_ac66ee33.png';
 
 const PRELOAD_IMAGE_URLS = [
@@ -19,9 +19,9 @@ const PRELOAD_IMAGE_URLS = [
   ONBOARDING_1_ARTWORK_URL,
   ONBOARDING_2_ARTWORK_URL,
   ONBOARDING_3_ARTWORK_URL,
-  '/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.webp',
-  '/assets/aistudio/image_3a3807e5.webp',
-  '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.webp'
+  '/assets/aistudio/file_0000000010cc8207b72f593050b0fa7c_1f1ac3d0.png',
+  '/assets/aistudio/image_3a3807e5.png',
+  '/assets/aistudio/file_00000000c4d882118daba62104aebfa5_00c0281b.png'
 ];
 
 /**

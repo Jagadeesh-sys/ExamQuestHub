@@ -2254,7 +2254,7 @@ export default function AdminMockTestsTab({
           confirmLabel="Delete Question"
           onConfirm={confirmDeleteQuestion}
           onCancel={() => setDeleteTarget(null)}
-          isDestructive={true}
+          confirmVariant="danger"
         />
       )}
     </div>

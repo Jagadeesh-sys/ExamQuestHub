@@ -28,7 +28,10 @@ export default function PreviousPapersPage() {
         const data = await getResources();
         // Filter those marked as Previous-Year Papers or related
         const pyqList = data.filter(
-          (r) => r.category === 'Previous-Year Papers' || r.type?.toLowerCase().includes('paper')
+          (r) =>
+            r.category === 'Previous-Year Papers' ||
+            r.category === 'Previous Year Question Papers' ||
+            r.type?.toLowerCase().includes('paper')
         );
         setResources(pyqList.length > 0 ? pyqList : data);
       } catch (err) {

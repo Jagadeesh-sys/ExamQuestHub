@@ -570,11 +570,11 @@ export default function MockTestsHubPage() {
       {
         id: 'series-appsc-group2',
         title: hasAppsc2024
-          ? 'APPSC Group-2 (2024 & 2025) Official Bilingual Papers (Prelims, P1 & P2)'
-          : 'APPSC Group-2 (2025) Official Bilingual Papers (Paper-1 & Paper-2)',
+          ? 'APPSC Group-2 (2024 Prelims & 2025 Mains P1, P2) Official Bilingual Papers'
+          : 'APPSC Group-2 (2025 Mains) Official Bilingual Papers (Paper-1 & Paper-2)',
         subtitle: hasAppsc2024
-          ? '2024 Prelims + 2025 Paper-1 & Paper-2 (English · Telugu)'
-          : '2025 Paper-1 (AP History & Polity) & Paper-2 (Economy & Sci-Tech)',
+          ? '2024 Prelims + 2025 Mains Paper-1 & Paper-2 (English · Telugu)'
+          : '2025 Mains Paper-1 (AP History & Polity) & Paper-2 (Economy & Sci-Tech)',
         totalTests: `${appscCount} Official Papers`,
         questionsCount: `${appscTotalQs.toLocaleString()} Qs`,
         languages: 'English · Telugu',
@@ -583,7 +583,7 @@ export default function MockTestsHubPage() {
         filterKey: 'appsc-group2',
         targetTab: 'pyqs',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
-        badge: hasAppsc2024 ? '2024–25 PRELIMS, P1 & P2' : '2025 P1 & P2'
+        badge: `${appscCount} PAPERS`
       },
       {
         id: 'series-rrb-group-d',
@@ -800,8 +800,8 @@ export default function MockTestsHubPage() {
     if (appscPrelimsShift) {
       list.push({
         id: appscPrelimsShift.id,
-        title: appscPrelimsShift.title || 'APPSC Group-2 Prelims (2024) – Full Official Paper',
-        examName: 'APPSC Group II',
+        title: appscPrelimsShift.title || 'APPSC Group-2 Prelims (25 Feb 2024) – Screening Test (Official Bilingual)',
+        examName: 'APPSC Group-2',
         questionsCount: firestoreStats.appsc2024Prelims || appscPrelimsShift.questionsCount || 146,
         timeMinutes: appscPrelimsShift.durationMinutes || 150,
         pattern: 'History · Geography · Society · CA · Mental Ability (EN + TE)',
@@ -822,14 +822,14 @@ export default function MockTestsHubPage() {
     if (appscP1Shift) {
       list.push({
         id: appscP1Shift.id,
-        title: appscP1Shift.title || 'APPSC Group-2 Paper-1 (2025) – History & Indian Constitution',
-        examName: 'APPSC Group II',
+        title: appscP1Shift.title || 'APPSC Group-2 Mains Paper-1 (23 Feb 2025) – AP History & Indian Constitution',
+        examName: 'APPSC Group-2',
         questionsCount: 150,
         timeMinutes: 150,
         pattern: '75 AP History · 75 Indian Constitution (EN + TE)',
         agency: 'APPSC',
         category: 'pyqs',
-        badge: 'PAPER-1',
+        badge: '2025 PAPER-1',
         badgeColor: 'bg-teal-100 text-teal-800',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
         rawObj: appscP1Shift
@@ -847,14 +847,14 @@ export default function MockTestsHubPage() {
     if (appscP2Shift) {
       list.push({
         id: appscP2Shift.id,
-        title: appscP2Shift.title || 'APPSC Group-2 Paper-2 (2025) – Full Official Paper',
-        examName: 'APPSC Group II',
+        title: appscP2Shift.title || 'APPSC Group-2 Mains Paper-2 (23 Feb 2025) – Economy & Science & Technology',
+        examName: 'APPSC Group-2',
         questionsCount: 150,
         timeMinutes: 150,
         pattern: '75 Indian & AP Economy · 75 Science & Technology (EN + TE)',
         agency: 'APPSC',
         category: 'pyqs',
-        badge: 'PAPER-2',
+        badge: '2025 PAPER-2',
         badgeColor: 'bg-teal-100 text-teal-800',
         logoUrl: '/assets/aistudio/image_3b1d93b9.png',
         rawObj: appscP2Shift
@@ -862,7 +862,7 @@ export default function MockTestsHubPage() {
     }
 
     return list;
-  }, [shifts]);
+  }, [shifts, firestoreStats.appsc2024Prelims]);
 
   const displayedDynamicTests = useMemo(() => {
     if (testSeriesSubFilter === 'rankers' || testSeriesSubFilter === 'full-mock') {
@@ -1504,13 +1504,13 @@ export default function MockTestsHubPage() {
                   ? '/assets/aistudio/RRB-NTPC-Graduate-2025-CBT1-EN-Official-Answer-Key_887400b5.pdf'
                   : '/assets/aistudio/RRB-NTPC-UG-2025-EN-All-Papers_copy_f08e8b76.pdf');
 
-                const testTitle = shift.title || (isAppscPrelims2024 ? 'APPSC Group-2 Prelims (2024) – Full Official Paper' : isAppscPaper1 ? 'APPSC Group-2 Paper-1 (2025) – History & Indian Constitution' : isAppsc ? 'APPSC Group-2 Paper-2 (2025)' : isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : isGroupD ? `RRB Group D 2025 Set ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`);
+                const testTitle = shift.title || (isAppscPrelims2024 ? 'APPSC Group-2 Prelims (25 Feb 2024) – Screening Test (Official Bilingual)' : isAppscPaper1 ? 'APPSC Group-2 Mains Paper-1 (23 Feb 2025) – AP History & Indian Constitution' : isAppsc ? 'APPSC Group-2 Mains Paper-2 (23 Feb 2025) – Economy & Science & Technology' : isSsc ? `SSC CGL Tier–I Shift ${shift.shiftNumber || 1}` : isGroupD ? `RRB Group D 2025 Set ${shift.shiftNumber || 1}` : `RRB NTPC CBT–1 Shift ${shift.shiftNumber || 1}`);
                 const badgeText = isAppscPrelims2024
                   ? '2024 PRELIMS'
                   : isAppscPaper1
-                  ? 'PAPER-1'
+                  ? '2025 PAPER-1'
                   : isAppsc
-                  ? 'PAPER-2'
+                  ? '2025 PAPER-2'
                   : isSsc
                   ? (shift.examYear === '2026' ? '2026 CBT' : 'TIER-1')
                   : isGroupD
@@ -1524,7 +1524,7 @@ export default function MockTestsHubPage() {
                   ? 'bg-rose-100 text-rose-800'
                   : (shift.examLevel === 'Graduate' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800');
                 const logoUrl = isAppsc ? '/assets/aistudio/image_3b1d93b9.png' : isSsc ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png';
-                const examLabel = isAppsc ? 'APPSC Group II' : isSsc ? 'SSC CGL' : isGroupD ? 'RRB Group D' : 'RRB NTPC';
+                const examLabel = isAppsc ? 'APPSC Group-2' : isSsc ? 'SSC CGL' : isGroupD ? 'RRB Group D' : 'RRB NTPC';
                 const qCount = shift.questionsCount || (isAppsc ? 150 : 100);
                 const duration = shift.durationMinutes || (isAppsc ? 150 : isSsc ? 60 : 90);
                 const negMarking = isAppsc ? '-0.33 Negative' : isSsc ? '-0.50 Negative' : isGroupD ? '-0.33 Negative' : '-0.25 Negative';

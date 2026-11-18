@@ -59,10 +59,10 @@ export const PRESET_DOCUMENTS = [
 ];
 
 export default function DocumentFileUploader({
-  value,
-  onChange,
-  onFileSizeChange,
-  onFileNameChange,
+  value = '',
+  onChange = () => {},
+  onFileSizeChange = undefined,
+  onFileNameChange = undefined,
   currentFileSize = '',
   label = 'Document / Question Paper File (PDF, DOC)'
 }) {
@@ -115,7 +115,12 @@ export default function DocumentFileUploader({
     // Read file as Data URL
     const reader = new FileReader();
     reader.onload = (e) => {
-      const dataUrl = e.target.result;
+      const dataUrl = e?.target?.result;
+      if (typeof dataUrl !== 'string' || !dataUrl) {
+        setUploadError('Failed to read document data.');
+        setUploadStatus('');
+        return;
+      }
       onChange(dataUrl);
       setUploadStatus(`Document "${file.name}" uploaded successfully!`);
       setTimeout(() => setUploadStatus(''), 4000);

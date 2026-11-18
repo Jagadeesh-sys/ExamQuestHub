@@ -389,12 +389,15 @@ export default function AdminSyllabusTab({ onNotify }) {
   };
 
   const removeSubjectAt = (sIdx) => {
+    if (!editingExam) return;
     const nextSubjects = (editingExam.subjects || []).filter((_, i) => i !== sIdx);
     setEditingExam({ ...editingExam, subjects: nextSubjects });
   };
 
   const addChapterToSubject = (sIdx) => {
+    if (!editingExam) return;
     const nextSubjects = [...(editingExam.subjects || [])];
+    if (!nextSubjects[sIdx]) return;
     const target = { ...nextSubjects[sIdx] };
     target.chapters = [
       ...(target.chapters || []),
@@ -410,15 +413,20 @@ export default function AdminSyllabusTab({ onNotify }) {
   };
 
   const updateChapterField = (sIdx, cIdx, patch) => {
+    if (!editingExam) return;
     const nextSubjects = [...(editingExam.subjects || [])];
+    if (!nextSubjects[sIdx]) return;
     const chapters = [...(nextSubjects[sIdx].chapters || [])];
+    if (!chapters[cIdx]) return;
     chapters[cIdx] = { ...chapters[cIdx], ...patch };
     nextSubjects[sIdx] = { ...nextSubjects[sIdx], chapters };
     setEditingExam({ ...editingExam, subjects: nextSubjects });
   };
 
   const removeChapterAt = (sIdx, cIdx) => {
+    if (!editingExam) return;
     const nextSubjects = [...(editingExam.subjects || [])];
+    if (!nextSubjects[sIdx]) return;
     nextSubjects[sIdx] = {
       ...nextSubjects[sIdx],
       chapters: (nextSubjects[sIdx].chapters || []).filter((_, i) => i !== cIdx)

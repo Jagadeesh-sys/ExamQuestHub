@@ -9,7 +9,7 @@ import React from 'react';
  *   - DATE NOT AVAILABLE / NEEDS VERIFICATION: Amber / slate badge
  *   - DRAFT / ADMIT CARD / RESULT: Domain specific badges
  */
-export default function StatusBadge({ status, subtext, size = 'sm', className = '' }) {
+export default function StatusBadge({ status, subtext = '', size = 'sm', className = '' }) {
   if (!status) return null;
 
   const normalized = String(status).trim().toLowerCase();

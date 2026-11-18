@@ -9,7 +9,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, isFirebaseConfigured } from '../firebase/config.js';
 import { logAppError } from '../utils/errorLogger.js';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 const LOCAL_ADMIN_KEY = 'eqh_demo_admin_user';
 const BOOTSTRAP_ADMIN_EMAILS = [
