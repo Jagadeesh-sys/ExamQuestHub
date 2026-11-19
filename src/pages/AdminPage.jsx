@@ -39,6 +39,7 @@ import {
   deleteUpdate,
   deleteAllUpdates,
   getCurrentAffairs,
+  subscribeToCurrentAffairs,
   saveCurrentAffair,
   bulkSaveCurrentAffairs,
   publishAllDraftCurrentAffairs,
@@ -252,7 +253,12 @@ export default function AdminPage() {
   useEffect(() => {
     if (currentUser && isAdmin) {
       loadAllAdminData();
+      const unsubCa = subscribeToCurrentAffairs((caList) => {
+        setCurrentAffairs(caList || []);
+      }, true);
+      return () => unsubCa();
     }
+    return undefined;
   }, [currentUser, isAdmin]);
 
   // Track verified Firestore sync health for the dashboard banner + diagnostics.
@@ -593,7 +599,8 @@ export default function AdminPage() {
     setCaImportSummary({ ok, failed: errors.length, errors, warnings, duplicates });
 
     if (ok > 0) {
-      await refreshCurrentAffairsOnly();
+      setCaImportJson('');
+      refreshCurrentAffairsOnly();
       triggerToast(
         `Imported ${ok} current affairs article${ok === 1 ? '' : 's'} & synced to Reels${
           duplicates.length ? `, ${duplicates.length} duplicate skipped` : ''
@@ -3357,7 +3364,12 @@ export default function AdminPage() {
             <textarea
               rows={12}
               value={caImportJson}
-              onChange={(e) => setCaImportJson(e.target.value)}
+              onChange={(e) => {
+                setCaImportJson(e.target.value);
+                if (caImportSummary && e.target.value.trim()) {
+                  setCaImportSummary(null);
+                }
+              }}
               spellCheck={false}
               placeholder='[ { "headline": { "en": "...", "te": "..." }, "summary": { "en": "..." }, "sourceUrl": "https://...", "topic": "National Affairs", "imageUrl": "https://..." } ]'
               className="w-full p-3 bg-[#F6F8FC] border border-slate-200 rounded-xl focus:bg-white font-mono text-[11px] leading-relaxed"
