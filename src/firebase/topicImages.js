@@ -1,3 +1,5 @@
+import { normalizeTopic } from '../constants/currentAffairs.js';
+
 export const DEFAULT_TOPIC_IMAGES = {
   'National Affairs': 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80',
   'National news': 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80',
@@ -22,7 +24,9 @@ export const DEFAULT_TOPIC_IMAGES = {
 };
 
 export const getDefaultImageForTopic = (topic) => {
-  return DEFAULT_TOPIC_IMAGES[topic] || DEFAULT_TOPIC_IMAGES.Default;
+  if (DEFAULT_TOPIC_IMAGES[topic]) return DEFAULT_TOPIC_IMAGES[topic];
+  const canonical = normalizeTopic(topic);
+  return DEFAULT_TOPIC_IMAGES[canonical] || DEFAULT_TOPIC_IMAGES.Default;
 };
 
 const BROKEN_IMAGE_URL_FRAGMENTS = ['photo-1517976487502-d216f9f6e632'];

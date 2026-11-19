@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { lazyWithRetry } from './utils/lazyWithRetry.js';
+import { prefetchCurrentAffairs } from './firebase/firestoreService.js';
 
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
@@ -108,10 +109,12 @@ export default function App() {
 
   // React has committed its first render — remove the document-level boot overlay
   // defined in index.html so users never sit on a blank or endless loading screen.
+  // Also pre-warm Current Affairs Reels cache & live listener in the background.
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof window.__EQH_BOOT_DONE === 'function') {
       window.__EQH_BOOT_DONE();
     }
+    prefetchCurrentAffairs().catch(() => {});
   }, []);
 
   // Allow Header/Footer "Welcome Tour" actions to replay Splash + Onboarding 1 & 2

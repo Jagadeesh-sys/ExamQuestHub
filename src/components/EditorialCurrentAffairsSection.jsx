@@ -27,7 +27,8 @@ import {
   Zap,
   ArrowDown,
   Grid,
-  LayoutList
+  LayoutList,
+  RefreshCw
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StraightLineCurrentAffair from './StraightLineCurrentAffair.jsx';
@@ -323,7 +324,8 @@ export default function EditorialCurrentAffairsSection({
   showViewToggle = true,
   initialViewMode = 'editorial', // 'editorial' | 'threeInRow' | 'singleAlign' | 'grid' | 'reels'
   mobileReels = false, // when true, phones open straight into the Reels-style feed
-  onOpenAdminImageModal = null // optional callback if admin wants quick image paste
+  onOpenAdminImageModal = null, // optional callback if admin wants quick image paste
+  onSyncNow = null // optional async handler to force-refresh from Firestore server
 }) {
   const { t, getLocalized } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
@@ -335,10 +337,29 @@ export default function EditorialCurrentAffairsSection({
   );
   const [bookmarkedIds, setBookmarkedIds] = useState({});
   const [expandedIds, setExpandedIds] = useState({});
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [justSynced, setJustSynced] = useState(false);
+  const [activeReelIdx, setActiveReelIdx] = useState(0);
   const reelsScrollRef = useRef(null);
+  const preloadedUrlsRef = useRef(new Set());
+
+  const handleManualSync = async () => {
+    if (!onSyncNow || isSyncing) return;
+    setIsSyncing(true);
+    try {
+      await onSyncNow(false);
+      setJustSynced(true);
+      setTimeout(() => setJustSynced(false), 1800);
+    } catch {
+      // ignore manual refresh error
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Reset Reels scroll position when filter/topic changes so user starts cleanly at top
   useEffect(() => {
+    setActiveReelIdx(0);
     if (viewMode === 'reels' && reelsScrollRef.current) {
       reelsScrollRef.current.scrollTo({ top: 0, behavior: 'auto' });
     }
@@ -424,17 +445,18 @@ export default function EditorialCurrentAffairsSection({
 
   // Deduplicate articles strictly by unique ID or normalized headline to avoid duplicate current affairs
   const uniqueArticles = React.useMemo(() => {
-    const seen = new Set();
+    const seenIds = new Set();
+    const seenHeadlines = new Set();
     const result = [];
     for (const art of articles || []) {
       if (!art) continue;
-      const h = (typeof art.headline === 'object' ? art.headline.en : art.headline) || '';
-      const cleanH = h.trim().toLowerCase();
+      const rawH = typeof art.headline === 'object' ? (art.headline?.en || art.headline?.te || '') : (art.headline || art.title || '');
+      const cleanH = String(rawH).trim().toLowerCase();
       const idKey = art.id ? String(art.id) : '';
-      if (idKey && seen.has(idKey)) continue;
-      if (cleanH && seen.has(cleanH)) continue;
-      if (idKey) seen.add(idKey);
-      if (cleanH) seen.add(cleanH);
+      if (idKey && seenIds.has(idKey)) continue;
+      if (cleanH && seenHeadlines.has(cleanH)) continue;
+      if (idKey) seenIds.add(idKey);
+      if (cleanH) seenHeadlines.add(cleanH);
       result.push(art);
     }
     return result;
@@ -452,6 +474,21 @@ export default function EditorialCurrentAffairsSection({
       return matchSearch && matchTopic;
     });
   }, [uniqueArticles, searchQuery, selectedTopic, getLocalized]);
+
+  // Preload upcoming 3 Reel images so swiping feels instantaneous
+  useEffect(() => {
+    if (viewMode !== 'reels' || typeof window === 'undefined' || !filtered.length) return;
+    const start = Math.max(0, activeReelIdx);
+    const end = Math.min(filtered.length, start + 4);
+    for (let i = start; i < end; i += 1) {
+      const url = filtered[i]?.imageUrl;
+      if (url && !preloadedUrlsRef.current.has(url)) {
+        preloadedUrlsRef.current.add(url);
+        const img = new window.Image();
+        img.src = url;
+      }
+    }
+  }, [viewMode, activeReelIdx, filtered]);
 
   // Month + year grouping for the list views, driven by deduplicated filtered articles
   const monthGroups = React.useMemo(() => {
@@ -655,14 +692,28 @@ export default function EditorialCurrentAffairsSection({
                   <p className="text-[9.5px] text-slate-500 font-bold">Swipe up for next update</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setViewMode('editorial')}
-                className="flex items-center gap-1.5 py-1 text-[11px] font-black text-[#0B1F3A] bg-transparent hover:text-[#2468B4] active:scale-95 transition-all cursor-pointer"
-              >
-                <Grid className="w-3.5 h-3.5" />
-                <span>Classic View</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {onSyncNow && (
+                  <button
+                    type="button"
+                    onClick={handleManualSync}
+                    disabled={isSyncing}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[10px] font-bold text-[#12345A] hover:bg-blue-50 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+                    title="Sync latest news from Admin"
+                  >
+                    <RefreshCw className={`w-3 h-3 text-[#2468B4] ${isSyncing ? 'animate-spin' : ''}`} />
+                    <span>{isSyncing ? 'Syncing' : justSynced ? 'Synced' : 'Sync'}</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setViewMode('editorial')}
+                  className="flex items-center gap-1.5 py-1 text-[11px] font-black text-[#0B1F3A] bg-transparent hover:text-[#2468B4] active:scale-95 transition-all cursor-pointer"
+                >
+                  <Grid className="w-3.5 h-3.5" />
+                  <span>Classic View</span>
+                </button>
+              </div>
             </div>
 
             {/* Topic Pills */}
@@ -705,6 +756,14 @@ export default function EditorialCurrentAffairsSection({
           ) : (
             <div
               ref={reelsScrollRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const h = el.clientHeight || 1;
+                const nextIdx = Math.round(el.scrollTop / h);
+                if (nextIdx !== activeReelIdx) {
+                  setActiveReelIdx(nextIdx);
+                }
+              }}
               className="flex-1 min-h-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain no-scrollbar touch-pan-y bg-white"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >

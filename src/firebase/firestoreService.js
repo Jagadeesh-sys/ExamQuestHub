@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  getDocsFromServer,
   getDoc,
   setDoc,
   deleteDoc,
@@ -17,6 +18,7 @@ import {
   INITIAL_RESOURCES
 } from '../data/initialData.js';
 import { logAppError } from '../utils/errorLogger.js';
+import { getIdbItem, setIdbItem } from '../utils/idbCache.js';
 import {
   AUTO_CLOSED_FLAG,
   hasDeadlinePassed,
@@ -36,6 +38,7 @@ export { DEFAULT_TOPIC_IMAGES };
 const STORAGE_KEYS = {
   UPDATES: 'eqh_db_updates_v1',
   CURRENT_AFFAIRS: 'eqh_db_current_affairs_v1',
+  CURRENT_AFFAIRS_LITE: 'eqh_db_current_affairs_lite_v1',
   QUESTIONS: 'eqh_db_questions_v1',
   MOCK_QUESTIONS: 'eqh_db_mock_questions_v1',
   MOCK_STATS: 'eqh_db_mock_stats_v7',
@@ -43,9 +46,14 @@ const STORAGE_KEYS = {
   ADMINS: 'eqh_db_admins_v1'
 };
 
+const IDB_CURRENT_AFFAIRS_KEY = 'eqh_idb_current_affairs_v1';
 const MAX_INLINE_BYTES = 700000;
 let lastFirestoreError = null;
 let inMemoryCurrentAffairs = null;
+let caIdbHydrated = false;
+let caPersistentUnsubscribe = null;
+let caPrefetchPromise = null;
+let lastServerRefreshMs = 0;
 
 export function getLastFirestoreError() {
   return lastFirestoreError;
@@ -494,127 +502,361 @@ export async function deleteAllUpdates() {
   return true;
 }
 
-export async function getCurrentAffairs(includeDrafts = false) {
-  if (isFirebaseConfigured && db) {
-    try {
-      const list = sortByDateDesc(await fetchCollection('currentAffairs')).map((item) => ({
-        ...item,
-        imageUrl: sanitizeTopicImageUrl(item.imageUrl, item.topic),
-        examRelevance: item.examRelevance?.length ? item.examRelevance : ['UPSC', 'APPSC', 'SSC']
-      }));
-      saveLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, list);
-      markSyncSuccess();
-      return includeDrafts ? list : list.filter((item) => !isDraft(item));
-    } catch (err) {
-      recordError('firestoreService.getCurrentAffairs', err);
-      markSyncFailure(err);
-      const cached = cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
-      const source = cached.length ? cached : INITIAL_CURRENT_AFFAIRS;
-      const list = source.map((item) => ({
-        ...item,
-        imageUrl: sanitizeTopicImageUrl(item.imageUrl, item.topic),
-        examRelevance: item.examRelevance?.length ? item.examRelevance : ['UPSC', 'APPSC', 'SSC']
-      }));
-      return includeDrafts ? list : list.filter((item) => !isDraft(item));
-    }
-  }
+function sortCurrentAffairsDesc(items) {
+  return [...items].sort((a, b) => {
+    const aEvent = String(a?.eventDate || a?.publishedAt || '');
+    const bEvent = String(b?.eventDate || b?.publishedAt || '');
+    if (bEvent !== aEvent) return bEvent.localeCompare(aEvent);
 
-  const list = getLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, INITIAL_CURRENT_AFFAIRS).map((item) => ({
+    const aPub = String(a?.publishedAt || '');
+    const bPub = String(b?.publishedAt || '');
+    if (bPub !== aPub) return bPub.localeCompare(aPub);
+
+    const aMod = String(a?.updatedAt || a?.serverUpdatedAt || a?.verifiedAt || a?.createdAt || a?.id || '');
+    const bMod = String(b?.updatedAt || b?.serverUpdatedAt || b?.verifiedAt || b?.createdAt || b?.id || '');
+    return bMod.localeCompare(aMod);
+  });
+}
+
+function decorateCurrentAffair(item) {
+  if (!item) return null;
+  return {
     ...item,
     imageUrl: sanitizeTopicImageUrl(item.imageUrl, item.topic),
     examRelevance: item.examRelevance?.length ? item.examRelevance : ['UPSC', 'APPSC', 'SSC']
-  }));
-  return includeDrafts ? list : list.filter((item) => !isDraft(item));
+  };
 }
 
-export function subscribeToCurrentAffairs(callback, includeDrafts = false) {
-  let liveSettled = false;
-  const decorate = (list) => {
-    const source = Array.isArray(list) && list.length > 0 ? list : INITIAL_CURRENT_AFFAIRS;
-    return sortByDateDesc(source).map((item) => ({
+function decorateCurrentAffairsList(rawList) {
+  const source = Array.isArray(rawList) && rawList.length > 0 ? rawList : INITIAL_CURRENT_AFFAIRS;
+  return sortCurrentAffairsDesc(source).map(decorateCurrentAffair);
+}
+
+const currentAffairsSubscribers = new Set();
+
+const caBroadcastChannel =
+  typeof window !== 'undefined' && typeof window.BroadcastChannel !== 'undefined'
+    ? new window.BroadcastChannel('eqh_ca_sync')
+    : null;
+
+function buildLiteCurrentAffairsSnapshot(sortedList) {
+  return sortedList.map((item) => {
+    const img = typeof item?.imageUrl === 'string' ? item.imageUrl : '';
+    const isLargeInline = img.startsWith('data:') && img.length > 2048;
+    if (!isLargeInline) return item;
+    return {
       ...item,
-      imageUrl: sanitizeTopicImageUrl(item.imageUrl, item.topic),
-      examRelevance: item.examRelevance?.length ? item.examRelevance : ['UPSC', 'APPSC', 'SSC']
-    }));
-  };
-  const emit = (items) => {
-    const next = decorate(items);
-    callback(includeDrafts ? next : next.filter((item) => !isDraft(item)));
-  };
+      imageUrl: getDefaultImageForTopic(item.topic)
+    };
+  });
+}
 
-  // 1. Immediately emit in-memory, cached, or seed articles so ALL current affairs open instantaneously (0ms)
-  const initialCached = inMemoryCurrentAffairs?.length
-    ? inMemoryCurrentAffairs
-    : cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
-  emit(initialCached.length ? initialCached : INITIAL_CURRENT_AFFAIRS);
+function readCachedCurrentAffairsSync() {
+  if (Array.isArray(inMemoryCurrentAffairs) && inMemoryCurrentAffairs.length > 0) {
+    return inMemoryCurrentAffairs;
+  }
+  const lite = cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS_LITE);
+  if (lite.length > 0) {
+    return lite;
+  }
+  return cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
+}
 
-  if (isFirebaseConfigured && db) {
-    const timeoutId = setTimeout(() => {
-      if (!liveSettled) {
-        const cached = cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
-        if (cached.length) emit(cached);
-      }
-    }, 3500);
+function persistCurrentAffairsCache(rawList, { broadcast = false } = {}) {
+  const sorted = sortCurrentAffairsDesc(Array.isArray(rawList) ? rawList : []);
+  inMemoryCurrentAffairs = sorted;
+  caIdbHydrated = true;
 
+  if (sorted.length > 0) {
+    setIdbItem(IDB_CURRENT_AFFAIRS_KEY, sorted).catch(() => {});
+    const lite = buildLiteCurrentAffairsSnapshot(sorted);
+    saveLocalData(STORAGE_KEYS.CURRENT_AFFAIRS_LITE, lite);
+    saveLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, sorted);
+  }
+
+  if (broadcast && caBroadcastChannel) {
     try {
-      const unsubscribe = onSnapshot(
-        collection(db, 'currentAffairs'),
-        (snapshot) => {
-          liveSettled = true;
-          clearTimeout(timeoutId);
-          const list = sortByDateDesc(snapshot.docs.map((d) => hydrateDoc(d.id, d.data())));
-          if (list.length > 0) {
-            inMemoryCurrentAffairs = list;
-            saveLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, list);
-          }
-          markSyncSuccess();
-          emit(list);
-        },
-        (error) => {
-          liveSettled = true;
-          clearTimeout(timeoutId);
-          recordError('subscribeToCurrentAffairs', error);
-          markSyncFailure(error);
-        }
-      );
-      return () => {
-        clearTimeout(timeoutId);
-        unsubscribe();
-      };
+      caBroadcastChannel.postMessage({ type: 'CA_UPDATED', ts: Date.now() });
+    } catch {
+      // ignore broadcast errors in restricted contexts
+    }
+  }
+  return sorted;
+}
+
+function notifyCurrentAffairsSubscribers(rawList) {
+  const decorated = decorateCurrentAffairsList(rawList);
+  currentAffairsSubscribers.forEach((entry) => {
+    try {
+      const filtered = entry.includeDrafts ? decorated : decorated.filter((item) => !isDraft(item));
+      entry.callback(filtered);
     } catch (err) {
-      liveSettled = true;
-      clearTimeout(timeoutId);
-      recordError('subscribeToCurrentAffairs', err);
+      console.warn('[CurrentAffairsSubscriber] Error in listener:', err);
+    }
+  });
+}
+
+async function hydrateCurrentAffairsFromIdb({ notify = true } = {}) {
+  try {
+    const idbList = await getIdbItem(IDB_CURRENT_AFFAIRS_KEY);
+    if (Array.isArray(idbList) && idbList.length > 0) {
+      const sorted = sortCurrentAffairsDesc(idbList);
+      if (!caIdbHydrated || !inMemoryCurrentAffairs || inMemoryCurrentAffairs.length === 0) {
+        inMemoryCurrentAffairs = sorted;
+        caIdbHydrated = true;
+        if (notify) {
+          notifyCurrentAffairsSubscribers(sorted);
+        }
+      }
+      return sorted;
+    }
+  } catch {
+    // ignore IDB failures
+  }
+  return null;
+}
+
+function ensureCurrentAffairsLiveSync() {
+  if (!isFirebaseConfigured || !db || caPersistentUnsubscribe) return;
+
+  try {
+    caPersistentUnsubscribe = onSnapshot(
+      collection(db, 'currentAffairs'),
+      (snapshot) => {
+        const items = sortCurrentAffairsDesc(snapshot.docs.map((d) => hydrateDoc(d.id, d.data())));
+        if (items.length > 0) {
+          persistCurrentAffairsCache(items);
+        }
+        markSyncSuccess();
+        notifyCurrentAffairsSubscribers(items);
+      },
+      (error) => {
+        recordError('subscribeToCurrentAffairs', error);
+        markSyncFailure(error);
+        caPersistentUnsubscribe = null;
+      }
+    );
+  } catch (err) {
+    recordError('subscribeToCurrentAffairs', err);
+    caPersistentUnsubscribe = null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  if (caBroadcastChannel) {
+    caBroadcastChannel.onmessage = (event) => {
+      if (event?.data?.type === 'CA_UPDATED') {
+        getIdbItem(IDB_CURRENT_AFFAIRS_KEY)
+          .then((idbList) => {
+            if (Array.isArray(idbList) && idbList.length > 0) {
+              const sorted = sortCurrentAffairsDesc(idbList);
+              inMemoryCurrentAffairs = sorted;
+              caIdbHydrated = true;
+              notifyCurrentAffairsSubscribers(sorted);
+            }
+          })
+          .catch(() => {});
+      }
+    };
+  }
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEYS.CURRENT_AFFAIRS_LITE || e.key === STORAGE_KEYS.CURRENT_AFFAIRS) {
+      getIdbItem(IDB_CURRENT_AFFAIRS_KEY)
+        .then((idbList) => {
+          if (Array.isArray(idbList) && idbList.length > 0) {
+            const sorted = sortCurrentAffairsDesc(idbList);
+            inMemoryCurrentAffairs = sorted;
+            caIdbHydrated = true;
+            notifyCurrentAffairsSubscribers(sorted);
+          } else if (e.newValue) {
+            try {
+              const parsed = JSON.parse(e.newValue);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                notifyCurrentAffairsSubscribers(parsed);
+              }
+            } catch {
+              // ignore
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  });
+
+  const handleResumeResync = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+    if (currentAffairsSubscribers.size === 0 || !isFirebaseConfigured || !db) return;
+    const now = Date.now();
+    if (now - lastServerRefreshMs < 15000) return;
+    lastServerRefreshMs = now;
+    refreshCurrentAffairsFromServer().catch(() => {});
+  };
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleResumeResync);
+  }
+  window.addEventListener('online', handleResumeResync);
+}
+
+/**
+ * Synchronous zero-latency read of cached Current Affairs for instant initial UI state.
+ * Returns null when no cached Admin articles exist yet so callers know live data is pending.
+ */
+export function getInstantCachedCurrentAffairs(includeDrafts = false) {
+  const cached = readCachedCurrentAffairsSync();
+  if (!cached || cached.length === 0) return null;
+  const decorated = decorateCurrentAffairsList(cached);
+  return includeDrafts ? decorated : decorated.filter((item) => !isDraft(item));
+}
+
+/**
+ * Warm up IndexedDB + persistent Firestore listener in the background on app boot
+ * so Reels News opens instantaneously with all Admin-uploaded articles.
+ */
+export function prefetchCurrentAffairs() {
+  if (caPrefetchPromise) return caPrefetchPromise;
+  caPrefetchPromise = (async () => {
+    await hydrateCurrentAffairsFromIdb({ notify: true });
+    ensureCurrentAffairsLiveSync();
+  })();
+  return caPrefetchPromise;
+}
+
+/**
+ * Force-fetch the latest Current Affairs directly from the Firestore server,
+ * bypassing stale client caches, and immediately push to all active Reels subscribers.
+ */
+export async function refreshCurrentAffairsFromServer(includeDrafts = false) {
+  lastServerRefreshMs = Date.now();
+  if (isFirebaseConfigured && db) {
+    try {
+      let snapshot;
+      try {
+        snapshot = await getDocsFromServer(collection(db, 'currentAffairs'));
+      } catch {
+        snapshot = await getDocs(collection(db, 'currentAffairs'));
+      }
+      const items = sortCurrentAffairsDesc(snapshot.docs.map((d) => hydrateDoc(d.id, d.data())));
+      if (items.length > 0) {
+        persistCurrentAffairsCache(items);
+      }
+      markSyncSuccess();
+      notifyCurrentAffairsSubscribers(items);
+      const decorated = decorateCurrentAffairsList(items);
+      return includeDrafts ? decorated : decorated.filter((item) => !isDraft(item));
+    } catch (err) {
+      recordError('firestoreService.refreshCurrentAffairsFromServer', err);
+      markSyncFailure(err);
+    }
+  }
+  return getCurrentAffairs(includeDrafts);
+}
+
+export async function getCurrentAffairs(includeDrafts = false) {
+  if (isFirebaseConfigured && db) {
+    try {
+      const items = sortCurrentAffairsDesc(await fetchCollection('currentAffairs'));
+      if (items.length > 0) {
+        persistCurrentAffairsCache(items);
+      }
+      markSyncSuccess();
+      notifyCurrentAffairsSubscribers(items);
+      const decorated = decorateCurrentAffairsList(items);
+      return includeDrafts ? decorated : decorated.filter((item) => !isDraft(item));
+    } catch (err) {
+      recordError('firestoreService.getCurrentAffairs', err);
+      markSyncFailure(err);
+      const idbFallback = await hydrateCurrentAffairsFromIdb({ notify: false });
+      const cached = idbFallback || readCachedCurrentAffairsSync();
+      const decorated = decorateCurrentAffairsList(cached);
+      return includeDrafts ? decorated : decorated.filter((item) => !isDraft(item));
     }
   }
 
-  return () => {};
+  const idbFallback = await hydrateCurrentAffairsFromIdb({ notify: false });
+  const cached = idbFallback || readCachedCurrentAffairsSync();
+  const decorated = decorateCurrentAffairsList(cached);
+  return includeDrafts ? decorated : decorated.filter((item) => !isDraft(item));
+}
+
+export function subscribeToCurrentAffairs(callback, includeDrafts = false) {
+  const subscriberEntry = { callback, includeDrafts };
+  currentAffairsSubscribers.add(subscriberEntry);
+
+  const emitImmediate = (rawItems) => {
+    const decorated = decorateCurrentAffairsList(rawItems);
+    callback(includeDrafts ? decorated : decorated.filter((item) => !isDraft(item)));
+  };
+
+  // 1. Immediately emit from in-memory or lite localStorage cache (0ms, no skeleton wait)
+  const syncCached = readCachedCurrentAffairsSync();
+  if (syncCached.length > 0) {
+    emitImmediate(syncCached);
+  } else if (!isFirebaseConfigured || !db) {
+    emitImmediate(INITIAL_CURRENT_AFFAIRS);
+  }
+
+  // 2. Hydrate full images/data from IndexedDB right away
+  if (!caIdbHydrated) {
+    hydrateCurrentAffairsFromIdb({ notify: true });
+  }
+
+  // 3. Keep persistent Firestore onSnapshot active so Admin uploads sync live in real time
+  ensureCurrentAffairsLiveSync();
+
+  // Safety fallback if Firestore is completely unreachable on first cold boot
+  let fallbackTimer = null;
+  if (isFirebaseConfigured && db && syncCached.length === 0) {
+    fallbackTimer = setTimeout(() => {
+      const latestCached = readCachedCurrentAffairsSync();
+      emitImmediate(latestCached.length ? latestCached : INITIAL_CURRENT_AFFAIRS);
+    }, 3500);
+  }
+
+  return () => {
+    if (fallbackTimer) clearTimeout(fallbackTimer);
+    currentAffairsSubscribers.delete(subscriberEntry);
+  };
 }
 
 export async function getCurrentAffairById(id) {
   if (!id) return null;
-  const decorate = (item) =>
-    item
-      ? {
-          ...item,
-          imageUrl: sanitizeTopicImageUrl(item.imageUrl, item.topic),
-          examRelevance: item.examRelevance?.length ? item.examRelevance : ['UPSC', 'APPSC', 'SSC']
-        }
-      : null;
+
+  // 1. Instant 0ms lookup from in-memory or lite cache
+  const syncList = readCachedCurrentAffairsSync();
+  const foundSync = syncList.find((item) => item.id === id || item.slug === id);
+  if (foundSync && !(typeof foundSync.imageUrl === 'string' && !caIdbHydrated)) {
+    return decorateCurrentAffair(foundSync);
+  }
+
+  // 2. Check IndexedDB full cache (has full pasted images)
+  const idbList = await getIdbItem(IDB_CURRENT_AFFAIRS_KEY).catch(() => null);
+  if (Array.isArray(idbList)) {
+    const foundIdb = idbList.find((item) => item.id === id || item.slug === id);
+    if (foundIdb) return decorateCurrentAffair(foundIdb);
+  }
+
+  if (foundSync) {
+    return decorateCurrentAffair(foundSync);
+  }
 
   if (isFirebaseConfigured && db) {
     try {
       const direct = await getDoc(doc(db, 'currentAffairs', id));
-      if (direct.exists()) return decorate(hydrateDoc(direct.id, direct.data()));
+      if (direct.exists()) return decorateCurrentAffair(hydrateDoc(direct.id, direct.data()));
       const items = await fetchCollection('currentAffairs');
-      return decorate(items.find((item) => item.id === id || item.slug === id) || null);
+      if (items.length > 0) {
+        persistCurrentAffairsCache(items);
+      }
+      return decorateCurrentAffair(items.find((item) => item.id === id || item.slug === id) || null);
     } catch (err) {
       recordError('firestoreService.getCurrentAffairById', err);
     }
   }
 
-  const list = getLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, INITIAL_CURRENT_AFFAIRS);
-  return decorate(list.find((item) => item.id === id || item.slug === id) || null);
+  const fallback = INITIAL_CURRENT_AFFAIRS.find((item) => item.id === id || item.slug === id) || null;
+  return decorateCurrentAffair(fallback);
 }
 
 export async function saveCurrentAffair(article) {
@@ -633,6 +875,7 @@ export async function saveCurrentAffair(article) {
     status,
     publishedAt: article.publishedAt || nowIso.split('T')[0],
     createdAt: article.createdAt || nowIso,
+    updatedAt: nowIso,
     verifiedAt: nowIso,
     imageUrl: article.imageUrl || getDefaultImageForTopic(article.topic)
   });
@@ -646,13 +889,109 @@ export async function saveCurrentAffair(article) {
     throw new Error(`Firestore save failed: ${msg}`);
   }
 
-  const list = cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS);
-  const index = list.findIndex((entry) => entry.id === id);
-  if (index >= 0) list[index] = payload;
-  else list.unshift(payload);
-  saveLocalData(STORAGE_KEYS.CURRENT_AFFAIRS, list);
+  const baseList = [...(readCachedCurrentAffairsSync() || [])];
+  const index = baseList.findIndex((entry) => entry.id === id);
+  if (index >= 0) baseList[index] = payload;
+  else baseList.unshift(payload);
+
+  const sorted = persistCurrentAffairsCache(baseList, { broadcast: true });
+  notifyCurrentAffairsSubscribers(sorted);
   markSyncSuccess();
   return payload;
+}
+
+/**
+ * High-speed batched upload for bulk importing Current Affairs articles.
+ * Writes in Firestore batch chunks and performs a single instant Reels cache & subscriber sync.
+ */
+export async function bulkSaveCurrentAffairs(articles) {
+  requireFirebaseWrite();
+  if (!Array.isArray(articles) || articles.length === 0) return [];
+
+  const nowIso = new Date().toISOString();
+  const today = nowIso.split('T')[0];
+  const prepared = [];
+
+  for (const article of articles) {
+    const id = safeId(article.id || `ca-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, 'ca');
+    const rawSlug = article.slug || (typeof article.headline === 'string' ? article.headline : article.headline?.en || id);
+    const slug = safeId(rawSlug, id);
+    const status = article.status || 'Published';
+
+    const payload = stripUndefined({
+      ...article,
+      id,
+      slug,
+      status,
+      eventDate: article.eventDate || today,
+      publishedAt: article.publishedAt || today,
+      createdAt: article.createdAt || nowIso,
+      updatedAt: nowIso,
+      verifiedAt: nowIso,
+      imageUrl: article.imageUrl || getDefaultImageForTopic(article.topic)
+    });
+    assertInlineSize(payload);
+    prepared.push(payload);
+  }
+
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < prepared.length; i += BATCH_SIZE) {
+    const chunk = prepared.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach((payload) => {
+      batch.set(doc(db, 'currentAffairs', payload.id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });
+    });
+    await batch.commit();
+  }
+
+  const map = new Map((readCachedCurrentAffairsSync() || []).map((item) => [item.id, item]));
+  prepared.forEach((payload) => map.set(payload.id, payload));
+  const sorted = persistCurrentAffairsCache(Array.from(map.values()), { broadcast: true });
+  notifyCurrentAffairsSubscribers(sorted);
+  markSyncSuccess();
+  return prepared;
+}
+
+/**
+ * Publishes all Current Affairs articles currently marked as Draft in one batch
+ * so Admin uploads go live in News Reels immediately.
+ */
+export async function publishAllDraftCurrentAffairs() {
+  requireFirebaseWrite();
+  const snapshot = await getDocs(collection(db, 'currentAffairs'));
+  const allDocs = snapshot.docs.map((d) => hydrateDoc(d.id, d.data()));
+  const drafts = allDocs.filter((item) => isDraft(item));
+
+  if (drafts.length === 0) {
+    persistCurrentAffairsCache(allDocs, { broadcast: true });
+    notifyCurrentAffairsSubscribers(allDocs);
+    return { publishedCount: 0, total: allDocs.length };
+  }
+
+  const nowIso = new Date().toISOString();
+  const BATCH_SIZE = 200;
+  for (let i = 0; i < drafts.length; i += BATCH_SIZE) {
+    const chunk = drafts.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach((item) => {
+      batch.set(
+        doc(db, 'currentAffairs', item.id),
+        { status: 'Published', published: true, updatedAt: nowIso, verifiedAt: nowIso, serverUpdatedAt: serverTimestamp() },
+        { merge: true }
+      );
+    });
+    await batch.commit();
+  }
+
+  const updatedDocs = allDocs.map((item) =>
+    isDraft(item)
+      ? { ...item, status: 'Published', published: true, updatedAt: nowIso, verifiedAt: nowIso }
+      : item
+  );
+  const sorted = persistCurrentAffairsCache(updatedDocs, { broadcast: true });
+  notifyCurrentAffairsSubscribers(sorted);
+  markSyncSuccess();
+  return { publishedCount: drafts.length, total: updatedDocs.length };
 }
 
 export async function deleteCurrentAffair(id) {
@@ -663,10 +1002,10 @@ export async function deleteCurrentAffair(id) {
     const msg = recordError('firestoreService.deleteCurrentAffair', err);
     throw new Error(`Firestore delete failed: ${msg}`);
   }
-  saveLocalData(
-    STORAGE_KEYS.CURRENT_AFFAIRS,
-    cachedOrEmpty(STORAGE_KEYS.CURRENT_AFFAIRS).filter((item) => item.id !== id)
-  );
+  const filtered = (readCachedCurrentAffairsSync() || []).filter((item) => item.id !== id);
+  const sorted = persistCurrentAffairsCache(filtered, { broadcast: true });
+  notifyCurrentAffairsSubscribers(sorted);
+  markSyncSuccess();
   return true;
 }
 

@@ -12,7 +12,11 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { subscribeToCurrentAffairs } from '../firebase/firestoreService.js';
+import {
+  subscribeToCurrentAffairs,
+  getInstantCachedCurrentAffairs,
+  refreshCurrentAffairsFromServer
+} from '../firebase/firestoreService.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EditorialCurrentAffairsSection from '../components/EditorialCurrentAffairsSection.jsx';
@@ -59,8 +63,11 @@ const MONTHLY_PDF_CAPSULES = [
 
 export default function CurrentAffairsPage() {
   const { t } = useLanguage();
-  const [articles, setArticles] = useState([]);
-  const [loadingArticles, setLoadingArticles] = useState(true);
+  const [articles, setArticles] = useState(() => getInstantCachedCurrentAffairs(false) || []);
+  const [loadingArticles, setLoadingArticles] = useState(() => {
+    const cached = getInstantCachedCurrentAffairs(false);
+    return !(Array.isArray(cached) && cached.length > 0);
+  });
 
   useEffect(() => {
     const unsub = subscribeToCurrentAffairs((data) => {
@@ -216,6 +223,7 @@ export default function CurrentAffairsPage() {
             showViewToggle={true}
             initialViewMode="editorial"
             mobileReels={true}
+            onSyncNow={refreshCurrentAffairsFromServer}
           />
         )}
       </section>

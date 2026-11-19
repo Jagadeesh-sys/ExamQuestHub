@@ -29,7 +29,12 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { subscribeToUpdates, subscribeToCurrentAffairs, getDirectFirestoreMockStats } from '../firebase/firestoreService.js';
+import {
+  subscribeToUpdates,
+  subscribeToCurrentAffairs,
+  getDirectFirestoreMockStats,
+  getInstantCachedCurrentAffairs
+} from '../firebase/firestoreService.js';
 import AgencyLogo from '../components/AgencyLogo.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -49,7 +54,7 @@ export default function HomePage() {
   useAutoStatusRefresh();
 
   const [updates, setUpdates] = useState([]);
-  const [currentAffairs, setCurrentAffairs] = useState([]);
+  const [currentAffairs, setCurrentAffairs] = useState(() => (getInstantCachedCurrentAffairs(false) || []).slice(0, 4));
   const [mockStats, setMockStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

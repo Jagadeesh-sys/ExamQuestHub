@@ -40,6 +40,8 @@ import {
   deleteAllUpdates,
   getCurrentAffairs,
   saveCurrentAffair,
+  bulkSaveCurrentAffairs,
+  publishAllDraftCurrentAffairs,
   deleteCurrentAffair,
   getQuestions,
   saveQuestion,
@@ -118,7 +120,9 @@ export default function AdminPage() {
   const [notifSearchQuery, setNotifSearchQuery] = useState('');
   const [notifStatusFilter, setNotifStatusFilter] = useState('ALL'); // 'ALL' | 'OPEN' | 'UPCOMING' | 'CLOSED' | 'DRAFT'
   const [caTopicFilter, setCaTopicFilter] = useState('All');
+  const [caStatusFilter, setCaStatusFilter] = useState('ALL'); // 'ALL' | 'Published' | 'Draft'
   const [caSearchQuery, setCaSearchQuery] = useState('');
+  const [caPublishingAll, setCaPublishingAll] = useState(false);
 
   // Modals state
   const [editingItem, setEditingItem] = useState(null);
@@ -194,6 +198,32 @@ export default function AdminPage() {
     }
   };
 
+  const refreshCurrentAffairsOnly = async () => {
+    try {
+      const ca = await getCurrentAffairs(true);
+      setCurrentAffairs(ca);
+    } catch (e) {
+      console.error('Error refreshing current affairs:', e);
+    }
+  };
+
+  const handlePublishAllDraftCa = async () => {
+    setCaPublishingAll(true);
+    try {
+      const { publishedCount } = await publishAllDraftCurrentAffairs();
+      await refreshCurrentAffairsOnly();
+      if (publishedCount > 0) {
+        triggerToast(`Published ${publishedCount} draft Current Affairs articles live to News Reels!`);
+      } else {
+        triggerToast('All Current Affairs articles are already published.');
+      }
+    } catch (err) {
+      triggerToast(`Publish all failed: ${err.message}`, 'error');
+    } finally {
+      setCaPublishingAll(false);
+    }
+  };
+
   const handleTogglePublish = async (item, type = 'update') => {
     try {
       if (type === 'update') {
@@ -207,14 +237,15 @@ export default function AdminPage() {
             ? `Notification marked as ${isCurrentlyDraft ? newStatus : 'Draft'} (saved locally — Firestore sync pending)`
             : `Notification marked as ${isCurrentlyDraft ? newStatus : 'Draft'}`
         );
+        await loadAllAdminData();
       } else if (type === 'ca') {
         const newStatus = item.status === 'Draft' ? 'Published' : 'Draft';
-        await saveCurrentAffair({ ...item, status: newStatus });
-        triggerToast(`Current Affair marked as ${newStatus}`);
+        await saveCurrentAffair({ ...item, status: newStatus, published: newStatus !== 'Draft' });
+        triggerToast(`Current Affair marked as ${newStatus} & synced to Reels`);
+        await refreshCurrentAffairsOnly();
       }
-      await loadAllAdminData();
     } catch (err) {
-      triggerToast(`Failed to update status: ${err.message}`);
+      triggerToast(`Failed to update status: ${err.message}`, 'error');
     }
   };
 
@@ -467,21 +498,47 @@ export default function AdminPage() {
     // Duplicates are rejected on a normalized headline, so the same story cannot
     // be imported twice under slightly different punctuation or casing.
     const dbHeadlines = new Set(
-      currentAffairs.map((entry) => normalizeHeadlineKey(entry.headline?.en)).filter(Boolean)
+      currentAffairs.map((entry) => normalizeHeadlineKey(entry.headline?.en || entry.headline)).filter(Boolean)
     );
     const payloadHeadlines = new Set();
-    let ok = 0;
+    const validPayloads = [];
+    const today = new Date().toISOString().split('T')[0];
 
     for (let i = 0; i < items.length; i += 1) {
-      const item = items[i];
-      const label = item?.headline?.en || item?.id || `item ${i + 1}`;
+      const item = items[i] || {};
+      const headlineObj =
+        typeof item.headline === 'string'
+          ? { en: item.headline, te: '' }
+          : typeof item.title === 'string'
+            ? { en: item.title, te: '' }
+            : item.headline?.en
+              ? item.headline
+              : item.title?.en
+                ? item.title
+                : null;
+      const summaryObj =
+        typeof item.summary === 'string'
+          ? { en: item.summary, te: '' }
+          : typeof item.description === 'string'
+            ? { en: item.description, te: '' }
+            : item.summary?.en
+              ? item.summary
+              : item.description?.en
+                ? item.description
+                : null;
+      const contentObj =
+        typeof item.content === 'string'
+          ? { en: item.content, te: '' }
+          : item.content;
+      const sourceUrl = item.sourceUrl || item.url || item.link || '';
+      const label = headlineObj?.en || item?.id || `item ${i + 1}`;
 
-      if (!item?.headline?.en || !item?.sourceUrl || !item?.summary?.en) {
+      if (!headlineObj?.en || !sourceUrl || !summaryObj?.en) {
         errors.push(`${label} — missing required field (headline.en, sourceUrl, summary.en)`);
         continue;
       }
 
-      const headlineKey = normalizeHeadlineKey(item.headline.en);
+      const headlineKey = normalizeHeadlineKey(headlineObj.en);
       if (dbHeadlines.has(headlineKey)) {
         duplicates.push(`${label} — already exists in the database`);
         continue;
@@ -492,31 +549,43 @@ export default function AdminPage() {
       }
       payloadHeadlines.add(headlineKey);
 
-      // `category` is accepted as an alias for `topic` so payloads carried over from the
-      // notifications importer still land in the right section instead of defaulting.
       const rawTopic = item.topic ?? item.category ?? item.subject;
       if (!rawTopic) {
         warnings.push(`${label} — no topic given, defaulted to "National Affairs"`);
       }
 
+      validPayloads.push({
+        ...item,
+        headline: headlineObj,
+        summary: summaryObj,
+        ...(contentObj ? { content: contentObj } : {}),
+        sourceUrl,
+        topic: normalizeTopic(rawTopic),
+        eventDate: item.eventDate || today,
+        publishedAt: item.publishedAt || today,
+        status: item.status || 'Published'
+      });
+    }
+
+    let ok = 0;
+    if (validPayloads.length > 0) {
       try {
-        // Normalize the topic so topic filters and badges line up with the manual form,
-        // and fill the date fields the form would otherwise require.
-        const today = new Date().toISOString().split('T')[0];
-        const payload = {
-          ...item,
-          topic: normalizeTopic(rawTopic),
-          eventDate: item.eventDate || today,
-          publishedAt: item.publishedAt || today,
-          status: item.status || 'Published'
-        };
-        // Sequential on purpose: surfaces the first real Firestore error (e.g.
-        // permission-denied) instead of firing N failing writes at once.
-        // eslint-disable-next-line no-await-in-loop
-        await saveCurrentAffair(payload);
-        ok += 1;
-      } catch (err) {
-        errors.push(`${label} — ${err.message}`);
+        await bulkSaveCurrentAffairs(validPayloads);
+        ok = validPayloads.length;
+      } catch (batchErr) {
+        for (let i = 0; i < validPayloads.length; i += 1) {
+          const payload = validPayloads[i];
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            await saveCurrentAffair(payload);
+            ok += 1;
+          } catch (err) {
+            errors.push(`${payload.headline?.en || payload.id} — ${err.message}`);
+          }
+        }
+        if (ok === 0 && errors.length === 0) {
+          errors.push(batchErr.message);
+        }
       }
     }
 
@@ -524,9 +593,9 @@ export default function AdminPage() {
     setCaImportSummary({ ok, failed: errors.length, errors, warnings, duplicates });
 
     if (ok > 0) {
-      await loadAllAdminData();
+      await refreshCurrentAffairsOnly();
       triggerToast(
-        `Imported ${ok} current affairs article${ok === 1 ? '' : 's'}${
+        `Imported ${ok} current affairs article${ok === 1 ? '' : 's'} & synced to Reels${
           duplicates.length ? `, ${duplicates.length} duplicate skipped` : ''
         }`
       );
@@ -1517,7 +1586,22 @@ export default function AdminPage() {
       {/* -------------------------------------------------------------
           TAB 2: CURRENT AFFAIRS MANAGER
          ------------------------------------------------------------- */}
-      {activeTab === 'currentAffairs' && (
+      {activeTab === 'currentAffairs' && (() => {
+        const draftCaCount = currentAffairs.filter((c) => c.status === 'Draft' || c.published === false).length;
+        const publishedCaCount = currentAffairs.length - draftCaCount;
+        const filteredCa = currentAffairs.filter((ca) => {
+          const isCaDraft = ca.status === 'Draft' || ca.published === false;
+          const matchesStatus =
+            caStatusFilter === 'ALL' ||
+            (caStatusFilter === 'Draft' && isCaDraft) ||
+            (caStatusFilter === 'Published' && !isCaDraft);
+          const matchesTopic = topicMatches(ca.topic, caTopicFilter);
+          const text = ((ca.headline?.en || '') + ' ' + (ca.headline?.te || '') + ' ' + (ca.summary?.en || '')).toLowerCase();
+          const matchesSearch = !caSearchQuery || text.includes(caSearchQuery.toLowerCase());
+          return matchesStatus && matchesTopic && matchesSearch;
+        });
+
+        return (
         <div className="bg-white rounded-3xl p-6 border border-[#E3EAF2] space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -1525,11 +1609,23 @@ export default function AdminPage() {
                 Manage Current Affairs Articles
               </h2>
               <p className="text-xs text-slate-500">
-                Add factual exam summaries with primary official sources and featured images (direct clipboard copy-paste supported).
+                {publishedCaCount} live in News Reels{draftCaCount > 0 ? ` • ${draftCaCount} hidden in Draft` : ''}. Changes sync to Reels immediately.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {draftCaCount > 0 && (
+                <button
+                  type="button"
+                  disabled={caPublishingAll}
+                  onClick={handlePublishAllDraftCa}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-60"
+                >
+                  {caPublishingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  <span>{caPublishingAll ? 'Publishing...' : `Publish All Drafts (${draftCaCount})`}</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => {
@@ -1549,7 +1645,7 @@ export default function AdminPage() {
                     headline: { en: '', te: '' },
                     summary: { en: '', te: '' },
                     content: { en: '', te: '' },
-                    topic: 'National news',
+                    topic: 'National Affairs',
                     eventDate: new Date().toISOString().split('T')[0],
                     publishedAt: new Date().toISOString().split('T')[0],
                     sourceName: 'PIB New Delhi',
@@ -1571,10 +1667,30 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Current Affairs Topic Filter & Search Bar */}
-          <div className="bg-[#F8FAFC] border border-[#E3EAF2] rounded-2xl p-3 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          {/* Current Affairs Status, Topic Filter & Search Bar */}
+          <div className="bg-[#F8FAFC] border border-[#E3EAF2] rounded-2xl p-3 flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs font-bold text-slate-700">Filter Topic:</label>
+              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1">
+                {[
+                  { key: 'ALL', label: `All (${currentAffairs.length})` },
+                  { key: 'Published', label: `Published (${publishedCaCount})` },
+                  { key: 'Draft', label: `Drafts (${draftCaCount})` }
+                ].map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setCaStatusFilter(opt.key)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer ${
+                      caStatusFilter === opt.key
+                        ? 'bg-[#12345A] text-white'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
               <select
                 value={caTopicFilter}
                 onChange={(e) => setCaTopicFilter(e.target.value)}
@@ -1600,11 +1716,12 @@ export default function AdminPage() {
                   className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs placeholder:text-slate-400 focus:outline-hidden focus:border-[#2468B4]"
                 />
               </div>
-              {(caTopicFilter !== 'All' || caSearchQuery) && (
+              {(caTopicFilter !== 'All' || caStatusFilter !== 'ALL' || caSearchQuery) && (
                 <button
                   type="button"
                   onClick={() => {
                     setCaTopicFilter('All');
+                    setCaStatusFilter('ALL');
                     setCaSearchQuery('');
                   }}
                   className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 text-[11px] font-semibold hover:bg-slate-200/60"
@@ -1616,14 +1733,7 @@ export default function AdminPage() {
           </div>
 
           <div className="divide-y divide-slate-100 text-xs">
-            {currentAffairs
-              .filter((ca) => {
-                const matchesTopic = topicMatches(ca.topic, caTopicFilter);
-                const text = ((ca.headline?.en || '') + ' ' + (ca.headline?.te || '') + ' ' + (ca.summary?.en || '')).toLowerCase();
-                const matchesSearch = !caSearchQuery || text.includes(caSearchQuery.toLowerCase());
-                return matchesTopic && matchesSearch;
-              })
-              .map((ca) => (
+            {filteredCa.map((ca) => (
               <div key={ca.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   {/* Thumbnail & Quick Paste Trigger */}
@@ -1745,11 +1855,7 @@ export default function AdminPage() {
               </div>
             ))}
 
-            {currentAffairs.filter((ca) => {
-              const matchesTopic = topicMatches(ca.topic, caTopicFilter);
-              const text = ((ca.headline?.en || '') + ' ' + (ca.headline?.te || '') + ' ' + (ca.summary?.en || '')).toLowerCase();
-              return matchesTopic && (!caSearchQuery || text.includes(caSearchQuery.toLowerCase()));
-            }).length === 0 && (
+            {filteredCa.length === 0 && (
               <div className="py-12 text-center text-slate-500 space-y-2">
                 <p className="font-semibold text-sm text-slate-700">No articles found under &ldquo;{caTopicFilter}&rdquo;</p>
                 <p className="text-xs text-slate-400">Click &quot;Add New CA&quot; to publish a current affair article for this topic.</p>
@@ -1757,7 +1863,8 @@ export default function AdminPage() {
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* -------------------------------------------------------------
           TAB 3: GK QUESTIONS MANAGER
@@ -2489,9 +2596,9 @@ export default function AdminPage() {
                       );
                     }
                     await saveCurrentAffair(editingItem);
-                    await loadAllAdminData();
+                    await refreshCurrentAffairsOnly();
                     setIsFormOpen(false);
-                    triggerToast('Current affairs article saved and synced to Firestore database.');
+                    triggerToast('Current affairs article saved and synced to News Reels.');
                   } catch (err) {
                     setFormError(err.message || 'Failed to save current affairs article.');
                   } finally {
@@ -3479,9 +3586,9 @@ export default function AdminPage() {
                       ...imageModalItem,
                       imageUrl: quickImageUrl
                     });
-                    await loadAllAdminData();
+                    await refreshCurrentAffairsOnly();
                     setImageModalItem(null);
-                    triggerToast('Current affair image updated successfully!');
+                    triggerToast('Current affair image updated and synced to News Reels!');
                   } catch (err) {
                     triggerToast(`Image not saved: ${err.message}`, 'error');
                   } finally {
