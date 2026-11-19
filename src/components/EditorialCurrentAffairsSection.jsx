@@ -126,8 +126,8 @@ function getReelImageSourceLabel(item) {
   return 'pib.gov.in';
 }
 
-// Full-height swipeable card used by the Reels-style mobile feed
-function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
+// Full-height swipeable card used by the Reels-style mobile feed (memoized & zero nested scroll trap)
+const ReelCard = React.memo(function ReelCard({ item, isBookmarked, onToggleBookmark, index, total, isActive }) {
   const { getLocalized } = useLanguage();
   const headline = getLocalized(item.headline);
   const summary = getLocalized(item.summary);
@@ -143,15 +143,16 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
   const examTags = Array.isArray(item.examRelevance) && item.examRelevance.length > 0
     ? item.examRelevance
     : ['UPSC', 'APPSC', 'SSC'];
-  const customHighlights = Array.isArray(item.highlights) && item.highlights.length > 0
-    ? item.highlights.map((h) => getLocalized(h)).filter(Boolean)
-    : [
-        `Verified against ${item.sourceName || 'official PIB & government releases'} for ${examTags.slice(0, 3).join(', ')} exam readiness.`,
-        item.tags?.length
-          ? `Key syllabus themes: ${item.tags.slice(0, 4).join(' • ')}.`
-          : `Focuses on ${item.topic || 'National Affairs'} policy updates and factual indicators.`,
-        'Essential high-yield update for Prelims objective MCQs and Mains analytical answers.'
-      ];
+  const customHighlights = (
+    Array.isArray(item.highlights) && item.highlights.length > 0
+      ? item.highlights.map((h) => getLocalized(h)).filter(Boolean)
+      : [
+          `Verified against ${item.sourceName || 'official PIB & government releases'} for ${examTags.slice(0, 3).join(', ')} exam readiness.`,
+          item.tags?.length
+            ? `Key syllabus themes: ${item.tags.slice(0, 4).join(' • ')}.`
+            : `Focuses on ${item.topic || 'National Affairs'} policy updates and factual indicators.`
+        ]
+  ).slice(0, 2);
 
   const handleShare = async (e) => {
     e.preventDefault();
@@ -163,22 +164,23 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           text: summary,
           url: window.location.origin + '/current-affairs/' + detailSlug,
         });
-      } catch (err) {
-        console.log('Error sharing:', err);
+      } catch {
+        // user cancelled share sheet
       }
     }
   };
 
   return (
-    <article className="relative h-full w-full snap-start snap-always bg-white overflow-y-auto no-scrollbar pb-14 pt-1">
+    <article className="relative h-full w-full bg-white overflow-hidden pt-1 pb-2 flex flex-col justify-between select-none">
       {/* Decorative Corner */}
       <div className="absolute top-0 right-0 w-24 h-24 opacity-[0.03] pointer-events-none overflow-hidden">
         <GoldenCornerFlourish />
       </div>
 
-      <div className="px-3.5 pb-6 space-y-2.5">
+      <div className="px-3.5 flex-1 min-h-0 flex flex-col justify-between gap-2 overflow-hidden">
+        <div className="space-y-2 min-h-0 flex-1 flex flex-col overflow-hidden">
         {/* Top Info: Category + Date + Page Indicator */}
-        <div className="flex items-center justify-between text-[10px] font-bold pt-1">
+        <div className="flex items-center justify-between text-[10px] font-bold pt-1 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wide truncate max-w-[155px]">
               {item.topic || 'National Affairs'}
@@ -194,8 +196,8 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
         </div>
 
         {/* Headline + Bookmark & Share Buttons */}
-        <div className="flex items-start justify-between gap-2.5">
-          <h2 className="font-heading font-black text-[#0B1F3A] text-[17px] leading-[1.24] tracking-tight flex-1">
+        <div className="flex items-start justify-between gap-2.5 shrink-0">
+          <h2 className="font-heading font-black text-[#0B1F3A] text-[16.5px] leading-[1.22] tracking-tight flex-1 line-clamp-3">
             {headline}
           </h2>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -222,12 +224,12 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           </div>
         </div>
 
-        {/* Uniform 1.68:1 card ratio matching reference screenshot, pinned to top edge so tops never clip */}
-        <div className="relative w-full aspect-[1.68/1] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/70 shadow-xs">
+        {/* Uniform card image, pre-decoded for instant snap */}
+        <div className="relative w-full aspect-[1.82/1] max-h-[210px] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/70 shadow-xs shrink-0">
           <img
             src={imgSrc}
             alt={headline}
-            loading={index < 8 ? 'eager' : 'lazy'}
+            loading="eager"
             decoding="async"
             className="w-full h-full object-cover object-top"
             onError={(e) => {
@@ -238,20 +240,20 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           />
           {imageSource && (
             <div
-              className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-xs text-white shadow-xs max-w-[85%]"
+              className="absolute bottom-2 left-2 z-10 inline-flex items-center px-2.5 py-0.5 rounded-full bg-black/65 text-white shadow-xs max-w-[85%]"
               title={imageSource}
             >
-              <span className="text-[11px] font-medium leading-none tracking-tight truncate">
+              <span className="text-[10.5px] font-medium leading-tight tracking-tight truncate">
                 {imageSource}
               </span>
             </div>
           )}
         </div>
 
-        {/* Expanded Matter Block — Designed to display 9+ clear readable lines immediately */}
-        <div className="space-y-2 pt-0.5">
+        {/* Expanded Matter Block — Fitted cleanly so swipe gestures never get trapped */}
+        <div className="space-y-2 pt-0.5 min-h-0 flex-1 overflow-hidden">
           {/* Summary Lead */}
-          <p className="text-slate-800 text-[13px] leading-[1.48] font-semibold">
+          <p className="text-slate-800 text-[13px] leading-[1.45] font-semibold line-clamp-4">
             {summary}
           </p>
 
@@ -259,35 +261,38 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
           {content && (
             <div className="space-y-1 pt-1.5 border-t border-slate-100">
               <div className="flex items-center gap-1.5">
-                <span className="w-1 h-3.5 bg-[#2468B4] rounded-full inline-block" />
-                <h3 className="font-heading font-black text-[#0B1F3A] text-xs uppercase tracking-wide">
+                <span className="w-1 h-3 bg-[#2468B4] rounded-full inline-block" />
+                <h3 className="font-heading font-black text-[#0B1F3A] text-[11px] uppercase tracking-wide">
                   Detailed Analysis
                 </h3>
               </div>
-              <p className="text-slate-600 text-[12.5px] leading-[1.48] font-normal">
+              <p className="text-slate-600 text-[12px] leading-[1.44] font-normal line-clamp-3">
                 {content}
               </p>
             </div>
           )}
 
           {/* Key Highlights */}
-          <div className="space-y-1.5 pt-1.5 border-t border-slate-100">
-            <div className="flex items-center gap-1.5 text-[#2468B4] font-bold text-[11px] uppercase tracking-wider">
+          <div className="space-y-1 pt-1.5 border-t border-slate-100">
+            <div className="flex items-center gap-1.5 text-[#2468B4] font-bold text-[10.5px] uppercase tracking-wider">
               <Zap className="w-3 h-3 fill-current" />
               <span>Exam Key Takeaways</span>
             </div>
             <ul className="space-y-1">
               {customHighlights.map((highlight, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-slate-700 text-[12px] leading-[1.42] font-medium">
+                <li key={idx} className="flex items-start gap-2 text-slate-700 text-[11.5px] leading-[1.38] font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#2468B4] mt-1.5 shrink-0" />
-                  <span>{highlight}</span>
+                  <span className="line-clamp-2">{highlight}</span>
                 </li>
               ))}
             </ul>
           </div>
+        </div>
+        </div>
 
-          {/* Exam Relevance Tags + Read Story Link */}
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        {/* Footer row: Exam Relevance Tags + Read Story Link + Swipe Cue */}
+        <div className="shrink-0 space-y-1.5 pt-1.5 border-t border-slate-100 bg-white">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 flex-wrap">
               {examTags.slice(0, 4).map((tag, idx) => (
                 <span
@@ -306,17 +311,16 @@ function ReelCard({ item, isBookmarked, onToggleBookmark, index, total }) {
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </div>
 
-        {/* Swipe Indicator */}
-        <div className="pt-2 pb-1 flex items-center justify-center gap-1.5 text-slate-400">
-          <ChevronUp className="w-4 h-4 animate-bounce" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.18em]">Swipe up for next update</span>
+          <div className="flex items-center justify-center gap-1 text-slate-400">
+            <ChevronUp className={`w-3.5 h-3.5 ${isActive ? 'animate-bounce' : ''}`} />
+            <span className="text-[9px] font-bold uppercase tracking-[0.18em]">Swipe up for next update</span>
+          </div>
         </div>
       </div>
     </article>
   );
-}
+});
 
 export default function EditorialCurrentAffairsSection({
   articles = [],
@@ -341,6 +345,7 @@ export default function EditorialCurrentAffairsSection({
   const [justSynced, setJustSynced] = useState(false);
   const [activeReelIdx, setActiveReelIdx] = useState(0);
   const reelsScrollRef = useRef(null);
+  const reelsScrollRafRef = useRef(null);
   const preloadedUrlsRef = useRef(new Set());
 
   const handleManualSync = async () => {
@@ -475,17 +480,21 @@ export default function EditorialCurrentAffairsSection({
     });
   }, [uniqueArticles, searchQuery, selectedTopic, getLocalized]);
 
-  // Preload upcoming 3 Reel images so swiping feels instantaneous
+  // Preload and pre-decode upcoming 5 Reel images off the main thread so swiping never lags
   useEffect(() => {
     if (viewMode !== 'reels' || typeof window === 'undefined' || !filtered.length) return;
     const start = Math.max(0, activeReelIdx);
-    const end = Math.min(filtered.length, start + 4);
+    const end = Math.min(filtered.length, start + 6);
     for (let i = start; i < end; i += 1) {
       const url = filtered[i]?.imageUrl;
       if (url && !preloadedUrlsRef.current.has(url)) {
         preloadedUrlsRef.current.add(url);
         const img = new window.Image();
+        img.decoding = 'async';
         img.src = url;
+        if (typeof img.decode === 'function') {
+          img.decode().catch(() => {});
+        }
       }
     }
   }, [viewMode, activeReelIdx, filtered]);
@@ -758,26 +767,36 @@ export default function EditorialCurrentAffairsSection({
               ref={reelsScrollRef}
               onScroll={(e) => {
                 const el = e.currentTarget;
-                const h = el.clientHeight || 1;
-                const nextIdx = Math.round(el.scrollTop / h);
-                if (nextIdx !== activeReelIdx) {
-                  setActiveReelIdx(nextIdx);
-                }
+                if (reelsScrollRafRef.current) return;
+                reelsScrollRafRef.current = window.requestAnimationFrame(() => {
+                  reelsScrollRafRef.current = null;
+                  const h = el.clientHeight || 1;
+                  const nextIdx = Math.max(0, Math.min(filtered.length - 1, Math.round(el.scrollTop / h)));
+                  setActiveReelIdx((prev) => (prev !== nextIdx ? nextIdx : prev));
+                });
               }}
               className="flex-1 min-h-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain no-scrollbar touch-pan-y bg-white"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              {filtered.map((item, idx) => (
-                <div key={item.id} className="h-full w-full snap-start snap-always">
-                  <ReelCard
-                    item={item}
-                    isBookmarked={!!bookmarkedIds[item.id]}
-                    onToggleBookmark={toggleBookmark}
-                    index={idx}
-                    total={filtered.length}
-                  />
-                </div>
-              ))}
+              {filtered.map((item, idx) => {
+                const inWindow = idx >= activeReelIdx - 3 && idx <= activeReelIdx + 5;
+                return (
+                  <div key={item.id} className="h-full w-full snap-start snap-always">
+                    {inWindow ? (
+                      <ReelCard
+                        item={item}
+                        isBookmarked={!!bookmarkedIds[item.id]}
+                        onToggleBookmark={toggleBookmark}
+                        index={idx}
+                        total={filtered.length}
+                        isActive={idx === activeReelIdx}
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-white" aria-hidden="true" />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
