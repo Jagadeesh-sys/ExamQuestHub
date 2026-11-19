@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Globe2,
@@ -344,8 +344,21 @@ export default function EditorialCurrentAffairsSection({
   const [isSyncing, setIsSyncing] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
   const [activeReelIdx, setActiveReelIdx] = useState(0);
-  const reelsScrollRef = useRef(null);
-  const reelsScrollRafRef = useRef(null);
+  const reelsViewportRef = useRef(null);
+  const reelsStageRef = useRef(null);
+  const snapStartOffsetRef = useRef(null);
+  const wheelLockUntilRef = useRef(0);
+  const swipeStateRef = useRef({
+    active: false,
+    dragging: false,
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    baseOffset: 0,
+    visualDy: 0,
+    gestureDy: 0
+  });
+  const didDragRef = useRef(false);
   const preloadedUrlsRef = useRef(new Set());
 
   const handleManualSync = async () => {
@@ -362,11 +375,13 @@ export default function EditorialCurrentAffairsSection({
     }
   };
 
-  // Reset Reels scroll position when filter/topic changes so user starts cleanly at top
+  // Reset Reels index cleanly when filter/topic/viewMode changes
   useEffect(() => {
+    snapStartOffsetRef.current = null;
     setActiveReelIdx(0);
-    if (viewMode === 'reels' && reelsScrollRef.current) {
-      reelsScrollRef.current.scrollTo({ top: 0, behavior: 'auto' });
+    if (reelsStageRef.current) {
+      reelsStageRef.current.style.transition = 'none';
+      reelsStageRef.current.style.transform = 'translate3d(0, 0, 0)';
     }
   }, [selectedTopic, searchQuery, viewMode]);
 
@@ -498,6 +513,195 @@ export default function EditorialCurrentAffairsSection({
       }
     }
   }, [viewMode, activeReelIdx, filtered]);
+
+  // Keep activeReelIdx valid if filtered list shrinks
+  useEffect(() => {
+    if (filtered.length > 0 && activeReelIdx >= filtered.length) {
+      setActiveReelIdx(filtered.length - 1);
+    }
+  }, [filtered.length, activeReelIdx]);
+
+  // Synchronous pre-paint GPU snap animation whenever activeReelIdx commits
+  useLayoutEffect(() => {
+    const stage = reelsStageRef.current;
+    if (!stage || viewMode !== 'reels') return;
+    const pendingStart = snapStartOffsetRef.current;
+    if (pendingStart !== null) {
+      snapStartOffsetRef.current = null;
+      stage.style.transition = 'none';
+      stage.style.transform = `translate3d(0, ${pendingStart}px, 0)`;
+      // Force layout flush so the GPU compositor animates cleanly from exact finger position to 0
+      void stage.offsetHeight;
+      stage.style.transition = 'transform 200ms cubic-bezier(0.22, 1, 0.36, 1)';
+      stage.style.transform = 'translate3d(0, 0, 0)';
+    } else {
+      stage.style.transition = 'none';
+      stage.style.transform = 'translate3d(0, 0, 0)';
+    }
+  }, [activeReelIdx, viewMode]);
+
+  const stepReel = useCallback(
+    (delta) => {
+      if (!filtered.length) return;
+      const h = reelsViewportRef.current?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 600);
+      setActiveReelIdx((prev) => {
+        const next = Math.max(0, Math.min(filtered.length - 1, prev + delta));
+        if (next === prev) return prev;
+        snapStartOffsetRef.current = delta > 0 ? h : -h;
+        return next;
+      });
+    },
+    [filtered.length]
+  );
+
+  // Keyboard ArrowUp / ArrowDown support in Reels mode
+  useEffect(() => {
+    if (viewMode !== 'reels' || typeof window === 'undefined') return;
+    const onKeyDown = (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        stepReel(1);
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        stepReel(-1);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [viewMode, stepReel]);
+
+  const beginSwipe = (clientX, clientY) => {
+    if (filtered.length === 0) return;
+    didDragRef.current = false;
+    const stage = reelsStageRef.current;
+    let baseOffset = 0;
+
+    if (stage && typeof window !== 'undefined') {
+      const computed = window.getComputedStyle(stage).transform;
+      if (computed && computed !== 'none') {
+        try {
+          const matrix = new window.DOMMatrixReadOnly(computed);
+          baseOffset = matrix.m42 || 0;
+        } catch {
+          baseOffset = 0;
+        }
+      }
+      stage.style.transition = 'none';
+      stage.style.transform = `translate3d(0, ${baseOffset}px, 0)`;
+    }
+
+    swipeStateRef.current = {
+      active: true,
+      dragging: false,
+      startX: clientX,
+      startY: clientY,
+      startTime: performance.now(),
+      baseOffset,
+      visualDy: baseOffset,
+      gestureDy: 0
+    };
+  };
+
+  const moveSwipe = (clientX, clientY) => {
+    const state = swipeStateRef.current;
+    if (!state.active) return;
+    const gestureDx = clientX - state.startX;
+    const gestureDy = clientY - state.startY;
+
+    if (!state.dragging) {
+      if (Math.abs(gestureDy) < 8 && Math.abs(gestureDx) < 8) return;
+      if (Math.abs(gestureDx) > Math.abs(gestureDy)) {
+        state.active = false;
+        return;
+      }
+      state.dragging = true;
+      didDragRef.current = true;
+    }
+
+    let rawVisualDy = state.baseOffset + gestureDy;
+    const atTopEdge = activeReelIdx === 0 && rawVisualDy > 0;
+    const atBottomEdge = activeReelIdx >= filtered.length - 1 && rawVisualDy < 0;
+    if (atTopEdge || atBottomEdge) {
+      rawVisualDy *= 0.22;
+    }
+
+    state.gestureDy = gestureDy;
+    state.visualDy = rawVisualDy;
+
+    const stage = reelsStageRef.current;
+    if (stage) {
+      stage.style.transition = 'none';
+      stage.style.transform = `translate3d(0, ${rawVisualDy}px, 0)`;
+    }
+  };
+
+  const endSwipe = () => {
+    const state = swipeStateRef.current;
+    if (!state.active) return;
+    state.active = false;
+
+    const stage = reelsStageRef.current;
+    const viewportH = reelsViewportRef.current?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 600);
+    const dt = Math.max(16, performance.now() - state.startTime);
+    const velocity = state.gestureDy / dt; // px per ms (negative = swiping up)
+
+    const shouldNext =
+      activeReelIdx < filtered.length - 1 &&
+      state.dragging &&
+      (state.gestureDy < -28 || velocity < -0.22);
+    const shouldPrev =
+      activeReelIdx > 0 &&
+      state.dragging &&
+      (state.gestureDy > 28 || velocity > 0.22);
+
+    if (shouldNext) {
+      snapStartOffsetRef.current = viewportH + state.visualDy;
+      setActiveReelIdx((prev) => Math.min(filtered.length - 1, prev + 1));
+    } else if (shouldPrev) {
+      snapStartOffsetRef.current = -viewportH + state.visualDy;
+      setActiveReelIdx((prev) => Math.max(0, prev - 1));
+    } else if (stage && (state.dragging || state.baseOffset !== 0)) {
+      stage.style.transition = 'transform 180ms cubic-bezier(0.22, 1, 0.36, 1)';
+      stage.style.transform = 'translate3d(0, 0, 0)';
+    }
+  };
+
+  const handleReelTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    beginSwipe(e.touches[0].clientX, e.touches[0].clientY);
+  };
+
+  const handleReelTouchMove = (e) => {
+    if (e.touches.length !== 1) return;
+    moveSwipe(e.touches[0].clientX, e.touches[0].clientY);
+  };
+
+  const handleReelTouchEnd = () => endSwipe();
+
+  const handleReelMouseDown = (e) => {
+    if (e.button !== 0) return;
+    beginSwipe(e.clientX, e.clientY);
+  };
+
+  const handleReelMouseMove = (e) => moveSwipe(e.clientX, e.clientY);
+
+  const handleReelMouseUp = () => endSwipe();
+
+  const handleReelClickCapture = (e) => {
+    if (didDragRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      didDragRef.current = false;
+    }
+  };
+
+  const handleReelWheel = (e) => {
+    if (Math.abs(e.deltaY) < 24) return;
+    const now = performance.now();
+    if (now < wheelLockUntilRef.current) return;
+    wheelLockUntilRef.current = now + 260;
+    stepReel(e.deltaY > 0 ? 1 : -1);
+  };
 
   // Month + year grouping for the list views, driven by deduplicated filtered articles
   const monthGroups = React.useMemo(() => {
@@ -764,39 +968,46 @@ export default function EditorialCurrentAffairsSection({
             </div>
           ) : (
             <div
-              ref={reelsScrollRef}
-              onScroll={(e) => {
-                const el = e.currentTarget;
-                if (reelsScrollRafRef.current) return;
-                reelsScrollRafRef.current = window.requestAnimationFrame(() => {
-                  reelsScrollRafRef.current = null;
-                  const h = el.clientHeight || 1;
-                  const nextIdx = Math.max(0, Math.min(filtered.length - 1, Math.round(el.scrollTop / h)));
-                  setActiveReelIdx((prev) => (prev !== nextIdx ? nextIdx : prev));
-                });
-              }}
-              className="flex-1 min-h-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain no-scrollbar touch-pan-y bg-white"
-              style={{ WebkitOverflowScrolling: 'touch' }}
+              ref={reelsViewportRef}
+              onTouchStart={handleReelTouchStart}
+              onTouchMove={handleReelTouchMove}
+              onTouchEnd={handleReelTouchEnd}
+              onTouchCancel={handleReelTouchEnd}
+              onMouseDown={handleReelMouseDown}
+              onMouseMove={handleReelMouseMove}
+              onMouseUp={handleReelMouseUp}
+              onMouseLeave={handleReelMouseUp}
+              onClickCapture={handleReelClickCapture}
+              onWheel={handleReelWheel}
+              className="relative flex-1 min-h-0 overflow-hidden touch-none bg-white select-none"
             >
-              {filtered.map((item, idx) => {
-                const inWindow = idx >= activeReelIdx - 3 && idx <= activeReelIdx + 5;
-                return (
-                  <div key={item.id} className="h-full w-full snap-start snap-always">
-                    {inWindow ? (
-                      <ReelCard
-                        item={item}
-                        isBookmarked={!!bookmarkedIds[item.id]}
-                        onToggleBookmark={toggleBookmark}
-                        index={idx}
-                        total={filtered.length}
-                        isActive={idx === activeReelIdx}
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-white" aria-hidden="true" />
-                    )}
-                  </div>
-                );
-              })}
+              <div
+                ref={reelsStageRef}
+                className="relative h-full w-full will-change-transform"
+              >
+                {filtered
+                  .slice(Math.max(0, activeReelIdx - 1), Math.min(filtered.length, activeReelIdx + 3))
+                  .map((item, sliceIdx) => {
+                    const realIdx = Math.max(0, activeReelIdx - 1) + sliceIdx;
+                    const slotOffsetPercent = (realIdx - activeReelIdx) * 100;
+                    return (
+                      <div
+                        key={item.id}
+                        className="absolute inset-0 h-full w-full"
+                        style={{ transform: `translate3d(0, ${slotOffsetPercent}%, 0)` }}
+                      >
+                        <ReelCard
+                          item={item}
+                          isBookmarked={!!bookmarkedIds[item.id]}
+                          onToggleBookmark={toggleBookmark}
+                          index={realIdx}
+                          total={filtered.length}
+                          isActive={realIdx === activeReelIdx}
+                        />
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
           )}
         </div>
