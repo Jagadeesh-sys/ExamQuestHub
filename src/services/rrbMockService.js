@@ -12,14 +12,14 @@ import {
   MOCK_CATEGORIES,
   resolveCanonicalTopicId
 } from '../constants/mockTaxonomy.js';
-import { getExamStageConfig } from '../constants/examHierarchy.js';
+import { CANONICAL_SUBJECTS, getExamStageConfig } from '../constants/examHierarchy.js';
 import { MOCK_QUESTIONS_DATABASE } from '../data/mockTestsData.js';
 import {
   computeUnifiedStats,
   getCachedUnifiedStats,
   saveCachedUnifiedStats
 } from '../utils/questionStats.js';
-import { getOptionTexts, getQuestionText } from '../utils/questionClassifier.js';
+import { extractProvenance, getOptionTexts, getQuestionText } from '../utils/questionClassifier.js';
 import {
   generateCustomOrPracticeMock,
   generateOfficialFullMock,
@@ -1381,6 +1381,7 @@ export async function generateCustomMockTest(params = {}) {
   const difficulty = params.difficulty || 'All';
   const count = params.count === 'all' ? 'all' : Math.max(5, Math.min(200, parseInt(params.count || '30', 10) || 30));
   const questionType = params.questionType || 'ALL';
+  const negOverride = params.negMarking !== undefined && params.negMarking !== '' ? String(params.negMarking) : 'official';
 
   const result = generateCustomOrPracticeMock(allQuestions, {
     examStageId,
@@ -1393,17 +1394,67 @@ export async function generateCustomMockTest(params = {}) {
   });
 
   const stageResolved = examStageId && examStageId !== 'all' ? getExamStageConfig(examStageId) : null;
-  const marksPerQ = stageResolved?.stage?.marksPerQuestion || (subjectIds.includes('english-language') ? 2 : 1);
-  const negRate = stageResolved?.stage?.negativeMarking ?? (subjectIds.includes('english-language') ? 0.5 : 0.33);
+  const subjectNameById = Object.fromEntries(CANONICAL_SUBJECTS.map((s) => [s.id, s.name]));
 
-  const tagged = result.questions.map((q) => ({
-    ...q,
-    marksPerQuestion: marksPerQ,
-    negativeMarkingPerQuestion: negRate
-  }));
+  const defaultMarksPerQ = stageResolved?.stage?.marksPerQuestion || (subjectIds.length === 1 && subjectIds[0] === 'english-language' ? 2 : 1);
+  const defaultNegRate =
+    negOverride === 'none' || negOverride === '0'
+      ? 0
+      : stageResolved?.stage?.negativeMarking ?? (subjectIds.length === 1 && subjectIds[0] === 'english-language' ? 0.5 : 0.33);
+
+  const sectionCountsMap = new Map();
+
+  const tagged = result.questions.map((q) => {
+    const cls = classifyQuestionCached(q);
+    const canonicalSecName = subjectNameById[cls.subjectId] || cls.subjectName || 'General Knowledge';
+
+    let qMarks = defaultMarksPerQ;
+    let qNeg = defaultNegRate;
+    if (stageResolved?.stage?.sections && negOverride !== 'none' && negOverride !== '0') {
+      const matchedSection = stageResolved.stage.sections.find((sec) =>
+        Array.isArray(sec.subjectIds) && sec.subjectIds.includes(cls.subjectId)
+      );
+      if (matchedSection) {
+        qMarks = matchedSection.marksPerQuestion ?? defaultMarksPerQ;
+        qNeg = matchedSection.negativeMarking ?? defaultNegRate;
+      }
+    }
+
+    if (!sectionCountsMap.has(canonicalSecName)) {
+      sectionCountsMap.set(canonicalSecName, {
+        name: canonicalSecName,
+        count: 0,
+        marksPerQuestion: qMarks,
+        negativeMarking: qNeg
+      });
+    }
+    sectionCountsMap.get(canonicalSecName).count += 1;
+
+    return {
+      ...q,
+      sectionName: canonicalSecName,
+      marksPerQuestion: qMarks,
+      negativeMarkingPerQuestion: qNeg
+    };
+  });
+
   const engineQuestions = formatToEngineQuestions(tagged);
   const examSummary = summarizeIncludedExams(engineQuestions);
-  const duration = Math.max(10, Math.min(180, parseInt(params.duration || '', 10) || engineQuestions.length));
+  const parsedDuration = parseInt(params.duration || '', 10);
+  const duration =
+    Number.isFinite(parsedDuration) && parsedDuration >= 5
+      ? Math.min(180, parsedDuration)
+      : Math.max(10, Math.min(180, engineQuestions.length || 30));
+
+  const readableSubjects =
+    subjectIds.length > 0
+      ? subjectIds.map((id) => subjectNameById[id] || id).join(', ')
+      : 'All Canonical Subjects';
+
+  const totalMarks = engineQuestions.reduce(
+    (sum, q) => sum + (q.marksPerQuestion ?? defaultMarksPerQ),
+    0
+  );
 
   return {
     meta: {
@@ -1412,21 +1463,22 @@ export async function generateCustomMockTest(params = {}) {
       title: stageResolved
         ? `${stageResolved.exam.shortName} (${stageResolved.stage.shortName}) – Custom Mock`
         : 'Custom Practice Mock Test',
-      subtitle: `${engineQuestions.length} Qs · ${difficulty} Difficulty · ${examSummary.examsSummaryText}`,
+      subtitle: `${engineQuestions.length} Qs · ${readableSubjects} · ${difficulty} Difficulty${result.difficultyFallbackUsed ? ' (mixed top-up applied)' : ''}`,
       examName: stageResolved ? stageResolved.exam.shortName : examSummary.examsSummaryText,
       examYear: examSummary.yearsText,
       includedExams: examSummary.includedExams,
       yearsList: examSummary.yearsList,
-      subjectLabel: subjectIds.length > 0 ? subjectIds.join(', ') : 'Mixed Subjects',
+      subjectLabel: readableSubjects,
       targetSubject: subjectIds[0] || 'all',
       questionsCount: engineQuestions.length,
       timeMinutes: duration,
-      marksPerQuestion: marksPerQ,
-      marks: engineQuestions.length * marksPerQ,
-      negativeMarking: negRate,
+      marksPerQuestion: defaultMarksPerQ,
+      marks: totalMarks,
+      negativeMarking: defaultNegRate,
+      sections: Array.from(sectionCountsMap.values()),
       pdfUrl: '',
       pdfFileName: '',
-      subjectTest: true,
+      subjectTest: subjectIds.length === 1,
       isRandomizedPool: true,
       shortfalls: result.shortfall > 0 ? [{ section: 'Custom Selection', requested: result.requestedCount, available: engineQuestions.length }] : []
     },

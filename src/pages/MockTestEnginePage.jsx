@@ -201,7 +201,11 @@ export default function MockTestEnginePage() {
 
   const subjectParam = searchParams.get('subject');
   const limitParam = searchParams.get('limit');
-  const searchParamsKey = searchParams.toString();
+  const loaderParamsKey = useMemo(() => {
+    const clone = new URLSearchParams(searchParams);
+    clone.delete('mode');
+    return clone.toString();
+  }, [searchParams]);
 
   // Load CBT, Subject, Custom, or Topic-wise Test (preserves active CBT questionIds across page refresh)
   useEffect(() => {
@@ -224,7 +228,8 @@ export default function MockTestEnginePage() {
                 difficulty: searchParams.get('difficulty') || 'All',
                 questionType: searchParams.get('questionType') || 'ALL',
                 count: searchParams.get('count') || '30',
-                duration: searchParams.get('duration') || ''
+                duration: searchParams.get('duration') || '',
+                negMarking: searchParams.get('negMarking') || 'official'
               }
             : null;
         const data = await getEngineMockTest(mockId, subjectParam, limitParam, customQuery);
@@ -274,7 +279,7 @@ export default function MockTestEnginePage() {
     return () => {
       active = false;
     };
-  }, [mockId, subjectParam, limitParam, isDynamicTest, refreshNonce, searchParamsKey]);
+  }, [mockId, subjectParam, limitParam, isDynamicTest, refreshNonce, loaderParamsKey]);
 
   const staticMeta = useMemo(
     () => MOCK_TESTS_METADATA.find((m) => m.id === mockId) || null,
@@ -316,7 +321,7 @@ export default function MockTestEnginePage() {
   };
 
   // Pre-test instructions & test controls
-  const [isExamStarted, setIsExamStarted] = useState(false);
+  const [isExamStarted, setIsExamStarted] = useState(() => modeParam !== 'cbt');
   const [instructionsAgreed, setInstructionsAgreed] = useState(true);
   const [instructionTab, setInstructionTab] = useState('instructions'); // 'instructions' | 'pattern' | 'faqs'
   const [isPaused, setIsPaused] = useState(false);
@@ -335,6 +340,12 @@ export default function MockTestEnginePage() {
   }, [modeParam]);
 
   const STORAGE_KEY_ACTIVE_TEST = mockMeta?.id && mockMeta.id !== 'custom' ? `eqh_active_test_${mockMeta.id}` : null;
+  const customConfigKey = useMemo(() => {
+    if (mockId !== 'custom') return '';
+    const clone = new URLSearchParams(searchParams);
+    clone.delete('mode');
+    return clone.toString();
+  }, [mockId, searchParams]);
 
   // Restore attempt-scoped values or initialize fresh
   useEffect(() => {
@@ -382,7 +393,7 @@ export default function MockTestEnginePage() {
       setPracticeSubset(null);
       setIsExamStarted(activeMode !== 'cbt');
     }
-  }, [mockMeta?.id]);
+  }, [mockMeta?.id, customConfigKey, refreshNonce]);
 
   // Persist CBT progress to localStorage with throttling
   useEffect(() => {
@@ -470,6 +481,7 @@ export default function MockTestEnginePage() {
   const examAgency = useMemo(() => {
     if (mockMeta?.includedExams && mockMeta.includedExams.length > 1) return 'PYQ';
     const raw = String(mockMeta?.agency || mockMeta?.examName || mockMeta?.code || mockId || '').toLowerCase();
+    if (raw.includes('appsc')) return 'APPSC';
     if (raw.includes('rrb') || raw.includes('railway') || raw.includes('ntpc')) return 'RRB';
     if (raw.includes('ssc') || raw.includes('cgl') || raw.includes('chsl') || raw.includes('mts')) return 'SSC';
     return 'EQH';
@@ -809,13 +821,24 @@ export default function MockTestEnginePage() {
             ? 'We are compiling additional verified questions for this topic. Please choose another topic or explore the full subject mocks.'
             : 'The requested mock test could not be loaded.'}
         </p>
-        <Link
-          to={backTo}
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#12345A] text-white rounded-full font-bold text-sm shadow-sm hover:bg-[#0B1F3A] transition"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Return to Mock Tests</span>
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {mockId === 'custom' && (
+            <Link
+              to={`/mocks?openBuilder=1${customConfigKey ? `&${customConfigKey}` : ''}`}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2468B4] text-white rounded-full font-bold text-sm shadow-sm hover:bg-[#1B4E89] transition"
+            >
+              <Sliders className="w-4 h-4" />
+              <span>Edit Custom Test Filters</span>
+            </Link>
+          )}
+          <Link
+            to={backTo}
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#12345A] text-white rounded-full font-bold text-sm shadow-sm hover:bg-[#0B1F3A] transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Mock Tests</span>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -988,8 +1011,8 @@ export default function MockTestEnginePage() {
                   <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border-2 border-[#DC2626] flex items-center justify-center mb-0.5 sm:mb-1">
                     <span className="w-2 sm:w-2.5 h-0.5 bg-[#DC2626] rounded-full inline-block" />
                   </div>
-                  <span className="text-sm sm:text-2xl font-black text-[#DC2626] leading-tight">
-                    -{negativeMarkingRate}
+                  <span className="text-sm sm:text-2xl font-black text-[#DC2626] leading-tight tabular-nums">
+                    {negativeMarkingRate === 0 ? '0' : `-${negativeMarkingRate}`}
                   </span>
                   <span className="text-[9px] sm:text-xs font-semibold text-slate-500 text-center leading-tight">
                     Negative Marking
@@ -1021,7 +1044,9 @@ export default function MockTestEnginePage() {
                   <li className="flex items-start gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] mt-1.5 shrink-0" />
                     <span>
-                      There is a negative marking of {negativeMarkingRate} marks for each wrong answer.
+                      {negativeMarkingRate === 0
+                        ? 'There is no negative marking for wrong answers in this test.'
+                        : `There is a negative marking of ${negativeMarkingRate} marks for each wrong answer.`}
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -1136,7 +1161,9 @@ export default function MockTestEnginePage() {
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                 <h4 className="font-bold text-xs sm:text-sm text-slate-900">How does negative marking work?</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  For every incorrect response, {negativeMarkingRate} marks are deducted. Questions left unattempted carry no negative penalty.
+                  {negativeMarkingRate === 0
+                    ? 'This test has no negative marking. Questions left incorrect or unattempted carry zero penalty.'
+                    : `For every incorrect response, ${negativeMarkingRate} marks are deducted. Questions left unattempted carry no negative penalty.`}
                 </p>
               </div>
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
@@ -1395,6 +1422,16 @@ export default function MockTestEnginePage() {
                       <Sparkles className="w-4 h-4 text-rose-600" />
                       <span>Practice Incorrect ({stats.incorrect})</span>
                     </button>
+                  )}
+
+                  {mockId === 'custom' && (
+                    <Link
+                      to={`/mocks?openBuilder=1${customConfigKey ? `&${customConfigKey}` : ''}`}
+                      className="px-5 py-2.5 bg-[#EAF3FF] hover:bg-[#DCEBFF] text-[#12345A] border border-[#2468B4]/25 rounded-full font-bold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Sliders className="w-4 h-4" />
+                      <span>Rebuild Custom Mock</span>
+                    </Link>
                   )}
 
                   <Link

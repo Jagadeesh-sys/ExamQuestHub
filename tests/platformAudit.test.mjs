@@ -254,3 +254,67 @@ test('Custom Mock Filter & Playability Guard exclude corrupted/empty questions',
   assert.equal(custom.questions[0].id, 'valid-q-1');
   assert.equal(custom.shortfall, 9);
 });
+
+test('Custom Mock Builder balances multi-subject quotas and handles sparse Hard/IMPORTANT filters cleanly', async () => {
+  const [ugBank, gradBank, ssc20Bank, ssc26Bank] = await Promise.all([
+    loadJsonBank('rrbNtpcUg2024Full.json'),
+    loadJsonBank('rrbNtpcGraduate2025Full.json'),
+    loadJsonBank('sscCgl2020Full.json'),
+    loadJsonBank('sscCgl2026Full.json')
+  ]);
+
+  const synthWithoutProvenance = {
+    id: 'ca-compendium-no-prov-1',
+    subjectId: 'current-affairs',
+    topicId: 'current-affairs-national',
+    classificationConfidence: 95,
+    questionType: 'PRACTICE',
+    difficulty: 'Hard',
+    year: 2026,
+    examName: 'Current Affairs 2026',
+    question: { en: 'Which country hosted the G20 Leaders Summit in 2025?' },
+    options: { en: ['South Africa', 'Brazil', 'India', 'Italy'] }
+  };
+
+  const pool = [
+    synthWithoutProvenance,
+    ...ugBank.questions,
+    ...gradBank.questions,
+    ...ssc20Bank.questions,
+    ...ssc26Bank.questions
+  ];
+
+  // 1. Balanced multi-subject quota (30 Qs across 3 subjects -> 10 each)
+  const balanced = generateCustomOrPracticeMock(pool, {
+    examStageId: 'all',
+    subjectIds: ['quantitative-aptitude', 'reasoning', 'general-knowledge'],
+    questionType: 'PYQ',
+    difficulty: 'All',
+    count: 30
+  });
+  assert.equal(balanced.questions.length, 30);
+  const subCounts = {};
+  for (const q of balanced.questions) {
+    subCounts[q.subjectId] = (subCounts[q.subjectId] || 0) + 1;
+  }
+  assert.equal(subCounts['quantitative-aptitude'], 10);
+  assert.equal(subCounts['reasoning'], 10);
+  assert.equal(subCounts['general-knowledge'], 10);
+
+  // 2. Sparse Hard + IMPORTANT filter with legacy topic alias should top-up cleanly from matching topic/subject
+  const sparseHard = generateCustomOrPracticeMock(pool, {
+    examStageId: 'ssc-cgl-tier1',
+    subjectIds: ['quantitative-aptitude'],
+    topicIds: ['percentage'],
+    difficulty: 'Hard',
+    questionType: 'IMPORTANT',
+    count: 20
+  });
+  assert.equal(sparseHard.questions.length, 20);
+  assert.ok(sparseHard.questions.every((q) => q.subjectId === 'quantitative-aptitude'));
+
+  // 3. Question without .provenance should work safely with extractProvenance
+  const prov = extractProvenance(synthWithoutProvenance);
+  assert.ok(prov && typeof prov.originExamName === 'string');
+});
+

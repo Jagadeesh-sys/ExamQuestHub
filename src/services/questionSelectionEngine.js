@@ -231,8 +231,45 @@ export function generateOfficialFullMock(allQuestions, stageId, options = {}) {
   };
 }
 
+const CUSTOM_TOPIC_ALIASES = {
+  geometry: 'mensuration-geometry',
+  mensuration: 'mensuration-geometry',
+  percentage: 'percentage-profit-loss',
+  'profit-loss': 'percentage-profit-loss',
+  interest: 'percentage-profit-loss',
+  'ratio-proportion': 'ratio-proportion-mixtures',
+  average: 'ratio-proportion-mixtures',
+  'time-work': 'time-speed-distance-work',
+  'time-speed-distance': 'time-speed-distance-work',
+  algebra: 'algebra-trigonometry',
+  trigonometry: 'algebra-trigonometry',
+  simplification: 'number-system',
+  'indian-geography': 'geography',
+  'indian-society': 'government-schemes',
+  'art-culture': 'static-gk',
+  'awards-honours': 'static-gk',
+  'books-authors': 'static-gk',
+  'important-days': 'static-gk',
+  sports: 'static-gk',
+  organisations: 'static-gk',
+  'human-body': 'biology',
+  diseases: 'biology',
+  'scientific-instruments': 'physics',
+  'inventions-discoveries': 'physics',
+  'science-technology': 'science-tech-ca',
+  fundamentals: 'computer-fundamentals',
+  networks: 'computer-networks',
+  programming: 'programming-oop'
+};
+
+function canonicalizeTopicSlug(id) {
+  const key = String(id || '').trim().toLowerCase();
+  return CUSTOM_TOPIC_ALIASES[key] || key;
+}
+
 /**
  * Generate a strictly filtered Subject / Topic / Subtopic / Custom / Sectional Test.
+ * Balances questions fairly across selected subjects and handles sparse difficulty/source tags gracefully.
  */
 export function generateCustomOrPracticeMock(allQuestions, config = {}) {
   const {
@@ -251,18 +288,27 @@ export function generateCustomOrPracticeMock(allQuestions, config = {}) {
   if (examStageId && examStageId !== 'all') {
     pool = pool.filter((q) => {
       const cls = getEffectiveClassification(q);
-      return Array.isArray(cls.eligibleExams) ? cls.eligibleExams.includes(examStageId) : true;
+      return Array.isArray(cls.eligibleExams) && cls.eligibleExams.length > 0
+        ? cls.eligibleExams.includes(examStageId)
+        : true;
     });
   }
 
-  if (Array.isArray(subjectIds) && subjectIds.length > 0 && !subjectIds.includes('all')) {
-    const subSet = new Set(subjectIds);
+  const requestedSubjects = Array.isArray(subjectIds)
+    ? subjectIds.filter((s) => s && s !== 'all')
+    : [];
+
+  if (requestedSubjects.length > 0) {
+    const subSet = new Set(requestedSubjects);
     pool = pool.filter((q) => subSet.has(getEffectiveClassification(q).subjectId));
   }
 
   if (Array.isArray(topicIds) && topicIds.length > 0 && !topicIds.includes('all')) {
-    const topSet = new Set(topicIds);
-    pool = pool.filter((q) => topSet.has(getEffectiveClassification(q).topicId));
+    const topSet = new Set(topicIds.map(canonicalizeTopicSlug));
+    pool = pool.filter((q) => {
+      const rawTop = String(getEffectiveClassification(q).topicId || '').toLowerCase();
+      return topSet.has(rawTop) || topSet.has(canonicalizeTopicSlug(rawTop));
+    });
   }
 
   if (subtopic && subtopic !== 'all') {
@@ -270,31 +316,166 @@ export function generateCustomOrPracticeMock(allQuestions, config = {}) {
     pool = pool.filter((q) => String(getEffectiveClassification(q).subtopic || '').toLowerCase() === target);
   }
 
-  if (difficulty && difficulty !== 'All') {
-    const diff = String(difficulty).toLowerCase();
-    const strictDiff = pool.filter((q) => String(q.difficulty || 'Medium').toLowerCase() === diff);
-    if (strictDiff.length > 0) pool = strictDiff;
-  }
-
   if (questionType && questionType !== 'ALL') {
     const qt = String(questionType).toUpperCase();
-    pool = pool.filter((q) => String(q.questionType || 'PYQ').toUpperCase() === qt);
+    let typedPool = pool;
+    if (qt === 'PYQ') {
+      typedPool = pool.filter((q) => {
+        if (String(q.questionType || '').toUpperCase() === 'PYQ') return true;
+        if (q.shiftNumber || q.provenance?.shiftNumber) return true;
+        const origin = String(q.provenance?.originExamId || '').toLowerCase();
+        if (origin && origin !== 'current-affairs-compendium' && origin !== 'custom') return true;
+        return Boolean(q.examName && !String(q.examName).toLowerCase().includes('compendium'));
+      });
+    } else if (qt === 'LATEST') {
+      typedPool = pool.filter((q) =>
+        ['2024', '2025', '2026'].includes(String(q.examYear || q.provenance?.examYear || ''))
+      );
+    } else if (qt === 'IMPORTANT') {
+      typedPool = pool.filter(
+        (q) =>
+          q.isImportant === true ||
+          String(q.questionType || '').toUpperCase() === 'IMPORTANT' ||
+          ((q.classificationConfidence ?? 90) >= 95 &&
+            ['2024', '2025', '2026'].includes(String(q.examYear || q.provenance?.examYear || '')))
+      );
+    } else {
+      typedPool = pool.filter((q) => String(q.questionType || 'PYQ').toUpperCase() === qt);
+    }
+    if (typedPool.length > 0) {
+      pool = typedPool;
+    }
   }
 
   const numericLimit = count === 'all' || !count ? pool.length : Math.max(1, Number(count));
 
-  let selected;
-  if (sortOrder === 'original') {
-    selected = [...pool]
-      .sort((a, b) => (a.originalOrder || a.questionNumber || 0) - (b.originalOrder || b.questionNumber || 0))
-      .slice(0, numericLimit);
-  } else {
-    selected = stratifiedPick(pool, numericLimit, new Set(), new Set());
+  // Separate strict difficulty matches so sparse Easy/Hard tags are prioritized without collapsing test size
+  let priorityPool = pool;
+  let secondaryPool = [];
+  let difficultyFallbackUsed = false;
+  let strictDifficultyCount = pool.length;
+
+  if (difficulty && difficulty !== 'All') {
+    const diff = String(difficulty).toLowerCase();
+    const strictDiff = pool.filter((q) => String(q.difficulty || 'Medium').toLowerCase() === diff);
+    strictDifficultyCount = strictDiff.length;
+    if (strictDiff.length >= numericLimit) {
+      priorityPool = strictDiff;
+    } else if (strictDiff.length > 0) {
+      const strictIds = new Set(strictDiff.map((q) => q.id));
+      priorityPool = strictDiff;
+      secondaryPool = pool.filter((q) => !strictIds.has(q.id));
+      difficultyFallbackUsed = true;
+    } else {
+      difficultyFallbackUsed = true;
+    }
   }
+
+  const pickFromPools = (targetCount) => {
+    if (sortOrder === 'original') {
+      const primarySorted = [...priorityPool].sort(
+        (a, b) => (a.originalOrder || a.questionNumber || 0) - (b.originalOrder || b.questionNumber || 0)
+      );
+      if (primarySorted.length >= targetCount || secondaryPool.length === 0) {
+        return primarySorted.slice(0, targetCount);
+      }
+      const secondarySorted = [...secondaryPool].sort(
+        (a, b) => (a.originalOrder || a.questionNumber || 0) - (b.originalOrder || b.questionNumber || 0)
+      );
+      return [...primarySorted, ...secondarySorted].slice(0, targetCount);
+    }
+
+    // Group fairly by subject when multiple subjects exist in the request
+    const activeSubjectBuckets = new Map();
+    const sourceOrder =
+      requestedSubjects.length > 1
+        ? requestedSubjects
+        : Array.from(new Set(pool.map((q) => getEffectiveClassification(q).subjectId)));
+
+    if (sourceOrder.length > 1 && targetCount > 1 && targetCount < pool.length) {
+      for (const sid of sourceOrder) {
+        activeSubjectBuckets.set(sid, { primary: [], secondary: [] });
+      }
+      for (const q of priorityPool) {
+        const sid = getEffectiveClassification(q).subjectId;
+        if (!activeSubjectBuckets.has(sid)) activeSubjectBuckets.set(sid, { primary: [], secondary: [] });
+        activeSubjectBuckets.get(sid).primary.push(q);
+      }
+      for (const q of secondaryPool) {
+        const sid = getEffectiveClassification(q).subjectId;
+        if (!activeSubjectBuckets.has(sid)) activeSubjectBuckets.set(sid, { primary: [], secondary: [] });
+        activeSubjectBuckets.get(sid).secondary.push(q);
+      }
+
+      const usedIds = new Set();
+      const usedSigs = new Set();
+      const pickedBySubject = new Map();
+      const nonEmptyKeys = Array.from(activeSubjectBuckets.entries())
+        .filter(([, b]) => b.primary.length + b.secondary.length > 0)
+        .map(([k]) => k);
+
+      if (nonEmptyKeys.length > 1) {
+        const baseQuota = Math.floor(targetCount / nonEmptyKeys.length);
+        let remainder = targetCount % nonEmptyKeys.length;
+
+        // First pass: give each subject its fair share
+        for (const sid of nonEmptyKeys) {
+          const b = activeSubjectBuckets.get(sid);
+          const want = baseQuota + (remainder > 0 ? 1 : 0);
+          if (remainder > 0) remainder--;
+          let got = stratifiedPick(b.primary, want, usedIds, usedSigs);
+          if (got.length < want && b.secondary.length > 0) {
+            got = [...got, ...stratifiedPick(b.secondary, want - got.length, usedIds, usedSigs)];
+          }
+          pickedBySubject.set(sid, got);
+        }
+
+        // Second pass: fill any shortfall from subjects with surplus questions
+        let totalGot = Array.from(pickedBySubject.values()).reduce((sum, list) => sum + list.length, 0);
+        if (totalGot < targetCount) {
+          for (const sid of nonEmptyKeys) {
+            if (totalGot >= targetCount) break;
+            const b = activeSubjectBuckets.get(sid);
+            const needed = targetCount - totalGot;
+            let extra = stratifiedPick(b.primary, needed, usedIds, usedSigs);
+            if (extra.length < needed && b.secondary.length > 0) {
+              extra = [...extra, ...stratifiedPick(b.secondary, needed - extra.length, usedIds, usedSigs)];
+            }
+            if (extra.length > 0) {
+              pickedBySubject.get(sid).push(...extra);
+              totalGot += extra.length;
+            }
+          }
+        }
+
+        // Order cleanly grouped by subject for CBT Section Tabs
+        const ordered = [];
+        for (const sid of nonEmptyKeys) {
+          ordered.push(...(pickedBySubject.get(sid) || []));
+        }
+        return ordered;
+      }
+    }
+
+    const usedIds = new Set();
+    const usedSigs = new Set();
+    let selected = stratifiedPick(priorityPool, targetCount, usedIds, usedSigs);
+    if (selected.length < targetCount && secondaryPool.length > 0) {
+      selected = [
+        ...selected,
+        ...stratifiedPick(secondaryPool, targetCount - selected.length, usedIds, usedSigs)
+      ];
+    }
+    return selected;
+  };
+
+  const selected = pickFromPools(numericLimit);
 
   return {
     questions: selected,
     totalAvailable: pool.length,
+    strictDifficultyCount,
+    difficultyFallbackUsed,
     requestedCount: numericLimit,
     shortfall: Math.max(0, numericLimit - selected.length)
   };
