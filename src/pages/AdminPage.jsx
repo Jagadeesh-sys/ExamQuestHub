@@ -2164,7 +2164,7 @@ export default function AdminPage() {
           MODAL: EDIT / CREATE MODAL
          ------------------------------------------------------------- */}
       {isFormOpen && editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl border border-slate-200 max-w-2xl w-full p-6 sm:p-8 shadow-2xl my-8 space-y-5 animate-in fade-in duration-150 max-h-[90vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -3571,7 +3571,7 @@ export default function AdminPage() {
 
       {/* Quick Image Paste & Update Modal for Current Affairs */}
       {imageModalItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -3636,7 +3636,7 @@ export default function AdminPage() {
 
       {/* Quick Document Upload Modal for Study Materials & Previous Papers */}
       {documentModalItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>

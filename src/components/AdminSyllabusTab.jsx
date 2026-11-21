@@ -641,7 +641,7 @@ export default function AdminSyllabusTab({ onNotify }) {
 
       {/* MODAL: CREATE / EDIT FULL 20-POINT SYLLABUS */}
       {editModalOpen && editingExam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl border border-slate-200 max-w-4xl w-full p-6 shadow-2xl my-6 space-y-4 max-h-[92vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
               <div>
@@ -1150,7 +1150,7 @@ export default function AdminSyllabusTab({ onNotify }) {
 
       {/* MODAL: QUICK PDF UPLOAD / LINK */}
       {pdfModalExam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white rounded-3xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-heading font-bold text-base text-[#182B45]">
@@ -1199,7 +1199,7 @@ export default function AdminSyllabusTab({ onNotify }) {
 
       {/* MODAL: JSON BULK IMPORT */}
       {importOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white rounded-3xl border border-slate-200 max-w-2xl w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-heading font-bold text-base text-[#182B45]">
@@ -1272,7 +1272,7 @@ export default function AdminSyllabusTab({ onNotify }) {
 
       {/* MODAL: ANNUAL VERSION UPDATE (PRESERVES HISTORICAL VERSIONS) */}
       {annualModalExam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <form onSubmit={handleAnnualBump} className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-heading font-bold text-base text-[#182B45]">

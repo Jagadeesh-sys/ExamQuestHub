@@ -2043,7 +2043,7 @@ export default function MockTestEnginePage() {
       {/* =========================================================================
           STICKY MOBILE BOTTOM NAVIGATION BAR (FIXED & SINGLE PRIMARY MOBILE NAV)
           ========================================================================= */}
-      {!isSubmitted && activeMode !== 'solutions' && (
+      {!isSubmitted && activeMode !== 'solutions' && !mobilePaletteOpen && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E3EAF2] px-3 py-2.5 shadow-lg safe-area-pb">
           <div className="flex items-center justify-between gap-1.5 max-w-lg mx-auto">
             {/* 1. Previous (Disabled on Question 1) */}
@@ -2110,8 +2110,14 @@ export default function MockTestEnginePage() {
           MOBILE QUESTION PALETTE DRAWER / BOTTOM SHEET
           ========================================================================= */}
       {mobilePaletteOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-xs lg:hidden animate-in fade-in duration-200">
-          <div className="bg-white rounded-t-3xl max-h-[80vh] flex flex-col shadow-2xl p-5 space-y-4">
+        <div
+          onClick={() => setMobilePaletteOpen(false)}
+          className="fixed inset-0 z-[120] flex flex-col justify-end bg-black/60 backdrop-blur-xs lg:hidden animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-t-3xl max-h-[80dvh] flex flex-col shadow-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] space-y-4"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-slate-900 text-sm">Question Navigation Palette</span>
@@ -2205,7 +2211,7 @@ export default function MockTestEnginePage() {
           SUBMIT CONFIRMATION MODAL
           ========================================================================= */}
       {submitConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
@@ -2267,7 +2273,7 @@ export default function MockTestEnginePage() {
           PAUSE MODAL DIALOG
           ========================================================================= */}
       {isPaused && !isSubmitted && activeMode === 'cbt' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-slate-100">
             <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-inner">
               <Pause className="w-7 h-7" />
@@ -2297,7 +2303,7 @@ export default function MockTestEnginePage() {
           EXIT CONFIRMATION MODAL
           ========================================================================= */}
       {exitConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">

@@ -1960,7 +1960,7 @@ export default function AdminMockTestsTab({
 
       {/* QUESTION EDIT MODAL */}
       {editingQuestion && editFormData && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 space-y-5 shadow-2xl my-8 border border-[#E3EAF2]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
@@ -2157,7 +2157,7 @@ export default function AdminMockTestsTab({
 
       {/* SHIFT EDIT MODAL */}
       {editingShift && shiftFormData && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E3EAF2]">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="text-base font-black text-[#12345A]">

@@ -284,192 +284,192 @@ export default function Header() {
             </div>
           </div>
         )}
+      </header>
 
-        {/* Mobile Navigation Drawer Overlay */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 flex">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-              onClick={() => setMobileMenuOpen(false)}
-            />
+      {/* Mobile Navigation Drawer Overlay (outside header stacking context so MobileBottomNav never overlaps) */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-[120] flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
 
-            {/* Slide-in Sheet */}
-            <div className="relative ml-auto w-full max-w-xs sm:max-w-sm bg-white text-[#182B45] h-full shadow-2xl flex flex-col justify-between overflow-y-auto z-10 animate-in slide-in-from-right duration-200">
-              
-              {/* Drawer Header */}
-              <div className="p-4 bg-[#1F224D] text-white flex items-center justify-between border-b border-[#2C3867]">
-                <div className="flex items-center gap-1.5">
-                  <img
-                    src="/assets/aistudio/examquesthub_cap_logo.webp"
-                    alt="ExamQuest Hub Logo"
-                    decoding="async"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = '/assets/aistudio/examquesthub_cap_logo.png';
-                    }}
-                    className="h-[24px] w-auto object-contain shrink-0"
-                  />
-                  <div>
-                    <span className="font-heading font-extrabold text-[13.5px] text-white leading-tight block">
-                      Exam<span className="text-[#F2BE4F] font-extrabold">Quest</span> Hub
-                    </span>
-                    <span className="text-[7.5px] sm:text-[8px] text-[#A6B9D8] font-medium block mt-0.5">
-                      Govt Exams • Jobs • Current Affairs
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer"
-                  aria-label="Close menu"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Drawer Links */}
-              <div className="p-4 space-y-1 flex-1 overflow-y-auto">
-                <div className="mb-4">
-                  <form onSubmit={handleSearchSubmit} className="relative">
-                    <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search exams, notifications..."
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#2468B4]"
-                    />
-                  </form>
-                </div>
-
-                {navLinks.map((link) => (
-                  <NavLink
-                    key={link.to}
-                    to={link.to}
-                    end={link.to === '/'}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-colors ${
-                        isActive
-                          ? 'text-[#12345A] bg-[#EAF3FF]'
-                          : 'text-slate-700 hover:bg-slate-50'
-                      }`
-                    }
-                  >
-                    <span>{link.label}</span>
-                    <ArrowRight className="w-4 h-4 text-slate-400" />
-                  </NavLink>
-                ))}
-
-                <div className="pt-3 border-t border-slate-100 space-y-2">
-                  <div className="px-1">
-                    <PWAInstallButton className="w-full justify-center bg-[#12345A] text-white hover:bg-[#0B1F3A] py-2.5 shadow-xs" />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      window.dispatchEvent(new CustomEvent('eqh:replay-onboarding'));
-                    }}
-                    className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-                  >
-                    <GraduationCap className="w-4 h-4 text-[#2468B4]" />
-                    <span>Welcome Tour</span>
-                  </button>
-                  <Link
-                    to="/admin"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50"
-                  >
-                    <ShieldCheck className="w-4 h-4 text-[#F2BE4F]" />
-                    <span>Admin Portal</span>
-                  </Link>
+          {/* Slide-in Sheet */}
+          <div className="relative ml-auto w-full max-w-xs sm:max-w-sm bg-white text-[#182B45] h-full shadow-2xl flex flex-col justify-between overflow-y-auto z-10 animate-in slide-in-from-right duration-200">
+            
+            {/* Drawer Header */}
+            <div className="p-4 bg-[#1F224D] text-white flex items-center justify-between border-b border-[#2C3867]">
+              <div className="flex items-center gap-1.5">
+                <img
+                  src="/assets/aistudio/examquesthub_cap_logo.webp"
+                  alt="ExamQuest Hub Logo"
+                  decoding="async"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/assets/aistudio/examquesthub_cap_logo.png';
+                  }}
+                  className="h-[24px] w-auto object-contain shrink-0"
+                />
+                <div>
+                  <span className="font-heading font-extrabold text-[13.5px] text-white leading-tight block">
+                    Exam<span className="text-[#F2BE4F] font-extrabold">Quest</span> Hub
+                  </span>
+                  <span className="text-[7.5px] sm:text-[8px] text-[#A6B9D8] font-medium block mt-0.5">
+                    Govt Exams • Jobs • Current Affairs
+                  </span>
                 </div>
               </div>
-
-              {/* Drawer Footer */}
-              <div className="p-4 border-t border-slate-100 space-y-3 bg-slate-50">
-                <div className="flex items-center justify-between text-xs text-slate-600">
-                  <span className="font-semibold">Language:</span>
-                  <LanguageSelector />
-                </div>
-                <a
-                  href="https://instagram.com/examquesthub"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-2xs"
-                >
-                  <Instagram className="w-4 h-4 text-pink-600" />
-                  <span>Follow @examquesthub</span>
-                </a>
-              </div>
-
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* Notifications Modal/Drawer */}
-        {notificationsOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
-              onClick={() => setNotificationsOpen(false)}
-            />
-            <div className="relative w-full max-w-md bg-white text-[#182B45] rounded-3xl shadow-2xl p-5 z-10 animate-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-50 text-[#12345A] flex items-center justify-center">
-                    <Bell className="w-4 h-4" />
-                  </div>
-                  <h3 className="font-heading font-extrabold text-base text-[#12345A]">
-                    Live Exam Alerts
-                  </h3>
+            {/* Drawer Links */}
+            <div className="p-4 space-y-1 flex-1 overflow-y-auto">
+              <div className="mb-4">
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search exams, notifications..."
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#2468B4]"
+                  />
+                </form>
+              </div>
+
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.to === '/'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-colors ${
+                      isActive
+                        ? 'text-[#12345A] bg-[#EAF3FF]'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`
+                  }
+                >
+                  <span>{link.label}</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                </NavLink>
+              ))}
+
+              <div className="pt-3 border-t border-slate-100 space-y-2">
+                <div className="px-1">
+                  <PWAInstallButton className="w-full justify-center bg-[#12345A] text-white hover:bg-[#0B1F3A] py-2.5 shadow-xs" />
                 </div>
                 <button
                   type="button"
-                  onClick={() => setNotificationsOpen(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 cursor-pointer"
-                  aria-label="Close"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    window.dispatchEvent(new CustomEvent('eqh:replay-onboarding'));
+                  }}
+                  className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  <GraduationCap className="w-4 h-4 text-[#2468B4]" />
+                  <span>Welcome Tour</span>
                 </button>
-              </div>
-
-              <div className="divide-y divide-slate-100 mt-2 max-h-[60vh] overflow-y-auto">
-                {quickNotifications.map((n) => (
-                  <Link
-                    key={n.id}
-                    to={n.link}
-                    onClick={() => setNotificationsOpen(false)}
-                    className="block py-3 hover:bg-slate-50 rounded-xl px-2 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A]">
-                        {n.tag}
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-medium">{n.time}</span>
-                    </div>
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
                 <Link
-                  to="/jobs"
-                  onClick={() => setNotificationsOpen(false)}
-                  className="text-xs font-bold text-[#2468B4] hover:underline"
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50"
                 >
-                  View All Notifications →
+                  <ShieldCheck className="w-4 h-4 text-[#F2BE4F]" />
+                  <span>Admin Portal</span>
                 </Link>
               </div>
             </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-slate-100 space-y-3 bg-slate-50">
+              <div className="flex items-center justify-between text-xs text-slate-600">
+                <span className="font-semibold">Language:</span>
+                <LanguageSelector />
+              </div>
+              <a
+                href="https://instagram.com/examquesthub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-2xs"
+              >
+                <Instagram className="w-4 h-4 text-pink-600" />
+                <span>Follow @examquesthub</span>
+              </a>
+            </div>
+
           </div>
-        )}
-      </header>
+        </div>
+      )}
+
+      {/* Notifications Modal/Drawer (outside header stacking context so MobileBottomNav never overlaps) */}
+      {notificationsOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            onClick={() => setNotificationsOpen(false)}
+          />
+          <div className="relative w-full max-w-md bg-white text-[#182B45] rounded-3xl shadow-2xl p-5 z-10 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-blue-50 text-[#12345A] flex items-center justify-center">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <h3 className="font-heading font-extrabold text-base text-[#12345A]">
+                  Live Exam Alerts
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNotificationsOpen(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-100 mt-2 max-h-[60vh] overflow-y-auto">
+              {quickNotifications.map((n) => (
+                <Link
+                  key={n.id}
+                  to={n.link}
+                  onClick={() => setNotificationsOpen(false)}
+                  className="block py-3 hover:bg-slate-50 rounded-xl px-2 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A]">
+                      {n.tag}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-medium">{n.time}</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+              <Link
+                to="/jobs"
+                onClick={() => setNotificationsOpen(false)}
+                className="text-xs font-bold text-[#2468B4] hover:underline"
+              >
+                View All Notifications →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
