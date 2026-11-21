@@ -27,6 +27,7 @@ import {
   getApplicationLastDate,
   formatDisplayDate
 } from '../utils/notificationStatus.js';
+import { sanitizeDocumentUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 /**
  * StraightLineNotification:
@@ -72,7 +73,8 @@ export default function StraightLineNotification({
   const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
   const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
   const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
-  const applyHref = item.applyUrl || item.officialUrl || '';
+  const applyHref = sanitizeExternalUrl(item.applyUrl || item.officialUrl || '', '');
+  const safePdfUrl = sanitizeDocumentUrl(item.pdfUrl, '');
 
   // Navy theme (matches the user's screenshot straight-line banner)
   if (theme === 'navy') {
@@ -166,9 +168,9 @@ export default function StraightLineNotification({
             {/* Action Bar */}
             <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-white/10">
               <div className="flex items-center gap-2">
-                {item.pdfUrl && (
+                {safePdfUrl && (
                   <a
-                    href={item.pdfUrl}
+                    href={safePdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold border border-white/20 transition-colors"
@@ -405,9 +407,9 @@ export default function StraightLineNotification({
           {/* Action Footer */}
           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#E3EAF2]">
             <div className="flex items-center gap-2">
-              {item.pdfUrl && (
+              {safePdfUrl && (
                 <a
-                  href={item.pdfUrl}
+                  href={safePdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-800 rounded-xl text-xs font-semibold border border-slate-300 transition-colors shadow-xs active:scale-95"

@@ -33,6 +33,7 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import StraightLineCurrentAffair from './StraightLineCurrentAffair.jsx';
 import CurrentAffairCard from './CurrentAffairCard.jsx';
 import { CURRENT_AFFAIR_TOPICS, topicMatches } from '../constants/currentAffairs.js';
+import { sanitizeMediaUrl } from '../utils/security.js';
 
 // Golden leaf corner SVG decoration matching image_1b19ce6e.png
 function GoldenCornerFlourish() {
@@ -134,10 +135,11 @@ const ReelCard = React.memo(function ReelCard({ item, isBookmarked, onToggleBook
   const detailSlug = item.slug || item.id;
   const imageSource = getReelImageSourceLabel(item);
   const defaultImg = 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=900&q=80';
-  const [imgSrc, setImgSrc] = useState(item.imageUrl || defaultImg);
+  const safeItemImg = sanitizeMediaUrl(item.imageUrl, defaultImg);
+  const [imgSrc, setImgSrc] = useState(safeItemImg);
 
   useEffect(() => {
-    setImgSrc(item.imageUrl || defaultImg);
+    setImgSrc(sanitizeMediaUrl(item.imageUrl, defaultImg));
   }, [item.imageUrl]);
   const examTags = Array.isArray(item.examRelevance) && item.examRelevance.length > 0
     ? item.examRelevance
@@ -487,7 +489,7 @@ export default function EditorialCurrentAffairsSection({
     const start = Math.max(0, activeReelIdx);
     const end = Math.min(filtered.length, start + 6);
     for (let i = start; i < end; i += 1) {
-      const url = filtered[i]?.imageUrl;
+      const url = sanitizeMediaUrl(filtered[i]?.imageUrl, '');
       if (url && !preloadedUrlsRef.current.has(url)) {
         preloadedUrlsRef.current.add(url);
         const img = new window.Image();
@@ -1031,7 +1033,7 @@ export default function EditorialCurrentAffairsSection({
                     {/* Thumbnail */}
                     <div className="w-full sm:w-52 aspect-[1.68/1] rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 relative">
                       <img
-                        src={item.imageUrl || 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80'}
+                        src={sanitizeMediaUrl(item.imageUrl, 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80')}
                         alt={headline}
                         className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {

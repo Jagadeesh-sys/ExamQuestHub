@@ -201,7 +201,7 @@ export default function CurrentAffairsPage() {
                 href={capsule.url}
                 download={capsule.fileName}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="w-full py-2 px-3 rounded-xl bg-white border border-[#E3EAF2] hover:bg-[#EAF3FF] hover:border-[#2468B4] text-[#12345A] text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-[#2468B4]" />

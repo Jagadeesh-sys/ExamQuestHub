@@ -41,6 +41,7 @@ import EmptyState from '../components/EmptyState.jsx';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import jobBannerImg from '../assets/images/job_banner_8d9279ad.webp';
+import { sanitizeDocumentUrl, sanitizeExternalUrl } from '../utils/security.js';
 import {
   getEffectiveStatus,
   getApplicationStartDate,
@@ -828,9 +829,9 @@ export default function JobsPage() {
                           {/* Bottom Action Bar */}
                           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80">
                             <div className="flex flex-wrap items-center gap-2">
-                              {item.pdfUrl && (
+                              {sanitizeDocumentUrl(item.pdfUrl, '') && (
                                 <a
-                                  href={item.pdfUrl}
+                                  href={sanitizeDocumentUrl(item.pdfUrl, '')}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-bold border border-slate-200 transition-colors shadow-2xs"
@@ -840,9 +841,9 @@ export default function JobsPage() {
                                 </a>
                               )}
 
-                              {isOpen && (item.applyUrl || item.officialUrl) ? (
+                              {isOpen && sanitizeExternalUrl(item.applyUrl || item.officialUrl || '', '') ? (
                                 <a
-                                  href={item.applyUrl || item.officialUrl}
+                                  href={sanitizeExternalUrl(item.applyUrl || item.officialUrl || '', '')}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#F2BE4F] hover:bg-[#E0AC3C] text-[#0B1F3A] rounded-lg text-xs font-black transition-colors shadow-xs"

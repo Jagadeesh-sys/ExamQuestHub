@@ -32,6 +32,13 @@ import {
 } from '../utils/notificationStatus.js';
 import { getDefaultImageForTopic as defaultImageForTopic, sanitizeTopicImageUrl, DEFAULT_TOPIC_IMAGES } from './topicImages.js';
 import { loadAllRRBQuestions, getVerifiedMockStats } from '../services/rrbMockService.js';
+import {
+  safeJsonParse,
+  sanitizeExternalUrl,
+  sanitizeMediaUrl,
+  sanitizeDocumentUrl,
+  stripDangerousKeys
+} from '../utils/security.js';
 
 export { DEFAULT_TOPIC_IMAGES };
 
@@ -113,7 +120,8 @@ function getLocalData(key, defaultData) {
   try {
     const raw = typeof window !== 'undefined' ? window.localStorage?.getItem(key) : null;
     if (!raw) return defaultData;
-    return JSON.parse(raw);
+    const parsed = safeJsonParse(raw, null);
+    return parsed !== null ? parsed : defaultData;
   } catch (e) {
     console.warn('[Cache] Read error for key', key, e);
     return defaultData;
@@ -273,11 +281,9 @@ function notifyUpdatesSubscribers(items) {
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
     if (e.key === STORAGE_KEYS.UPDATES) {
-      try {
-        const next = JSON.parse(e.newValue || '[]');
+      const next = safeJsonParse(e.newValue || '[]', []);
+      if (Array.isArray(next)) {
         notifyUpdatesSubscribers(next);
-      } catch (err) {
-        // ignore
       }
     }
   });
@@ -418,8 +424,11 @@ export async function saveUpdate(item) {
     }
   }
 
-  const payload = stripUndefined({
+  const payload = stripDangerousKeys(stripUndefined({
     ...fields,
+    officialUrl: fields.officialUrl ? sanitizeExternalUrl(fields.officialUrl, '') : undefined,
+    applyUrl: fields.applyUrl ? sanitizeExternalUrl(fields.applyUrl, '') : undefined,
+    pdfUrl: fields.pdfUrl ? sanitizeDocumentUrl(fields.pdfUrl, '') : undefined,
     applicationStartDate: startDate || undefined,
     applicationLastDate: lastDate || undefined,
     openingDate: startDate || fields.openingDate || undefined,
@@ -433,7 +442,7 @@ export async function saveUpdate(item) {
     slug,
     updatedAt: nowIso,
     verifiedAt: isDraft(fields) ? fields.verifiedAt || null : fields.verifiedAt || nowIso
-  });
+  }));
   assertInlineSize(payload);
 
   // 1. Immediately store in local cache so this browser session and all public pages reflect it instantly
@@ -670,13 +679,9 @@ if (typeof window !== 'undefined') {
             caIdbHydrated = true;
             notifyCurrentAffairsSubscribers(sorted);
           } else if (e.newValue) {
-            try {
-              const parsed = JSON.parse(e.newValue);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                notifyCurrentAffairsSubscribers(parsed);
-              }
-            } catch {
-              // ignore
+            const parsed = safeJsonParse(e.newValue, null);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              notifyCurrentAffairsSubscribers(parsed);
             }
           }
         })
@@ -868,17 +873,18 @@ export async function saveCurrentAffair(article) {
   const slug = safeId(rawSlug, id);
   const status = article.status || 'Published';
 
-  const payload = stripUndefined({
+  const payload = stripDangerousKeys(stripUndefined({
     ...article,
     id,
     slug,
     status,
+    sourceUrl: article.sourceUrl ? sanitizeExternalUrl(article.sourceUrl, '') : undefined,
     publishedAt: article.publishedAt || nowIso.split('T')[0],
     createdAt: article.createdAt || nowIso,
     updatedAt: nowIso,
     verifiedAt: nowIso,
-    imageUrl: article.imageUrl || getDefaultImageForTopic(article.topic)
-  });
+    imageUrl: sanitizeMediaUrl(article.imageUrl, '') || getDefaultImageForTopic(article.topic)
+  }));
   assertInlineSize(payload);
 
   try {
@@ -918,18 +924,19 @@ export async function bulkSaveCurrentAffairs(articles) {
     const slug = safeId(rawSlug, id);
     const status = article.status || 'Published';
 
-    const payload = stripUndefined({
+    const payload = stripDangerousKeys(stripUndefined({
       ...article,
       id,
       slug,
       status,
+      sourceUrl: article.sourceUrl ? sanitizeExternalUrl(article.sourceUrl, '') : undefined,
       eventDate: article.eventDate || today,
       publishedAt: article.publishedAt || today,
       createdAt: article.createdAt || nowIso,
       updatedAt: nowIso,
       verifiedAt: nowIso,
-      imageUrl: article.imageUrl || getDefaultImageForTopic(article.topic)
-    });
+      imageUrl: sanitizeMediaUrl(article.imageUrl, '') || getDefaultImageForTopic(article.topic)
+    }));
     assertInlineSize(payload);
     prepared.push(payload);
   }
@@ -1027,7 +1034,13 @@ export async function getQuestions() {
 export async function saveQuestion(question) {
   requireFirebaseWrite();
   const id = safeId(question.id || `gk-${Date.now()}`, 'gk');
-  const payload = stripUndefined({ ...question, id });
+  const payload = stripDangerousKeys(stripUndefined({
+    ...question,
+    id,
+    imageUrl: question.imageUrl ? sanitizeMediaUrl(question.imageUrl, '') : undefined,
+    paperUrl: question.paperUrl ? sanitizeDocumentUrl(question.paperUrl, '') : undefined
+  }));
+  assertInlineSize(payload);
   try {
     await setDoc(doc(db, 'questions', id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });
   } catch (err) {
@@ -1525,11 +1538,14 @@ export async function saveMockQuestion(question) {
   const sanitized = mapRrbToMockQuestion({
     ...question,
     id,
+    imageUrl: question.imageUrl ? sanitizeMediaUrl(question.imageUrl, '') : undefined,
+    paperUrl: question.paperUrl ? sanitizeDocumentUrl(question.paperUrl, '') : undefined,
     createdAt: question.createdAt || nowIso,
     updatedAt: nowIso
   });
 
-  const payload = stripUndefined(sanitized);
+  const payload = stripDangerousKeys(stripUndefined(sanitized));
+  assertInlineSize(payload);
 
   try {
     await setDoc(doc(db, 'mockQuestions', id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });
@@ -1562,8 +1578,13 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
   const seenSignatures = new Set();
 
   for (const item of rawList) {
-    if (!item) continue;
-    const clean = mapRrbToMockQuestion(item);
+    if (!item || typeof item !== 'object') continue;
+    const safeItem = stripDangerousKeys(item);
+    const clean = mapRrbToMockQuestion({
+      ...safeItem,
+      imageUrl: safeItem.imageUrl ? sanitizeMediaUrl(safeItem.imageUrl, '') : undefined,
+      paperUrl: safeItem.paperUrl ? sanitizeDocumentUrl(safeItem.paperUrl, '') : undefined
+    });
     const id = safeId(clean.id || `mock-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, 'mock');
 
     // Skip if document ID already processed in this batch
@@ -1578,7 +1599,7 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
     }
     if (signature) seenSignatures.add(signature);
 
-    dedupMap.set(id, { ...clean, id });
+    dedupMap.set(id, stripDangerousKeys({ ...clean, id }));
   }
   const list = Array.from(dedupMap.values());
   const CHUNK_SIZE = 450;
@@ -1818,7 +1839,12 @@ export async function getResources() {
 export async function saveResource(res) {
   requireFirebaseWrite();
   const id = safeId(res.id || `res-${Date.now()}`, 'res');
-  const payload = stripUndefined({ ...res, id });
+  const payload = stripDangerousKeys(stripUndefined({
+    ...res,
+    id,
+    downloadUrl: res.downloadUrl ? sanitizeDocumentUrl(res.downloadUrl, '') : undefined,
+    officialSource: res.officialSource ? sanitizeExternalUrl(res.officialSource, '') : undefined
+  }));
   assertInlineSize(payload);
   try {
     await setDoc(doc(db, 'resources', id), { ...payload, serverUpdatedAt: serverTimestamp() }, { merge: true });

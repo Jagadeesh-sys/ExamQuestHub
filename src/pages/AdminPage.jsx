@@ -83,6 +83,13 @@ import {
 import { SAMPLE_NOTIFICATIONS_JSON, SAMPLE_MINIMAL_TEMPLATE_JSON } from '../data/sampleImportNotifications.js';
 import { getAllShifts, loadAllShifts } from '../services/rrbMockService.js';
 import { computeUnifiedStats } from '../utils/questionStats.js';
+import {
+  safeJsonParse,
+  sanitizeExternalUrl,
+  sanitizeDocumentUrl,
+  sanitizeMediaUrl,
+  stripDangerousKeys
+} from '../utils/security.js';
 
 /**
  * Comparison key for a current affairs headline. Case, spacing and punctuation
@@ -278,11 +285,9 @@ export default function AdminPage() {
   const handleBulkImport = async () => {
     setImportSummary(null);
 
-    let parsed;
-    try {
-      parsed = JSON.parse(importJson);
-    } catch (e) {
-      setImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON syntax: ${e.message}`], items: [] });
+    const parsed = safeJsonParse(importJson, null, 2 * 1024 * 1024);
+    if (!parsed) {
+      setImportSummary({ ok: 0, failed: 0, errors: ['Invalid JSON syntax or payload exceeds 2 MB safety limit.'], items: [] });
       return;
     }
 
@@ -300,6 +305,10 @@ export default function AdminPage() {
 
     if (!items || items.length === 0) {
       setImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of job notifications.'], items: [] });
+      return;
+    }
+    if (items.length > 500) {
+      setImportSummary({ ok: 0, failed: 0, errors: ['Bulk import is capped at 500 notifications per batch.'], items: [] });
       return;
     }
 
@@ -329,10 +338,13 @@ export default function AdminPage() {
         : item?.organization?.en || item?.organization?.te || item?.org || item?.department || '';
       const teOrg = typeof item.organization === 'object' ? item.organization?.te || '' : '';
 
-      // URL normalization
-      const officialUrl = item.officialUrl || item.official_url || item.website || item.applyUrl || item.apply_url || '';
-      const applyUrl = item.applyUrl || item.apply_url || officialUrl || '';
-      const pdfUrl = item.pdfUrl || item.pdf_url || item.notificationPdf || '';
+      // URL normalization & scheme validation
+      const rawOfficialUrl = item.officialUrl || item.official_url || item.website || item.applyUrl || item.apply_url || '';
+      const rawApplyUrl = item.applyUrl || item.apply_url || rawOfficialUrl || '';
+      const rawPdfUrl = item.pdfUrl || item.pdf_url || item.notificationPdf || '';
+      const officialUrl = sanitizeExternalUrl(rawOfficialUrl, '');
+      const applyUrl = sanitizeExternalUrl(rawApplyUrl, officialUrl);
+      const pdfUrl = rawPdfUrl ? sanitizeDocumentUrl(rawPdfUrl, '') : '';
 
       // Summary normalization
       const enSummary = typeof item.summary === 'string'
@@ -349,7 +361,7 @@ export default function AdminPage() {
         continue;
       }
       if (!officialUrl) {
-        errors.push(`${label} — missing required official website URL.`);
+        errors.push(`${label} — missing or unsafe official website URL (must start with https:// or http://).`);
         continue;
       }
 
@@ -424,22 +436,23 @@ export default function AdminPage() {
 
   const importParseStatus = React.useMemo(() => {
     if (!importJson || !importJson.trim()) return null;
-    try {
-      const parsed = JSON.parse(importJson);
-      const list = Array.isArray(parsed)
-        ? parsed
-        : Array.isArray(parsed?.updates)
-          ? parsed.updates
-          : Array.isArray(parsed?.jobs)
-            ? parsed.jobs
-            : Array.isArray(parsed?.notifications)
-              ? parsed.notifications
-              : null;
-      if (!list) return { valid: false, message: 'JSON is valid syntax, but could not detect an array of jobs.' };
-      return { valid: true, count: list.length };
-    } catch (err) {
-      return { valid: false, message: err.message };
+    const parsed = safeJsonParse(importJson, null, 2 * 1024 * 1024);
+    if (!parsed) {
+      return { valid: false, message: 'Invalid JSON syntax or payload exceeds 2 MB limit.' };
     }
+    const list = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.updates)
+        ? parsed.updates
+        : Array.isArray(parsed?.jobs)
+          ? parsed.jobs
+          : Array.isArray(parsed?.notifications)
+            ? parsed.notifications
+            : Array.isArray(parsed?.items)
+              ? parsed.items
+              : null;
+    if (!list) return { valid: false, message: 'JSON is valid syntax, but could not detect an array of jobs.' };
+    return { valid: true, count: list.length };
   }, [importJson]);
 
   const handleImportFileSelect = (e) => {
@@ -477,11 +490,9 @@ export default function AdminPage() {
   const handleCaBulkImport = async () => {
     setCaImportSummary(null);
 
-    let parsed;
-    try {
-      parsed = JSON.parse(caImportJson);
-    } catch (e) {
-      setCaImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`], warnings: [], duplicates: [] });
+    const parsed = safeJsonParse(caImportJson, null, 2 * 1024 * 1024);
+    if (!parsed) {
+      setCaImportSummary({ ok: 0, failed: 0, errors: ['Invalid JSON syntax or payload exceeds 2 MB safety limit.'], warnings: [], duplicates: [] });
       return;
     }
 
@@ -494,6 +505,10 @@ export default function AdminPage() {
           : null;
     if (!items || items.length === 0) {
       setCaImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of current affairs articles.'], warnings: [], duplicates: [] });
+      return;
+    }
+    if (items.length > 500) {
+      setCaImportSummary({ ok: 0, failed: 0, errors: ['Bulk import is capped at 500 articles per batch.'], warnings: [], duplicates: [] });
       return;
     }
 
@@ -536,11 +551,12 @@ export default function AdminPage() {
         typeof item.content === 'string'
           ? { en: item.content, te: '' }
           : item.content;
-      const sourceUrl = item.sourceUrl || item.url || item.link || '';
+      const rawSourceUrl = item.sourceUrl || item.url || item.link || '';
+      const sourceUrl = sanitizeExternalUrl(rawSourceUrl, '');
       const label = headlineObj?.en || item?.id || `item ${i + 1}`;
 
       if (!headlineObj?.en || !sourceUrl || !summaryObj?.en) {
-        errors.push(`${label} — missing required field (headline.en, sourceUrl, summary.en)`);
+        errors.push(`${label} — missing required field or unsafe URL (headline.en, https sourceUrl, summary.en)`);
         continue;
       }
 
@@ -612,11 +628,9 @@ export default function AdminPage() {
   const handleGkBulkImport = async () => {
     setGkImportSummary(null);
 
-    let parsed;
-    try {
-      parsed = JSON.parse(gkImportJson);
-    } catch (e) {
-      setGkImportSummary({ ok: 0, failed: 0, errors: [`Invalid JSON: ${e.message}`], duplicates: [] });
+    const parsed = safeJsonParse(gkImportJson, null, 2 * 1024 * 1024);
+    if (!parsed) {
+      setGkImportSummary({ ok: 0, failed: 0, errors: ['Invalid JSON syntax or payload exceeds 2 MB safety limit.'], duplicates: [] });
       return;
     }
 
@@ -627,6 +641,10 @@ export default function AdminPage() {
         : null;
     if (!items || items.length === 0) {
       setGkImportSummary({ ok: 0, failed: 0, errors: ['Expected a non-empty array of GK questions.'], duplicates: [] });
+      return;
+    }
+    if (items.length > 500) {
+      setGkImportSummary({ ok: 0, failed: 0, errors: ['Bulk import is capped at 500 GK questions per batch.'], duplicates: [] });
       return;
     }
 
@@ -674,14 +692,14 @@ export default function AdminPage() {
       payloadText.add(key);
 
       try {
-        const payload = {
+        const payload = stripDangerousKeys({
           ...item,
           options: { ...item.options, en: enOptions.slice(0, 4) },
           correctAnswer,
           topic: item.topic || 'General Knowledge',
           isPyq: Boolean(item.isPyq),
           examSource: item.examSource || 'ExamQuestHub Practice'
-        };
+        });
         // Sequential on purpose: surfaces the first real Firestore error (e.g.
         // permission-denied) instead of firing N failing writes at once.
         // eslint-disable-next-line no-await-in-loop
@@ -1747,7 +1765,7 @@ export default function AdminPage() {
                   <div className="relative group shrink-0">
                     <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
                       <img
-                        src={ca.imageUrl || 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80'}
+                        src={sanitizeMediaUrl(ca.imageUrl, 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80')}
                         alt={getLocalized(ca.headline)}
                         className="w-full h-full object-cover"
                         onError={(e) => {

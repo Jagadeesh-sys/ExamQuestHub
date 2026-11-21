@@ -18,6 +18,7 @@ import useSeo from '../hooks/useSeo.js';
 import { buildArticlePageSeo, buildNotFoundSeo, getOrigin } from '../utils/seo.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import SkeletonLoader from '../components/SkeletonLoader.jsx';
+import { sanitizeExternalUrl, sanitizeMediaUrl } from '../utils/security.js';
 
 export default function CurrentAffairDetailPage() {
   const { id } = useParams();
@@ -87,6 +88,8 @@ export default function CurrentAffairDetailPage() {
   const headline = getLocalized(article.headline);
   const summary = getLocalized(article.summary);
   const content = getLocalized(article.content || article.summary);
+  const safeSourceUrl = sanitizeExternalUrl(article.sourceUrl, '');
+  const safeImageUrl = sanitizeMediaUrl(article.imageUrl, '');
 
   return (
     <div className="max-w-[900px] mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -136,9 +139,9 @@ export default function CurrentAffairDetailPage() {
               Verified Source: <strong className="text-slate-900">{article.sourceName || 'Official Press Release'}</strong>
             </span>
           </div>
-          {article.sourceUrl && (
+          {safeSourceUrl && (
             <a
-              href={article.sourceUrl}
+              href={safeSourceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-semibold text-[#2468B4] hover:underline"
@@ -150,10 +153,10 @@ export default function CurrentAffairDetailPage() {
         </div>
 
         {/* Featured Image */}
-        {article.imageUrl && (
+        {safeImageUrl && (
           <div className="w-full aspect-[1.68/1] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
             <img
-              src={article.imageUrl}
+              src={safeImageUrl}
               alt={headline}
               decoding="async"
               className="w-full h-full object-cover object-top"

@@ -6,6 +6,7 @@
 import { classifyQuestion, SUBJECT_TOPIC_TAXONOMY } from '../constants/mockTaxonomy.js';
 import { FULL_MOCK_SERIES, SECTIONAL_TESTS, SUBJECT_MOCK_TESTS } from '../data/fullMockSeriesData.js';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
+import { safeJsonParse } from './security.js';
 
 export const MOCK_STATS_STORAGE_KEY = 'eqh_db_mock_stats_v9';
 export const MOCK_STATS_VERSION = 9;
@@ -295,7 +296,7 @@ export function getCachedUnifiedStats() {
   try {
     const raw = window.localStorage?.getItem(MOCK_STATS_STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
+    const parsed = safeJsonParse(raw, null, 256 * 1024);
     if (
       parsed &&
       parsed.statsVersion === MOCK_STATS_VERSION &&

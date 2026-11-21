@@ -9,6 +9,7 @@ import {
   Star
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { sanitizeMediaUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 /**
  * CurrentAffairCard:
@@ -25,6 +26,8 @@ export default function CurrentAffairCard({ item, layout = 'threeInRow' }) {
   const detailSlug = item.slug || item.id;
   const isThreeInRow = layout === 'threeInRow';
   const examTags = item.examRelevance || ['UPSC', 'APPSC', 'SSC'];
+  const safeImageUrl = sanitizeMediaUrl(item.imageUrl, '');
+  const safeSourceUrl = sanitizeExternalUrl(item.sourceUrl, '');
 
   return (
     <article
@@ -35,10 +38,10 @@ export default function CurrentAffairCard({ item, layout = 'threeInRow' }) {
       <div className="space-y-3">
         {/* Top Media & Tags Header */}
         <div className="flex gap-3">
-          {item.imageUrl && (
+          {safeImageUrl && (
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
               <img
-                src={item.imageUrl}
+                src={safeImageUrl}
                 alt={headline}
                 className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
@@ -97,11 +100,11 @@ export default function CurrentAffairCard({ item, layout = 'threeInRow' }) {
 
       {/* Footer Actions */}
       <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-        {item.sourceUrl ? (
+        {safeSourceUrl ? (
           <a
-            href={item.sourceUrl}
+            href={safeSourceUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="text-[10px] text-slate-500 hover:text-[#2468B4] flex items-center gap-1 truncate max-w-[130px]"
             title={item.sourceName || 'Primary Source'}
           >

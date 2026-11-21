@@ -16,6 +16,7 @@ import {
 import { getAllShifts, loadAllShifts } from '../services/rrbMockService.js';
 import { FULL_MOCK_SERIES } from '../data/fullMockSeriesData.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import { safeJsonParse, sanitizeDocumentUrl } from '../utils/security.js';
 
 export default function TestSeriesPage() {
   const { seriesId } = useParams();
@@ -45,7 +46,8 @@ export default function TestSeriesPage() {
   const [bookmarkedIds, setBookmarkedIds] = useState(() => {
     try {
       const cached = localStorage.getItem('eqh_bookmarked_series_tests');
-      return cached ? JSON.parse(cached) : [];
+      const parsed = cached ? safeJsonParse(cached, [], 256 * 1024) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -573,11 +575,11 @@ export default function TestSeriesPage() {
 
                       {/* Right Buttons matching Image 1: [Practice] [▶ Start Test] */}
                       <div className="flex items-center gap-2 shrink-0">
-                        {(shift.paperUrl || shift.pdfUrl) && (
+                        {sanitizeDocumentUrl(shift.paperUrl || shift.pdfUrl || '', '') && (
                           <a
-                            href={shift.paperUrl || shift.pdfUrl}
+                            href={sanitizeDocumentUrl(shift.paperUrl || shift.pdfUrl || '', '')}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             download={shift.pdfFileName || undefined}
                             className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold transition"
                             title="Download official PDF paper"

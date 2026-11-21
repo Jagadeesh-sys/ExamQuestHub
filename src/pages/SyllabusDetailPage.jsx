@@ -29,6 +29,7 @@ import {
   toggleChapterProgress
 } from '../services/syllabusService.js';
 import { getCategoryById, getExamChapterCount } from '../data/syllabus/syllabusRegistry.js';
+import { sanitizeDocumentUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 const DETAIL_TABS = [
   { id: 'overview', label: 'Overview & Eligibility' },
@@ -830,11 +831,11 @@ export default function SyllabusDetailPage() {
               </div>
 
               <div className="space-y-2.5 pt-2">
-                {exam.officialSyllabusPdfUrl && (
+                {sanitizeDocumentUrl(exam.officialSyllabusPdfUrl, '') && (
                   <a
-                    href={exam.officialSyllabusPdfUrl}
+                    href={sanitizeDocumentUrl(exam.officialSyllabusPdfUrl, '')}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="w-full py-3 px-4 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-bold flex items-center justify-between transition-colors"
                   >
                     <span className="inline-flex items-center gap-2">
@@ -845,11 +846,11 @@ export default function SyllabusDetailPage() {
                   </a>
                 )}
 
-                {exam.officialWebsiteUrl && (
+                {sanitizeExternalUrl(exam.officialWebsiteUrl, '') && (
                   <a
-                    href={exam.officialWebsiteUrl}
+                    href={sanitizeExternalUrl(exam.officialWebsiteUrl, '')}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="w-full py-3 px-4 rounded-xl bg-[#EAF3FF] hover:bg-[#dcebff] text-[#12345A] text-xs font-bold flex items-center justify-between transition-colors"
                   >
                     <span className="inline-flex items-center gap-2">

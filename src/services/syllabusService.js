@@ -16,6 +16,12 @@ import {
   getExamChapterCount
 } from '../data/syllabus/syllabusRegistry.js';
 import { logAppError } from '../utils/errorLogger.js';
+import {
+  safeJsonParse,
+  stripDangerousKeys,
+  sanitizeExternalUrl,
+  sanitizeDocumentUrl
+} from '../utils/security.js';
 
 const STORAGE_KEYS = {
   CATEGORIES: 'eqh_syllabus_categories_v1',
@@ -29,7 +35,7 @@ const MAX_INLINE_BYTES = 700000;
 function getLocal(key, fallback) {
   try {
     const raw = typeof window !== 'undefined' ? window.localStorage?.getItem(key) : null;
-    return raw ? JSON.parse(raw) : fallback;
+    return raw ? safeJsonParse(raw, fallback) : fallback;
   } catch {
     return fallback;
   }
@@ -230,11 +236,13 @@ export async function saveExamSyllabus(exam, existingList = null) {
         }
       ];
 
-  const payload = stripUndefined({
+  const payload = stripDangerousKeys(stripUndefined({
     ...exam,
     id,
     examCode,
     shortName: exam.shortName || exam.name,
+    officialWebsiteUrl: exam.officialWebsiteUrl ? sanitizeExternalUrl(exam.officialWebsiteUrl, '') : undefined,
+    officialSyllabusPdfUrl: exam.officialSyllabusPdfUrl ? sanitizeDocumentUrl(exam.officialSyllabusPdfUrl, '') : undefined,
     status: exam.status || 'Published',
     active: (exam.status || 'Published') !== 'Draft',
     notificationYear: Number(exam.notificationYear) || 2026,
@@ -242,7 +250,7 @@ export async function saveExamSyllabus(exam, existingList = null) {
     syllabusVersion: version,
     versionHistory: existingHistory,
     updatedAt: new Date().toISOString()
-  });
+  }));
 
   const cached = getLocal(STORAGE_KEYS.SYLLABI, []);
   const idx = cached.findIndex((item) => item.id === id);
@@ -325,11 +333,9 @@ export async function bumpAnnualSyllabusVersion(exam, newYear, notes) {
  * Bulk JSON import for exam syllabi with schema validation and duplicate protection.
  */
 export async function importSyllabiFromJson(jsonText) {
-  let parsed;
-  try {
-    parsed = JSON.parse(jsonText);
-  } catch (err) {
-    return { ok: 0, skipped: 0, errors: [`Invalid JSON syntax: ${err.message}`], duplicates: [] };
+  const parsed = safeJsonParse(jsonText, null, 2 * 1024 * 1024);
+  if (!parsed) {
+    return { ok: 0, skipped: 0, errors: ['Invalid JSON syntax or payload exceeds 2 MB safety limit.'], duplicates: [] };
   }
 
   const list = Array.isArray(parsed)
@@ -342,6 +348,9 @@ export async function importSyllabiFromJson(jsonText) {
 
   if (!list || list.length === 0) {
     return { ok: 0, skipped: 0, errors: ['Expected a non-empty JSON array of exam syllabi.'], duplicates: [] };
+  }
+  if (list.length > 200) {
+    return { ok: 0, skipped: 0, errors: ['Bulk import is limited to 200 syllabi per batch.'], duplicates: [] };
   }
 
   const existing = await getExamSyllabi(true);

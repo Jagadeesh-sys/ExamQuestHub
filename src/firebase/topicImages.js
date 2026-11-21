@@ -1,4 +1,5 @@
 import { normalizeTopic } from '../constants/currentAffairs.js';
+import { sanitizeMediaUrl } from '../utils/security.js';
 
 export const DEFAULT_TOPIC_IMAGES = {
   'National Affairs': 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80',
@@ -36,5 +37,6 @@ export const sanitizeTopicImageUrl = (url, topic) => {
   if (!raw || BROKEN_IMAGE_URL_FRAGMENTS.some((frag) => raw.includes(frag))) {
     return getDefaultImageForTopic(topic);
   }
-  return raw;
+  const safe = sanitizeMediaUrl(raw, '');
+  return safe || getDefaultImageForTopic(topic);
 };

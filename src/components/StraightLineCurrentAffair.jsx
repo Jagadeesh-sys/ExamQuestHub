@@ -12,6 +12,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { sanitizeMediaUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 /**
  * StraightLineCurrentAffair:
@@ -41,6 +42,8 @@ export default function StraightLineCurrentAffair({
   const headline = getLocalized(item.headline);
   const summary = getLocalized(item.summary);
   const detailSlug = item.slug || item.id;
+  const safeImageUrl = sanitizeMediaUrl(item.imageUrl, '');
+  const safeSourceUrl = sanitizeExternalUrl(item.sourceUrl, '');
 
   return (
     <div
@@ -125,10 +128,10 @@ export default function StraightLineCurrentAffair({
 
           {/* Media & Full Narrative / Summary */}
           <div className="flex flex-col sm:flex-row gap-4 bg-white p-3.5 sm:p-4 rounded-xl border border-[#E3EAF2]">
-            {item.imageUrl && (
+            {safeImageUrl && (
               <div className="w-full sm:w-44 aspect-[1.68/1] rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
                 <img
-                  src={item.imageUrl}
+                  src={safeImageUrl}
                   alt={headline}
                   className="w-full h-full object-cover object-top"
                   onError={(e) => {
@@ -176,9 +179,9 @@ export default function StraightLineCurrentAffair({
           {/* Action Footer */}
           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/60">
             <div className="flex items-center gap-2">
-              {item.sourceUrl && (
+              {safeSourceUrl && (
                 <a
-                  href={item.sourceUrl}
+                  href={safeSourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-colors"

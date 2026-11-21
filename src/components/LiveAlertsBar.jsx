@@ -22,6 +22,7 @@ import {
   getApplicationLastDate,
   formatDisplayDate
 } from '../utils/notificationStatus.js';
+import { sanitizeDocumentUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 /**
  * LiveAlertsBar:
@@ -58,7 +59,8 @@ export default function LiveAlertsBar({ notifications = [] }) {
   const detailSlug = currentItem.slug || currentItem.id;
   const startD = getApplicationStartDate(currentItem);
   const lastD = getApplicationLastDate(currentItem);
-  const applyHref = currentItem.applyUrl || currentItem.officialUrl || '';
+  const applyHref = sanitizeExternalUrl(currentItem.applyUrl || currentItem.officialUrl || '', '');
+  const safePdfUrl = sanitizeDocumentUrl(currentItem.pdfUrl, '');
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -222,9 +224,9 @@ export default function LiveAlertsBar({ notifications = [] }) {
             {/* Action Buttons */}
             <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-white/10">
               <div className="flex items-center gap-2.5">
-                {currentItem.pdfUrl && (
+                {safePdfUrl && (
                   <a
-                    href={currentItem.pdfUrl}
+                    href={safePdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold border border-white/20 transition-colors shadow-xs"

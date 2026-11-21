@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, ArrowRight, Play, BookOpen, CheckCircle, ExternalLink } from 'lucide-react';
+import { sanitizeDocumentUrl } from '../utils/security.js';
 
 export default function MockTestCard({ mock }) {
   const navigate = useNavigate();
+  const safePdfUrl = sanitizeDocumentUrl(mock.pdfUrl, '');
 
   const handleStartCbt = () => {
     navigate(`/mocks/${mock.id}?mode=cbt`);
@@ -35,9 +37,9 @@ export default function MockTestCard({ mock }) {
           {mock.month}
         </span>
 
-        {mock.pdfUrl && (
+        {safePdfUrl && (
           <a
-            href={mock.pdfUrl}
+            href={safePdfUrl}
             download={mock.pdfFileName || `${mock.title}.pdf`}
             onClick={(e) => e.stopPropagation()}
             title={`Download ${mock.pdfFileName || 'PDF'}`}

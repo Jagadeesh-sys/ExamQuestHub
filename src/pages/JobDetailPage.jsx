@@ -34,6 +34,7 @@ import {
   formatDisplayDate
 } from '../utils/notificationStatus.js';
 import useAutoStatusRefresh from '../hooks/useAutoStatusRefresh.js';
+import { sanitizeDocumentUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 export default function JobDetailPage() {
   const { slug } = useParams();
@@ -137,7 +138,9 @@ export default function JobDetailPage() {
   const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
   const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
   const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
-  const applyHref = job.applyUrl || job.officialUrl || '';
+  const applyHref = sanitizeExternalUrl(job.applyUrl || job.officialUrl || '', '');
+  const safePdfUrl = sanitizeDocumentUrl(job.pdfUrl, '');
+  const safeOfficialUrl = sanitizeExternalUrl(job.officialUrl, '');
 
   const title = getLocalized(job.title);
   const org = getLocalized(job.organization);
@@ -290,9 +293,9 @@ export default function JobDetailPage() {
             )}
 
             {/* Official Notification PDF download */}
-            {job.pdfUrl && (
+            {safePdfUrl && (
               <a
-                href={job.pdfUrl}
+                href={safePdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs sm:text-sm font-semibold rounded-xl transition-all active:scale-95"
@@ -493,9 +496,9 @@ export default function JobDetailPage() {
                 </div>
               ) : null}
 
-              {job.pdfUrl && (
+              {safePdfUrl && (
                 <a
-                  href={job.pdfUrl}
+                  href={safePdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 font-semibold transition-colors"
@@ -505,9 +508,9 @@ export default function JobDetailPage() {
                 </a>
               )}
 
-              {job.officialUrl && (
+              {safeOfficialUrl && (
                 <a
-                  href={job.officialUrl}
+                  href={safeOfficialUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
@@ -582,9 +585,9 @@ export default function JobDetailPage() {
             <span>{job.type === 'admit-card' ? t('downloadAdmitCard') : job.type === 'result' ? t('checkResult') : t('applyOnline')}</span>
             <ExternalLink className="w-4 h-4" />
           </a>
-          {job.pdfUrl && (
+          {safePdfUrl && (
             <a
-              href={job.pdfUrl}
+              href={safePdfUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="py-3 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center justify-center gap-1 border border-slate-200 active:scale-98 shrink-0"

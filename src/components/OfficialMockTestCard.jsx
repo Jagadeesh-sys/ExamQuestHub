@@ -1,5 +1,6 @@
 import React from 'react';
 import { Monitor, Clock, Flame, Bookmark, BookmarkCheck, Play, Download, Crown, CheckCircle2 } from 'lucide-react';
+import { sanitizeMediaUrl, sanitizeDocumentUrl } from '../utils/security.js';
 
 /**
  * Exact UI Card matching user attachment /public/assets/aistudio/image_94cc3b53.png
@@ -62,7 +63,8 @@ export default function OfficialMockTestCard({
   const duration = test.timeMinutes || test.durationMinutes || (isSsc ? 60 : 90);
   // Official emblem logo
   const defaultLogo = isAppsc ? '/assets/aistudio/image_3b1d93b9.png' : (isSsc ? '/assets/aistudio/image_445d7a66.png' : '/assets/aistudio/image_cbd93505.png');
-  const logoUrl = test.logoUrl || defaultLogo;
+  const logoUrl = sanitizeMediaUrl(test.logoUrl, defaultLogo);
+  const safePdfUrl = sanitizeDocumentUrl(test.pdfUrl, '');
 
   return (
     <div className="bg-white rounded-2xl sm:rounded-[20px] p-3.5 sm:p-4 shadow-xs border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-2.5 relative group">
@@ -105,11 +107,11 @@ export default function OfficialMockTestCard({
                 <span>{duration} Mins</span>
               </span>
 
-              {test.pdfUrl && (
+              {safePdfUrl && (
                 <>
                   <span className="text-slate-300 hidden sm:inline">|</span>
                   <a
-                    href={test.pdfUrl}
+                    href={safePdfUrl}
                     download
                     onClick={(e) => e.stopPropagation()}
                     className="hidden sm:inline-flex items-center gap-1 text-[10.5px] font-bold text-slate-500 hover:text-[#12345A]"

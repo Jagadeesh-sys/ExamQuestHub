@@ -608,7 +608,7 @@ export default function AdminSyllabusTab({ onNotify }) {
                   <a
                     href={`/syllabus/${exam.id}`}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="p-1.5 rounded-lg text-slate-500 hover:text-[#2468B4] hover:bg-slate-100"
                     title="Preview public syllabus page"
                   >

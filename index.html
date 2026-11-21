@@ -36,6 +36,20 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <script>
+      (function () {
+        window.__EQH_PWA_PROMPT = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          window.__EQH_PWA_PROMPT = e;
+          window.dispatchEvent(new CustomEvent('eqh:pwa-prompt-ready'));
+        });
+        window.addEventListener('appinstalled', function () {
+          window.__EQH_PWA_PROMPT = null;
+          window.dispatchEvent(new CustomEvent('eqh:pwa-installed'));
+        });
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="image" href="/assets/aistudio/examquesthub_cap_logo.webp" fetchpriority="high" />

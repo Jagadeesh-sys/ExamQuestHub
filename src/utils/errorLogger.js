@@ -3,6 +3,7 @@
  * Captures, sanitizes, and categorizes runtime errors (React, Firebase, Auth, Network, Routing)
  * without exposing sensitive user tokens, passwords, or credentials.
  */
+import { safeJsonParse, stripDangerousKeys } from './security.js';
 
 const MAX_LOGS = 50;
 const STORAGE_KEY = 'eqh_error_logs_v1';
@@ -14,7 +15,8 @@ const logSubscribers = new Set();
 try {
   const saved = typeof window !== 'undefined' ? window.sessionStorage?.getItem(STORAGE_KEY) : null;
   if (saved) {
-    inMemoryLogs = JSON.parse(saved);
+    const parsed = safeJsonParse(saved, [], 512 * 1024);
+    inMemoryLogs = Array.isArray(parsed) ? parsed : [];
   }
 } catch {
   // Session storage unavailable or restricted (private mode)
@@ -83,7 +85,7 @@ export function logAppError({
     stack: sanitizeMessage(stack).slice(0, 1000),
     device: `${deviceInfo.os} • ${deviceInfo.browser} (${deviceInfo.screen})`,
     online: deviceInfo.online,
-    metadata: typeof metadata === 'object' ? JSON.parse(JSON.stringify(metadata)) : {}
+    metadata: metadata && typeof metadata === 'object' ? stripDangerousKeys(safeJsonParse(JSON.stringify(metadata), {}, 64 * 1024)) : {}
   };
 
   inMemoryLogs.unshift(entry);

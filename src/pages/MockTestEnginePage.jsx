@@ -54,6 +54,7 @@ import {
   toEngineQuestion
 } from '../constants/mockTaxonomy.js';
 import { getEngineMockTest, getQuestionsByIds, summarizeIncludedExams } from '../services/rrbMockService.js';
+import { safeJsonParse, sanitizeDocumentUrl, sanitizeMediaUrl } from '../utils/security.js';
 
 /**
  * Builds engine metadata for a Firestore-backed subject test
@@ -89,6 +90,7 @@ function QuestionAttribution({ question, className = '' }) {
   const examNameStr = String(question.examName || '').trim();
   const examYearStr = String(question.examYear || '').trim();
   const showYearSeparately = Boolean(examYearStr && !examNameStr.includes(examYearStr));
+  const safePaperUrl = sanitizeDocumentUrl(question.paperUrl, '');
   const shiftInfo = question.shift && question.shift !== 'Master PYQ Pool' && question.shift !== 'Official Question Bank'
     ? question.shift
     : '';
@@ -115,11 +117,11 @@ function QuestionAttribution({ question, className = '' }) {
           Verified
         </span>
       )}
-      {question.paperUrl && (
+      {safePaperUrl && (
         <a
-          href={question.paperUrl}
+          href={safePaperUrl}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           download={question.paperFileName || undefined}
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#EAF3FF] text-[#12345A] font-bold hover:bg-[#DCEBFF] transition"
         >
@@ -217,7 +219,7 @@ export default function MockTestEnginePage() {
           try {
             const savedRaw = localStorage.getItem(`eqh_active_test_${mockId}`);
             if (savedRaw) {
-              const saved = JSON.parse(savedRaw);
+              const saved = safeJsonParse(savedRaw, null, 2 * 1024 * 1024);
               if (saved && !saved.isSubmitted && Array.isArray(saved.questionIds) && saved.questionIds.length > 0) {
                 const restoredQs = await getQuestionsByIds(saved.questionIds);
                 if (active && restoredQs.length > 0) {
@@ -315,7 +317,7 @@ export default function MockTestEnginePage() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_TEST);
         if (saved) {
-          const parsed = JSON.parse(saved);
+          const parsed = safeJsonParse(saved, null, 2 * 1024 * 1024);
           if (parsed && !parsed.isSubmitted && Array.isArray(parsed.visitedQuestions)) {
             setSelectedAnswers(parsed.selectedAnswers || {});
             setMarkedForReview(parsed.markedForReview || {});
@@ -1171,11 +1173,11 @@ export default function MockTestEnginePage() {
               </>
             )}
 
-            {mockMeta.pdfUrl && (
+            {sanitizeDocumentUrl(mockMeta.pdfUrl, '') && (
               <a
-                href={mockMeta.pdfUrl}
+                href={sanitizeDocumentUrl(mockMeta.pdfUrl, '')}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 download={mockMeta.pdfFileName}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition border border-slate-200"
                 title="Download original paper"
@@ -1511,10 +1513,10 @@ export default function MockTestEnginePage() {
                     <p className="text-sm text-slate-600 leading-relaxed -mt-1">{q.questionTe}</p>
                   )}
 
-                  {q.imageUrl && (
+                  {sanitizeMediaUrl(q.imageUrl, '') && (
                     <div className="my-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 flex justify-center">
                       <img
-                        src={q.imageUrl}
+                        src={sanitizeMediaUrl(q.imageUrl, '')}
                         alt={`Question ${q.qNumber || idx + 1} figure`}
                         className="max-h-64 w-auto object-contain rounded-lg"
                       />
@@ -1711,10 +1713,10 @@ export default function MockTestEnginePage() {
                       {currentQ.questionTe}
                     </p>
                   )}
-                  {currentQ.imageUrl && (
+                  {sanitizeMediaUrl(currentQ.imageUrl, '') && (
                     <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 flex justify-center">
                       <img
-                        src={currentQ.imageUrl}
+                        src={sanitizeMediaUrl(currentQ.imageUrl, '')}
                         alt={`Question ${currentIndex + 1} diagram`}
                         className="max-h-64 w-auto object-contain rounded-lg"
                       />

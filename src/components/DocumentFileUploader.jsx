@@ -11,6 +11,7 @@ import {
   Eye,
   Sparkles
 } from 'lucide-react';
+import { sanitizeDocumentUrl } from '../utils/security.js';
 
 // Preset Authentic Exam & Practice Documents
 export const PRESET_DOCUMENTS = [
@@ -151,12 +152,20 @@ export default function DocumentFileUploader({
 
   const handleApplyUrl = (e) => {
     e.preventDefault();
-    if (urlInput.trim()) {
-      onChange(urlInput.trim());
-      if (onFileSizeChange && !currentFileSize) onFileSizeChange('Web PDF');
-      setUploadStatus('Document URL connected!');
-      setTimeout(() => setUploadStatus(''), 3000);
+    const raw = urlInput.trim();
+    if (!raw) return;
+    const safeUrl = sanitizeDocumentUrl(raw, '');
+    if (!safeUrl) {
+      setUploadError('Invalid document URL. Only https://, http://, relative / paths, or base64 PDFs are allowed.');
+      setUploadStatus('');
+      return;
     }
+    setUploadError('');
+    onChange(safeUrl);
+    setUrlInput(safeUrl);
+    if (onFileSizeChange && !currentFileSize) onFileSizeChange('Web PDF');
+    setUploadStatus('Document URL connected!');
+    setTimeout(() => setUploadStatus(''), 3000);
   };
 
   const handleRemoveDocument = () => {
@@ -218,16 +227,18 @@ export default function DocumentFileUploader({
           </div>
 
           <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            <a
-              href={value}
-              target="_blank"
-              rel="noopener noreferrer"
-              download={fileName ? fileName : 'exam_document.pdf'}
-              className="px-3 py-1.5 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
-            >
-              <Download className="w-3 h-3" />
-              <span>Test Download</span>
-            </a>
+            {sanitizeDocumentUrl(value, '') && (
+              <a
+                href={sanitizeDocumentUrl(value, '#')}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={fileName ? fileName : 'exam_document.pdf'}
+                className="px-3 py-1.5 rounded-xl bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+              >
+                <Download className="w-3 h-3" />
+                <span>Test Download</span>
+              </a>
+            )}
             <button
               type="button"
               onClick={handleRemoveDocument}

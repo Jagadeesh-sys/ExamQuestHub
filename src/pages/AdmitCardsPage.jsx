@@ -17,6 +17,7 @@ import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import AgencyLogo from '../components/AgencyLogo.jsx';
 import { formatDisplayDate } from '../utils/notificationStatus.js';
+import { sanitizeExternalUrl } from '../utils/security.js';
 
 export default function AdmitCardsPage() {
   const { t, getLocalized } = useLanguage();
@@ -117,6 +118,7 @@ export default function AdmitCardsPage() {
           {filtered.map((item) => {
             const title = getLocalized(item.title);
             const org = getLocalized(item.organization);
+            const safePortalUrl = sanitizeExternalUrl(item.applyUrl || item.officialUrl || '', '');
             return (
               <div
                 key={item.id}
@@ -164,9 +166,9 @@ export default function AdmitCardsPage() {
                     Verified: {formatDisplayDate(item.publishedAt) || item.publishedAt || 'Official Notice'}
                   </span>
 
-                  {(item.applyUrl || item.officialUrl) ? (
+                  {safePortalUrl ? (
                     <a
-                      href={item.applyUrl || item.officialUrl}
+                      href={safePortalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold rounded-xl transition-colors shadow-xs active:scale-95"

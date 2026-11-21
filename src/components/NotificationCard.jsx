@@ -18,6 +18,7 @@ import {
   getApplicationLastDate,
   formatDisplayDate
 } from '../utils/notificationStatus.js';
+import { sanitizeDocumentUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 export default function NotificationCard({ item }) {
   const { t, getLocalized } = useLanguage();
@@ -36,7 +37,8 @@ export default function NotificationCard({ item }) {
   const isOpen = normalizedStatus === 'open' || normalizedStatus === 'applications open' || normalizedStatus.includes('open');
   const isUpcoming = normalizedStatus === 'upcoming' || normalizedStatus.includes('upcoming');
   const isClosed = normalizedStatus === 'closed' || normalizedStatus.includes('closed');
-  const applyHref = item.applyUrl || item.officialUrl || '';
+  const applyHref = sanitizeExternalUrl(item.applyUrl || item.officialUrl || '', '');
+  const safePdfUrl = sanitizeDocumentUrl(item.pdfUrl, '');
 
   return (
     <article className="bg-white rounded-2xl border border-[#E3EAF2] hover:border-[#2468B4]/40 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
@@ -120,9 +122,9 @@ export default function NotificationCard({ item }) {
         </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {item.pdfUrl && (
+          {safePdfUrl && (
             <a
-              href={item.pdfUrl}
+              href={safePdfUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 sm:p-2.5 text-slate-600 hover:text-[#12345A] hover:bg-slate-100 rounded-xl transition-colors border border-slate-200/60 active:scale-95"

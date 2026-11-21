@@ -23,9 +23,11 @@ export default defineConfig(() => {
           theme_color: '#12345A',
           background_color: '#0B1F3A',
           display: 'standalone',
+          display_override: ['standalone', 'minimal-ui'],
           orientation: 'portrait-primary',
           start_url: '/',
           scope: '/',
+          prefer_related_applications: false,
           categories: ['education', 'books', 'productivity'],
           icons: [
             {
@@ -49,7 +51,10 @@ export default defineConfig(() => {
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}', 'pwa-*.png', 'favicon.png', 'apple-touch-icon.png', 'logo.png', 'assets/*.{png,jpg,jpeg,webp}'],
+          cleanupOutdatedCaches: true,
+          skipWaiting: true,
+          clientsClaim: true,
+          globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}', 'pwa-*.png', 'assets/*.{png,jpg,jpeg,webp}'],
           globIgnores: ['**/assets/aistudio/**', '**/data/**'],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
           runtimeCaching: [

@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Sparkles
 } from 'lucide-react';
+import { sanitizeMediaUrl } from '../utils/security.js';
 
 // Curated high quality exam editorial presets for quick selection
 export const EXAM_IMAGE_PRESETS = [
@@ -154,14 +155,17 @@ export default function ImagePasteUploader({ value, onChange, label = 'Current A
     // If no direct image file, check for pasted image URL text
     if (!foundImage) {
       const text = clipboardData.getData('text');
-      if (text && (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('data:image/'))) {
-        if (text.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i) || text.startsWith('data:image/')) {
-          e.preventDefault();
-          onChange(text);
-          setUrlInput(text);
-          setPasteStatus('Image URL pasted successfully!');
-          setTimeout(() => setPasteStatus(''), 3000);
-        }
+      const safePastedUrl = sanitizeMediaUrl(text, '');
+      if (
+        safePastedUrl &&
+        (safePastedUrl.startsWith('data:image/') || safePastedUrl.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i))
+      ) {
+        e.preventDefault();
+        setPasteError('');
+        onChange(safePastedUrl);
+        setUrlInput(safePastedUrl);
+        setPasteStatus('Image URL pasted successfully!');
+        setTimeout(() => setPasteStatus(''), 3000);
       }
     }
   };
@@ -189,13 +193,14 @@ export default function ImagePasteUploader({ value, onChange, label = 'Current A
         if (!found) {
           // Fallback to text reading if no binary image
           const text = await navigator.clipboard.readText();
-          if (text && (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('data:image/'))) {
-            onChange(text);
-            setUrlInput(text);
+          const safeTextUrl = sanitizeMediaUrl(text, '');
+          if (safeTextUrl && (safeTextUrl.startsWith('http://') || safeTextUrl.startsWith('https://') || safeTextUrl.startsWith('data:image/'))) {
+            onChange(safeTextUrl);
+            setUrlInput(safeTextUrl);
             setPasteStatus('Image URL pasted from clipboard!');
             setTimeout(() => setPasteStatus(''), 3000);
           } else {
-            setPasteError('No image found in clipboard. Please copy an image (or image address) first.');
+            setPasteError('No safe image URL found in clipboard. Please copy an image (or image address) first.');
             setPasteStatus('');
           }
         }
@@ -220,11 +225,19 @@ export default function ImagePasteUploader({ value, onChange, label = 'Current A
 
   const handleApplyUrl = (e) => {
     e.preventDefault();
-    if (urlInput.trim()) {
-      onChange(urlInput.trim());
-      setPasteStatus('Image URL set!');
-      setTimeout(() => setPasteStatus(''), 2500);
+    const raw = urlInput.trim();
+    if (!raw) return;
+    const safeUrl = sanitizeMediaUrl(raw, '');
+    if (!safeUrl) {
+      setPasteError('Invalid image URL. Only https://, http://, relative / paths, or raster base64 images are allowed.');
+      setPasteStatus('');
+      return;
     }
+    setPasteError('');
+    onChange(safeUrl);
+    setUrlInput(safeUrl);
+    setPasteStatus('Image URL set!');
+    setTimeout(() => setPasteStatus(''), 2500);
   };
 
   const handleRemoveImage = () => {
@@ -257,7 +270,7 @@ export default function ImagePasteUploader({ value, onChange, label = 'Current A
         <div className="relative rounded-2xl border-2 border-slate-200 overflow-hidden bg-slate-50 p-2 flex flex-col sm:flex-row items-center gap-3">
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-slate-300 relative group">
             <img
-              src={value}
+              src={sanitizeMediaUrl(value, EXAM_IMAGE_PRESETS[0].url)}
               alt="Current Affair Preview"
               className="w-full h-full object-cover"
               onError={(e) => {

@@ -6,13 +6,18 @@ service cloud.firestore {
     }
 
     function bootstrapAdmin() {
-      return signedIn() && request.auth.token.email in [
-        'lokeshsamatham66@gmail.com',
-        'jagadeeshkoppisetti694@gmail.com',
-        'koppisettijagadeesh978@gmail.com',
-        'koppisettijagadesh916@gmail.com',
-        'admin@examquesthub.com'
-      ];
+      return signedIn()
+        && request.auth.token.email in [
+          'lokeshsamatham66@gmail.com',
+          'jagadeeshkoppisetti694@gmail.com',
+          'koppisettijagadeesh978@gmail.com',
+          'koppisettijagadesh916@gmail.com',
+          'admin@examquesthub.com'
+        ]
+        && (
+          request.auth.token.email_verified == true
+          || request.auth.token.firebase.sign_in_provider == 'password'
+        );
     }
 
     function isAdmin() {
@@ -20,44 +25,122 @@ service cloud.firestore {
         (signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    function isSafeUrl(val) {
+      return val is string
+        && val.size() <= 950000
+        && (
+          val.size() == 0
+          || val.matches('^https?://.*')
+          || val.matches('^/[^/].*')
+          || val.matches('^data:image/(png|jpeg|jpg|webp|gif);base64,.*')
+          || val.matches('^data:application/pdf;base64,.*')
+        );
+    }
+
+    function hasValidOptionalUrl(data, field) {
+      return !(field in data) || data[field] == null || isSafeUrl(data[field]);
+    }
+
+    function isValidUpdatePayload(data) {
+      return data.keys().size() <= 50
+        && hasValidOptionalUrl(data, 'officialUrl')
+        && hasValidOptionalUrl(data, 'applyUrl')
+        && hasValidOptionalUrl(data, 'pdfUrl');
+    }
+
+    function isValidCurrentAffairPayload(data) {
+      return data.keys().size() <= 35
+        && hasValidOptionalUrl(data, 'sourceUrl')
+        && hasValidOptionalUrl(data, 'imageUrl');
+    }
+
+    function isValidQuestionPayload(data) {
+      return data.keys().size() <= 45
+        && hasValidOptionalUrl(data, 'imageUrl')
+        && hasValidOptionalUrl(data, 'paperUrl');
+    }
+
+    function isValidResourcePayload(data) {
+      return data.keys().size() <= 30
+        && hasValidOptionalUrl(data, 'downloadUrl')
+        && hasValidOptionalUrl(data, 'officialSource');
+    }
+
+    function isValidSyllabusPayload(data) {
+      return data.keys().size() <= 50
+        && hasValidOptionalUrl(data, 'officialWebsiteUrl')
+        && hasValidOptionalUrl(data, 'officialSyllabusPdfUrl');
+    }
+
+    function isValidAdminDoc(data) {
+      return data.keys().hasAll(['email', 'role'])
+        && data.keys().hasOnly(['email', 'role', 'createdAt'])
+        && data.email is string
+        && data.email.size() >= 3
+        && data.email.size() <= 150
+        && data.role == 'SuperAdmin';
+    }
+
+    function isValidSyllabusProgressCreate(data) {
+      return data.keys().hasAll(['userId', 'examId', 'completedChapters'])
+        && data.keys().hasOnly(['userId', 'examId', 'completedChapters', 'totalChapters', 'completionPercent', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.examId is string
+        && data.examId.size() >= 1
+        && data.examId.size() <= 100
+        && data.completedChapters is list
+        && data.completedChapters.size() <= 500;
+    }
+
     match /updates/{id} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update: if isAdmin() && isValidId(id) && isValidUpdatePayload(request.resource.data);
+      allow delete: if isAdmin() && isValidId(id);
     }
 
     match /currentAffairs/{id} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update: if isAdmin() && isValidId(id) && isValidCurrentAffairPayload(request.resource.data);
+      allow delete: if isAdmin() && isValidId(id);
     }
 
     match /questions/{id} {
       allow read: if true;
-      allow write: if true;
+      allow create, update: if isAdmin() && isValidId(id) && isValidQuestionPayload(request.resource.data);
+      allow delete: if isAdmin() && isValidId(id);
     }
 
     match /mockQuestions/{id} {
       allow read: if true;
-      allow write: if true;
+      allow create, update: if isAdmin() && isValidId(id) && isValidQuestionPayload(request.resource.data);
+      allow delete: if isAdmin() && isValidId(id);
     }
 
     match /resources/{id} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update: if isAdmin() && isValidId(id) && isValidResourcePayload(request.resource.data);
+      allow delete: if isAdmin() && isValidId(id);
     }
 
     match /admins/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if signedIn() && request.auth.uid == uid && bootstrapAdmin();
-      allow update, delete: if isAdmin();
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if signedIn()
+        && isValidId(uid)
+        && request.auth.uid == uid
+        && bootstrapAdmin()
+        && isValidAdminDoc(request.resource.data);
+      allow update: if isAdmin() && isValidId(uid) && isValidAdminDoc(request.resource.data);
+      allow delete: if isAdmin() && isValidId(uid);
     }
 
     match /test/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+      allow write: if isAdmin() && isValidId(doc);
     }
 
     match /examCategories/{categoryId} {
@@ -67,7 +150,8 @@ service cloud.firestore {
 
     match /examSyllabi/{syllabusId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin() && isValidId(syllabusId);
+      allow create, update: if isAdmin() && isValidId(syllabusId) && isValidSyllabusPayload(request.resource.data);
+      allow delete: if isAdmin() && isValidId(syllabusId);
     }
 
     match /examSubjects/{subjectId} {
@@ -81,19 +165,25 @@ service cloud.firestore {
     }
 
     match /syllabusProgress/{progressId} {
-      allow read: if signedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow get: if signedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if signedIn()
         && isValidId(progressId)
-        && request.resource.data.keys().hasAll(['userId', 'examId', 'completedChapters'])
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.examId is string
-        && request.resource.data.completedChapters is list;
+        && isValidSyllabusProgressCreate(request.resource.data);
       allow update: if signedIn()
+        && isValidId(progressId)
         && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
         && request.resource.data.examId == resource.data.examId
-        && request.resource.data.completedChapters is list;
-      allow delete: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completedChapters', 'totalChapters', 'completionPercent', 'updatedAt'])
+        && request.resource.data.completedChapters is list
+        && request.resource.data.completedChapters.size() <= 500;
+      allow delete: if signedIn() && isValidId(progressId) && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Default-deny rule for any unspecified collection paths
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -17,6 +17,7 @@ import SkeletonLoader from '../components/SkeletonLoader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import AgencyLogo from '../components/AgencyLogo.jsx';
 import { formatDisplayDate } from '../utils/notificationStatus.js';
+import { sanitizeDocumentUrl, sanitizeExternalUrl } from '../utils/security.js';
 
 export default function ResultsPage() {
   const { t, getLocalized } = useLanguage();
@@ -115,6 +116,8 @@ export default function ResultsPage() {
           {filtered.map((item) => {
             const title = getLocalized(item.title);
             const org = getLocalized(item.organization);
+            const safePdfUrl = sanitizeDocumentUrl(item.pdfUrl, '');
+            const safePortalUrl = sanitizeExternalUrl(item.applyUrl || item.officialUrl || '', '');
             return (
               <div
                 key={item.id}
@@ -157,9 +160,9 @@ export default function ResultsPage() {
                   </span>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    {item.pdfUrl && (
+                    {safePdfUrl && (
                       <a
-                        href={item.pdfUrl}
+                        href={safePdfUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2.5 rounded-xl text-slate-600 hover:text-[#12345A] hover:bg-slate-100 border border-slate-200"
@@ -168,9 +171,9 @@ export default function ResultsPage() {
                         <FileText className="w-4 h-4 text-red-500" />
                       </a>
                     )}
-                    {(item.applyUrl || item.officialUrl) ? (
+                    {safePortalUrl ? (
                       <a
-                        href={item.applyUrl || item.officialUrl}
+                        href={safePortalUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-semibold rounded-xl transition-colors shadow-xs active:scale-95"

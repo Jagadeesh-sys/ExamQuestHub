@@ -74,6 +74,12 @@ import {
   saveCachedUnifiedStats,
   isImportantOrReviewQuestion
 } from '../utils/questionStats.js';
+import {
+  safeJsonParse,
+  stripDangerousKeys,
+  sanitizeMediaUrl,
+  sanitizeDocumentUrl
+} from '../utils/security.js';
 
 export default function AdminMockTestsTab({
   initialQuestions = null,
@@ -807,10 +813,16 @@ export default function AdminMockTestsTab({
     }
     setBulkBusy(true);
     try {
-      const parsed = JSON.parse(bulkJson);
+      const parsed = safeJsonParse(bulkJson, null, 6 * 1024 * 1024);
+      if (!parsed) {
+        throw new Error('Invalid JSON syntax or payload exceeds 6 MB safety limit');
+      }
       const items = Array.isArray(parsed) ? parsed : (parsed.questions || []);
       if (!Array.isArray(items) || items.length === 0) {
         throw new Error('Expected JSON array of question objects');
+      }
+      if (items.length > 5000) {
+        throw new Error('Bulk import is capped at 5,000 questions per batch');
       }
 
       let added = 0;
@@ -818,12 +830,15 @@ export default function AdminMockTestsTab({
       const currentIds = new Set(rrbQuestions.map((q) => q.id));
       const normalizedItems = [];
 
-      for (const item of items) {
-        if (!item || typeof item !== 'object') continue;
+      for (const rawItem of items) {
+        if (!rawItem || typeof rawItem !== 'object') continue;
+        const item = stripDangerousKeys(rawItem);
         const normalized = {
           _sourceOrigin: 'uploaded',
           ...item,
           id: item.id || `custom-q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          imageUrl: item.imageUrl ? sanitizeMediaUrl(item.imageUrl, '') : undefined,
+          paperUrl: item.paperUrl ? sanitizeDocumentUrl(item.paperUrl, '') : undefined,
           status: item.status || 'Published',
           verificationStatus: item.verificationStatus || (item.status === 'Needs Review' || item.questionType === 'IMPORTANT' ? 'UNVERIFIED' : 'VERIFIED')
         };

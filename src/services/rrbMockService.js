@@ -13,6 +13,7 @@ import {
   getCachedUnifiedStats,
   saveCachedUnifiedStats
 } from '../utils/questionStats.js';
+import { safeJsonParse, stripDangerousKeys } from '../utils/security.js';
 
 const STORAGE_KEY_CUSTOM_QUESTIONS = 'eqh_custom_mock_questions_v1';
 const STORAGE_KEY_TEST_OVERRIDES = 'eqh_mock_test_overrides_v1';
@@ -203,7 +204,7 @@ function getInitialShifts() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CACHED_SHIFTS);
     if (raw) {
-      const parsed = JSON.parse(raw);
+      const parsed = safeJsonParse(raw, null, 4 * 1024 * 1024);
       if (Array.isArray(parsed) && parsed.length > 0) {
         cachedShifts = parsed;
         return cachedShifts;
@@ -254,7 +255,7 @@ async function loadRrbDataFile(fileName) {
       const path = await import(/* @vite-ignore */ pathModule);
       const fullPath = path.resolve(process.cwd(), 'public/data', fileName);
       const fileData = await fs.readFile(fullPath, 'utf-8');
-      return JSON.parse(fileData);
+      return safeJsonParse(fileData, null, 25 * 1024 * 1024);
     } catch {
       return null;
     }
@@ -292,7 +293,7 @@ async function loadRrbDataFile(fileName) {
       throw new Error(`Received HTML instead of JSON for ${fileName}`);
     }
 
-    return JSON.parse(trimmed);
+    return safeJsonParse(trimmed, null, 25 * 1024 * 1024);
   };
 
   try {
@@ -609,11 +610,12 @@ export async function loadAllRRBQuestions(forceRefresh = false) {
  */
 function applyLocalOverrides(baseQuestions) {
   try {
-    const custom = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOM_QUESTIONS) || '[]');
-    if (!custom || custom.length === 0) return baseQuestions;
+    const custom = safeJsonParse(localStorage.getItem(STORAGE_KEY_CUSTOM_QUESTIONS) || '[]', []);
+    if (!Array.isArray(custom) || custom.length === 0) return baseQuestions;
 
     const map = new Map(baseQuestions.map((q) => [q.id, { ...q }]));
     for (const cq of custom) {
+      if (!cq || typeof cq !== 'object' || !cq.id) continue;
       if (cq._deleted) {
         map.delete(cq.id);
       } else if (map.has(cq.id)) {
@@ -633,20 +635,22 @@ function applyLocalOverrides(baseQuestions) {
  */
 export function saveLocalQuestionOverride(question) {
   try {
-    const custom = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOM_QUESTIONS) || '[]');
-    const existingIndex = custom.findIndex((q) => q.id === question.id);
+    const cleanQuestion = stripDangerousKeys(question);
+    const parsed = safeJsonParse(localStorage.getItem(STORAGE_KEY_CUSTOM_QUESTIONS) || '[]', []);
+    const custom = Array.isArray(parsed) ? parsed : [];
+    const existingIndex = custom.findIndex((q) => q.id === cleanQuestion.id);
     if (existingIndex >= 0) {
-      custom[existingIndex] = question;
+      custom[existingIndex] = cleanQuestion;
     } else {
-      custom.push(question);
+      custom.push(cleanQuestion);
     }
     localStorage.setItem(STORAGE_KEY_CUSTOM_QUESTIONS, JSON.stringify(custom));
     if (cachedQuestions) {
-      const idx = cachedQuestions.findIndex((q) => q.id === question.id);
+      const idx = cachedQuestions.findIndex((q) => q.id === cleanQuestion.id);
       if (idx >= 0) {
-        cachedQuestions[idx] = { ...cachedQuestions[idx], ...question };
+        cachedQuestions[idx] = { ...cachedQuestions[idx], ...cleanQuestion };
       } else {
-        cachedQuestions.push({ _sourceOrigin: 'uploaded', ...question });
+        cachedQuestions.push({ _sourceOrigin: 'uploaded', ...cleanQuestion });
       }
     }
     return true;
@@ -661,7 +665,8 @@ export function saveLocalQuestionOverride(question) {
  */
 export function deleteLocalQuestionOverride(questionId) {
   try {
-    const custom = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOM_QUESTIONS) || '[]');
+    const parsed = safeJsonParse(localStorage.getItem(STORAGE_KEY_CUSTOM_QUESTIONS) || '[]', []);
+    const custom = Array.isArray(parsed) ? parsed : [];
     const existing = custom.find((q) => q.id === questionId);
     if (existing) {
       existing._deleted = true;
@@ -690,7 +695,8 @@ export async function loadAllShifts() {
  */
 export function getAllShifts() {
   try {
-    const overrides = JSON.parse(localStorage.getItem(STORAGE_KEY_TEST_OVERRIDES) || '{}');
+    const parsed = safeJsonParse(localStorage.getItem(STORAGE_KEY_TEST_OVERRIDES) || '{}', {});
+    const overrides = parsed && typeof parsed === 'object' ? parsed : {};
     const base = (cachedShifts && cachedShifts.length > 0) ? cachedShifts : getInitialShifts();
     return base.map((shift) => {
       const ov = overrides[shift.id];
@@ -706,8 +712,10 @@ export function getAllShifts() {
  */
 export function saveShiftOverride(shiftId, updates) {
   try {
-    const overrides = JSON.parse(localStorage.getItem(STORAGE_KEY_TEST_OVERRIDES) || '{}');
-    overrides[shiftId] = { ...(overrides[shiftId] || {}), ...updates };
+    const cleanUpdates = stripDangerousKeys(updates);
+    const parsed = safeJsonParse(localStorage.getItem(STORAGE_KEY_TEST_OVERRIDES) || '{}', {});
+    const overrides = parsed && typeof parsed === 'object' ? parsed : {};
+    overrides[shiftId] = { ...(overrides[shiftId] || {}), ...cleanUpdates };
     localStorage.setItem(STORAGE_KEY_TEST_OVERRIDES, JSON.stringify(overrides));
     return true;
   } catch (err) {

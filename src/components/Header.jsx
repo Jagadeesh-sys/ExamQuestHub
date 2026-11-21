@@ -110,7 +110,7 @@ export default function Header() {
               <a
                 href="https://instagram.com/examquesthub"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="flex items-center gap-1.5 hover:text-[#F2BE4F] transition-colors"
                 title="Follow on Instagram"
               >
@@ -213,8 +213,13 @@ export default function Header() {
               ))}
             </nav>
 
-            {/* Right Slot: Language Pill, Notification Bell, Search Icon */}
+            {/* Right Slot: App Download Pill (mobile), Language Pill, Notification Bell, Search Icon */}
             <div className="flex items-center gap-1 sm:gap-1.5">
+              {/* Mobile Install / Update App CTA */}
+              <div className="lg:hidden">
+                <PWAInstallButton compact className="bg-[#F2BE4F] text-[#0B1F3A] hover:bg-[#E0AC3C] shadow-xs" />
+              </div>
+
               {/* Language Selector Pill "🌐 English ⌵" */}
               <LanguageSelector variant="pill-dark" />
 
@@ -393,7 +398,7 @@ export default function Header() {
                 <a
                   href="https://instagram.com/examquesthub"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold shadow-2xs"
                 >
                   <Instagram className="w-4 h-4 text-pink-600" />

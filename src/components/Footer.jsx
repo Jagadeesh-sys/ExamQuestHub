@@ -62,7 +62,7 @@ export default function Footer() {
               <a
                 href="https://instagram.com/examquesthub"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-pink-400 hover:bg-pink-600 hover:text-white transition-colors"
                 title="ExamQuestHub on Instagram"
               >
@@ -132,7 +132,7 @@ export default function Footer() {
                 <a
                   href="https://upsc.gov.in"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <span>UPSC (upsc.gov.in)</span>
@@ -143,7 +143,7 @@ export default function Footer() {
                 <a
                   href="https://ssc.gov.in"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <span>SSC (ssc.gov.in)</span>
@@ -154,7 +154,7 @@ export default function Footer() {
                 <a
                   href="https://psc.ap.gov.in"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <span>APPSC (psc.ap.gov.in)</span>
@@ -165,7 +165,7 @@ export default function Footer() {
                 <a
                   href="https://tgpsc.gov.in"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <span>TGPSC (tgpsc.gov.in)</span>
@@ -176,7 +176,7 @@ export default function Footer() {
                 <a
                   href="https://rrbcdg.gov.in"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <span>Railway RRB (rrbcdg.gov.in)</span>
@@ -187,7 +187,7 @@ export default function Footer() {
                 <a
                   href="https://ibps.in"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <span>IBPS (ibps.in)</span>

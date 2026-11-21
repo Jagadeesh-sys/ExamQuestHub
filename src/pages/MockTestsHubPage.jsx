@@ -60,6 +60,7 @@ import {
   computeMockTestsCount,
   TOTAL_TOPIC_UNITS
 } from '../utils/questionStats.js';
+import { safeJsonParse, sanitizeDocumentUrl } from '../utils/security.js';
 
 // Import Circular 3D Medallion Subject Icons
 import iconAllMock from '../assets/images/subject_all_mock.webp';
@@ -118,7 +119,8 @@ export default function MockTestsHubPage() {
   const [bookmarkedIds, setBookmarkedIds] = useState(() => {
     try {
       const saved = localStorage.getItem('eqh_bookmarked_tests');
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? safeJsonParse(saved, [], 256 * 1024) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -1556,9 +1558,9 @@ export default function MockTestsHubPage() {
                             {badgeText}
                           </span>
                           <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold truncate">{examLabel}</span>
-                          {pdfDownloadUrl && (
+                          {sanitizeDocumentUrl(pdfDownloadUrl, '') && (
                             <a
-                              href={pdfDownloadUrl}
+                              href={sanitizeDocumentUrl(pdfDownloadUrl, '')}
                               download
                               onClick={(e) => e.stopPropagation()}
                               className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-[#12345A] ml-1 bg-slate-100 hover:bg-slate-200 px-1.5 py-0.2 rounded transition"
