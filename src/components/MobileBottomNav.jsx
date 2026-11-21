@@ -20,7 +20,7 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile Bottom App Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white border-t border-[#E3EAF2] px-2 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white border-t border-[#E3EAF2] px-2 pt-1.5 pb-[max(6px,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
@@ -31,7 +31,7 @@ export default function MobileBottomNav() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-1 min-w-[56px] min-h-[48px] transition-all select-none tap-highlight-transparent active:scale-95 ${
+                `flex flex-col items-center justify-center py-0.5 px-1 min-w-[56px] min-h-[46px] transition-all select-none tap-highlight-transparent active:scale-95 ${
                   isActive ? 'text-[#12345A]' : 'text-slate-500 hover:text-slate-800'
                 }`
               }
@@ -39,23 +39,23 @@ export default function MobileBottomNav() {
               {({ isActive }) => (
                 <>
                   <div
-                    className={`h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    className={`h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
                       isActive
-                        ? 'w-14 bg-[#12345A] text-white shadow-xs'
+                        ? 'w-[52px] bg-[#12345A] text-white shadow-xs'
                         : 'w-10 text-slate-500'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-[18px] h-[18px]" />
                   </div>
                   <span
-                    className={`text-[10px] tracking-tight leading-tight mt-1 whitespace-nowrap transition-colors ${
+                    className={`text-[10px] tracking-tight leading-tight mt-0.5 whitespace-nowrap transition-colors ${
                       isActive ? 'font-black text-[#12345A]' : 'font-semibold text-slate-600'
                     }`}
                   >
                     {item.label}
                   </span>
                   {isActive && (
-                    <span className="w-3.5 h-1 bg-[#F2BE4F] rounded-full mt-0.5" />
+                    <span className="w-3.5 h-[3px] bg-[#F2BE4F] rounded-full mt-0.5" />
                   )}
                 </>
               )}
