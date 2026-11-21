@@ -234,14 +234,23 @@ export function PWAInstallButton({ className = '' }) {
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-base font-black text-[#12345A] mb-1">
-              Install ExamQuestHub App
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              {isIOS
-                ? 'Follow these quick steps on your iPhone/iPad Safari:'
-                : 'Add to your phone or desktop home screen for one-tap native access:'}
-            </p>
+            <div className="flex items-center gap-3 mb-4">
+              <img
+                src="/pwa-192x192.png"
+                alt="ExamQuestHub App Icon"
+                className="w-12 h-12 rounded-2xl shadow-md border border-[#E3EAF2] shrink-0"
+              />
+              <div>
+                <h3 className="text-base font-black text-[#12345A] leading-tight">
+                  Install ExamQuestHub App
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {isIOS
+                    ? 'Follow these quick steps on your iPhone/iPad Safari:'
+                    : 'Add to your phone or desktop home screen for one-tap native access:'}
+                </p>
+              </div>
+            </div>
             <div className="space-y-2 text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-4">
               {isIOS ? (
                 <>

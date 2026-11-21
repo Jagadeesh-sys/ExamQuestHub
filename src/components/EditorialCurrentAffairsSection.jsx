@@ -27,8 +27,7 @@ import {
   Zap,
   ArrowDown,
   Grid,
-  LayoutList,
-  RefreshCw
+  LayoutList
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import StraightLineCurrentAffair from './StraightLineCurrentAffair.jsx';
@@ -316,6 +315,9 @@ const ReelCard = React.memo(function ReelCard({ item, isBookmarked, onToggleBook
             <ChevronUp className={`w-3.5 h-3.5 ${isActive ? 'animate-bounce' : ''}`} />
             <span className="text-[9px] font-bold uppercase tracking-[0.18em]">Swipe up for next update</span>
           </div>
+
+          {/* 4-line white empty gap below swipe cue */}
+          <div className="h-16 bg-white shrink-0" aria-hidden="true" />
         </div>
       </div>
     </article>
@@ -341,8 +343,6 @@ export default function EditorialCurrentAffairsSection({
   );
   const [bookmarkedIds, setBookmarkedIds] = useState({});
   const [expandedIds, setExpandedIds] = useState({});
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [justSynced, setJustSynced] = useState(false);
   const [activeReelIdx, setActiveReelIdx] = useState(0);
   const reelsViewportRef = useRef(null);
   const reelsStageRef = useRef(null);
@@ -360,20 +360,6 @@ export default function EditorialCurrentAffairsSection({
   });
   const didDragRef = useRef(false);
   const preloadedUrlsRef = useRef(new Set());
-
-  const handleManualSync = async () => {
-    if (!onSyncNow || isSyncing) return;
-    setIsSyncing(true);
-    try {
-      await onSyncNow(false);
-      setJustSynced(true);
-      setTimeout(() => setJustSynced(false), 1800);
-    } catch {
-      // ignore manual refresh error
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   // Reset Reels index cleanly when filter/topic/viewMode changes
   useEffect(() => {
@@ -906,18 +892,6 @@ export default function EditorialCurrentAffairsSection({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {onSyncNow && (
-                  <button
-                    type="button"
-                    onClick={handleManualSync}
-                    disabled={isSyncing}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[10px] font-bold text-[#12345A] hover:bg-blue-50 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
-                    title="Sync latest news from Admin"
-                  >
-                    <RefreshCw className={`w-3 h-3 text-[#2468B4] ${isSyncing ? 'animate-spin' : ''}`} />
-                    <span>{isSyncing ? 'Syncing' : justSynced ? 'Synced' : 'Sync'}</span>
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => setViewMode('editorial')}
