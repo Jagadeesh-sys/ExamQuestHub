@@ -939,9 +939,9 @@ export default function MockTestEnginePage() {
 
                 {mockMeta.includedExams && mockMeta.includedExams.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    {mockMeta.includedExams.map((ex) => (
+                    {mockMeta.includedExams.map((ex, idx) => (
                       <span
-                        key={ex.label}
+                        key={`${ex.label}-${idx}`}
                         className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] sm:text-[11px] font-semibold border border-slate-200/80"
                       >
                         {ex.label} ({ex.count} Qs)
@@ -1600,9 +1600,9 @@ export default function MockTestEnginePage() {
               {mockMeta?.includedExams && mockMeta.includedExams.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
                   <span className="text-[11px] font-bold text-slate-500 mr-1">Exams &amp; Years in Set:</span>
-                  {mockMeta.includedExams.map((ex) => (
+                  {mockMeta.includedExams.map((ex, idx) => (
                     <span
-                      key={ex.label}
+                      key={`${ex.label}-${idx}`}
                       className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200/80"
                     >
                       {ex.label} ({ex.count} Qs)
@@ -1721,9 +1721,9 @@ export default function MockTestEnginePage() {
                     <span className="text-[11px] font-bold text-[#12345A] uppercase tracking-wider mr-0.5">
                       Exam &amp; Year Mix:
                     </span>
-                    {mockMeta.includedExams.map((ex) => (
+                    {mockMeta.includedExams.map((ex, idx) => (
                       <span
-                        key={ex.label}
+                        key={`${ex.label}-${idx}`}
                         className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10.5px] font-semibold border border-slate-200/80"
                       >
                         {ex.label} · {ex.count}

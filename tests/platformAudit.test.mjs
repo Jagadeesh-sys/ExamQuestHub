@@ -316,5 +316,17 @@ test('Custom Mock Builder balances multi-subject quotas and handles sparse Hard/
   // 3. Question without .provenance should work safely with extractProvenance
   const prov = extractProvenance(synthWithoutProvenance);
   assert.ok(prov && typeof prov.originExamName === 'string');
+
+  // 4. summarizeIncludedExams must never emit duplicate labels for mixed-year Current Affairs 2025-2026
+  const { summarizeIncludedExams } = await import('../src/services/rrbMockService.js');
+  const summary = summarizeIncludedExams([
+    { id: 'dec25-1', examName: 'Current Affairs 2025-2026', examYear: '2025' },
+    { id: 'jan26-1', examName: 'Current Affairs 2025-2026', examYear: '2026' }
+  ]);
+  const labels = summary.includedExams.map((e) => e.label);
+  assert.equal(new Set(labels).size, labels.length);
+  assert.equal(summary.includedExams.length, 1);
+  assert.equal(summary.includedExams[0].label, 'Current Affairs 2025-2026');
+  assert.equal(summary.includedExams[0].count, 2);
 });
 

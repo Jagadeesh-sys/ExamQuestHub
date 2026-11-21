@@ -927,16 +927,21 @@ export function summarizeIncludedExams(questions) {
     const examYear = deriveQuestionExamYear(q);
     if (examYear) yearsSet.add(examYear);
 
-    const key = `${examName}:::${examYear}`;
-    if (!countsMap.has(key)) {
-      countsMap.set(key, {
+    const label = formatExamBucketLabel(examName, examYear);
+    if (!countsMap.has(label)) {
+      countsMap.set(label, {
         examName,
         examYear,
-        label: formatExamBucketLabel(examName, examYear),
+        label,
         count: 0
       });
+    } else {
+      const existing = countsMap.get(label);
+      if (examYear && String(examYear).localeCompare(String(existing.examYear || '')) > 0) {
+        existing.examYear = examYear;
+      }
     }
-    countsMap.get(key).count += 1;
+    countsMap.get(label).count += 1;
   }
 
   const includedExams = Array.from(countsMap.values()).sort((a, b) => {
