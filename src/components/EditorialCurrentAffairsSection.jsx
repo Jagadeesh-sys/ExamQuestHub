@@ -316,8 +316,8 @@ const ReelCard = React.memo(function ReelCard({ item, isBookmarked, onToggleBook
             <span className="text-[9px] font-bold uppercase tracking-[0.18em]">Swipe up for next update</span>
           </div>
 
-          {/* 4-line white empty gap below swipe cue */}
-          <div className="h-16 bg-white shrink-0" aria-hidden="true" />
+          {/* White space below swipe cue so cue stays comfortably above the floating bottom nav */}
+          <div className="h-[80px] bg-white shrink-0" aria-hidden="true" />
         </div>
       </div>
     </article>
@@ -869,7 +869,7 @@ export default function EditorialCurrentAffairsSection({
       {/* 3. MAIN CONTENT RENDERING */}
       {viewMode === 'reels' ? (
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) - Single snap container, zero nested scroll trap */
-        <div className="fixed top-0 bottom-[calc(62px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 bg-white lg:hidden overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-40 bg-white lg:hidden overflow-hidden flex flex-col">
           {/* Reels Header: App logo on left side of News Reels text */}
           <div className="shrink-0 bg-white px-3.5 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100 safe-area-pt shadow-2xs">
             <div className="flex items-center justify-between">

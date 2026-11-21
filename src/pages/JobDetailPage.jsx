@@ -572,7 +572,7 @@ export default function JobDetailPage() {
           - Not displayed for UPCOMING or CLOSED jobs.
       */}
       {isOpen && applyHref && (
-        <div className="lg:hidden fixed bottom-[62px] left-0 right-0 z-[65] bg-white/95 backdrop-blur-md px-4 py-2.5 border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] flex items-center gap-2">
+        <div className="lg:hidden fixed bottom-[78px] left-0 right-0 z-[65] bg-white/95 backdrop-blur-md px-4 py-2.5 border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] flex items-center gap-2">
           <a
             href={applyHref}
             target="_blank"

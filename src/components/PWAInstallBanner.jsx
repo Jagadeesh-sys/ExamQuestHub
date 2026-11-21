@@ -49,7 +49,7 @@ export default function PWAInstallBanner() {
       {/* Mobile & Tablet Bottom Install Bar */}
       <aside
         aria-label="App installation banner"
-        className="fixed bottom-[60px] lg:bottom-4 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-md z-[105] bg-gradient-to-r from-[#0B1F3A] to-[#12345A] text-white p-3.5 rounded-2xl shadow-2xl border border-white/15 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom duration-300"
+        className="fixed bottom-[78px] lg:bottom-4 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-md z-[105] bg-gradient-to-r from-[#0B1F3A] to-[#12345A] text-white p-3.5 rounded-2xl shadow-2xl border border-white/15 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom duration-300"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
