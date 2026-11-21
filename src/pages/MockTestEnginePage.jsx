@@ -64,6 +64,10 @@ function buildSubjectTestMeta({ categoryId, subjectId, questionType }, questions
   const subject = getSubjectById(categoryId, subjectId);
   const type = getTestTypeById(questionType);
 
+  const isEnglish = categoryId === 'english' || subjectId === 'english-language';
+  const marksPerQ = isEnglish ? 2 : 1;
+  const negRate = isEnglish ? 0.5 : 0.33;
+
   return {
     id: buildTestId(categoryId, subjectId, questionType),
     code: category?.shortName || categoryId,
@@ -72,8 +76,9 @@ function buildSubjectTestMeta({ categoryId, subjectId, questionType }, questions
     subtitle: type?.description || '',
     questionsCount: questions.length,
     timeMinutes: Math.min(180, Math.max(5, questions.length)),
-    marks: questions.length,
-    negativeMarking: 0.25,
+    marksPerQuestion: marksPerQ,
+    marks: questions.length * marksPerQ,
+    negativeMarking: negRate,
     pdfUrl: '',
     pdfFileName: '',
     subjectTest: true
@@ -147,7 +152,8 @@ export default function MockTestEnginePage() {
     () =>
       Boolean(
         mockId &&
-          (mockId.startsWith('rrb-') ||
+          (mockId === 'custom' ||
+            mockId.startsWith('rrb-') ||
             mockId.startsWith('ssc-') ||
             mockId.startsWith('appsc-') ||
             mockId.startsWith('subject-') ||
@@ -195,8 +201,9 @@ export default function MockTestEnginePage() {
 
   const subjectParam = searchParams.get('subject');
   const limitParam = searchParams.get('limit');
+  const searchParamsKey = searchParams.toString();
 
-  // Load CBT, Subject, or Topic-wise Test (preserves active CBT questionIds across page refresh; re-samples on refreshNonce)
+  // Load CBT, Subject, Custom, or Topic-wise Test (preserves active CBT questionIds across page refresh)
   useEffect(() => {
     if (!isDynamicTest) {
       setRrbTestState({ loading: false, meta: null, questions: [] });
@@ -208,14 +215,26 @@ export default function MockTestEnginePage() {
 
     (async () => {
       try {
-        const data = await getEngineMockTest(mockId, subjectParam, limitParam);
+        const customQuery =
+          mockId === 'custom'
+            ? {
+                examStage: searchParams.get('examStage') || 'all',
+                subjects: searchParams.get('subjects') || '',
+                topics: searchParams.get('topics') || '',
+                difficulty: searchParams.get('difficulty') || 'All',
+                questionType: searchParams.get('questionType') || 'ALL',
+                count: searchParams.get('count') || '30',
+                duration: searchParams.get('duration') || ''
+              }
+            : null;
+        const data = await getEngineMockTest(mockId, subjectParam, limitParam, customQuery);
         if (!active) return;
 
         let finalQuestions = data?.questions || [];
         let finalMeta = data?.meta || null;
 
         // If user refreshes mid-CBT test, restore the exact same question IDs so saved answers match
-        if (refreshNonce === 0 && modeParam === 'cbt' && mockId) {
+        if (refreshNonce === 0 && modeParam === 'cbt' && mockId && mockId !== 'custom') {
           try {
             const savedRaw = localStorage.getItem(`eqh_active_test_${mockId}`);
             if (savedRaw) {
@@ -255,7 +274,7 @@ export default function MockTestEnginePage() {
     return () => {
       active = false;
     };
-  }, [mockId, subjectParam, limitParam, isDynamicTest, refreshNonce]);
+  }, [mockId, subjectParam, limitParam, isDynamicTest, refreshNonce, searchParamsKey]);
 
   const staticMeta = useMemo(
     () => MOCK_TESTS_METADATA.find((m) => m.id === mockId) || null,
@@ -280,12 +299,21 @@ export default function MockTestEnginePage() {
   const [selectedAnswers, setSelectedAnswers] = useState({}); // { [qId]: 'A'|'B'|'C'|'D' }
   const [markedForReview, setMarkedForReview] = useState({}); // { [qId]: boolean }
   const [visitedQuestions, setVisitedQuestions] = useState(new Set([0]));
+  const [questionTimeSpent, setQuestionTimeSpent] = useState({}); // { [qId]: seconds }
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
   const [mobilePaletteOpen, setMobilePaletteOpen] = useState(false);
   const [fontSize, setFontSize] = useState('base'); // 'sm' | 'base' | 'lg'
   const [solutionFilter, setSolutionFilter] = useState('all'); // 'all' | 'correct' | 'incorrect' | 'unattempted'
+  const isSubmittingRef = useRef(false);
+
+  const submitTest = () => {
+    if (isSubmittingRef.current || isSubmitted) return;
+    isSubmittingRef.current = true;
+    setSubmitConfirmOpen(false);
+    setIsSubmitted(true);
+  };
 
   // Pre-test instructions & test controls
   const [isExamStarted, setIsExamStarted] = useState(false);
@@ -306,11 +334,12 @@ export default function MockTestEnginePage() {
     }
   }, [modeParam]);
 
-  const STORAGE_KEY_ACTIVE_TEST = mockMeta?.id ? `eqh_active_test_${mockMeta.id}` : null;
+  const STORAGE_KEY_ACTIVE_TEST = mockMeta?.id && mockMeta.id !== 'custom' ? `eqh_active_test_${mockMeta.id}` : null;
 
   // Restore attempt-scoped values or initialize fresh
   useEffect(() => {
     if (!mockMeta) return;
+    isSubmittingRef.current = false;
 
     let restored = false;
     if (STORAGE_KEY_ACTIVE_TEST) {
@@ -322,6 +351,7 @@ export default function MockTestEnginePage() {
             setSelectedAnswers(parsed.selectedAnswers || {});
             setMarkedForReview(parsed.markedForReview || {});
             setVisitedQuestions(new Set(parsed.visitedQuestions));
+            setQuestionTimeSpent(parsed.questionTimeSpent || {});
             if (typeof parsed.timeRemaining === 'number' && parsed.timeRemaining > 0) {
               const elapsed = parsed.timestamp ? Math.floor((Date.now() - parsed.timestamp) / 1000) : 0;
               const remaining = Math.max(0, parsed.timeRemaining - elapsed);
@@ -345,6 +375,7 @@ export default function MockTestEnginePage() {
       setSelectedAnswers({});
       setMarkedForReview({});
       setVisitedQuestions(new Set([0]));
+      setQuestionTimeSpent({});
       setTimeRemaining((mockMeta.timeMinutes || 60) * 60);
       setIsSubmitted(false);
       setSolutionFilter('all');
@@ -367,6 +398,7 @@ export default function MockTestEnginePage() {
           selectedAnswers,
           markedForReview,
           visitedQuestions: Array.from(visitedQuestions),
+          questionTimeSpent,
           timeRemaining,
           currentIndex,
           isSubmitted: false,
@@ -376,7 +408,7 @@ export default function MockTestEnginePage() {
     } catch {
       // ignore storage quota errors
     }
-  }, [STORAGE_KEY_ACTIVE_TEST, selectedAnswers, markedForReview, visitedQuestions, currentIndex, isSubmitted, activeMode, allQuestions.length, baseQuestions, mockMeta?.id, mockMeta?.title, mockMeta?.targetSubject]);
+  }, [STORAGE_KEY_ACTIVE_TEST, selectedAnswers, markedForReview, visitedQuestions, questionTimeSpent, currentIndex, isSubmitted, activeMode, allQuestions.length, baseQuestions, mockMeta?.id, mockMeta?.title, mockMeta?.targetSubject]);
 
   // Clear saved progress on submission
   useEffect(() => {
@@ -394,15 +426,22 @@ export default function MockTestEnginePage() {
     setVisitedQuestions((prev) => new Set([...prev, currentIndex]));
   }, [currentIndex]);
 
-  // Timer for CBT mode
+  // Timer + per-question time tracker for CBT mode
   useEffect(() => {
     if (activeMode !== 'cbt' || isSubmitted || !isExamStarted || isPaused || !mockMeta || allQuestions.length === 0) return;
 
+    const activeQId = allQuestions[currentIndex]?.id;
     const timer = setInterval(() => {
+      if (activeQId) {
+        setQuestionTimeSpent((prev) => ({
+          ...prev,
+          [activeQId]: (prev[activeQId] || 0) + 1
+        }));
+      }
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setIsSubmitted(true);
+          submitTest();
           return 0;
         }
         return prev - 1;
@@ -410,7 +449,7 @@ export default function MockTestEnginePage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [activeMode, isSubmitted, isExamStarted, isPaused, mockMeta, allQuestions.length]);
+  }, [activeMode, isSubmitted, isExamStarted, isPaused, mockMeta, allQuestions, currentIndex]);
 
   // Format seconds to hh:mm:ss format matching official CBT (Image 2)
   const formatTime = (secs) => {
@@ -509,6 +548,7 @@ export default function MockTestEnginePage() {
 
   // Retake test from scratch (deals a fresh randomized set across all exams/years for dynamic pools)
   const handleRetake = () => {
+    isSubmittingRef.current = false;
     if (STORAGE_KEY_ACTIVE_TEST) {
       try {
         localStorage.removeItem(STORAGE_KEY_ACTIVE_TEST);
@@ -519,6 +559,7 @@ export default function MockTestEnginePage() {
     setSelectedAnswers({});
     setMarkedForReview({});
     setVisitedQuestions(new Set([0]));
+    setQuestionTimeSpent({});
     setCurrentIndex(0);
     setTimeRemaining((mockMeta?.timeMinutes || 60) * 60);
     setIsSubmitted(false);
@@ -536,10 +577,12 @@ export default function MockTestEnginePage() {
     });
 
     if (incorrectQs.length > 0) {
+      isSubmittingRef.current = false;
       setPracticeSubset(incorrectQs);
       setSelectedAnswers({});
       setMarkedForReview({});
       setVisitedQuestions(new Set([0]));
+      setQuestionTimeSpent({});
       setCurrentIndex(0);
       setActiveMode('practice');
       setIsSubmitted(false);
@@ -548,7 +591,9 @@ export default function MockTestEnginePage() {
   };
 
   const handleSwitchMode = (newMode) => {
-    setSearchParams({ mode: newMode });
+    const next = new URLSearchParams(searchParams);
+    next.set('mode', newMode);
+    setSearchParams(next);
     setActiveMode(newMode);
     setMobilePaletteOpen(false);
   };
@@ -593,26 +638,41 @@ export default function MockTestEnginePage() {
     return { answered, marked, markedAnswered, notAnswered, unvisited };
   }, [allQuestions, selectedAnswers, markedForReview, visitedQuestions]);
 
-  // Overall Performance Statistics
+  // Overall Performance Statistics (supports per-question marksPerQuestion & negativeMarkingPerQuestion)
+  const defaultMarksPerQ = mockMeta?.marksPerQuestion ?? (examAgency === 'SSC' ? 2 : 1);
+  const defaultNegRate = mockMeta?.negativeMarking ?? (examAgency === 'SSC' ? 0.5 : 0.33);
+
   const stats = useMemo(() => {
     let correct = 0;
     let incorrect = 0;
     let unattempted = 0;
+    let earnedMarks = 0;
+    let totalDeduction = 0;
+    let maxMarks = 0;
+    const distinctPositive = new Set();
+    const distinctNegative = new Set();
 
     allQuestions.forEach((q) => {
+      const qPos = q.marksPerQuestion ?? defaultMarksPerQ;
+      const qNeg = q.negativeMarkingPerQuestion ?? defaultNegRate;
+      maxMarks += qPos;
+      distinctPositive.add(qPos);
+      distinctNegative.add(qNeg);
+
       const chosen = selectedAnswers[q.id];
       if (!chosen) {
         unattempted++;
       } else if (chosen === q.correctAnswer) {
         correct++;
+        earnedMarks += qPos;
       } else {
         incorrect++;
+        totalDeduction += qNeg;
       }
     });
 
     const attempted = correct + incorrect;
-    const negRate = mockMeta?.negativeMarking ?? 0.25;
-    const rawScore = correct * 1 - incorrect * negRate;
+    const rawScore = earnedMarks - totalDeduction;
     const score = Math.max(0, Number(rawScore.toFixed(2)));
     const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
     const totalSecs = (mockMeta?.timeMinutes || 60) * 60;
@@ -624,13 +684,16 @@ export default function MockTestEnginePage() {
       unattempted,
       correct,
       incorrect,
-      negativeMarking: negRate,
-      negativeDeduction: Number((incorrect * negRate).toFixed(2)),
+      marksPerQuestion: defaultMarksPerQ,
+      negativeMarking: defaultNegRate,
+      hasVariableMarking: distinctPositive.size > 1 || distinctNegative.size > 1,
+      maxMarks: Number(maxMarks.toFixed(2)),
+      negativeDeduction: Number(totalDeduction.toFixed(2)),
       score,
       accuracy,
       timeSpent
     };
-  }, [allQuestions, selectedAnswers, mockMeta, timeRemaining]);
+  }, [allQuestions, selectedAnswers, mockMeta, timeRemaining, defaultMarksPerQ, defaultNegRate]);
 
   // Subject-wise and Topic-wise Breakdown
   const breakdownStats = useMemo(() => {
@@ -638,21 +701,29 @@ export default function MockTestEnginePage() {
     const topicMap = {};
 
     allQuestions.forEach((q) => {
-      const sub = q.subject || q.targetSubject || mockMeta?.subjectLabel || 'General Knowledge';
+      const sub = q.sectionName || q.subject || q.targetSubject || mockMeta?.subjectLabel || 'General Knowledge';
       const top = q.topic || q.subtopic || 'General Practice';
+      const qPos = q.marksPerQuestion ?? defaultMarksPerQ;
+      const qNeg = q.negativeMarkingPerQuestion ?? defaultNegRate;
       const ans = selectedAnswers[q.id];
       const isAttempted = ans !== undefined;
       const isCorrect = isAttempted && ans === q.correctAnswer;
       const isIncorrect = isAttempted && ans !== q.correctAnswer;
 
       if (!subjectMap[sub]) {
-        subjectMap[sub] = { subject: sub, total: 0, attempted: 0, correct: 0, incorrect: 0, unattempted: 0 };
+        subjectMap[sub] = { subject: sub, total: 0, attempted: 0, correct: 0, incorrect: 0, unattempted: 0, earnedMarks: 0, deductedMarks: 0 };
       }
       subjectMap[sub].total++;
       if (isAttempted) subjectMap[sub].attempted++;
       else subjectMap[sub].unattempted++;
-      if (isCorrect) subjectMap[sub].correct++;
-      if (isIncorrect) subjectMap[sub].incorrect++;
+      if (isCorrect) {
+        subjectMap[sub].correct++;
+        subjectMap[sub].earnedMarks += qPos;
+      }
+      if (isIncorrect) {
+        subjectMap[sub].incorrect++;
+        subjectMap[sub].deductedMarks += qNeg;
+      }
 
       if (!topicMap[top]) {
         topicMap[top] = { topic: top, subject: sub, total: 0, attempted: 0, correct: 0, incorrect: 0, unattempted: 0 };
@@ -664,10 +735,8 @@ export default function MockTestEnginePage() {
       if (isIncorrect) topicMap[top].incorrect++;
     });
 
-    const negRate = mockMeta?.negativeMarking ?? 0.25;
-
     const subjects = Object.values(subjectMap).map((s) => {
-      const marks = Number(Math.max(0, s.correct * 1 - s.incorrect * negRate).toFixed(2));
+      const marks = Number(Math.max(0, s.earnedMarks - s.deductedMarks).toFixed(2));
       const accuracy = s.attempted > 0 ? Math.round((s.correct / s.attempted) * 100) : 0;
       return { ...s, marks, accuracy };
     });
@@ -682,7 +751,7 @@ export default function MockTestEnginePage() {
     });
 
     return { subjects, topics };
-  }, [allQuestions, selectedAnswers, mockMeta]);
+  }, [allQuestions, selectedAnswers, mockMeta, defaultMarksPerQ, defaultNegRate]);
 
   // Questions filtered for Solutions mode
   const filteredSolutionsQuestions = useMemo(() => {
@@ -752,8 +821,10 @@ export default function MockTestEnginePage() {
   }
 
   const isLastQuestion = currentIndex === allQuestions.length - 1;
-  const marksPerQuestion = examAgency === 'SSC' ? 2 : 1;
-  const negativeMarkingRate = mockMeta?.negativeMarking ?? (examAgency === 'SSC' ? 0.5 : 0.25);
+  const marksPerQuestion = mockMeta?.marksPerQuestion ?? (examAgency === 'SSC' ? 2 : 1);
+  const negativeMarkingRate = mockMeta?.negativeMarking ?? (examAgency === 'SSC' ? 0.5 : 0.33);
+  const activeQMarksPos = currentQ?.marksPerQuestion ?? marksPerQuestion;
+  const activeQMarksNeg = currentQ?.negativeMarkingPerQuestion ?? negativeMarkingRate;
 
   // =========================================================================
   // PRE-TEST INSTRUCTIONS SCREEN (Matching Image 1)
@@ -1023,18 +1094,30 @@ export default function MockTestEnginePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {sectionsList.map((sec, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="py-3 px-3 font-bold text-slate-800">{sec.name}</td>
-                        <td className="py-3 px-3 text-center font-bold text-slate-700">{sec.count}</td>
-                        <td className="py-3 px-3 text-center font-bold text-[#12345A]">
-                          {sec.count * marksPerQuestion}
-                        </td>
-                        <td className="py-3 px-3 text-right font-bold text-rose-600">
-                          -{negativeMarkingRate}
-                        </td>
-                      </tr>
-                    ))}
+                    {(Array.isArray(mockMeta?.sections) && mockMeta.sections.length > 0
+                      ? mockMeta.sections
+                      : sectionsList.map((sec) => ({
+                          name: sec.name,
+                          count: sec.count,
+                          marksPerQuestion,
+                          negativeMarking: negativeMarkingRate
+                        }))
+                    ).map((sec, idx) => {
+                      const secPos = sec.marksPerQuestion ?? marksPerQuestion;
+                      const secNeg = sec.negativeMarking ?? negativeMarkingRate;
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50">
+                          <td className="py-3 px-3 font-bold text-slate-800">{sec.name}</td>
+                          <td className="py-3 px-3 text-center font-bold text-slate-700">{sec.count}</td>
+                          <td className="py-3 px-3 text-center font-bold text-[#12345A]">
+                            {sec.count * secPos}
+                          </td>
+                          <td className="py-3 px-3 text-right font-bold text-rose-600">
+                            {secNeg === 0 ? '0 (Qualifying)' : `-${secNeg}`}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1253,11 +1336,14 @@ export default function MockTestEnginePage() {
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-black text-[#12345A]">
-                  Your Score: <span className="text-[#2468B4]">{stats.score}</span> / {mockMeta.marks || allQuestions.length}
+                  Your Score: <span className="text-[#2468B4]">{stats.score}</span> / {mockMeta.marks || stats.maxMarks}
                 </h2>
 
                 <p className="text-slate-600 text-xs sm:text-sm max-w-md mx-auto">
-                  Marking Scheme: +1 for correct answer, -{stats.negativeMarking} negative marking for incorrect answer. Time taken: <strong className="text-slate-800">{formatTime(stats.timeSpent)}</strong>.
+                  {stats.hasVariableMarking
+                    ? `Section-wise official marking applied (+${stats.marksPerQuestion} / -${stats.negativeMarking} & qualifying rules). `
+                    : `Marking Scheme: +${stats.marksPerQuestion} for correct answer, -${stats.negativeMarking} negative marking for incorrect answer. `}
+                  Time taken: <strong className="text-slate-800">{formatTime(stats.timeSpent)}</strong>.
                 </p>
 
                 {/* Performance Cards */}
@@ -1661,11 +1747,16 @@ export default function MockTestEnginePage() {
                       Question {currentIndex + 1} of {allQuestions.length}
                     </span>
                     <span className="px-1.5 sm:px-2 py-0.5 rounded-md bg-[#DCFCE7] text-[#15803D] text-[10px] sm:text-xs font-black">
-                      +{marksPerQuestion.toFixed(2)}
+                      +{activeQMarksPos.toFixed(2)}
                     </span>
                     <span className="px-1.5 sm:px-2 py-0.5 rounded-md bg-[#FFE4E6] text-[#E11D48] text-[10px] sm:text-xs font-black">
-                      -{negativeMarkingRate.toFixed(2)}
+                      -{activeQMarksNeg.toFixed(2)}
                     </span>
+                    {questionTimeSpent[currentQ?.id] > 0 && (
+                      <span className="hidden sm:inline-flex px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
+                        {questionTimeSpent[currentQ.id]}s
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1 text-slate-500">
@@ -1799,7 +1890,7 @@ export default function MockTestEnginePage() {
                         <>
                           <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 shrink-0" />
                           <span className="font-bold text-xs sm:text-sm text-emerald-900">
-                            Correct Answer! (+1 Mark)
+                            Correct Answer! (+{activeQMarksPos} {activeQMarksPos === 1 ? 'Mark' : 'Marks'})
                           </span>
                         </>
                       ) : (
@@ -2256,11 +2347,9 @@ export default function MockTestEnginePage() {
                 Continue Test
               </button>
               <button
-                onClick={() => {
-                  setSubmitConfirmOpen(false);
-                  setIsSubmitted(true);
-                }}
-                className="px-5 py-2 rounded-full bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-black transition shadow-xs cursor-pointer active:scale-95"
+                onClick={submitTest}
+                disabled={isSubmitted}
+                className="px-5 py-2 rounded-full bg-[#12345A] hover:bg-[#0B1F3A] disabled:opacity-50 text-white text-xs font-black transition shadow-xs cursor-pointer active:scale-95"
               >
                 Yes, Submit Test
               </button>

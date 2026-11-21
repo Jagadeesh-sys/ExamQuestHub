@@ -8,8 +8,8 @@ import { FULL_MOCK_SERIES, SECTIONAL_TESTS, SUBJECT_MOCK_TESTS } from '../data/f
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import { safeJsonParse } from './security.js';
 
-export const MOCK_STATS_STORAGE_KEY = 'eqh_db_mock_stats_v9';
-export const MOCK_STATS_VERSION = 9;
+export const MOCK_STATS_STORAGE_KEY = 'eqh_db_mock_stats_v10';
+export const MOCK_STATS_VERSION = 10;
 
 export const TOTAL_TOPIC_UNITS = Object.values(SUBJECT_TOPIC_TAXONOMY || {}).reduce(
   (acc, sub) => acc + (Array.isArray(sub?.topics) ? sub.topics.length : 0),

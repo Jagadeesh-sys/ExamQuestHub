@@ -19,7 +19,7 @@ export const FULL_MOCK_SERIES = [
     questionsCount: 100,
     timeMinutes: 90,
     marks: 100,
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     difficulty: 'Medium',
     difficultyBadge: 'bg-[#FEF9C3] text-[#854D0E]',
     isFree: true,
@@ -44,7 +44,7 @@ export const FULL_MOCK_SERIES = [
     questionsCount: 100,
     timeMinutes: 60,
     marks: 200,
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.50 Negative Marking',
     difficulty: 'Medium',
     difficultyBadge: 'bg-[#FEF9C3] text-[#854D0E]',
     isFree: true,
@@ -70,7 +70,7 @@ export const FULL_MOCK_SERIES = [
     questionsCount: 100,
     timeMinutes: 90,
     marks: 100,
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     difficulty: 'Hard',
     difficultyBadge: 'bg-[#F3E8FF] text-[#7E22CE]',
     isFree: true,
@@ -426,6 +426,62 @@ export const FULL_MOCK_SERIES = [
       { name: 'Session 2: General Awareness', count: 25 },
       { name: 'Session 2: English Language', count: 25 }
     ]
+  },
+  // --- SSC CGL Tier-2 Paper-I ---
+  {
+    id: 'ssc-cgl-tier2-mock-01',
+    examId: 'ssc-cgl',
+    examName: 'SSC CGL Tier-2',
+    mockNumber: 'Tier-2 Mock 01',
+    title: 'SSC CGL Tier-2 Paper-I Full Mock – 01',
+    subtitle: 'Official Revised Mains Pattern · +3 Marks / -1 Negative · Includes Computer Knowledge',
+    pattern: '30 Math · 30 Reasoning · 45 English · 25 GA · 20 Computer',
+    questionsCount: 150,
+    timeMinutes: 135,
+    marks: 450,
+    negativeMarking: '-1.0 Negative Marking',
+    difficulty: 'Hard',
+    difficultyBadge: 'bg-[#FEE2E2] text-[#DC2626]',
+    isFree: true,
+    attempts: '24.1K Attempts',
+    agency: 'SSC',
+    agencyColor: 'bg-[#DCFCE7] text-[#15803D]',
+    targetSubject: 'all',
+    sections: [
+      { name: 'Section I: Mathematical Abilities', count: 30 },
+      { name: 'Section I: Reasoning & General Intelligence', count: 30 },
+      { name: 'Section II: English Language & Comprehension', count: 45 },
+      { name: 'Section II: General Awareness', count: 25 },
+      { name: 'Section III: Computer Knowledge Module', count: 20 }
+    ]
+  },
+  // --- APPSC Group-2 Prelims ---
+  {
+    id: 'appsc-group2-prelims-mock-01',
+    examId: 'appsc-group-2',
+    examName: 'APPSC Group 2',
+    mockNumber: 'Prelims Mock 01',
+    title: 'APPSC Group-2 Screening (Prelims) Full Mock – 01',
+    subtitle: 'Official 5-Section Pattern · 30 Qs Each · Bilingual English & Telugu Support',
+    pattern: '30 History · 30 Geography · 30 Society · 30 CA · 30 Mental Ability',
+    questionsCount: 150,
+    timeMinutes: 150,
+    marks: 150,
+    negativeMarking: '-0.33 Negative Marking',
+    difficulty: 'Hard',
+    difficultyBadge: 'bg-[#FEE2E2] text-[#DC2626]',
+    isFree: true,
+    attempts: '19.8K Attempts',
+    agency: 'APPSC',
+    agencyColor: 'bg-[#E0E7FF] text-[#3730A3]',
+    targetSubject: 'all',
+    sections: [
+      { name: 'Indian History', count: 30 },
+      { name: 'Geography', count: 30 },
+      { name: 'Indian Society', count: 30 },
+      { name: 'Current Affairs', count: 30 },
+      { name: 'Mental Ability', count: 30 }
+    ]
   }
 ];
 
@@ -522,7 +578,7 @@ export const SECTIONAL_TESTS = [
     timeMinutes: 20,
     marks: 25,
     difficulty: 'Medium',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'CSE',
     agencyColor: 'bg-[#E0E7FF] text-[#3730A3]'
@@ -599,7 +655,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 25,
     marks: 25,
     difficulty: 'Easy',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'GA'
   },
@@ -613,7 +669,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 30,
     marks: 30,
     difficulty: 'Medium',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'GA'
   },
@@ -627,7 +683,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 45,
     marks: 50,
     difficulty: 'Medium',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'GA'
   },
@@ -641,7 +697,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 90,
     marks: 100,
     difficulty: 'Hard',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'GA'
   },
@@ -889,7 +945,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 20,
     marks: 25,
     difficulty: 'Easy',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'CSE'
   },
@@ -903,7 +959,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 30,
     marks: 30,
     difficulty: 'Medium',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'CSE'
   },
@@ -917,7 +973,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 45,
     marks: 50,
     difficulty: 'Medium',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'CSE'
   },
@@ -931,7 +987,7 @@ export const SUBJECT_MOCK_TESTS = [
     timeMinutes: 90,
     marks: 100,
     difficulty: 'Hard',
-    negativeMarking: '-0.25 Negative Marking',
+    negativeMarking: '-0.33 Negative Marking',
     isFree: true,
     agency: 'CSE'
   }

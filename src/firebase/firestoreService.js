@@ -31,7 +31,9 @@ import {
   formatDateIST
 } from '../utils/notificationStatus.js';
 import { getDefaultImageForTopic as defaultImageForTopic, sanitizeTopicImageUrl, DEFAULT_TOPIC_IMAGES } from './topicImages.js';
-import { loadAllRRBQuestions, getVerifiedMockStats } from '../services/rrbMockService.js';
+import { loadAllRRBQuestions, loadBankManifest, getVerifiedMockStats } from '../services/rrbMockService.js';
+import { classifyQuestionConceptually, extractProvenance } from '../utils/questionClassifier.js';
+import { SUBJECT_TOPIC_TREE } from '../constants/examHierarchy.js';
 import {
   safeJsonParse,
   sanitizeExternalUrl,
@@ -42,13 +44,18 @@ import {
 
 export { DEFAULT_TOPIC_IMAGES };
 
+const CANONICAL_TOPIC_UNITS_COUNT = Object.values(SUBJECT_TOPIC_TREE || {}).reduce(
+  (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
+  0
+);
+
 const STORAGE_KEYS = {
   UPDATES: 'eqh_db_updates_v1',
   CURRENT_AFFAIRS: 'eqh_db_current_affairs_v1',
   CURRENT_AFFAIRS_LITE: 'eqh_db_current_affairs_lite_v1',
   QUESTIONS: 'eqh_db_questions_v1',
   MOCK_QUESTIONS: 'eqh_db_mock_questions_v1',
-  MOCK_STATS: 'eqh_db_mock_stats_v7',
+  MOCK_STATS: 'eqh_db_mock_stats_v10',
   RESOURCES: 'eqh_db_resources_v1',
   ADMINS: 'eqh_db_admins_v1'
 };
@@ -1068,136 +1075,20 @@ export async function deleteQuestion(id) {
 }
 
 export function mapRrbToMockQuestion(q) {
-  const safeQText = typeof q.question === 'string'
-    ? q.question
-    : (typeof q.question?.en === 'string' ? q.question.en : (typeof q.question?.te === 'string' ? q.question.te : ''));
-  const safeOptsText = Array.isArray(q.options?.en)
-    ? q.options.en.join(' ')
-    : (q.options && typeof q.options === 'object' ? Object.values(q.options).filter(v => typeof v === 'string').join(' ') : '');
-  const text = (safeQText + ' ' + (q.subtopic || '') + ' ' + safeOptsText).toLowerCase();
-  const rawSub = (q.subject || '').toLowerCase();
-  const rawCat = (q.categoryId || '').toLowerCase();
+  const provenance = q?.provenance || extractProvenance(q);
+  const originalOrder = Number(q?.originalOrder || provenance?.originalOrder || q?.questionNumber || 0) || null;
 
-  let subject = 'General Knowledge';
-  let categoryId = 'gk';
-  let subjectId = 'general-knowledge';
-  let subtopic = q.subtopic || q.topic || 'Static GK & Culture';
+  const hasManualOverride = Boolean(q?.manualClassificationOverride && q?.subjectId && q?.topicId);
+  const conceptual = classifyQuestionConceptually(q);
 
-  // 0. Current Affairs (check explicitly before generic GK fallthrough)
-  if (
-    rawSub.includes('current affair') ||
-    rawSub.includes('current-affairs') ||
-    rawCat === 'ca' ||
-    String(q.subjectId || '').toLowerCase() === 'current-affairs'
-  ) {
-    subject = 'Current Affairs';
-    categoryId = q.categoryId || 'gk';
-    subjectId = 'current-affairs';
-    subtopic = q.subtopic || q.topic || 'National Affairs';
-  }
-  // 1. English Language
-  else if (rawSub.includes('english') || rawCat === 'english' || q.sectionName?.includes('English')) {
-    subject = 'English Language';
-    categoryId = 'english';
-    subjectId = 'english-language';
-    subtopic = q.subtopic || 'Grammar & Error Spotting';
-    if (!q.subtopic) {
-      if (text.includes('idiom') || text.includes('phrase')) subtopic = 'Idioms & Phrases';
-      else if (text.includes('synonym') || text.includes('antonym')) subtopic = 'Vocabulary, Synonyms & Antonyms';
-      else if (text.includes('one word') || text.includes('spelt') || text.includes('spelling') || text.includes('misspelt')) subtopic = 'One Word Substitution & Spelling';
-      else if (text.includes('passage') || text.includes('comprehension') || text.includes('cloze')) subtopic = 'Reading Comprehension & Cloze Test';
-      else if (text.includes('jumbled') || text.includes('rearrangement') || text.includes('rearrange')) subtopic = 'Sentence Rearrangement & Para Jumbles';
-    }
-  }
-  // 2. Computer Science
-  else if (
-    rawSub.includes('computer') || rawCat === 'cse' ||
-    q.subtopic?.includes('Computer') || q.subtopic === 'Operating Systems' || q.subtopic === 'Computer Networks' || q.subtopic === 'Database Management Systems' || q.subtopic === 'Programming & OOP' || q.subtopic === 'Software Engineering' || q.subtopic === 'Digital Logic & Computer Organization' ||
-    (!q.topicId && (
-      text.includes('operating system') || text.includes('windows') || text.includes('linux') || text.includes('kernel') || text.includes('ms-dos') ||
-      text.includes('ip address') || text.includes('lan ') || text.includes('wan ') || text.includes('computer network') || text.includes('tcp/ip') || text.includes('router') ||
-      text.includes('database') || text.includes('dbms') || text.includes('sql') || text.includes('rdbms') ||
-      text.includes('compiler') || text.includes('programming') || text.includes('algorithm') || text.includes('binary tree') ||
-      text.includes('ms office') || text.includes('ms word') || text.includes('ms excel') || text.includes('spreadsheet') || text.includes('powerpoint') ||
-      text.includes('motherboard') || text.includes('microprocessor') || text.includes('logic gate') || text.includes('digital logic')
-    ))
-  ) {
-    subject = 'Computer Science';
-    categoryId = 'cse';
-    subjectId = 'computer-science';
-    subtopic = q.subtopic || 'Computer Fundamentals & Awareness';
-    if (!q.subtopic) {
-      if (text.includes('operating system') || text.includes('windows') || text.includes('linux') || text.includes('kernel')) subtopic = 'Operating Systems';
-      else if (text.includes('network') || text.includes('ip address') || text.includes('lan ') || text.includes('internet') || text.includes('protocol')) subtopic = 'Computer Networks';
-      else if (text.includes('database') || text.includes('dbms') || text.includes('sql')) subtopic = 'Database Management Systems';
-      else if (text.includes('programming') || text.includes('compiler') || text.includes('java') || text.includes('python')) subtopic = 'Programming & OOP';
-      else if (text.includes('software') || text.includes('testing') || text.includes('malware') || text.includes('virus')) subtopic = 'Software Engineering';
-      else if (text.includes('logic gate') || text.includes('binary') || text.includes('digital logic')) subtopic = 'Digital Logic & Computer Organization';
-    }
-  }
-  // 3. Quantitative Aptitude
-  else if (rawSub.includes('quant') || rawSub.includes('math') || rawCat === 'quant' || q.sectionName?.includes('Quantitative') || q.sectionName?.includes('Mathematics')) {
-    subject = 'Quantitative Aptitude';
-    categoryId = 'quant';
-    subjectId = 'quantitative-aptitude';
-    subtopic = q.subtopic || q.topic || 'Number System & Simplification';
-    if (!q.subtopic) {
-      if (text.includes('work') || text.includes('pipe') || text.includes('cistern') || text.includes('speed') || text.includes('distance') || text.includes('train') || text.includes('boat')) subtopic = 'Time, Speed, Distance & Work';
-      else if (text.includes('profit') || text.includes('loss') || text.includes('discount') || text.includes('interest') || text.includes('percent')) subtopic = 'Percentage, Profit & Loss';
-      else if (text.includes('ratio') || text.includes('proportion') || text.includes('mixture') || text.includes('average') || text.includes('partnership')) subtopic = 'Ratio, Proportion & Mixtures';
-      else if (text.includes('area') || text.includes('perimeter') || text.includes('volume') || text.includes('surface') || text.includes('triangle') || text.includes('circle') || text.includes('cylinder') || text.includes('cone') || text.includes('sphere') || text.includes('prism')) subtopic = 'Mensuration & Geometry';
-      else if (text.includes('algebra') || text.includes('equation') || text.includes('trigonometr') || text.includes('sin ') || text.includes('cos ') || text.includes('tan ') || text.includes('sec ') || text.includes('cosec ') || text.includes('cot ')) subtopic = 'Algebra & Trigonometry';
-      else if (text.includes('pie chart') || text.includes('bar graph') || text.includes('histogram') || text.includes('table')) subtopic = 'Data Interpretation';
-    }
-  }
-  // 4. Reasoning
-  else if (rawSub.includes('reason') || rawCat === 'reasoning' || q.sectionName?.includes('Intelligence') || q.sectionName?.includes('Reasoning')) {
-    subject = 'Reasoning';
-    categoryId = 'reasoning';
-    subjectId = 'reasoning';
-    subtopic = q.subtopic || q.topic || 'Series & Coding-Decoding';
-    if (!q.subtopic) {
-      if (text.includes('blood') || text.includes('direction') || text.includes('facing') || text.includes('turns left') || text.includes('turns right')) subtopic = 'Blood Relations & Direction Sense';
-      else if (text.includes('syllogism') || text.includes('conclusion') || text.includes('statement') || text.includes('assumption')) subtopic = 'Syllogisms & Statements';
-      else if (text.includes('seating') || text.includes('circular table') || text.includes('row') || text.includes('floor') || text.includes('puzzle')) subtopic = 'Puzzles & Seating Arrangement';
-      else if (text.includes('mirror') || text.includes('water image') || text.includes('paper fold') || text.includes('cube') || text.includes('dice') || text.includes('figure')) subtopic = 'Non-Verbal Reasoning';
-      else if (text.includes('analogy') || text.includes('related') || text.includes('odd one') || text.includes('share the same relationship')) subtopic = 'Analogy & Classification';
-    }
-  }
-  // 5. General Science
-  else if (
-    rawSub.includes('science') || rawCat === 'general-science' || rawCat === 'science' ||
-    (!q.topicId && (
-      text.includes('acid') || text.includes('base') || text.includes('element') || text.includes('compound') || text.includes('metal') || text.includes('chemical') || text.includes('periodic table') ||
-      text.includes('cell') || text.includes('tissue') || text.includes('organ') || text.includes('vitamin') || text.includes('protein') || text.includes('disease') || text.includes('bacteria') || text.includes('virus') || text.includes('blood') || text.includes('plant') || text.includes('respiration') ||
-      text.includes('force') || text.includes('gravity') || text.includes('motion') || text.includes('energy') || text.includes('lens') || text.includes('optics') || text.includes('sound') || text.includes('frequency') || text.includes('voltage') || text.includes('resistance') || text.includes('newton') || text.includes('watt')
-    ))
-  ) {
-    subject = 'General Science';
-    categoryId = 'general-science';
-    subjectId = 'general-science';
-    subtopic = q.subtopic || q.topic || 'Physics';
-    if (!q.subtopic) {
-      if (text.includes('cell') || text.includes('tissue') || text.includes('organ') || text.includes('vitamin') || text.includes('disease') || text.includes('blood') || text.includes('plant') || text.includes('biology')) subtopic = 'Biology';
-      else if (text.includes('acid') || text.includes('base') || text.includes('chemical') || text.includes('reaction') || text.includes('metal') || text.includes('chemistry')) subtopic = 'Chemistry';
-    }
-  }
-  // 6. General Knowledge
-  else {
-    subject = 'General Knowledge';
-    categoryId = 'gk';
-    subjectId = 'general-knowledge';
-    subtopic = q.subtopic || q.topic || 'Static GK & Culture';
-    if (!q.subtopic) {
-      if (text.includes('article') || text.includes('constitution') || text.includes('amendment') || text.includes('court') || text.includes('parliament') || text.includes('president') || text.includes('polity') || text.includes('fundamental rights') || text.includes('lok sabha') || text.includes('rajya sabha')) subtopic = 'Indian Polity & Constitution';
-      else if (text.includes('dynasty') || text.includes('battle') || text.includes('british') || text.includes('gandhi') || text.includes('mughal') || text.includes('history') || text.includes('harappa') || text.includes('ashoka') || text.includes('akbar')) subtopic = 'Indian History';
-      else if (text.includes('river') || text.includes('mountain') || text.includes('soil') || text.includes('climate') || text.includes('geography') || text.includes('lake') || text.includes('ocean') || text.includes('pass') || text.includes('tributary')) subtopic = 'Geography';
-      else if (text.includes('rbi') || text.includes('gdp') || text.includes('bank') || text.includes('inflation') || text.includes('economy') || text.includes('budget') || text.includes('tax') || text.includes('five year plan')) subtopic = 'Indian Economy';
-      else if (text.includes('national park') || text.includes('sanctuary') || text.includes('biosphere') || text.includes('wetland') || text.includes('ecology') || text.includes('environment')) subtopic = 'Environment & Ecology';
-      else if (text.includes('scheme') || text.includes('yojana') || text.includes('pradhan mantri')) subtopic = 'Government Schemes';
-      else if (text.includes('2024') || text.includes('2025') || text.includes('2026') || text.includes('olympic') || text.includes('summit') || text.includes('award') || text.includes('current affair')) subtopic = 'Current Affairs';
-    }
-  }
+  const subject = hasManualOverride ? (q.subject || conceptual.subjectName) : conceptual.subjectName;
+  const subjectId = hasManualOverride ? q.subjectId : conceptual.subjectId;
+  const categoryId = hasManualOverride
+    ? (q.categoryId || conceptual.categoryId)
+    : (subjectId === 'general-science' ? 'general-science' : conceptual.categoryId);
+  const topicId = hasManualOverride ? q.topicId : conceptual.topicId;
+  const topic = hasManualOverride ? (q.topic || conceptual.topicName) : conceptual.topicName;
+  const subtopic = hasManualOverride ? (q.subtopic || q.topic || conceptual.subtopic) : conceptual.subtopic;
 
   const isAppsc =
     q.examType === 'APPSC Group II' ||
@@ -1315,10 +1206,34 @@ export function mapRrbToMockQuestion(q) {
     subject,
     categoryId,
     subjectId,
-    topicId: q.topicId,
-    topic: q.topic || subtopic,
+    topicId,
+    topic,
     subtopic,
     pdfSubtopic: q.pdfSubtopic,
+    secondaryTags: q.secondaryTags || conceptual.secondaryTags,
+    classificationConfidence: q.classificationConfidence ?? conceptual.confidence,
+    classificationTier: q.classificationTier || conceptual.confidenceTier,
+    classificationStatus: hasManualOverride
+      ? (q.classificationStatus || 'ADMIN_VERIFIED')
+      : (q.classificationStatus || conceptual.classificationStatus),
+    suggestedClassification: q.suggestedClassification || {
+      subjectId: conceptual.subjectId,
+      subjectName: conceptual.subjectName,
+      topicId: conceptual.topicId,
+      topicName: conceptual.topicName,
+      subtopic: conceptual.subtopic,
+      confidence: conceptual.confidence,
+      confidenceTier: conceptual.confidenceTier,
+      reasoning: conceptual.reasoning
+    },
+    eligibleExams: Array.isArray(q.eligibleExams) && q.eligibleExams.length > 0
+      ? q.eligibleExams
+      : conceptual.eligibleExams,
+    qualityFlags: Array.isArray(q.qualityFlags)
+      ? q.qualityFlags
+      : conceptual.qualityFlags,
+    provenance,
+    originalOrder,
     questionType,
     difficulty: q.difficulty || 'Medium',
     status,
@@ -1330,43 +1245,59 @@ export function mapRrbToMockQuestion(q) {
 }
 
 /**
- * Direct real-time aggregation of Mock Test metrics from Firestore server.
- * Reads directly from the `mockQuestions` collection in Firestore.
+ * Direct fast aggregation of Mock Test metrics.
+ * Prefers precomputed `bankManifest.json` (<50ms) and local cache before hitting Firestore `_stats_`.
  */
 export async function getDirectFirestoreMockStats() {
-  // 1. Check cached stats in localStorage if already calculated
+  // 1. Fast-path: load static precomputed bankManifest.json (<50ms)
+  try {
+    const manifest = await loadBankManifest();
+    if (manifest && manifest.stats && manifest.stats.totalQuestions > 0) {
+      const mStats = {
+        ...manifest.stats,
+        totalSubtopics: CANONICAL_TOPIC_UNITS_COUNT || manifest.stats.totalSubtopics || 43,
+        source: `Verified Question Bank (${Number(manifest.stats.totalQuestions).toLocaleString()} Qs • ${manifest.stats.totalShifts || 214} CBT Shifts)`
+      };
+      saveLocalData(STORAGE_KEYS.MOCK_STATS, mStats);
+      return mStats;
+    }
+  } catch {
+    // fallback to localStorage / Firestore
+  }
+
+  // 2. Check cached stats in localStorage if already calculated
   try {
     const cached = getLocalData(STORAGE_KEYS.MOCK_STATS, null);
-    if (cached && typeof cached.totalQuestions === 'number' && cached.totalQuestions >= 19900 && (cached.totalShifts || 0) >= 214) {
+    if (cached && typeof cached.totalQuestions === 'number' && cached.totalQuestions > 0 && (cached.totalShifts || 0) >= 200) {
       return cached;
     }
   } catch {
     // ignore
   }
 
-  // 2. Query Firestore server _stats_ document if connected
+  // 3. Query Firestore server _stats_ document if connected
   if (isFirebaseConfigured && db) {
     try {
       const statsSnap = await getDoc(doc(db, 'mockQuestions', '_stats_'));
       if (statsSnap.exists()) {
         const serverStats = statsSnap.data();
-        if (serverStats && serverStats.totalQuestions && serverStats.totalQuestions >= 24360 && (serverStats.totalShifts || 0) >= 214) {
+        if (serverStats && serverStats.totalQuestions > 0) {
           const formatted = {
             totalQuestions: serverStats.totalQuestions,
             verifiedQuestions: serverStats.verifiedQuestions || serverStats.totalQuestions,
             unverifiedQuestions: serverStats.unverifiedQuestions || 0,
             totalShifts: serverStats.totalShifts || 214,
-            totalSubtopics: serverStats.totalSubtopics || 66,
-            totalMockTests: serverStats.totalMockTests || 431,
+            totalSubtopics: CANONICAL_TOPIC_UNITS_COUNT || serverStats.totalSubtopics || 43,
+            totalMockTests: serverStats.totalMockTests || 314,
             subjectCounts: serverStats.subjectCounts || {
               all: serverStats.totalQuestions,
-              'general-knowledge': 7739,
-              'quantitative-aptitude': 5621,
-              reasoning: 5599,
-              'general-science': 2295,
-              'computer-science': 810,
-              'english-language': 680,
-              'current-affairs': 1623
+              'general-knowledge': 5152,
+              'quantitative-aptitude': 5571,
+              reasoning: 5471,
+              'general-science': 1978,
+              'computer-science': 309,
+              'english-language': 659,
+              'current-affairs': 718
             },
             source: `Official Question Bank (${serverStats.totalQuestions.toLocaleString()} Qs • ${serverStats.totalShifts || 214} CBT Shifts)`
           };
@@ -1379,25 +1310,25 @@ export async function getDirectFirestoreMockStats() {
     }
   }
 
-  // 3. Fallback: verified full bank including all 214 CBT shifts (24,367+)
+  // 4. Fallback: synchronized bankManifest totals (19,858 unique / 214 shifts / 43 canonical topics)
   const fallbackStats = {
-    totalQuestions: 24367,
-    verifiedQuestions: 24367,
+    totalQuestions: 19858,
+    verifiedQuestions: 19858,
     unverifiedQuestions: 0,
     totalShifts: 214,
-    totalSubtopics: 66,
-    totalMockTests: 431,
+    totalSubtopics: CANONICAL_TOPIC_UNITS_COUNT || 43,
+    totalMockTests: 314,
     subjectCounts: {
-      all: 24367,
-      'general-knowledge': 7739,
-      'quantitative-aptitude': 5621,
-      reasoning: 5599,
-      'general-science': 2295,
-      'computer-science': 810,
-      'english-language': 680,
-      'current-affairs': 1623
+      all: 19858,
+      'general-knowledge': 5152,
+      'quantitative-aptitude': 5571,
+      reasoning: 5471,
+      'general-science': 1978,
+      'computer-science': 309,
+      'english-language': 659,
+      'current-affairs': 718
     },
-    source: 'Official Question Bank (24,367 Qs • 214 CBT Shifts)'
+    source: 'Official Question Bank (19,858 Qs • 214 CBT Shifts)'
   };
 
   saveLocalData(STORAGE_KEYS.MOCK_STATS, fallbackStats);
@@ -1511,15 +1442,15 @@ export async function getMockQuestions(forceRefresh = false) {
     }
   }
 
-  // Keep fast cached stats synchronized with exact count (214 shifts)
+  // Keep fast cached stats synchronized with exact counts
   try {
     saveLocalData(STORAGE_KEYS.MOCK_STATS, {
       totalQuestions: merged.length,
-      verifiedQuestions: merged.length,
-      unverifiedQuestions: 0,
+      verifiedQuestions: merged.filter((m) => m.verificationStatus !== 'UNVERIFIED' && m.status !== 'Needs Review').length,
+      unverifiedQuestions: merged.filter((m) => m.verificationStatus === 'UNVERIFIED' || m.status === 'Needs Review').length,
       totalShifts: 214,
-      totalSubtopics: 66,
-      totalMockTests: 431,
+      totalSubtopics: CANONICAL_TOPIC_UNITS_COUNT || 43,
+      totalMockTests: 314,
       subjectCounts: dynamicSubjectCounts,
       source: `Official Question Bank (${merged.length.toLocaleString()} Qs • 214 CBT Shifts)`
     });
@@ -1679,8 +1610,8 @@ export async function bulkSaveMockQuestions(questions, onProgress) {
         verifiedQuestions: verified,
         unverifiedQuestions: list.length - verified,
         totalShifts: Math.max(shiftsSet.size, 214),
-        totalSubtopics: Math.max(subtopicsSet.size, 66),
-        totalMockTests: 431,
+        totalSubtopics: CANONICAL_TOPIC_UNITS_COUNT || subtopicsSet.size || 43,
+        totalMockTests: 314,
         graduate2026,
         graduate2024,
         underGraduate,

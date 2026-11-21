@@ -42,7 +42,8 @@ import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import {
   getAllShifts,
-  loadAllShifts
+  loadAllShifts,
+  loadBankManifest
 } from '../services/rrbMockService.js';
 import { MOCK_TESTS_METADATA } from '../data/mockTestsMetadata.js';
 import {
@@ -51,13 +52,13 @@ import {
   SUBJECT_MOCK_TESTS
 } from '../data/fullMockSeriesData.js';
 import OfficialMockTestCard from '../components/OfficialMockTestCard.jsx';
-import { getMockQuestions } from '../firebase/firestoreService.js';
-import { getTopicsForSubject } from '../constants/mockTaxonomy.js';
+import { getTopicsForSubject, resolveCanonicalTopicId } from '../constants/mockTaxonomy.js';
+import { CANONICAL_SUBJECTS, SUBJECT_TOPIC_TREE, getAllExamStagesFlat } from '../constants/examHierarchy.js';
 import {
-  computeUnifiedStats,
   getCachedUnifiedStats,
   saveCachedUnifiedStats,
   computeMockTestsCount,
+  MOCK_STATS_VERSION,
   TOTAL_TOPIC_UNITS
 } from '../utils/questionStats.js';
 import { safeJsonParse, sanitizeDocumentUrl } from '../utils/security.js';
@@ -177,13 +178,67 @@ export default function MockTestsHubPage() {
   const [pyqCurrentPage, setPyqCurrentPage] = useState(1);
   const SHIFTS_PER_PAGE = 10;
 
-  // Deterministically load full merged pool (Static + Monthly CA + Firestore/IDB + Daily GK)
+  // Custom Mock Builder Modal state
+  const [customBuilderOpen, setCustomBuilderOpen] = useState(false);
+  const [customExamStage, setCustomExamStage] = useState('all');
+  const [customSubjects, setCustomSubjects] = useState(['quantitative-aptitude', 'reasoning', 'general-knowledge']);
+  const [customTopics, setCustomTopics] = useState([]);
+  const [customDifficulty, setCustomDifficulty] = useState('All');
+  const [customQuestionType, setCustomQuestionType] = useState('PYQ');
+  const [customCount, setCustomCount] = useState(30);
+  const [customMode, setCustomMode] = useState('cbt');
+
+  const allExamStages = useMemo(() => getAllExamStagesFlat(), []);
+  const availableCustomTopics = useMemo(() => {
+    const activeSubs = customSubjects.length > 0 ? customSubjects : CANONICAL_SUBJECTS.map((s) => s.id);
+    const list = [];
+    for (const sid of activeSubs) {
+      for (const top of SUBJECT_TOPIC_TREE[sid] || []) {
+        list.push({ ...top, subjectId: sid });
+      }
+    }
+    return list;
+  }, [customSubjects]);
+
+  const toggleCustomSubject = (sid) => {
+    setCustomSubjects((prev) => {
+      const next = prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid];
+      return next;
+    });
+    setCustomTopics((prev) =>
+      prev.filter((tid) => {
+        const nextSubs = customSubjects.includes(sid)
+          ? customSubjects.filter((x) => x !== sid)
+          : [...customSubjects, sid];
+        return nextSubs.some((s) => (SUBJECT_TOPIC_TREE[s] || []).some((t) => t.id === tid));
+      })
+    );
+  };
+
+  const toggleCustomTopic = (tid) => {
+    setCustomTopics((prev) => (prev.includes(tid) ? prev.filter((x) => x !== tid) : [...prev, tid]));
+  };
+
+  const handleLaunchCustomMock = () => {
+    const params = new URLSearchParams();
+    params.set('mode', customMode);
+    if (customExamStage && customExamStage !== 'all') params.set('examStage', customExamStage);
+    if (customSubjects.length > 0) params.set('subjects', customSubjects.join(','));
+    if (customTopics.length > 0) params.set('topics', customTopics.join(','));
+    if (customDifficulty !== 'All') params.set('difficulty', customDifficulty);
+    if (customQuestionType !== 'ALL') params.set('questionType', customQuestionType);
+    params.set('count', String(customCount));
+    setCustomBuilderOpen(false);
+    navigate(`/mocks/custom?${params.toString()}`);
+  };
+
+  // Deterministically load precomputed bankManifest.json (<50ms) instead of parsing ~28 MB JSON on mount
   useEffect(() => {
     let isMounted = true;
-    const fetchUnifiedBankData = async () => {
+    const fetchFastManifest = async () => {
       try {
-        const [qRes, shiftsRes] = await Promise.allSettled([
-          getMockQuestions(),
+        const [manifestRes, shiftsRes] = await Promise.allSettled([
+          loadBankManifest(),
           loadAllShifts()
         ]);
 
@@ -195,22 +250,26 @@ export default function MockTestsHubPage() {
             : getAllShifts();
         setShifts(loadedShifts);
 
-        const allQuestions =
-          qRes.status === 'fulfilled' && Array.isArray(qRes.value) ? qRes.value : [];
-
-        if (allQuestions.length > 0) {
-          const unified = computeUnifiedStats(allQuestions, loadedShifts);
+        const manifest = manifestRes.status === 'fulfilled' ? manifestRes.value : null;
+        if (manifest && manifest.stats && manifest.stats.totalQuestions > 0) {
+          const unified = {
+            ...manifest.stats,
+            statsVersion: MOCK_STATS_VERSION,
+            totalSubtopics: TOTAL_TOPIC_UNITS,
+            totalMockTests: computeMockTestsCount(loadedShifts),
+            source: `Verified Question Bank (${Number(manifest.stats.totalQuestions).toLocaleString()} Qs • ${loadedShifts.length} Shifts)`
+          };
           saveCachedUnifiedStats(unified);
           setFirestoreStats(unified);
         }
       } catch (err) {
-        console.error('Error loading unified mock test bank:', err);
+        console.error('Error loading mock bank manifest:', err);
       } finally {
         if (isMounted) setStatsLoading(false);
       }
     };
 
-    fetchUnifiedBankData();
+    fetchFastManifest();
     return () => {
       isMounted = false;
     };
@@ -332,11 +391,21 @@ export default function MockTestsHubPage() {
     return getTopicsForSubject(targetSub);
   }, [selectedSubject]);
 
-  // Exact Topic questions counter
+  // Exact Topic questions counter (includes legacy alias rollups from bankManifest)
   const getTopicQuestionCount = (subjectId, topic) => {
-    const key = `${subjectId}::${topic.id}`;
-    if (firestoreStats?.topicCounts && firestoreStats.topicCounts[key] !== undefined) {
-      return firestoreStats.topicCounts[key];
+    const counts = firestoreStats?.topicCounts;
+    if (counts) {
+      let total = 0;
+      const prefix = `${subjectId}::`;
+      for (const [k, val] of Object.entries(counts)) {
+        if (k.startsWith(prefix)) {
+          const rawTop = k.slice(prefix.length);
+          if (rawTop === topic.id || resolveCanonicalTopicId(rawTop) === topic.id) {
+            total += Number(val) || 0;
+          }
+        }
+      }
+      if (total > 0 || !statsLoading) return total;
     }
     return statsLoading ? '...' : 0;
   };
@@ -384,7 +453,7 @@ export default function MockTestsHubPage() {
         subjectName: 'Current Affairs',
         agency: 'CA',
         difficulty: ca.difficulty || 'Medium',
-        negativeMarking: ca.negativeMarking || '-0.25 Negative Marking'
+        negativeMarking: ca.negativeMarking || '-0.33 Negative Marking'
       })
     );
 
@@ -660,10 +729,10 @@ export default function MockTestsHubPage() {
       {
         id: 'series-full-mocks',
         title: 'Official Examination Full CBT Simulated Mocks',
-        subtitle: 'Timed full-length mocks matching RRB (90 min) & SSC (60 min) official patterns',
+        subtitle: 'Timed full-length mocks matching RRB (90 min), SSC (60–135 min) & APPSC (150 min) official patterns',
         totalTests: `${fullMockCount} Full Mocks`,
-        questionsCount: `${(fullMockCount * 100).toLocaleString()} Qs`,
-        languages: 'English · Hindi',
+        questionsCount: `${FULL_MOCK_SERIES.reduce((acc, m) => acc + (m.questionsCount || 100), 0).toLocaleString()} Qs`,
+        languages: 'English · Hindi · Telugu',
         agency: 'EXAM',
         examId: 'all',
         filterKey: 'all',
@@ -971,25 +1040,36 @@ export default function MockTestsHubPage() {
         </section>
 
         {/* =========================================================================
-            LIVE GLOBAL SEARCH BAR
+            LIVE GLOBAL SEARCH BAR + CUSTOM MOCK TEST BUILDER TRIGGER
             ========================================================================= */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={globalSearch}
-            onChange={(e) => setGlobalSearch(e.target.value)}
-            placeholder="Search full mocks, previous year shift papers (e.g. Shift 1, Modern History, SSC CGL Tier-1)..."
-            className="w-full pl-11 pr-10 py-3 bg-white text-slate-800 text-xs sm:text-sm font-medium rounded-2xl sm:rounded-full border border-slate-200/90 shadow-xs focus:outline-hidden focus:border-[#2468B4] focus:ring-2 focus:ring-[#2468B4]/20 transition"
-          />
-          {globalSearch && (
-            <button
-              onClick={() => setGlobalSearch('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              placeholder="Search full mocks, previous year shift papers (e.g. Shift 1, Modern History, SSC CGL Tier-1)..."
+              className="w-full pl-11 pr-10 py-3 bg-white text-slate-800 text-xs sm:text-sm font-medium rounded-2xl sm:rounded-full border border-slate-200/90 shadow-xs focus:outline-hidden focus:border-[#2468B4] focus:ring-2 focus:ring-[#2468B4]/20 transition"
+            />
+            {globalSearch && (
+              <button
+                onClick={() => setGlobalSearch('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setCustomBuilderOpen(true)}
+            className="px-4 py-3 rounded-2xl sm:rounded-full bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs sm:text-sm font-black shadow-sm transition flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95"
+          >
+            <Filter className="w-4 h-4 text-[#FACC15]" />
+            <span>Custom Mock Builder</span>
+          </button>
         </div>
 
         {/* =========================================================================
@@ -1529,7 +1609,7 @@ export default function MockTestsHubPage() {
                 const examLabel = isAppsc ? 'APPSC Group-2' : isSsc ? 'SSC CGL' : isGroupD ? 'RRB Group D' : 'RRB NTPC';
                 const qCount = shift.questionsCount || (isAppsc ? 150 : 100);
                 const duration = shift.durationMinutes || (isAppsc ? 150 : isSsc ? 60 : 90);
-                const negMarking = isAppsc ? '-0.33 Negative' : isSsc ? '-0.50 Negative' : isGroupD ? '-0.33 Negative' : '-0.25 Negative';
+                const negMarking = isAppsc ? '-0.33 Negative' : isSsc ? '-0.50 Negative' : '-0.33 Negative';
 
                 return (
                   <div
@@ -1785,7 +1865,7 @@ export default function MockTestsHubPage() {
                   test={{
                     ...test,
                     agency: test.agency || (test.title.includes('SSC') ? 'SSC' : 'RRB'),
-                    negativeMarking: test.negativeMarking || '-0.25 Negative Marking'
+                    negativeMarking: test.negativeMarking || '-0.33 Negative Marking'
                   }}
                   isBookmarked={bookmarkedIds.includes(test.id)}
                   onToggleBookmark={toggleBookmark}
@@ -1796,6 +1876,206 @@ export default function MockTestsHubPage() {
               ))}
             </div>
           </section>
+        )}
+
+        {/* =========================================================================
+            CUSTOM MOCK TEST BUILDER MODAL
+            ========================================================================= */}
+        {customBuilderOpen && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                <div>
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#2468B4]">
+                    Intelligent Exam Builder · Official Bank
+                  </span>
+                  <h3 className="text-xl font-black text-[#12345A] mt-0.5">
+                    Create Custom Mock Test
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Combine exam stages, subjects, canonical topics, difficulty &amp; question count with zero cross-exam contamination.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCustomBuilderOpen(false)}
+                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* 1. Target Exam Stage */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">1. Target Exam &amp; Stage</label>
+                <select
+                  value={customExamStage}
+                  onChange={(e) => setCustomExamStage(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-hidden focus:border-[#2468B4]"
+                >
+                  <option value="all">All Eligible Competitive Exams (National Pool)</option>
+                  {allExamStages.map((st) => (
+                    <option key={st.stageId} value={st.stageId}>
+                      {st.examShortName} — {st.name} (+{st.marksPerQuestion} / -{st.negativeMarking})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 2. Subjects Multi-Select */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700">2. Select Subjects ({customSubjects.length} selected)</label>
+                  <button
+                    type="button"
+                    onClick={() => setCustomSubjects(customSubjects.length === CANONICAL_SUBJECTS.length ? [] : CANONICAL_SUBJECTS.map((s) => s.id))}
+                    className="text-[11px] font-bold text-[#2468B4] hover:underline cursor-pointer"
+                  >
+                    {customSubjects.length === CANONICAL_SUBJECTS.length ? 'Clear All' : 'Select All'}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {CANONICAL_SUBJECTS.map((sub) => {
+                    const active = customSubjects.includes(sub.id);
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => toggleCustomSubject(sub.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                          active
+                            ? 'bg-[#12345A] text-white border-[#12345A] shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {sub.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Canonical Topics (Optional Narrowing) */}
+              {availableCustomTopics.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700">
+                      3. Narrow by Topics (Optional — leave empty for balanced mix)
+                    </label>
+                    {customTopics.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setCustomTopics([])}
+                        className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Clear Topics ({customTopics.length})
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-36 overflow-y-auto flex flex-wrap gap-1.5 p-2.5 bg-slate-50 rounded-2xl border border-slate-200">
+                    {availableCustomTopics.map((top) => {
+                      const active = customTopics.includes(top.id);
+                      return (
+                        <button
+                          key={top.id}
+                          type="button"
+                          onClick={() => toggleCustomTopic(top.id)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                            active
+                              ? 'bg-[#2468B4] text-white border-[#2468B4]'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {top.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Difficulty, Question Type, Count, Mode */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Difficulty</label>
+                  <select
+                    value={customDifficulty}
+                    onChange={(e) => setCustomDifficulty(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800"
+                  >
+                    <option value="All">All Levels (Mixed)</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Question Source</label>
+                  <select
+                    value={customQuestionType}
+                    onChange={(e) => setCustomQuestionType(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800"
+                  >
+                    <option value="PYQ">Previous Year (PYQ)</option>
+                    <option value="ALL">All Questions</option>
+                    <option value="IMPORTANT">Important / Expected</option>
+                    <option value="PRACTICE">Practice Pool</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Engine Mode</label>
+                  <select
+                    value={customMode}
+                    onChange={(e) => setCustomMode(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800"
+                  >
+                    <option value="cbt">Timed CBT Exam</option>
+                    <option value="practice">Practice Mode (Instant Answers)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700">Question Count</label>
+                <div className="grid grid-cols-5 gap-1.5 text-xs font-bold">
+                  {[10, 20, 30, 50, 100].map((cnt) => (
+                    <button
+                      key={cnt}
+                      type="button"
+                      onClick={() => setCustomCount(cnt)}
+                      className={`py-2 rounded-xl border transition cursor-pointer ${
+                        customCount === cnt
+                          ? 'bg-[#12345A] text-white border-[#12345A] shadow-xs'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {cnt} Qs
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setCustomBuilderOpen(false)}
+                  className="px-4 py-2.5 rounded-full border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLaunchCustomMock}
+                  className="px-6 py-2.5 rounded-full bg-[#12345A] hover:bg-[#0B1F3A] text-white text-xs font-black flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Generate &amp; Start Custom Test</span>
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* =========================================================================

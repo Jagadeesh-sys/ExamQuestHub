@@ -286,6 +286,115 @@
         "updatedAt": { "type": "string", "maxLength": 40 }
       },
       "required": ["userId", "examId", "completedChapters"]
+    },
+    "MockQuestion": {
+      "title": "MockQuestion",
+      "description": "Official CBT previous-year or practice mock question with conceptual classification, provenance, eligibility, and quality metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "subjectId": { "type": "string", "maxLength": 80 },
+        "categoryId": { "type": "string", "maxLength": 40 },
+        "topic": { "type": "string", "maxLength": 150 },
+        "topicId": { "type": "string", "maxLength": 100 },
+        "subtopic": { "type": "string", "maxLength": 200 },
+        "question": { "type": "object" },
+        "options": { "type": "object" },
+        "correctAnswer": { "type": "number" },
+        "explanation": { "type": "object" },
+        "examName": { "type": "string", "maxLength": 200 },
+        "examType": { "type": "string", "maxLength": 100 },
+        "examYear": { "type": "string", "maxLength": 20 },
+        "examLevel": { "type": "string", "maxLength": 80 },
+        "shiftNumber": { "type": "number" },
+        "originalOrder": { "type": "number" },
+        "provenance": { "type": "object" },
+        "classificationConfidence": { "type": "number" },
+        "classificationTier": { "type": "string", "enum": ["HIGH", "REVIEW", "MANUAL_REVIEW"] },
+        "classificationStatus": { "type": "string", "enum": ["AUTO_VERIFIED", "SUGGESTED_REVIEW", "MANUAL_REVIEW", "ADMIN_VERIFIED"] },
+        "suggestedClassification": { "type": "object" },
+        "eligibleExams": { "type": "array" },
+        "qualityFlags": { "type": "array" },
+        "manualClassificationOverride": { "type": "boolean" },
+        "classificationHistory": { "type": "array" },
+        "duplicateGroupId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "maxLength": 40 },
+        "verificationStatus": { "type": "string", "maxLength": 40 },
+        "imageUrl": { "type": "string", "maxLength": 950000 },
+        "paperUrl": { "type": "string", "maxLength": 950000 }
+      },
+      "required": ["id", "subjectId", "topicId", "question", "options", "correctAnswer"]
+    },
+    "ExamHierarchyConfig": {
+      "title": "ExamHierarchyConfig",
+      "description": "Configurable Exam -> Stage -> Section Quotas and Marking Rules registry",
+      "type": "object",
+      "properties": {
+        "examId": { "type": "string", "maxLength": 80 },
+        "name": { "type": "string", "maxLength": 150 },
+        "shortName": { "type": "string", "maxLength": 80 },
+        "agency": { "type": "string", "maxLength": 60 },
+        "syllabusVersion": { "type": "string", "maxLength": 120 },
+        "stages": { "type": "array" },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["examId", "name", "agency", "stages"]
+    },
+    "PreviousYearPaper": {
+      "title": "PreviousYearPaper",
+      "description": "Metadata and inventory record for an official previous-year shift paper",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 250 },
+        "examType": { "type": "string", "maxLength": 100 },
+        "examLevel": { "type": "string", "maxLength": 80 },
+        "examYear": { "type": "string", "maxLength": 20 },
+        "examDate": { "type": "string", "maxLength": 60 },
+        "shiftNumber": { "type": "number" },
+        "durationMinutes": { "type": "number" },
+        "totalMarks": { "type": "number" },
+        "negativeMarking": { "type": "number" },
+        "questionCount": { "type": "number" },
+        "incompleteCount": { "type": "number" },
+        "pdfUrl": { "type": "string", "maxLength": 950000 },
+        "status": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "title", "examType", "status"]
+    },
+    "MockTestTemplate": {
+      "title": "MockTestTemplate",
+      "description": "Blueprint for generated full-length, sectional, or custom CBT mock tests",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "examStageId": { "type": "string", "maxLength": 80 },
+        "questionsCount": { "type": "number" },
+        "timeMinutes": { "type": "number" },
+        "totalMarks": { "type": "number" },
+        "marksPerQuestion": { "type": "number" },
+        "negativeMarking": { "type": "number" },
+        "sections": { "type": "array" },
+        "status": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "title", "examStageId", "questionsCount", "timeMinutes"]
+    },
+    "ClassificationAudit": {
+      "title": "ClassificationAudit",
+      "description": "Audit log entry recording manual classification overrides, approvals, and reverts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "questionId": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "enum": ["APPROVE_SUGGESTION", "ADMIN_EDIT", "BULK_REASSIGN", "BULK_SHIFT_RECLASSIFY", "REVERT"] },
+        "adminUid": { "type": "string", "maxLength": 128 },
+        "previous": { "type": "object" },
+        "next": { "type": "object" },
+        "timestamp": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "questionId", "action", "timestamp"]
     }
   },
   "firestore": {
@@ -300,6 +409,10 @@
     "/questions/{questionId}": {
       "schema": "Question",
       "description": "GK practice questions, keys, and explanations"
+    },
+    "/mockQuestions/{questionId}": {
+      "schema": "MockQuestion",
+      "description": "Unified CBT mock & PYP question bank with conceptual classification and provenance"
     },
     "/resources/{resourceId}": {
       "schema": "Resource",
@@ -328,6 +441,22 @@
     "/syllabusProgress/{progressId}": {
       "schema": "SyllabusProgress",
       "description": "Per-user chapter completion tracking for exam syllabi"
+    },
+    "/examHierarchyConfigs/{configId}": {
+      "schema": "ExamHierarchyConfig",
+      "description": "Configurable Exam -> Stage -> Section quotas and official marking rules"
+    },
+    "/previousYearPapers/{paperId}": {
+      "schema": "PreviousYearPaper",
+      "description": "Previous-year shift paper metadata and quality inventory"
+    },
+    "/mockTestTemplates/{templateId}": {
+      "schema": "MockTestTemplate",
+      "description": "Official mock test blueprints and custom test templates"
+    },
+    "/classificationAudits/{auditId}": {
+      "schema": "ClassificationAudit",
+      "description": "Admin classification audit trail and revert history"
     }
   }
 }

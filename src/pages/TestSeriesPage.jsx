@@ -92,7 +92,7 @@ export default function TestSeriesPage() {
         questionsPerTest: 100,
         timeMinutes: 90,
         totalMarks: 100,
-        negativeMarking: '0.25',
+        negativeMarking: '0.33',
         languages: 'English · Hindi',
         logoUrl: '/assets/aistudio/image_cbd93505.png',
         badge: `${ugShifts.length || 57} OFFICIAL SHIFTS`,
@@ -118,7 +118,7 @@ export default function TestSeriesPage() {
         questionsPerTest: 100,
         timeMinutes: 90,
         totalMarks: 100,
-        negativeMarking: '0.25',
+        negativeMarking: '0.33',
         languages: 'English · Hindi',
         logoUrl: '/assets/aistudio/image_cbd93505.png',
         badge: `${gradShifts.length || 71} OFFICIAL SHIFTS`,
@@ -250,7 +250,7 @@ export default function TestSeriesPage() {
       questionsCount: m.questionsCount || 100,
       durationMinutes: m.timeMinutes || 90,
       totalMarks: m.marks || 100,
-      negativeMarking: 0.25,
+      negativeMarking: m.negativeMarking || (m.agency === 'SSC' ? '0.50' : '0.33'),
       isFullMock: true,
       rawObj: m
     }));
@@ -269,7 +269,7 @@ export default function TestSeriesPage() {
       questionsPerTest: 100,
       timeMinutes: 90,
       totalMarks: 100,
-      negativeMarking: '0.25',
+      negativeMarking: '0.33',
       languages: 'English · Hindi',
       logoUrl: '/assets/aistudio/image_cbd93505.png',
       badge: 'FULL CBT SIMULATION',
@@ -569,7 +569,11 @@ export default function TestSeriesPage() {
                           Medium
                         </span>
                         <span className="px-3 py-1 rounded-full bg-[#F1F5F9] text-[#475569] text-xs font-medium border border-slate-200/60">
-                          -{seriesConfig.negativeMarking} Negative Marking
+                          {shift.negativeMarking && String(shift.negativeMarking).includes('Negative')
+                            ? shift.negativeMarking
+                            : shift.negativeMarking && String(shift.negativeMarking).includes('Session')
+                            ? shift.negativeMarking
+                            : `-${shift.negativeMarking || seriesConfig.negativeMarking} Negative Marking`}
                         </span>
                       </div>
 

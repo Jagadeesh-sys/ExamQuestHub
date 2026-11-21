@@ -18,7 +18,8 @@ import {
   buildTestId,
   getCategoryById,
   getSubjectById,
-  normalizeQuestionType
+  normalizeQuestionType,
+  resolveCanonicalTopicId
 } from '../constants/mockTaxonomy.js';
 
 /**
@@ -50,14 +51,20 @@ export default function MockSubjectPage() {
     };
   }, [categoryId, subjectId]);
 
-  // Only this subject's questions matter here.
-  const subjectQuestions = useMemo(
-    () =>
-      (questions || []).filter(
-        (question) => question.categoryId === categoryId && question.subjectId === subjectId
-      ),
-    [questions, categoryId, subjectId]
-  );
+  // Only this subject's questions matter here (supporting canonical topicId & GK sub-disciplines).
+  const subjectQuestions = useMemo(() => {
+    const canonicalSubject = resolveCanonicalTopicId(subjectId);
+    return (questions || []).filter((question) => {
+      const qCat = String(question.categoryId || '').toLowerCase();
+      const qSub = String(question.subjectId || '').toLowerCase();
+      const qTop = resolveCanonicalTopicId(question.topicId || '');
+      const catMatches =
+        qCat === categoryId ||
+        (categoryId === 'gk' && (qSub === 'general-science' || qSub === 'current-affairs'));
+      if (!catMatches) return false;
+      return qSub === subjectId || qTop === canonicalSubject;
+    });
+  }, [questions, categoryId, subjectId]);
 
   const tests = useMemo(() => {
     return MOCK_TEST_TYPES.map((type) => {
