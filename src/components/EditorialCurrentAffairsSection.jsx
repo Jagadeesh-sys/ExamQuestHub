@@ -873,7 +873,7 @@ export default function EditorialCurrentAffairsSection({
         /* INSTAGRAM-REELS STYLE SWIPE FEED (mobile) - Single snap container, zero nested scroll trap */
         <div className="fixed inset-0 z-40 bg-white lg:hidden overflow-hidden flex flex-col">
           {/* Reels Header: App logo on left side of News Reels text */}
-          <div className="shrink-0 bg-white px-3.5 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100 safe-area-pt shadow-2xs">
+          <div className="shrink-0 bg-white px-3.5 pb-2 space-y-2 border-b border-slate-100 safe-area-pt shadow-2xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img
